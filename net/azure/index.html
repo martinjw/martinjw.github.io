@@ -1,0 +1,70 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Azure</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="index.html">Azure &gt;</a></li>
+<li><a href="blob.html">Blob storage</a></li>
+<li><a href="table.html">Table storage</a></li>
+<li><a href="queue.html">Queue storage</a></li>
+<li><a href="cache.html">Cache</a></li>
+<li><a href="servicebus.html">Service Bus</a></li>
+<li><a href="diagnostics.html">Diagnostics</a></li>
+</ul>
+</div>
+<div class="content">
+<p><a href="http://www.windowsazure.com/">WindowsAzure.com</a></p>
+<p><a href="https://manage.windowsazure.com/">Portal logon (manage.windowsazure.com)</a></p>
+<p>Websites are great, easy and quick for development/test sites; web roles give more options for production sites.</p>
+<p>If you use both, you may run into problems with Microsoft.WindowsAzure.ServiceRuntime.dll which is part of the SDK (C:\Program Files\Microsoft SDKs\Azure\.NET SDK\v2.5\ref\) and NOT in NuGet. Just change the assembly reference to Copy Local.</p>
+<p><a href="http://www.windowsazure.com/en-us/develop/net/common-tasks/custom-dns-web-site/">Configuring with domain names for websites</a> and <a href="http://www.windowsazure.com/en-us/develop/net/common-tasks/custom-dns/">for web roles</a>. Use a CNAME to map http://mysite/ to http://mysite.cloudapp.net/. If you use A records (eg for wildcard domains) the IP address may change!</p>
+<h3>Storage Tips</h3>
+<h4>DefaultConnectionLimit</h4>
+<p>Connections to a storage endpoint are throttled to default 2. This obviously affects concurrency and scaling! See <a href="http://blogs.msdn.com/b/jpsanders/archive/2009/05/20/understanding-maxservicepointidletime-and-defaultconnectionlimit.aspx">Understanding MaxServicePointIdleTime and DefaultConnectionLimit</a></p>
+<div class="code">
+<p><span style="color: #2b91af;">ServicePointManager</span>.DefaultConnectionLimit = 10;</p>
+</div>
+<p>In config:</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">system.net</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">connectionManagement</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><span style="color: red;">address</span><span style="color: blue;">=</span>"<span style="color: blue;">*</span>"<span style="color: blue;"> </span><span style="color: red;">maxconnection</span><span style="color: blue;">=</span>"<span style="color: blue;">10</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">connectionManagement</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">system.net</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+<h4>Disable Nagling</h4>
+<p>The default Nagling algorithm delays sending TCP requests until enough data is available. Conversely, this is <a href="http://blogs.msdn.com/b/windowsazurestorage/archive/2010/06/25/nagle-s-algorithm-is-not-friendly-towards-small-requests.aspx">bad for small POSTs (&lt;1kb)</a>. Disable it:</p>
+<div class="code">
+<p><span style="color: #2b91af;">ServicePointManager</span>.UseNagleAlgorithm = <span style="color: blue;">false</span>;</p>
+</div>
+
+<h4>Expect: 100-continue</h4>
+<p>By default, the webclient talking to storage endpoints sends an HTTP header "Expect: 100-continue" first, to check the POST will be accepted (e.g. authentication etc.); the server responds with 100, then the POST payload is sent. This behaviour is a problem with some non-azure endpoints (eg Twitter).</p>
+<p>For lots of small posts, this is means more roundtrips. Remove it:</p>
+<div class="code">
+<p><span style="color: #2b91af;">ServicePointManager</span>.Expect100Continue = <span style="color: blue;">false</span>;</p>
+</div>
+
+</div>
+<div class="Footer"><script type="text/javascript">
+//<![CDATA[
+
+
+prettyPrint();
+//]]>
+</script></div>
+</body>
+</html>

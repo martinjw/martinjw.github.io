@@ -1,0 +1,75 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Changing AppSettings in tests</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main</a></li>
+<li><a href="../dotnet.html">.Net</a></li>
+<li><a href="index.html">Code</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>Changing AppSettings in tests</h2>
+<p>ConfigurationManager.AppSettings is a static dependency, so how can you unit test? Actually it's pretty easy - GetSection, Save, RefreshSection.<br />
+The only caveat is you must have an app.config in your test project, even if it's empty.</p>
+<div class="code">
+<p>[<span style="color: #2b91af;">TestClass</span>]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">ChangeConfigurationTest</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">const</span> <span style="color: blue;">string</span> Value = <span style="color: #a31515;">"Hello"</span>;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">const</span> <span style="color: blue;">string</span> KeyValue = <span style="color: #a31515;">"MySetting"</span>;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> ChangeConfiguration()<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//the .config must exist (AppSettings doesn't have to be there).</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//if your test class doesn't have an App.config, this succeeds but the new appSetting is not loaded.</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> config = <span style="color: #2b91af;">ConfigurationManager</span>.OpenExeConfiguration(<span style="color: #2b91af;">Assembly</span>.GetCallingAssembly().Location);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> appSettings = (<span style="color: #2b91af;">AppSettingsSection</span>)config.GetSection(<span style="color: #a31515;">"appSettings"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; appSettings.Settings.Clear();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; appSettings.Settings.Add(KeyValue, Value);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; config.Save();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">ConfigurationManager</span>.RefreshSection(<span style="color: #a31515;">"appSettings"</span>);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">TestMethod</span>]<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> TestMethod1()<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> setting = <span style="color: #2b91af;">ConfigurationManager</span>.AppSettings[KeyValue];<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Assert</span>.AreEqual(<span style="color: blue;">true</span>, <span style="color: blue;">string</span>.IsNullOrEmpty(setting));<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; ChangeConfiguration();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; setting = <span style="color: #2b91af;">ConfigurationManager</span>.AppSettings[KeyValue];<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Assert</span>.AreEqual(Value, setting);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+<h3>ConnectionStrings</h3>
+<p>The corresponding code for a connection string.</p>
+<div class="code">
+<p><span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> ChangeConfiguration()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> config = <span style="color: #2b91af;">ConfigurationManager</span>.OpenExeConfiguration(<span style="color: #2b91af;">Assembly</span>.GetCallingAssembly().Location);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> connectionStrings = (<span style="color: #2b91af;">ConnectionStringsSection</span>)config.GetSection(<span style="color: #a31515;">"connectionStrings"</span>);<br />
+&nbsp;&nbsp;&nbsp; connectionStrings.ConnectionStrings[<span style="color: #a31515;">"MyDatabase"</span>]<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .ConnectionString = <span style="color: #a31515;">@"Data Source=C:\Dev\commands.sqlite"</span>;<br />
+&nbsp;&nbsp;&nbsp; config.Save();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">ConfigurationManager</span>.RefreshSection(<span style="color: #a31515;">"connectionStrings"</span>);<br />
+}</p>
+</div>
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

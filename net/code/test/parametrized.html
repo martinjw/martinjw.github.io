@@ -1,0 +1,145 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Parametrized Tests</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../index.html">Code &gt;</a></li>
+<li><a href="tests.html">Tests</a></li>
+<li><a href="lifecycle.html">Test lifecycle</a></li>
+<li><a href="parametrized.html">Parametrized Tests</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Parametrized Tests</h2>
+<p>Running tests with different data is a nice feature. MsTest is pretty poor here, XUnit is ok, and NUnit has very rich, flexible support.</p>
+<h3>MsTest</h3>
+<p>It's called <a href="https://msdn.microsoft.com/en-us/library/ms182527.aspx">data driven tests</a> in Visual Studio, and needs a Sql database (ugh) or a CSV or XML file source. Tests can't have arguments- you access an instance TestContext (not the static version).</p>
+<p>Add an xml file, with Copy to Output Directory=Always</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">Products</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;!--</span><span style="color: green;"> Copy to Output Directory=Always</span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">Product</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Name</span><span style="color: blue;">&gt;</span>Apple<span style="color: blue;">&lt;/</span><span style="color: #a31515;">Name</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Price</span><span style="color: blue;">&gt;</span>10<span style="color: blue;">&lt;/</span><span style="color: #a31515;">Price</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">Product</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">Product</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Name</span><span style="color: blue;">&gt;</span>Orange<span style="color: blue;">&lt;/</span><span style="color: #a31515;">Name</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Price</span><span style="color: blue;">&gt;</span>12<span style="color: blue;">&lt;/</span><span style="color: #a31515;">Price</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">Product</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">Products</span><span style="color: blue;">&gt;</span></p>
+</div>
+<p>The test has a DataSource attribute.</p>
+<div class="code">
+<p><span style="color: green;">//it does property injection into this</span><br />
+<span style="color: blue;">public</span> <span style="color: #2b91af;">TestContext</span> TestContext { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+&nbsp;<br />
+[<span style="color: #2b91af;">TestMethod</span>,<br />
+&nbsp;<span style="color: #2b91af;">DataSource</span>(<span style="color: #a31515;">"Microsoft.VisualStudio.TestTools.DataSource.XML"</span>,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #a31515;">"XmlData.xml"</span>, <span style="color: green;">// file name</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #a31515;">"Product"</span>, <span style="color: green;">// root/element</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">DataAccessMethod</span>.Sequential<br />
+&nbsp;&nbsp;&nbsp; )]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">void</span> TestDataDriven()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> name = TestContext.DataRow[<span style="color: #a31515;">"Name"</span>].ToString();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> price = <span style="color: #2b91af;">Int32</span>.Parse(TestContext.DataRow[<span style="color: #a31515;">"Price"</span>].ToString());<br />
+}</p>
+</div>
+
+<h3>NUnit</h3>
+<p>There are three types of parametrized tests - simple inline tests, using properties and/or helper classes, and theories.</p>
+<p>This is inline:</p>
+<div class="code">
+<p><span style="color: green;">//inline parameters</span><br />
+[<span style="color: #2b91af;">Test</span>, <span style="color: #2b91af;">Sequential</span>]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">void</span> TestMethod1(<br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">Values</span>(<span style="color: #a31515;">"A"</span>, <span style="color: #a31515;">"ABC"</span>)] <span style="color: blue;">string</span> value,<br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">Values</span>(1, 3)] <span style="color: blue;">int</span> expected)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Assert</span>.AreEqual(expected, value.Length);<br />
+}<br />
+&nbsp;<br />
+[<span style="color: #2b91af;">Test</span>] <span style="color: green;">//implicitly [Combinatorial]</span><br />
+<span style="color: blue;">public</span> <span style="color: blue;">void</span> TestMethod2(<br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">Values</span>(<span style="color: #a31515;">"A"</span>, <span style="color: #a31515;">"ABC"</span>)] <span style="color: blue;">string</span> value,<br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">Values</span>(1, 3)] <span style="color: blue;">int</span> expected)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//gets A + 1, A + 3, ABC + 1, ABC + 3</span><br />
+}</p>
+</div>
+<p>You can pull from a method or property (and specify another class)</p>
+<div class="code">
+<p><span style="color: green;">//pull from a IEnumerable member (maybe in another class)</span><br />
+[<span style="color: #2b91af;">Test</span>, <span style="color: #2b91af;">TestCaseSource</span>(<span style="color: #a31515;">"GetData"</span>)]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">void</span> TestMethod3(<span style="color: #2b91af;">Product</span> product)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Console</span>.WriteLine(product.Name);<br />
+}<br />
+&nbsp;<br />
+<span style="color: green;">//or return IEnumerable and yield return new TestCaseData(1, 2);</span><br />
+<span style="color: blue;">public</span> <span style="color: #2b91af;">IEnumerable</span>&lt;<span style="color: #2b91af;">Product</span>&gt; GetData<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">get</span><br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">yield</span> <span style="color: blue;">return</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">Product</span>(<span style="color: #a31515;">"Apple"</span>, 10);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">yield</span> <span style="color: blue;">return</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">Product</span>(<span style="color: #a31515;">"Orange"</span>, 12);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+<p>Theories are similar. Instead of [Test] you have [Theory] and it looks up fields or properties by type with the [Datapoints] attribute.</p>
+<div class="code">
+<p><span style="color: green;">//enums and bools are automatically generated; others from Datapoint[s] fields</span><br />
+[<span style="color: #2b91af;">Theory</span>]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">void</span> TestMethod4(<span style="color: blue;">int</span> i, <span style="color: #2b91af;">DayOfWeek</span> dayOfWeek) { }<br />
+&nbsp;<br />
+[<span style="color: #2b91af;">Datapoints</span>]<br />
+<span style="color: blue;">private</span> <span style="color: blue;">int</span>[] _data = <span style="color: blue;">new</span>[] { 1, 2, 3 };</p>
+</div>
+<h3>XUnit</h3>
+<p>In XUnit, all parameter tests are [Theory], not [Fact]. In v1 you have to reference xunit.extensions.dll; in v2 it's built in.</p>
+<p>[<span style="color: #2b91af;">InlineData</span>] is just like NUnit's [<span style="color: #2b91af;">Values</span>] attribute, but clearer as it's on the method with sequential mode.</p>
+<div class="code">
+<p>[<span style="color: #2b91af;">Theory</span>]<br />
+[<span style="color: #2b91af;">InlineData</span>(<span style="color: #a31515;">"A"</span>, 1)]<br />
+[<span style="color: #2b91af;">InlineData</span>(<span style="color: #a31515;">"ABC"</span>, 3)]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">void</span> TestInline(<span style="color: blue;">string</span> value, <span style="color: blue;">int</span> expected)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Assert</span>.Equal(expected, value.Length);<br />
+}</p>
+</div>
+<p>In v1 you could also refer to a public static property with [<span style="color: #2b91af;">PropertyData</span>(<span style="color: #a31515;">"GetData"</span>)]. In v2, it can be a public static property or method via [<span style="color: #2b91af;">MemberData</span>(<span style="color: #a31515;">"GetData"</span>)].</p>
+<div style="font-family: Consolas; font-size: 10pt; color: black; background: white;">
+<p style="margin: 0px;">[<span style="color: #2b91af;">Theory</span>]</p>
+<p style="margin: 0px;">[<span style="color: #2b91af;">MemberData</span>(<span style="color: #a31515;">"GetData"</span>)]</p>
+<p style="margin: 0px;"><span style="color: blue;">public</span> <span style="color: blue;">void</span> TestMember(<span style="color: blue;">string</span> value, <span style="color: blue;">int</span> expected)</p>
+<p style="margin: 0px;">{</p>
+<p style="margin: 0px;">&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Assert</span>.Equal(expected, value.Length);</p>
+<p style="margin: 0px;">}</p>
+<p style="margin: 0px;">&nbsp;</p>
+<p style="margin: 0px;"><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #2b91af;">IEnumerable</span>&lt;<span style="color: blue;">object</span>[]&gt; GetData</p>
+<p style="margin: 0px;">{</p>
+<p style="margin: 0px;">&nbsp;&nbsp;&nbsp; <span style="color: blue;">get</span></p>
+<p style="margin: 0px;">&nbsp;&nbsp;&nbsp; {</p>
+<p style="margin: 0px;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">yield</span> <span style="color: blue;">return</span> <span style="color: blue;">new</span> <span style="color: blue;">object</span>[] { <span style="color: #a31515;">"A"</span>, 1 };</p>
+<p style="margin: 0px;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">yield</span> <span style="color: blue;">return</span> <span style="color: blue;">new</span> <span style="color: blue;">object</span>[] { <span style="color: #a31515;">"ABC"</span>, 3 };</p>
+<p style="margin: 0px;">&nbsp;&nbsp;&nbsp; }</p>
+<p style="margin: 0px;">}</p>
+</div>
+
+</div>
+<div class="Footer">
+</div>
+</body>
+</html>

@@ -1,0 +1,162 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Asp.Net Webforms Resources- Embedded, Javascript, Stylesheets</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="aspcontrols.html">Asp Webforms Controls</a></li>
+<li><a href="aspdotnetbind.html">Asp Webforms Binding</a></li>
+<li><a href="aspdotnetjs.html">Asp Webforms Js/Css/Img</a></li>
+<li><a href="asp2.html">Asp Webforms 2.0</a></li>
+<li><a href="aspajax.html">Asp Webforms Ajax</a></li>
+<li><a href="aspvalidation.html">Asp Webforms Validomatic</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>ASP Webforms Resources</h2>
+<p><a href="aspajax.html">See also Asp Ajax</a></p>
+<h3>Embedded Resources</h3>
+<p>Instead of loading a resource such as an image or xml file from disc, you can embed it in the assembly, for easier deployment and caching. Add the resource to the project, then Properties- Build Action= Embedded Resource.</p>
+
+<p>To access the file:</p>
+<div class="code">
+<p><span style="color: #2b91af;">Stream</span> stream = GetType().Assembly.GetManifestResourceStream(<span style="color: #a31515;">"DemoWidgets.Globe.png"</span>);</p>
+</div>
+<p>Then put the stream into a constructor for System.Windows.Media.BitmapImage or whatever.<br />
+Asp 2:</p>
+<ul>
+<li>Add to file to custom control/ class library as <strong>Embedded Resource</strong></li>
+<li>Add Mime type to Assembly.cs
+<br />[<span style="color: blue;">assembly</span>: System.Web.UI.<span style="color: #2b91af;">WebResource</span>(<span style="color: #a31515;">"DemoWidgets.Globe.png"</span>, <span style="color: #a31515;">"image/png"</span>)]
+</li>
+<li>Reference with Page.ClientScript.GetWebResourceUrl(GetType(), resourceName)
+<div class="code">
+<p><span style="color: blue;">protected</span> <span style="color: blue;">override</span> <span style="color: blue;">void</span> CreateChildControls()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Image</span> img = <span style="color: blue;">new</span> <span style="color: #2b91af;">Image</span>();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//default namespace + [subfolder+] filename</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">const</span> <span style="color: blue;">string</span> resourceName = <span style="color: #a31515;">"DemoWidgets.Globe.png"</span>;<br />
+&nbsp;&nbsp;&nbsp; img.ImageUrl = Page.ClientScript.GetWebResourceUrl(GetType(), resourceName);<br />
+&nbsp;&nbsp;&nbsp; Controls.Add(img);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">base</span>.CreateChildControls();<br />
+}</p>
+</div>
+
+</li>
+</ul>
+<h3>Adding resources dynamically</h3>
+<p>An static image with subfolders- use ResolveUrl with ~ (squiggle)</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">UpdatePanel</span> <span style="color: red;">ID</span><span style="color: blue;">="UpdatePanel1"</span> <span style="color: red;">runat</span><span style="color: blue;">="server"&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">ContentTemplate</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">uc1</span><span style="color: blue;">:</span><span style="color: #a31515;">MyUserControl</span> <span style="color: red;">ID</span><span style="color: blue;">="MyUserControl1"</span> <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <span style="color: blue;">/&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">UpdateProgress</span> <span style="color: red;">ID</span><span style="color: blue;">="UpdateProgress1"</span> <span style="color: red;">AssociatedUpdatePanelID</span><span style="color: blue;">="UpdatePanel1"</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <span style="color: red;">DisplayAfter</span><span style="color: blue;">="500"&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">ProgressTemplate</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">div</span> <span style="color: red;">style</span><span style="color: blue;">="position: absolute"&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">img</span> <span style="color: red;">src</span><span style="color: blue;">='</span><span style="background: #ffee62;">&lt;%</span>=ResolveUrl("~/images/progress.gif") <span style="background: #ffee62;">%&gt;</span><span style="color: blue;">'</span> <span style="color: red;">alt</span><span style="color: blue;">="Updating"</span> <span style="color: blue;">/&gt;&lt;/</span><span style="color: #a31515;">div</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;/</span><span style="color: #a31515;">ProgressTemplate</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;/</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">UpdateProgress</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;/</span><span style="color: #a31515;">ContentTemplate</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">UpdatePanel</span><span style="color: blue;">&gt;</span></p>
+</div>
+<p>Also useful like ResolveUrl is <a href="http://msdn2.microsoft.com/en-us/library/system.web.virtualpathutility.aspx">VirtualPathUtility</a> which is like Path for virtual directories (GetFileName, GetDirectory, Combine). MakeRelative is neat.</p>
+<div class="code">
+<span style="color:Blue">string</span><span style="color:Black"> offset = </span><span style="color:#2b91af">VirtualPathUtility</span><span style="color:Black">.MakeRelative(Request.AppRelativeCurrentExecutionFilePath,</span> <span style="color:#a31515">"~/"</span><span style="color:Black">);</span>
+</div>
+<h3>Javascript</h3>
+<p>Add javascript. Also see RegisterClientScriptInclude, RegisterStartupScript and RegisterClientScriptResource (the typeof()/GetType() is a bit of a pain when you have shared scripts - you need to use a common type)</p>
+
+<div class="code">
+<p>Page.ClientScript.RegisterClientScriptBlock(typeof(Page), <span style="color: #a31515;">"FixDefaultButton"</span>,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #a31515;">"function fireAlert(s) {alert(s);}"</span>, <span style="color: blue;">true</span>);</p>
+</div>
+
+<p>RegisterStartupScript just puts the block at the bottom of the page, but the asp Ajax $addHandler allows you hook into the real Dom onload.</p>
+<div class="code">
+<p><span style="color: blue;">string</span> onLoad = <span style="color: #a31515;">"pageInit('"</span> + textBox1.ClientID + <span style="color: #a31515;">"');"</span>;<br />
+onLoad = <span style="color: #a31515;">"$addHandler(window, 'load', function() { "</span> + onLoad + <span style="color: #a31515;">" } );"</span>;<br />
+ClientScript.RegisterStartupScript(GetType(), <span style="color: #a31515;">"PageLoad"</span>, onLoad, <span style="color: blue;">true</span>);</p>
+</div>
+
+<h4>ScriptManager</h4>
+<p>You can also add script references to the script manager.</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: maroon;">asp</span><span style="color: blue;">:</span><span style="color: maroon;">ScriptManager</span> <span style="color: red;">ID</span><span style="color: blue;">="ScriptManager1"</span> <span style="color: red;">runat</span><span style="color: blue;">="server"&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: maroon;">Scripts</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: maroon;">asp</span><span style="color: blue;">:</span><span style="color: maroon;">ScriptReference</span> <span style="color: red;">Path</span><span style="color: blue;">="~/Scripts/jquery.validate.js"</span> <span style="color: blue;">/&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: maroon;">asp</span><span style="color: blue;">:</span><span style="color: maroon;">ScriptReference</span> <br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: red;">Assembly</span><span style="color: blue;">="WebApplication1"</span> <br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: red;">Name</span><span style="color: blue;">="WebApplication1.Scripts.EmbeddedScript.js"</span> <span style="color: blue;">/&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;/</span><span style="color: maroon;">Scripts</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: maroon;">asp</span><span style="color: blue;">:</span><span style="color: maroon;">ScriptManager</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+<p>For scripts which are embedded resources, add the WebResource attribute to AssemblyInfo.cs</p>
+<div class="code">
+<p>[<span style="color: blue;">assembly</span>: System.Web.UI.<span style="color: #2b91af;">WebResource</span>(<span style="color: #a31515;">"WebApplication1.Scripts.EmbeddedScript.js"</span>, <span style="color: #a31515;">"text/javascript"</span>)]</p>
+</div>
+
+
+<h4>OnSubmit- waiting</h4>
+<p>Another version of a waiting script (see <a href="../../jslib2.html">a general js version</a>). Styles are in the javascript to reduce dependencies, otherwise just extract them out.</p>
+<ol>
+<li><a href="waiting.js">waiting.js</a> (adjust relative paths as required)</li>
+<li>This image: <img src="waiting.gif" height="16" width="16" alt="Please wait..." /></li>
+<li>Add this to Page_Load:
+<div class="code">
+<p>Page.ClientScript.RegisterClientScriptInclude(GetType(), <span style="color: #a31515;">"WaitScript"</span>, <span style="color: #a31515;">"waiting.js"</span>);<br />
+Page.ClientScript.RegisterOnSubmitStatement(GetType(), <span style="color: #a31515;">"Waiting"</span>, <span style="color: #a31515;">"return showWait()"</span>);</p>
+</div>
+</li>
+</ol>
+
+<h4>Highlight on error</h4>
+<p>See <a href="aspvalidation.html#hi">the validomatic page</a>.</p>
+
+<h4>jQuery</h4>
+<p><a href="../../jquery.html">See jQuery syntax notes</a>.</p>
+<p>jQuery UI's dialog is by default outside the form, so do this:</p>
+<div class="code">
+<p><span style="color: blue;">var</span> dlg = $(<span style="color: maroon;">'#</span><span style="color: maroon; background: yellow;">&lt;%</span><span style="color: maroon;">= MyDialogPanel.ClientID </span><span style="color: maroon; background: yellow;">%&gt;</span><span style="color: maroon;">'</span>).dialog({ autoOpen: <span style="color: blue;">false</span>, title: <span style="color: maroon;">'</span><span style="color: maroon; background: yellow;">&lt;%</span><span style="color: maroon;">= Resources.WebResources.MyDialogTitle </span><span style="color: maroon; background: yellow;">%&gt;</span><span style="color: maroon;">'</span> });<br />
+dlg.parent().appendTo($(<span style="color: maroon;">"form:first"</span>));<br />
+&nbsp;</p>
+</div>
+
+
+<h3>Stylesheets</h3>
+<p>Add a stylesheet</p>
+<div class="code">
+<p><span style="color: blue;">private</span> <span style="color: blue;">void</span> AddStyleSheet()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">HtmlLink</span> hlink = <span style="color: blue;">new</span> <span style="color: #2b91af;">HtmlLink</span>();<br />
+&nbsp;&nbsp;&nbsp; hlink.Href = ResolveUrl(<span style="color: #a31515;">"StyleSheet.css"</span>);<br />
+&nbsp;&nbsp;&nbsp; hlink.Attributes[<span style="color: #a31515;">"rel"</span>] = <span style="color: #a31515;">"stylesheet"</span>;<br />
+&nbsp;&nbsp;&nbsp; hlink.Attributes[<span style="color: #a31515;">"text"</span>] = <span style="color: #a31515;">"text/css"</span>;<br />
+&nbsp;&nbsp;&nbsp; Page.Header.Controls.Add(hlink);<br />
+}</p>
+</div>
+<p>Potential problem: If you're rebasing your urls in the head (i.e. your masterPage has <span style="color: blue;">&lt;</span><span style="color: maroon;">script</span> <span style="color: red;">type</span><span style="color: blue;">="text/javascript"</span> <span style="color: red;">src</span><span style="color: blue;">='</span><span style="background: yellow;">&lt;%</span><span style="color: blue;">=</span> ResolveClientUrl("~/js/jquery.min.js") <span style="background: yellow;">%&gt;</span><span style="color: blue;">'&gt;&lt;/</span><span style="color: maroon;">script</span><span style="color: blue;">&gt;</span>) you get an error ("The Controls collection cannot be modified because the control contains code blocks").</p>
+<ul>
+<li>Place a <span style="color: blue;">&lt;</span><span style="color: maroon;">asp</span><span style="color: blue;">:</span><span style="color: maroon;">PlaceHolder</span> <span style="color: red;">runat</span><span style="color: blue;">="server"&gt;</span> around the header
+</li>
+<li>Use databinding and Page.Header.DataBind()</li>
+</ul>
+</div>
+<div class="Footer">
+
+</div></body>
+</html>

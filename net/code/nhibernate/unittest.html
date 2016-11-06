@@ -1,0 +1,76 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>NHibernate unit test</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../index.html">Code &gt;</a></li>
+<li><a href="index.html">NHibernate</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>NHibernate Unit Test</h2>
+<p>A simple unit test using Category and Product from Northwind - check the test result to see the SQL used (in particular, only one "INSERT" in the first unit of work).</p>
+<p>Hidden here is the NHibernate configuration and session factory (because the UnitOfWork calls SessionManager which is a lazily loaded singleton). More commonly, there's a test setup/Initialize (or Application_Start) which initializes this.</p>
+
+<div class="code">
+<p>[<span style="color: #2b91af;">TestMethod</span>]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">void</span> TestWithUnitOfWork()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">int</span> newProductId;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: blue;">var</span> uow = <span style="color: blue;">new</span> <span style="color: #2b91af;">UnitOfWork</span>())<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//let's read</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> categoryManager = <span style="color: blue;">new</span> <span style="color: #2b91af;">CategoryRepository</span>(uow.Current);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> productManager = <span style="color: blue;">new</span> <span style="color: #2b91af;">ProductRepository</span>(uow.Current);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> category = categoryManager.LoadProxy(2);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//No SQL (unless we did a Session.Get)</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//add a product</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> p = <span style="color: blue;">new</span> <span style="color: #2b91af;">Product</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Category = category, <span style="color: green;">//the proxy, just with Id</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; ProductName = <span style="color: #a31515;">"Eggs"</span>,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; UnitPrice = 3,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; QuantityPerUnit = <span style="color: #a31515;">"6"</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; };<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//No SQL to get category</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; productManager.SaveOrUpdate(p); <span style="color: green;">//save product</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//No SQL even after "Save"</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; uow.Commit();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//SQL= INSERT INTO [Products] ... on commit</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; newProductId = p.Id;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//second unit of work (=new session and transaction), just to clean up</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: blue;">var</span> uow = <span style="color: blue;">new</span> <span style="color: #2b91af;">UnitOfWork</span>())<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> productManager = <span style="color: blue;">new</span> <span style="color: #2b91af;">ProductRepository</span>(uow.Current);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Product</span> p = productManager.GetById(newProductId);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//SQL= SELECT * FROM [Products] WHERE ...</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; productManager.Delete(p);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//SQL= DELETE FROM [Products] WHERE ...</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; uow.Commit();<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+
+</div>
+<div class="Footer">
+
+</div></body>
+</html>

@@ -1,0 +1,303 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>.Net Async</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="dotnetcollections.html">Collections</a></li>
+<li><a href="events.html">Events</a></li>
+<li><a href="globaldotnet.html">Globalization</a></li>
+<li><a href="reflection.html">Reflection</a></li>
+<li><a href="dotnetsecurity.html">Security</a></li>
+<li><a href="claims.html">Claims Security</a></li>
+<li><a href="dotnetsecurity_crypto.html">Crypto+ signing</a></li>
+<li><a href="serialization.html">Serialization</a></li>
+<li><a href="dotnetthreads.html">Threading</a></li>
+<li><a href="async.html">Async</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Async</h2>
+<p>The .net libraries have higher-level APIs for async work (so you don't have to manage the <a href="dotnetthreads.html">low level Threading</a>).</p>
+<ul>
+<li>.Net 4: <a href="http://msdn.microsoft.com/en-us/library/dd460717.aspx">Task Parallel Library</a> and see below</li>
+<li>.Net 4.5: <a href="http://msdn.microsoft.com/en-us/vstudio/async.aspx">Async</a></li>
+</ul>
+<h3>Asynchronous patterns in FCL</h3>
+<p>There are 3 main patterns in .net:</p>
+<ul>
+<li>APM: Asynchronous Programming Model (BeginX, EndX(IAsyncResult), with AsyncCallbacks)</li>
+<li>EAP: Event based Asynchronous Pattern (callback events, eg BackgroundWorker)</li>
+<li>TAP: Task-based Asynchronous Pattern (Task Programming Library in .net 4)<br/>
+The await/async pattern in .net 4.5 extends this so that asynchronous code is written like normal synchronous code.</li>
+</ul>
+<p>NB: concurrency (parallelism) isn't quite the same as asynchronous, but the Task combination methods .WhenAll and .WhenAny enable concurrency.</p>
+
+<h3>Task</h3>
+<p><a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.task.aspx">Task</a> is a higher level API for managing threads, and is enhanced in .net 4.5 with awaiters.</p>
+<p>Task corresponds to what other APIs call a "Future" or "Promise".</p>
+
+<table>
+<tr><th>Threads</th><th>Tasks</th></tr>
+<tr><td><span style="color: blue;">new</span> <span style="color: #2b91af;">Thread</span>(Method).Start();
+</td>
+<td>
+<span style="color: green;">//.net 4.0</span><br/>
+<span style="color: #2b91af;">Task</span>.Factory.StartNew(Method);<br/>
+<span style="color: green;">//.net 4.5</span><br/>
+<span style="color: #2b91af;">Task</span>.Run(Method);</p>
+<div class="alert">Tasks are always Started.</div>
+</td></tr>
+
+<tr>
+<td><span style="color: #2b91af;">Thread</span>.Sleep(1000);</td>
+<td><span style="color: #2b91af;">Task</span>.Delay(1000); <span style="color: green;">//.net 4.5</span></td>
+</tr>
+
+<tr>
+<td>thread.Join();</td>
+<td>task.Wait();</td>
+</tr>
+
+</table>
+<div class="alert">
+Task is Disposable, but generally shouldn't be disposed (it can hold WaitHandle resources, but rarely). Disposing patterns complicate async code, so Microsoft advice is not to Dispose.
+</div>
+<ul>
+<li>You can turn APM into awaitable Tasks with the .AsTask() extension.</li>
+<li>For WinForms/WPF, you're always in the main UI context, so there are no problems referencing controls (you can mark Tasks with .ConfigureAwait(false) if UI is not required).</li>
+</ul>
+
+<h3>Exceptions</h3>
+<p>An async task may throw either an AggregateException or a TaskCancelledException.</p>
+<p>But it is possible to have a void-return to not be captured... and uncaptured exceptions will crash the app when garbage collected.</p>
+<ul>
+<li>Use a global exception handler<ul>
+<li><a href="http://msdn.microsoft.com/en-us/library/system.appdomain.unhandledexception.aspx">AppDomain.CurrentDomain.UnhandledException event</a></li>
+<li><a href="http://msdn.microsoft.com/en-us/library/system.web.httpapplication.error.aspx">Asp.Net's global.asax Application_Error</a></li>
+<li><a href="http://msdn.microsoft.com/en-us/library/system.windows.application.dispatcherunhandledexception.aspx">WPF's DispatcherUnhandledException event</a></li>
+<li><a href="http://msdn.microsoft.com/en-us/library/system.servicemodel.dispatcher.ierrorhandler.aspx">WCF's IErrorHandler.HandleError applied as a ServiceBehavior</a></li>
+</ul></li>
+<li>Async has it's own unhandled exception event: <a href="http://msdn.microsoft.com/en-us/library/system.threading.tasks.taskscheduler.unobservedtaskexception.aspx">TaskScheduler.UnobservedTaskException</a></li>
+</ul>
+
+
+<h3>.Net 4.0 Task Parallel Library</h3>
+
+<div class="code">
+<p><span style="color: green;">//separate creation from scheduling</span><br />
+<span style="color: green;">//var task1 = new Task&lt;int&gt;(() =&gt; int.MaxValue);</span><br />
+<span style="color: green;">//task1.Start();</span><br />
+<span style="color: green;">//preferred</span><br />
+<span style="color: blue;">var</span> task = <span style="color: #2b91af;">Task</span>.Factory.StartNew(() =&gt; <span style="color: blue;">int</span>.MaxValue);<br />
+&nbsp;<br />
+<span style="color: blue;">try</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//block with a timeout</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!task.Wait(<span style="color: #2b91af;">TimeSpan</span>.FromSeconds(1)))<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Debug</span>.WriteLine(<span style="color: #a31515;">"It took longer than a second"</span>);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> task.Result;<br />
+}<br />
+<span style="color: blue;">catch</span> (<span style="color: #2b91af;">AggregateException</span> exception)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">// exception.InnerExceptions can include nested AggregateExceptions</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">// so exception.Flatten() to simplify</span><br />
+&nbsp;&nbsp;&nbsp; exception.Handle(x =&gt;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (x <span style="color: blue;">is</span> <span style="color: #2b91af;">OverflowException</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Console</span>.WriteLine(<span style="color: #a31515;">"Overflow handled"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">true</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">false</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; });<br />
+}</p>
+</div>
+<p>Func Results</p>
+<div class="code">
+<p>&nbsp;<br/>
+<span style="color: blue;">var</span> task = <span style="color: #2b91af;">Task</span>&lt;<span style="color: blue;">int</span>&gt;.Factory.StartNew(() =&gt; 1 + 2);<br/>
+<span style="color: blue;">int</span> result = task.Result; <span style="color: green;">//this blocks- like task.Wait()</span></p>
+</div>
+
+<p>Multiple tasks</p>
+<div class="code">
+<p><span style="color: blue;">var</span> tasks = <span style="color: blue;">new</span> <span style="color: #2b91af;">Task</span>[2]<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Task</span>.Factory.StartNew(Work1),<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Task</span>.Factory.StartNew(Work2)<br />
+};<br />
+&nbsp;<br />
+<span style="color: green;">//Block until all tasks complete.</span><br />
+<span style="color: #2b91af;">Task</span>.WaitAll(tasks);</p>
+</div>
+
+<ul>
+<li>Creation: you can create with Factory.StartNew (preferred), or various Action/Func ctors.</li>
+<li>Waiting: Task.WaitAll(tasks), Task.WaitAny(tasks), task.Wait with timespan.</li>
+<li>Exceptions: Everything is nested in AggregateException (thrown on Waits or accessing Result)</li>
+</ul>
+<h4>Continuations</h4>
+<div class="code">
+<p><span style="color: blue;">var</span> continuationTask = <span style="color: #2b91af;">Task</span>.Factory<br />
+&nbsp;&nbsp;&nbsp; .StartNew(() =&gt; ReadFile())<br />
+&nbsp;&nbsp;&nbsp; .ContinueWith(x =&gt; ReadLines(x.Result));</p>
+</div>
+<p>Also ContinueWhenAll, ContinueWhenAny</p>
+<h4>Cancellations</h4>
+<p><a href="http://msdn.microsoft.com/en-us/library/dd997396.aspx">MSDN</a>. Pass in a cancellation token and cancel the token source on the main thread.</p>
+<div class="code">
+<p><span style="color: blue;">var</span> tokenSource = <span style="color: blue;">new</span> <span style="color: #2b91af;">CancellationTokenSource</span>();<br />
+<span style="color: blue;">var</span> token = tokenSource.Token;<br />
+<span style="color: blue;">var</span> task = <span style="color: #2b91af;">Task</span>.Factory.StartNew(() =&gt;<br />
+{<br />
+&nbsp;&nbsp;&nbsp; token.ThrowIfCancellationRequested();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">for</span> (<span style="color: blue;">var</span> i = 0; i &lt; 3; i++)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Thread</span>.Sleep(<span style="color: #2b91af;">TimeSpan</span>.FromSeconds(1));<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//raise an OperationCanceledException</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (token.IsCancellationRequested)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; token.ThrowIfCancellationRequested();<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//pass in the token</span><br />
+}, token);<br />
+<span style="color: green;">//cancel it</span><br />
+tokenSource.Cancel();<br />
+<span style="color: green;">//run it</span><br />
+<span style="color: blue;">try</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; task.Wait();<br />
+}<br />
+<span style="color: blue;">catch</span> (<span style="color: #2b91af;">AggregateException</span>)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//will hit here</span><br />
+}<br />
+<span style="color: #2b91af;">Console</span>.WriteLine(task.IsCanceled);</p>
+</div>
+
+<h3>Async- await (.net 4.5)</h3>
+<p><cite>await</cite> makes the rest of the method a continuation. You can't use it in catch/finally blocks.<br/>
+await <span style="color: #2b91af;">Task</span>.Run(() =&gt; 1 + 2);</p>
+<div class="code">
+<p><span style="color: green;">//You must also mark lambdas "async" when they include an await...</span><br/>
+<span style="color: blue;">var</span> result = <span style="color: blue;">await</span> <span style="color: #2b91af;">Task</span>.Run(<span style="color: blue;">async</span> () =&gt;<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">await</span> <span style="color: #2b91af;">Task</span>.Delay(1000);<br/>
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> CpuIntensive();<br/>
+});</p>
+</div>
+
+<ul>
+<li>Await says to wait for a method that is marked async (similar to task.Wait, but makes rest of method into a callback)<br/>
+A void return cannot be awaited- it's a fire and forget.<br/>
+await = "pause here until completed" - the thread is not blocked</li>
+<li>Async method keyword tells the compiler the method has an await.(there's a compiler warning if it doesn't).<br/>
+An async method may return void, Task or Task&lt;T&gt; (in WinRT, IAsyncOperation&lt;T&gt;).</li>
+<li>By convention, the method name has the suffix Async</li>
+</ul>
+<div class="alert">
+An async method may return Task&lt;T&gt;, but the "return" statement is of type T. The compiler rewrites your code.
+public async Task&lt;bool&gt; IsTrue implements interface bool IsTrue
+</div>
+<p>You can also store and await later (concurrency:)</p>
+<div class="code">
+<p><span style="color: blue;">var</span> task1 = RunAsync();<br/>
+<span style="color: blue;">var</span> task2 = Run2Async();<br/>
+&nbsp;<br/>
+<span style="color: #2b91af;">Task</span>.WaitAll(<span style="color: blue;">new</span> <span style="color: #2b91af;">Task</span>[] { task1, task2 });<br/>
+<span style="color: green;">//or</span><br/>
+<span style="color: blue;">await</span> <span style="color: #2b91af;">Task</span>.WhenAll(task1, task2);<br/>
+&nbsp;<br/>
+<span style="color: blue;">var</span> result1 = task1.Result;<br/>
+<span style="color: blue;">var</span> result2 = task2.Result;</p>
+</div>
+<p>Or, more simply:</p>
+<div class="code">
+<p><span style="color: blue;">var</span> task1 = RunAsync();<br/>
+<span style="color: blue;">var</span> task2 = Run2Async();<br/>
+<span style="color: green;">//tasks are now running simultaneously</span><br/>
+<span style="color: blue;">var</span> result1 = <span style="color: blue;">await</span> task1; <span style="color: green;">//wait for first task to finish</span><br/>
+<span style="color: blue;">var</span> result2 = <span style="color: blue;">await</span> task2; <span style="color: green;">//wait for second</span></p>
+</div>
+
+<h4>Prevent reentrancy</h4>
+<p>You can cache the Task... Note no async/await here.</p>
+<div class="code">
+<p><span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: #2b91af;">Dictionary</span>&lt;<span style="color: blue;">string</span>, <span style="color: #2b91af;">Task</span>&lt;<span style="color: blue;">string</span>&gt;&gt; _cache =<br/>
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">Dictionary</span>&lt;<span style="color: blue;">string</span>, <span style="color: #2b91af;">Task</span>&lt;<span style="color: blue;">string</span>&gt;&gt;();<br/>
+&nbsp;<br/>
+<span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: #2b91af;">Task</span>&lt;<span style="color: blue;">string</span>&gt; GetPageAsync(<span style="color: blue;">string</span> uri) <span style="color: green;">//no "async"</span><br/>
+{<br/>
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Task</span>&lt;<span style="color: blue;">string</span>&gt; task;<br/>
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (_cache.TryGetValue(uri, <span style="color: blue;">out</span> task)) <span style="color: blue;">return</span> task;<br/>
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//no "await" keyword- set the dictionary value to the task</span><br/>
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> _cache[uri] = <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpClient</span>().GetStringAsync(uri);<br/>
+}</p>
+</div>
+
+
+<h4>Cancellation</h4>
+<p>You can create a Task with a Task.Delay(timeout) which then fires a cancellationToken. But in .net 4.5 it is simpler to just set the timeout in the <a href="http://msdn.microsoft.com/en-us/library/system.threading.cancellationtokensource%28v=vs.110%29.aspx">CancellationTokenSource ctor</a>.</p>
+<div class="code">
+<p><span style="color: green;">//timeout of one second</span><br/>
+<span style="color: blue;">var</span> cts = <span style="color: blue;">new</span> <span style="color: #2b91af;">CancellationTokenSource</span>(<span style="color: #2b91af;">TimeSpan</span>.FromSeconds(1));<br/>
+<span style="color: blue;">var</span> get = <span style="color: blue;">await</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpClient</span>().GetAsync(url, cts.Token);<br/>
+get.EnsureSuccessStatusCode();<br/>
+<span style="color: blue;">var</span> response = <span style="color: blue;">await</span> get.Content.ReadAsStringAsync();</p>
+</div>
+<p>Wrap in try/catch(OperationCancelledException)
+Then cts.Cancel(); to cancel.</p>
+<p>NB: WInRT doesn't have tokens, but you can use the extension method .AsTask(token) to turn it into standard .net.</p>
+<p>CancellationToken is a struct, so in implementing methods the input argument should get an empty token</p>
+<div class="code">
+<p><span style="color: blue;">private</span> <span style="color: blue;">async</span> <span style="color: blue;">static</span> <span style="color: #2b91af;">Task</span>&lt;<span style="color: blue;">string</span>&gt; RunAsync(<br/>
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">CancellationToken</span> token = <span style="color: blue;">default</span>(<span style="color: #2b91af;">CancellationToken</span>))</p>
+</div>
+<h4>Progress</h4>
+<p>You can also use Progress&lt;T&gt;.Report(value) for progress reporting.</p>
+<div class="code">
+<p><span style="color: green;">//create the progress with an Action (eg update UI progress bar)</span><br/>
+<span style="color: blue;">var</span> progress = <span style="color: blue;">new</span> <span style="color: #2b91af;">Progress</span>&lt;<span style="color: blue;">int</span>&gt;(i =&gt; <span style="color: #2b91af;">Console</span>.WriteLine(i));<br/>
+<span style="color: blue;">var</span> task1 = RunAsync(progress);</p>
+</div>
+<div class="code">
+<p><span style="color: blue;">private</span> <span style="color: blue;">async</span> <span style="color: blue;">static</span> <span style="color: #2b91af;">Task</span>&lt;<span style="color: blue;">string</span>&gt; RunAsync(<span style="color: #2b91af;">IProgress</span>&lt;<span style="color: blue;">int</span>&gt; progress,<br/>
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">CancellationToken</span> token = <span style="color: blue;">default</span>(<span style="color: #2b91af;">CancellationToken</span>))<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">for</span> (<span style="color: blue;">int</span> i = 0; i &lt; 10; i++)<br/>
+&nbsp;&nbsp;&nbsp; {<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">await</span> <span style="color: #2b91af;">Task</span>.Delay(400);<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; progress.Report(i);<br/>
+&nbsp;&nbsp;&nbsp; }<br/>
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: #a31515;">"Done"</span>;<br/>
+}</p>
+</div>
+
+<h4>Async void</h4>
+<div class="alert"><a href="http://msdn.microsoft.com/en-us/magazine/jj991977.aspx">Avoid async void</a>. You can't catch exceptions or wait for their tasks to finish. </div>
+
+<h4>Testing</h4>
+<p>MSTest supports async Task testmethods since VS2012. When using mocks, use <span style="color: #2b91af;">Task</span>.FromResult(x)</p>
+<div class="code">
+<p><span style="color: blue;">var</span> moq = <span style="color: blue;">new</span> <span style="color: #2b91af;">Mock</span>&lt;<span style="color: #2b91af;">IService</span>&gt;();<br />
+moq.Setup(x =&gt; x.Save(<span style="color: #2b91af;">It</span>.IsAny&lt;<span style="color: #2b91af;">Message</span>&gt;())).Returns(<span style="color: #2b91af;">Task</span>.FromResult((<span style="color: blue;">int</span>?)1));</p>
+</div>
+
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

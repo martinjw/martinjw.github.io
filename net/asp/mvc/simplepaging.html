@@ -1,0 +1,212 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP MVC Simple paging</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="../aspmvc.html">Asp MVC</a></li>
+<li><a href="mvccontrollers.html">MVC Controllers</a></li>
+<li><a href="mvcactions.html">MVC Actions</a></li>
+<li><a href="../asprouting.html">Asp Routing</a></li>
+<li><a href="../aspmvcview.html">Asp MVC Views</a></li>
+<li><a href="htmlhelpers.html">HTML Helpers</a></li>
+<li><a href="bundles.html">Bundling</a></li>
+<li><a href="errors.html">MVC Errors</a></li>
+<li><a href="mvcvalidation.html">MVC Validation</a></li>
+<li><a href="simplepaging.html">Simple Paging</a></li>
+<li><a href="webapi.html">WebApi</a></li>
+<li><a href="webapiformat.html">WebApi Formatting</a></li>
+<li><a href="webapiclient.html">WebApi HttpClient</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Simple paging</h2>
+
+
+<h3>Paging HtmlHelper</h3>
+<p>Very simple version (list all pages)</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">PagingHelpers</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #2b91af;">MvcHtmlString</span> PagingLinks(<span style="color: blue;">this</span> <span style="color: #2b91af;">HtmlHelper</span> html,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">PagingData</span> pagingData,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Func</span>&lt;<span style="color: blue;">int</span>, <span style="color: blue;">string</span>&gt; pageUrl)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> result = <span style="color: blue;">new</span> <span style="color: #2b91af;">StringBuilder</span>();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">for</span> (<span style="color: blue;">int</span> i = 1; i &lt;= pagingData.TotalPages; i++)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> tag = <span style="color: blue;">new</span> <span style="color: #2b91af;">TagBuilder</span>(<span style="color: #a31515;">"a"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; tag.MergeAttribute(<span style="color: #a31515;">"href"</span>, pageUrl(i));<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; tag.InnerHtml = i.ToString(<span style="color: #2b91af;">CultureInfo</span>.InvariantCulture);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (i == pagingData.CurrentPage)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; tag.AddCssClass(<span style="color: #a31515;">"selected"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; result.Append(tag + <span style="color: #a31515;">" "</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: #2b91af;">MvcHtmlString</span>.Create(result.ToString());<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+<p>More elaborate version- first/last/current page and current+/-4. This one writes buttons, not links, so we can post if it's in a form (e.g. with search filters).</p>
+
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">PagingHelpers</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> Paging links (up to 10 links, copes with 1000s of pages)</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;param name="html"&gt;</span><span style="color: green;">The HTML.</span><span style="color: gray;">&lt;/param&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;param name="pagingData"&gt;</span><span style="color: green;">The paging data.</span><span style="color: gray;">&lt;/param&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;param name="pageUrl"&gt;</span><span style="color: green;">The page URL. Eg x =&gt; Url.Action("Index", new { page = x })</span><span style="color: gray;">&lt;/param&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;returns&gt;&lt;/returns&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #2b91af;">MvcHtmlString</span> PagingLinks(<span style="color: blue;">this</span> <span style="color: #2b91af;">HtmlHelper</span> html,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">IPagingData</span> pagingData,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Func</span>&lt;<span style="color: blue;">int</span>, <span style="color: blue;">string</span>&gt; pageUrl)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> totalPages = pagingData.TotalPages;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (totalPages == 1) <span style="color: blue;">return</span> <span style="color: blue;">null</span>;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> result = <span style="color: blue;">new</span> <span style="color: #2b91af;">StringBuilder</span>();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> currentPage = pagingData.CurrentPage;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//record the current page in form</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; AddHiddenField(result, currentPage.ToString(<span style="color: #2b91af;">CultureInfo</span>.InvariantCulture));<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> start = 1;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> end = totalPages;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">const</span> <span style="color: blue;">int</span> maxPrevNext = 4;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//where to start</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (currentPage &gt; maxPrevNext)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; start = currentPage - maxPrevNext + 1;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (currentPage + maxPrevNext &gt;= end)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//if near end, move back even more</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; start = start - maxPrevNext + 1;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//unless we overshot</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (start &lt;= 2) start = 2;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; WritePageLink(0, 1, result);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (start &gt; 2)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; result.Append(<span style="color: #a31515;">" ... "</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//where to end</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> showMore = currentPage + maxPrevNext;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (showMore &lt; totalPages)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; end = showMore;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//draw the pages</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">for</span> (<span style="color: blue;">var</span> i = start; i &lt;= end; i++)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; WritePageLink(currentPage, i, result);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//draw the end page if required</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (totalPages &gt; end)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (totalPages != end + 1)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; result.Append(<span style="color: #a31515;">" ... "</span>); <span style="color: green;">//if there is a gap</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; WritePageLink(currentPage, totalPages, result);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//wrap up and write</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> wrapper = <span style="color: blue;">new</span> <span style="color: #2b91af;">TagBuilder</span>(<span style="color: #a31515;">"div"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; wrapper.AddCssClass(<span style="color: #a31515;">"paging"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; wrapper.InnerHtml = result.ToString();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: #2b91af;">MvcHtmlString</span>.Create(wrapper.ToString());<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> WritePageLink(<span style="color: blue;">int</span> currentPage, <span style="color: blue;">int</span> pageNumber, <span style="color: #2b91af;">StringBuilder</span> result)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> pageText = pageNumber.ToString(<span style="color: #2b91af;">CultureInfo</span>.InvariantCulture);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> tag = <span style="color: blue;">new</span> <span style="color: #2b91af;">TagBuilder</span>(<span style="color: #a31515;">"input"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; tag.Attributes.Add(<span style="color: #a31515;">"type"</span>, <span style="color: #a31515;">"button"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; tag.Attributes.Add(<span style="color: #a31515;">"value"</span>, pageText);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (pageNumber == currentPage)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; tag.AddCssClass(<span style="color: #a31515;">"selected"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; result.Append(tag + <span style="color: #a31515;">" "</span>);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> AddHiddenField(<span style="color: #2b91af;">StringBuilder</span> result, <span style="color: blue;">string</span> value)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> hidden = <span style="color: blue;">new</span> <span style="color: #2b91af;">TagBuilder</span>(<span style="color: #a31515;">"input"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; hidden.Attributes.Add(<span style="color: #a31515;">"type"</span>, <span style="color: #a31515;">"hidden"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; hidden.Attributes.Add(<span style="color: #a31515;">"name"</span>, <span style="color: #a31515;">"page"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; hidden.Attributes.Add(<span style="color: #a31515;">"id"</span>, <span style="color: #a31515;">"page"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; hidden.Attributes.Add(<span style="color: #a31515;">"value"</span>, value);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; result.AppendLine(hidden.ToString(<span style="color: #2b91af;">TagRenderMode</span>.Normal));<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+
+<h3>View:</h3>
+<div class="code">
+<p>&nbsp;&nbsp;&nbsp; <span style="background: yellow;">@</span>Html.PagingLinks(Model.PagingData, x =&gt; Url.Action(<span style="color: #a31515;">"Index"</span>, <span style="color: blue;">new</span> { page = x }))</p>
+</div>
+
+<p>The form-buttons version requires the links to be in a form (with the search filter inputs), and this javascript.</p>
+<div style="font-family: Consolas; font-size: 10pt; color: black; background: white;">
+<p style="margin: 0px;">$(<span style="color: #a31515;">'.paging input'</span>).click(<span style="color: blue;">function</span>() {</p>
+<p style="margin: 0px;">&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> gotoPage = $(<span style="color: blue;">this</span>).val();</p>
+<p style="margin: 0px;">&nbsp;&nbsp;&nbsp; $(<span style="color: #a31515;">"#page"</span>).val(gotoPage);</p>
+<p style="margin: 0px;">&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> form = $(<span style="color: blue;">this</span>).parents(<span style="color: #a31515;">"form"</span>);</p>
+<p style="margin: 0px;">&nbsp;&nbsp;&nbsp; form.submit();</p>
+<p style="margin: 0px;">});</p>
+</div>
+
+<h3>Controller:</h3>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: #2b91af;">ActionResult</span> Index(<span style="color: blue;">int</span> page = 1)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">IEnumerable</span>&lt;<span style="color: #2b91af;">CountryModel</span>&gt; countryCollection = _context.CountryCollection;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> pagedModel = <span style="color: blue;">new</span> <span style="color: #2b91af;">PagedCountriesViewModel</span><br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Countries =&nbsp; countryCollection.OrderBy(p =&gt; p.Code)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .Skip((page - 1) * PageSize)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .Take(PageSize),<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; PagingData = <span style="color: blue;">new</span> <span style="color: #2b91af;">PagingData</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; CurrentPage = page,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; ItemsPerPage = PageSize,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; TotalItems = countryCollection.Count()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; };<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> View(pagedModel);<br />
+}</p>
+</div>
+<h3>Paging class:</h3>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">PagingData</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">int</span> TotalItems { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">int</span> ItemsPerPage { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">int</span> CurrentPage { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">int</span> TotalPages<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">get</span> { <span style="color: blue;">return</span> (<span style="color: blue;">int</span>)<span style="color: #2b91af;">Math</span>.Ceiling((<span style="color: blue;">decimal</span>)TotalItems / ItemsPerPage); }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

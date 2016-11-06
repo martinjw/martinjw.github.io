@@ -1,0 +1,68 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>WCF</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="wcf.html">WCF &gt;</a></li>
+<li><a href="behavior.html">Behavior</a></li>
+<li><a href="clients.html">Clients</a></li>
+<li><a href="contracts.html">Contracts</a></li>
+<li><a href="endpoints.html">Endpoints</a></li>
+<li><a href="faults.html">Faults</a></li>
+<li><a href="logging.html">Logging</a></li>
+<li><a href="routing.html">Routing</a></li>
+<li><a href="security.html">Security</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>WCF</h2>
+
+
+<h4>Message Exchange Patterns</h4>
+<ul>
+<li>Request/Response (default)</li>
+<li>OneWay - [<span style="color: #2b91af;">OperationContract</span>(IsOneWay=true)]</li>
+<li>Duplex - [<span style="color: #2b91af;">ServiceContract</span>(CallbackContract<span style="color: blue;">=</span>typeof(x)] and the client will have a long running session. Not good at interop or scaling. Service implemntations must have [<span style="color: #2b91af;">ServiceBehavior</span>(ConcurrencyMode = <span style="color: #2b91af;">ConcurrencyMode</span>.Reentrant or Multiple)]</li>
+</ul>
+
+<h4>WCF Topics</h4>
+<ul>
+<li><a href="behavior.html">Behavior</a></li>
+<li><a href="clients.html">Clients</a></li>
+<li><a href="contracts.html">Contracts</a></li>
+<li><a href="endpoints.html">Endpoints</a></li>
+<li><a href="faults.html">Faults</a></li>
+<li><a href="logging.html">Logging</a></li>
+<li><a href="routing.html">Routing</a> and discovery</li>
+<li><a href="security.html">Security</a></li>
+</ul>
+<p>And...</p>
+<ul>
+<li><a href="../asp/aspajax.html#wcf">RESTful WCF: Ajax/JSON</a></li>
+<li><a href="../data/wcfds.html">WCF Data Services (ODATA)</a></li>
+</ul>
+<p>See also <a href="../dotnetremote.html">.Net 1 remoting and webservices</a></p>
+
+ 
+</div>
+<div class="Footer"><script type="text/javascript">
+//<![CDATA[
+
+
+prettyPrint();
+//]]>
+</script></div>
+</body>
+</html>

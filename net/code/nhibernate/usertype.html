@@ -1,0 +1,346 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>NHibernate IUserType</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../index.html">Code &gt;</a></li>
+<li><a href="index.html">NHibernate</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>NHibernate IUserType</h2>
+<p>This is the common scenario of having a sql blob that needs to be an image on the domain side. You can also use this for xml which is a clob in sql and needs to be an XmlDocument or XDocument. Remember some less obvious things like enums and boolean YesNo (Y/N) /TrueFalse (T/F) exist already.</p>
+<h3>Domain Entity</h3>
+<p>Category is the same as <a href="sampleentities.html">here</a> except the Picture property uses a new domain class called "Picture".</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">virtual</span> <span style="color: #2b91af;">Picture</span> Picture { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }</p>
+</div>
+<p>Picture is simply a decorator around System.Drawing.Image which includes the format information. It's part of our domain and has no NHibernate dependency - our mapper will use the constructor overload that takes a byte array. Because I'm testing with Northwind there's an ugly hack for the OLE image header.</p>
+<div class="code">
+<p style="margin: 0px;"><span style="color: blue;">using</span> System;<br />
+<span style="color: blue;">using</span> System.Diagnostics;<br />
+<span style="color: blue;">using</span> System.Drawing;<br />
+<span style="color: blue;">using</span> System.Drawing.Imaging;<br />
+<span style="color: blue;">using</span> System.IO;<br />
+&nbsp;<br />
+<span style="color: blue;">namespace</span> Northwind<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> A picture with format information.</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">Serializable</span>]<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">Picture</span><br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">DebuggerBrowsable</span>(<span style="color: #2b91af;">DebuggerBrowsableState</span>.Never)]<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">readonly</span> <span style="color: #2b91af;">Image</span> _image;<br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; #region</span> Constructors<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> Picture(<span style="color: blue;">byte</span>[] bytes)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//called by NHibernate</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">try</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: blue;">var</span> ms = <span style="color: blue;">new</span> <span style="color: #2b91af;">MemoryStream</span>(bytes))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; _image = <span style="color: #2b91af;">Image</span>.FromStream(ms);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">catch</span> (<span style="color: #2b91af;">ArgumentException</span>) <span style="color: green;">//parameter is not valid</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//has 78-byte OLE header... a Northwind thing :(</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: blue;">var</span> ms = <span style="color: blue;">new</span> <span style="color: #2b91af;">MemoryStream</span>(bytes, 78, bytes.Length - 78))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; _image = <span style="color: #2b91af;">Image</span>.FromStream(ms);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; ImageFormat = <span style="color: #2b91af;">ImageFormat</span>.Bmp; <span style="color: green;">//default</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> Picture(<span style="color: #2b91af;">Image</span> image, <span style="color: #2b91af;">ImageFormat</span> format)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//construct as simple decorator with format information</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; _image = image;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; ImageFormat = format;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; #endregion</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: #2b91af;">Image</span> Image { <span style="color: blue;">get</span> { <span style="color: blue;">return</span> _image; } }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: #2b91af;">ImageFormat</span> ImageFormat { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> Returns the image as a byte array which can be persisted.</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;returns&gt;&lt;/returns&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">byte</span>[] ToArray()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: blue;">var</span> ms = <span style="color: blue;">new</span> <span style="color: #2b91af;">MemoryStream</span>())<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; _image.Save(ms, ImageFormat);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> ms.ToArray();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; #region</span> Identity<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">override</span> <span style="color: blue;">bool</span> Equals(<span style="color: blue;">object</span> obj)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> _image.Equals(obj);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">override</span> <span style="color: blue;">int</span> GetHashCode()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> _image.GetHashCode();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">override</span> <span style="color: blue;">string</span> ToString()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (_image != <span style="color: blue;">null</span>) <span style="color: blue;">return</span> _image.Width + <span style="color: #a31515;">" x "</span> + _image.Height;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: #a31515;">"Empty"</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; #endregion</span><br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+<h3>Mapping</h3>
+<p>The hbm mapping doesn't specify "Picture" as the type, it specifies another class that derives from IUserType.</p>
+<div class="code">
+<p style="margin: 0px;"><span style="color: blue;">&lt;</span><span style="color: #a31515;">property</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Picture</span>"<span style="color: blue;"> </span><span style="color: red;">column</span><span style="color: blue;">=</span>"<span style="color: blue;">`Picture`</span>"<span style="color: blue;"> </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">Northwind.Mappings.PictureMapper, Northwind</span>"<span style="color: blue;"> /&gt;</span></p>
+</div>
+<p>Alternatively, with parameters (for IParameterizedType)</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">property</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Picture</span>"<span style="color: blue;"> </span><span style="color: red;">column</span><span style="color: blue;">=</span>"<span style="color: blue;">`Picture`</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">type</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Northwind.Mappings.PictureMapper, Northwind</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">param</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">format</span>"<span style="color: blue;">&gt;</span>Jpeg<span style="color: blue;">&lt;/</span><span style="color: #a31515;">param</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">type</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">property</span><span style="color: blue;">&gt;</span></p>
+</div>
+<p>Here is the mapping class, derived from IUserType (and IParameterizedType so we can define the format parameter in mapping). The real work is done in NullSafeGet and NullSafeSet. The IParameterizedType interface had an additional method in NHibernate 2.1, which this includes.</p>
+
+<div class="code">
+<p><span style="color: blue;">using</span> System;<br />
+<span style="color: blue;">using</span> System.Collections;<br />
+<span style="color: blue;">using</span> System.Collections.Generic;<br />
+<span style="color: blue;">using</span> System.Data;<br />
+<span style="color: blue;">using</span> System.Diagnostics;<br />
+<span style="color: blue;">using</span> System.Drawing.Imaging;<br />
+<span style="color: blue;">using</span> NHibernate;<br />
+<span style="color: blue;">using</span> NHibernate.UserTypes;<br />
+&nbsp;<br />
+<span style="color: blue;">namespace</span> Northwind.Mappings<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> A mapper to tranlate between database byte array and an image (in our Picture decorator). </span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">PictureMapper</span> : <span style="color: #2b91af;">IUserType</span>, <span style="color: #2b91af;">IParameterizedType</span><br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">DebuggerBrowsable</span>(<span style="color: #2b91af;">DebuggerBrowsableState</span>.Never)]<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">ImageFormat</span> _imageFormat = <span style="color: #2b91af;">ImageFormat</span>.Bmp;<br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; #region</span> IUserType Members<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">object</span> Assemble(<span style="color: blue;">object</span> cached, <span style="color: blue;">object</span> owner)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> DeepCopy(cached);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">object</span> DeepCopy(<span style="color: blue;">object</span> value)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> value;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">object</span> Disassemble(<span style="color: blue;">object</span> value)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> DeepCopy(value);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">new</span> <span style="color: blue;">bool</span> Equals(<span style="color: blue;">object</span> x, <span style="color: blue;">object</span> y)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (<span style="color: blue;">object</span>.ReferenceEquals(x, y)) <span style="color: blue;">return</span> <span style="color: blue;">true</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (x == <span style="color: blue;">null</span> || y == <span style="color: blue;">null</span>) <span style="color: blue;">return</span> <span style="color: blue;">false</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> x.Equals(y);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">int</span> GetHashCode(<span style="color: blue;">object</span> x)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> x.GetHashCode();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">bool</span> IsMutable<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">get</span> { <span style="color: blue;">return</span> <span style="color: blue;">false</span>; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">object</span> NullSafeGet(System.Data.<span style="color: #2b91af;">IDataReader</span> rs, <span style="color: blue;">string</span>[] names, <span style="color: blue;">object</span> owner)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">object</span> obj = <span style="color: #2b91af;">NHibernateUtil</span>.BinaryBlob.NullSafeGet(rs, names[0]);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (obj == <span style="color: blue;">null</span>) <span style="color: blue;">return</span> <span style="color: blue;">null</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> bytes = obj <span style="color: blue;">as</span> <span style="color: blue;">byte</span>[];<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> pic = <span style="color: blue;">new</span> <span style="color: #2b91af;">Picture</span>(bytes); <span style="color: green;">//create from bytes</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; pic.ImageFormat = _imageFormat; <span style="color: green;">//the mapping default</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> pic;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> NullSafeSet(System.Data.<span style="color: #2b91af;">IDbCommand</span> cmd, <span style="color: blue;">object</span> value, <span style="color: blue;">int</span> index)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> parameter = (<span style="color: #2b91af;">IDataParameter</span>)cmd.Parameters[index];<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (value == <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; parameter.Value = <span style="color: #2b91af;">DBNull</span>.Value;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">else</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; parameter.Value = ((<span style="color: #2b91af;">Picture</span>)value).ToArray();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">object</span> Replace(<span style="color: blue;">object</span> original, <span style="color: blue;">object</span> target, <span style="color: blue;">object</span> owner)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> original;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: #2b91af;">Type</span> ReturnedType<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//the .Net type that this maps to</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">get</span> { <span style="color: blue;">return</span> <span style="color: blue;">typeof</span>(System.Drawing.<span style="color: #2b91af;">Image</span>); }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> NHibernate.SqlTypes.<span style="color: #2b91af;">SqlType</span>[] SqlTypes<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//the sql type that this maps to</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">get</span> { <span style="color: blue;">return</span> <span style="color: blue;">new</span> NHibernate.SqlTypes.<span style="color: #2b91af;">SqlType</span>[] { <span style="color: #2b91af;">NHibernateUtil</span>.BinaryBlob.SqlType }; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; #endregion</span><br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; #region</span> IParameterizedType Members<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> Sets the parameter values. Called if mapping tag in the hbm.</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;param name="parameters"&gt;</span><span style="color: green;">The parameters.</span><span style="color: gray;">&lt;/param&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> SetParameterValues(<span style="color: #2b91af;">IDictionary</span> parameters)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (parameters == <span style="color: blue;">null</span>) <span style="color: blue;">return</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">/*enables mapping (optional)</span><br />
+<span style="color: green;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &lt;property name="Picture"&gt;</span><br />
+<span style="color: green;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;type name="PictureMapper"&gt;</span><br />
+<span style="color: green;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;param name="format"&gt;Bmp&lt;/param&gt;</span><br />
+<span style="color: green;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;/type&gt;</span><br />
+<span style="color: green;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &lt;/property&gt;</span><br />
+<span style="color: green;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; */</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> value = parameters[<span style="color: #a31515;">"format"</span>] <span style="color: blue;">as</span> <span style="color: blue;">string</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (value == <span style="color: blue;">null</span>) <span style="color: blue;">return</span>;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; _imageFormat = TranslateImageFormat(value);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> Sets the parameter values. New from NHibernate 2.1</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;param name="parameters"&gt;</span><span style="color: green;">The parameters.</span><span style="color: gray;">&lt;/param&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> SetParameterValues(<span style="color: #2b91af;">IDictionary</span>&lt;<span style="color: blue;">string</span>, <span style="color: blue;">string</span>&gt; parameters)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (parameters == <span style="color: blue;">null</span>) <span style="color: blue;">return</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!parameters.ContainsKey(<span style="color: #a31515;">"format"</span>)) <span style="color: blue;">return</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> value = parameters[<span style="color: #a31515;">"format"</span>] <span style="color: blue;">as</span> <span style="color: blue;">string</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (value == <span style="color: blue;">null</span>) <span style="color: blue;">return</span>;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; _imageFormat = TranslateImageFormat(value);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: #2b91af;">ImageFormat</span> TranslateImageFormat(<span style="color: blue;">string</span> value)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">switch</span> (value.ToUpper(System.Globalization.<span style="color: #2b91af;">CultureInfo</span>.InvariantCulture))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">case</span> <span style="color: #a31515;">"BMP"</span>: <span style="color: green;">// the bitmap (BMP) image format.</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: #2b91af;">ImageFormat</span>.Bmp; <span style="color: green;">// bitmap (BMP) image format.</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">case</span> <span style="color: #a31515;">"EMF"</span>: <span style="color: green;">// the enhanced metafile (EMF) image format.</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: #2b91af;">ImageFormat</span>.Emf; <span style="color: green;">// enhanced metafile (EMF) image format.</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">case</span> <span style="color: #a31515;">"EXIF"</span>: <span style="color: green;">// the Exchangeable Image File (Exif) format.</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: #2b91af;">ImageFormat</span>.Exif;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">case</span> <span style="color: #a31515;">"GIF"</span>: <span style="color: green;">//Gets the Graphics Interchange Format (GIF) image format.</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: #2b91af;">ImageFormat</span>.Gif;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">case</span> <span style="color: #a31515;">"ICON"</span>: <span style="color: green;">// the Windows icon image format.</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: #2b91af;">ImageFormat</span>.Icon;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">case</span> <span style="color: #a31515;">"JPEG"</span>: <span style="color: green;">// the Joint Photographic Experts Group (JPEG) image format </span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: #2b91af;">ImageFormat</span>.Jpeg;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">case</span> <span style="color: #a31515;">"MEMORYBMP"</span>: <span style="color: green;">// a memory bitmap image format.</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: #2b91af;">ImageFormat</span>.MemoryBmp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">case</span> <span style="color: #a31515;">"PNG"</span>: <span style="color: green;">// the W3C Portable Network Graphics (PNG) image format.</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: #2b91af;">ImageFormat</span>.Png;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">case</span> <span style="color: #a31515;">"TIFF"</span>: <span style="color: green;">// the Tagged Image File Format (TIFF) image format.</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: #2b91af;">ImageFormat</span>.Tiff;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">case</span> <span style="color: #a31515;">"WMF"</span>: <span style="color: green;">// the Windows metafile (WMF) image format. </span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: #2b91af;">ImageFormat</span>.Wmf;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">default</span>:<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: #2b91af;">ImageFormat</span>.Bmp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; #endregion</span><br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+<h3>Unit test</h3>
+<p>A simple MSTest for it.</p>
+<div class="code">
+<p>[<span style="color: #2b91af;">TestMethod</span>, <span style="color: #2b91af;">DeploymentItem</span>(<span style="color: #a31515;">"Windows XP.jpg"</span>)]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">void</span> TestImage()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">int</span> categoryId = 0;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> path = <span style="color: #2b91af;">Path</span>.Combine(<span style="color: #2b91af;">Environment</span>.CurrentDirectory, <span style="color: #a31515;">"Windows XP.jpg"</span>);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!<span style="color: #2b91af;">File</span>.Exists(path)) <span style="color: #2b91af;">Assert</span>.Inconclusive(<span style="color: #a31515;">"Image not copied"</span>);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> picture = <span style="color: #2b91af;">Image</span>.FromFile(path);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//create a new category with picture</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: blue;">var</span> work = <span style="color: blue;">new</span> <span style="color: #2b91af;">UnitOfWork</span>())<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> cat = <span style="color: blue;">new</span> <span style="color: #2b91af;">Category</span>();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; cat.CategoryName = <span style="color: #a31515;">"Test Category"</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; cat.Description = <span style="color: #a31515;">"Test Category with Image"</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; cat.Picture = <span style="color: blue;">new</span> <span style="color: #2b91af;">Picture</span>(picture, <span style="color: #2b91af;">ImageFormat</span>.Jpeg);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">CategoryRepository</span>.SaveOrUpdate(cat);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; work.Commit(); <span style="color: green;">//physically save it to sql</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; categoryId = cat.Id;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//reload the category</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: blue;">var</span> work = <span style="color: blue;">new</span> <span style="color: #2b91af;">UnitOfWork</span>())<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> cat = <span style="color: #2b91af;">CategoryRepository</span>.GetById(categoryId);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Assert</span>.IsNotNull(cat);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> img = cat.Picture.Image;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//if (img != null)</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//{</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//&nbsp;&nbsp;&nbsp; var fs = new FileStream(Path.Combine(Environment.CurrentDirectory, "Windows XP2.jpg"), FileMode.Create);</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//&nbsp;&nbsp;&nbsp; img.Save(fs, cat.Picture.ImageFormat);</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//}</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Assert</span>.AreEqual(picture.Width, img.Width);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">CategoryRepository</span>.Delete(cat); <span style="color: green;">//delete it</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; work.Commit();<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+
+
+</div>
+<div class="Footer">
+
+</div></body>
+</html>

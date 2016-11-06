@@ -1,0 +1,118 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>.Net Claims Security</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="dotnetcollections.html">Collections</a></li>
+<li><a href="events.html">Events</a></li>
+<li><a href="globaldotnet.html">Globalization</a></li>
+<li><a href="reflection.html">Reflection</a></li>
+<li><a href="dotnetsecurity.html">Security</a></li>
+<li><a href="claims.html">Claims Security</a></li>
+<li><a href="dotnetsecurity_crypto.html">Crypto+ signing</a></li>
+<li><a href="serialization.html">Serialization</a></li>
+<li><a href="dotnetthreads.html">Threading</a></li>
+<li><a href="async.html">Async</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>.Net Claims Security</h2>
+<div class="alert">
+WIF (Windows Identity Foundation, pronounced "dub-i-f") is part of .net (mscorlib) as from 4.5 (2012).
+</div>
+<p><strong>Identity Providers</strong> (IdPs) manage user identity (login and properties of the user). The properties (name, and others such as role, email etc) can be passed to the application (<strong>Relying Party, RP</strong>)</p>
+<p>Claims may be passed via different IdPs (federation), which may involve transformation (changing the claims- either to expose a subset, or a completely different set of claims).</p>
+<p>Protocols based on claims: <a href="../asp/security/wsfederationconfig.html">WS-Federation</a>, OAuth, SOAP WS-Trust/WS-Security</p>
+
+<h3>ClaimsIdentity/ClaimsPrincipal</h3>
+<p>.net 1.0+ uses IPrincipal and IIdentity in Thread.CurrentPrincipal.</p>
+<div class="code">
+<p><span style="color: blue;">var</span> cp = <span style="color: #2b91af;">Thread</span>.CurrentPrincipal;<br />
+<span style="color: green;">//within Windows-AD</span><br />
+<span style="color: blue;">var</span> wc = <span style="color: #2b91af;">WindowsPrincipal</span>.Current;<br />
+<span style="color: blue;">var</span> wi = <span style="color: #2b91af;">WindowsIdentity</span>.GetCurrent();<br />
+<span style="color: #2b91af;">Thread</span>.CurrentPrincipal = <span style="color: blue;">new</span> <span style="color: #2b91af;">WindowsPrincipal</span>(wi);<br />
+&nbsp;<br />
+<span style="color: green;">//or generic</span><br />
+<span style="color: blue;">var</span> gi = <span style="color: blue;">new</span> <span style="color: #2b91af;">GenericIdentity</span>(<span style="color: #a31515;">"Martin"</span>);<br />
+<span style="color: blue;">var</span> gp = <span style="color: blue;">new</span> <span style="color: #2b91af;">GenericPrincipal</span>(gi, <span style="color: blue;">new</span>[] { <span style="color: #a31515;">"Admin"</span>, <span style="color: #a31515;">"Dev"</span> });<br />
+<span style="color: #2b91af;">Thread</span>.CurrentPrincipal = gp;</p>
+</div>
+<p>NB: WCF is different- it has ServiceSecurityContext</p>
+<p>In .net 4.5, WindowsIdentity, GenericIdentity and FormsIdentity all derive from ClaimsIdentity. </p>
+<div class="code">
+<p><span style="color: blue;">var</span> wp = <span style="color: #2b91af;">WindowsPrincipal</span>.Current;<br />
+<span style="color: blue;">var</span> claimsIdentities = wp.Identities; <span style="color: green;">//not just one wc.Identity</span><br />
+<span style="color: blue;">var</span> claims = wp.Claims; <span style="color: green;">//all the raw claims</span><br />
+<span style="color: green;">//Windows AD properties are mapped to OASIS standard names</span><br />
+<span style="color: blue;">var</span> nameClaim = wp.FindFirst(<span style="color: #2b91af;">ClaimTypes</span>.Name);<br />
+<span style="color: blue;">var</span> roleClaims = wp.FindAll(<span style="color: #2b91af;">ClaimTypes</span>.GroupSid);</p>
+</div>
+
+<p>You can also get the claims principal/identity via:</p>
+<div class="code">
+<p><span style="color: blue;">var</span> principal = <span style="color: #2b91af;">ClaimsPrincipal</span>.Current;<br />
+<span style="color: green;">//is the same as</span><br />
+<span style="color: blue;">var</span> p = <span style="color: #2b91af;">Thread</span>.CurrentPrincipal <span style="color: blue;">as</span> <span style="color: #2b91af;">ClaimsPrincipal</span> ?? <span style="color: blue;">new</span> <span style="color: #2b91af;">ClaimsPrincipal</span>(<span style="color: #2b91af;">Thread</span>.CurrentPrincipal);</p>
+</div>
+<h3>Claims</h3>
+<div class="code">
+<p><span style="color: green;">//System.Security.Claims</span><br />
+<span style="color: blue;">var</span> claimsList = <span style="color: blue;">new</span> <span style="color: #2b91af;">List</span>&lt;<span style="color: #2b91af;">Claim</span>&gt;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  <span style="color: green;">//custom claim</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  <span style="color: blue;">new</span> <span style="color: #2b91af;">Claim</span>(<span style="color: #a31515;">"Name"</span>, <span style="color: #a31515;">"I"</span>),<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  <span style="color: green;">//SAML standard names (URIs)</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  <span style="color: blue;">new</span> <span style="color: #2b91af;">Claim</span>(<span style="color: #2b91af;">ClaimTypes</span>.Name, <span style="color: #a31515;">"me"</span>),<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  <span style="color: blue;">new</span> <span style="color: #2b91af;">Claim</span>(<span style="color: #2b91af;">ClaimTypes</span>.Role, <span style="color: #a31515;">"Admin"</span>),<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  };<br />
+&nbsp;<br />
+<span style="color: blue;">var</span> cId = <span style="color: blue;">new</span> <span style="color: #2b91af;">ClaimsIdentity</span>(claimsList);<br />
+<span style="color: #2b91af;">Console</span>.WriteLine(cId.IsAuthenticated); <span style="color: green;">//is false! Needs an authentication type.</span><br />
+cId = <span style="color: blue;">new</span> <span style="color: #2b91af;">ClaimsIdentity</span>(claimsList, <span style="color: #a31515;">"AuthenticationType"</span>); <span style="color: green;">//NB: Windows is "Negotiate"</span><br />
+<span style="color: #2b91af;">Console</span>.WriteLine(cId.IsAuthenticated); <span style="color: green;">//is true.</span><br />
+<span style="color: green;">//specify the default name and roles</span><br />
+cId = <span style="color: blue;">new</span> <span style="color: #2b91af;">ClaimsIdentity</span>(claimsList, <span style="color: #a31515;">"AuthenticationType"</span>, <span style="color: #a31515;">"Name"</span>, <span style="color: #2b91af;">ClaimTypes</span>.Role);<br />
+<span style="color: #2b91af;">Console</span>.WriteLine(cId.Name); <span style="color: green;">//returns "I", not "me".</span><br />
+<span style="color: green;">//set it on the thread as normal</span><br />
+<span style="color: #2b91af;">Thread</span>.CurrentPrincipal = <span style="color: blue;">new</span> <span style="color: #2b91af;">ClaimsPrincipal</span>(cId);</p>
+</div>
+<p>ClaimsIdentity (+WindowsIdentity etc) flatten the claims and find the first for Name and IsInRole for first claims it finds (.FindFirst()).</p>
+
+
+<h3>Authorization</h3>
+<p>You can use ClaimsPrincipalPermission just like the old CAS Permission Demands.</p>
+<div class="code">
+<p><span style="color: green;">//declarative</span><br />
+[<span style="color: #2b91af;">ClaimsPrincipalPermission</span>(<span style="color: #2b91af;">SecurityAction</span>.Demand,<br />
+&nbsp;&nbsp;&nbsp; Resource = <span style="color: #a31515;">"Resource"</span>, Operation = <span style="color: #a31515;">"Edit"</span>)]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">void</span> EditResource()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//programmatic - System.IdentityModel.Services</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">ClaimsPrincipalPermission</span>.CheckAccess(<span style="color: #a31515;">"Resource"</span>, <span style="color: #a31515;">"Edit"</span>);</p>
+</div>
+
+<p>Derive from ClaimsAuthorizationManager and override bool CheckAccess(AuthorizationContext).<br/>
+The context has the ClaimsPrincipal, a list of Action claims and a list of Resource claims.</p>
+
+
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

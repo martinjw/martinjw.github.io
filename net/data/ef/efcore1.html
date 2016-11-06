@@ -1,0 +1,147 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>EF Core v1</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../io.html">Data &gt;</a></li>
+<li><a href="ef.html">Entity Framework &gt;</a></li>
+<li><a href="efcore1.html">EF Core v1</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Entity Framework Core v1</h2>
+<p>EF Core v1 was released in 2016 and is a complete rewrite of <a href="ef.html">Entity Framework</a> (which dates back to v4.1 in 2011).<br />
+As of 2016, <a href="efcodefirst.html">EF v6 Code First</a> was still the recommended EF (EF Core v1.0.0 was missing some critical features, including lazy loading)</p>
+<p><strong>EF Core</strong> can run on <a href="../../asp/core/core.html">.net Core</a> (and thus not just on Windows), as well as the full framework. Some ADO providers only support the full framework (minimum 4.5.1).</p>
+<h3>Links</h3>
+<ul>
+<li><a href="https://docs.efproject.net/en/latest/">Docs</a></li>
+<li><a href="https://github.com/aspnet/EntityFramework">Source (Github)</a> and <a href="https://github.com/aspnet/EntityFramework/wiki/Roadmap">Roadmap</a></li>
+</ul>
+<p>Nuget:</p>
+<ul>
+<li>Install-Package <strong>Microsoft.EntityFrameworkCore.InMemory</strong> (Testing)</li>
+<li>Install-Package <strong>Microsoft.EntityFrameworkCore.SqlServer</strong></li>
+<li>Install-Package <strong>Microsoft.EntityFrameworkCore.SQLite</strong></li>
+<li>Install-Package <strong>Npgsql.EntityFrameworkCore.PostgreSQL</strong></li>
+<li>Install-Package <strong>Microsoft.EntityFrameworkCore.Tools -pre</strong> (Migrations, still not RTMed)</li>
+</ul>
+<h3>Configuring</h3>
+<p>You can't use app/web.config (because .net Core dumped it). If you forget to configure you get an InvalidOperationException with the message "No database provider has been configured for this DbContext...."</p>
+<div class="code">
+<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:darkblue;">MyContext</span>&nbsp;:&nbsp;<span style="color:darkblue;">DbContext</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:darkblue;">DbSet</span>&lt;<span style="color:darkblue;">Product</span>&gt;&nbsp;<span style="color:purple;">Products</span>&nbsp;{&nbsp;<span style="color:darkcyan;">get</span>;&nbsp;<span style="color:darkcyan;">set</span>;&nbsp;}<br />
+ <br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">protected</span>&nbsp;<span style="color:blue;">override</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:darkcyan;">OnConfiguring</span>(<span style="color:darkblue;">DbContextOptionsBuilder</span>&nbsp;optionsBuilder)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;optionsBuilder.<span style="color:darkcyan;">UseSqlServer</span>(<span style="color:#a31515;">&quot;Server=(localdb)</span><span style="color:#ff007f;">\\</span><span style="color:#a31515;">MSSQLLocalDB;Integrated&nbsp;Security=true;Database=MyDatabase&quot;</span>);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+}</div>
+<p>Swapping from SqlServer to InMemory is a nice testing feature, but you'll have to inject options in tests with a constructor overload.</p>
+
+<div class="code">
+<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:darkblue;">MyContext</span>&nbsp;:&nbsp;<span style="color:darkblue;">DbContext</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:darkblue;">MyContext</span>()&nbsp;{&nbsp;}<br />
+ <br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:darkblue;">MyContext</span>(<span style="color:darkblue;">DbContextOptions</span>&nbsp;options)&nbsp;:&nbsp;<span style="color:darkblue;">base</span>(options)&nbsp;{&nbsp;}<br />
+ <br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:darkblue;">DbSet</span>&lt;<span style="color:darkblue;">Product</span>&gt;&nbsp;<span style="color:purple;">Products</span>&nbsp;{&nbsp;<span style="color:darkcyan;">get</span>;&nbsp;<span style="color:darkcyan;">set</span>;&nbsp;}<br />
+ <br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">protected</span>&nbsp;<span style="color:blue;">override</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:darkcyan;">OnConfiguring</span>(<span style="color:darkblue;">DbContextOptionsBuilder</span>&nbsp;optionsBuilder)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(!optionsBuilder.<span style="color:purple;">IsConfigured</span>)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;optionsBuilder.<span style="color:darkcyan;">UseSqlServer</span>(<span style="color:#a31515;">&quot;Server=(localdb)</span><span style="color:#ff007f;">\\</span><span style="color:#a31515;">MSSQLLocalDB;Integrated&nbsp;Security=true;Database=MyDatabase&quot;</span>);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+}</div>
+<p>In the tests, use the ctor overload to inject your options.</p>
+<div class="code">
+<span style="color:blue;">var</span>&nbsp;builder&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:darkblue;">DbContextOptionsBuilder</span>&lt;<span style="color:darkblue;">MyContext</span>&gt;();<br />
+builder.<span style="color:darkcyan;">UseInMemoryDatabase</span>();<br />
+<span style="color:blue;">var</span>&nbsp;options&nbsp;=&nbsp;builder.<span style="color:purple;">Options</span>;<br />
+<span style="color:blue;">var</span>&nbsp;context&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:darkblue;">MyContext</span>(options);</div>
+
+<h3>Database Initialization</h3>
+<p>In EF v6 we had context.<span style="color: #2b91af;">Database</span>.SetInitializer(<span style="color: blue;">new</span> <span style="color: #2b91af;">CreateDatabaseIfNotExists</span>&lt;<span style="color: #2b91af;">ModelContext</span>&gt;());<br />
+and for migrations, <span style="color: #2b91af;">Database</span>.SetInitializer(<span style="color: blue;">new</span> <span style="color: #2b91af;">MigrateDatabaseToLatestVersion</span>&lt;<span style="color: #2b91af;">MyContext</span>, <span style="color: #2b91af;">Configuration</span>&gt;());</p>
+<p>In EF Core v1, use:</p>
+<ul>
+<li>For simple create-database: context.<span style="color: #2b91af;">Database</span>.EnsureCreated()</li>
+<li>For migrations, Add-Migration "name" and <span style="color: #2b91af;">Database</span>.Migrate()<br />
+NB: does not work with InMemory - "Unable to resolve service for type ...IMigrator". If you swap between InMemory and a database, you may have to code around this.</li>
+</ul>
+<p>In v6 you could put this in OnModelCreating. In EF Core you can't; it needs to be in Startup.cs or equivalent.</p>
+<ul>
+<li>New command for reverse engineering a db: <code>Scaffold-DbContext "connection string" Microsoft.EntityFrameworkCore.SqlServer</code></li>
+<li>The EF v6 "Enable-Migrations" command has gone.</li>
+<li>The _MigrationHistory table is renamed to __EFMigrationsHistory (it is not created with "EnsureCreated()").</li>
+</ul>
+
+
+
+<h3>Differences to EF v6</h3>
+<table class="tablegrid">
+<tr>
+<th>EF v6</th>
+<th>EF Core v1</th>
+</tr>
+<tr>
+<td>namespace System.Data.Entity</td>
+<td>namespace Microsoft.Data.Entity</td>
+</tr>
+<tr>
+<td>app/web.config configuration (based on ADO DbProviderFactory)</td>
+<td>Code-based config</td>
+</tr>
+<tr>
+<td>Database Initializers<br />
+</td>
+<td><span style="color: #2b91af;">Database</span>.EnsureCreated(); or <span style="color: #2b91af;">Database</span>.Migrate();</td>
+</tr>
+<tr>
+<td>DbContext.OnModelCreating(<strong>Db</strong>ModelBuilder builder)<br />
+Split mapping into classes with EntityTypeConfiguration </td>
+<td>DbContext.OnModelCreating(ModelBuilder builder)<br />
+No equivalent mapping classes- manually create static classes which take an EntityTypeBuilder</td>
+</tr>
+<tr>
+<td>In fluent mapping, HasDatabaseGeneratedOption(DatabaseGeneratedOption.Computed)</td>
+<td>.ValueGeneratedOnAddOrUpdate()<br />
+also a .HasComputedColumnSql(sql)</td>
+</tr>
+<tr>
+<td>In fluent mapping, IsMaxLength()</td>
+<td>No equivalent.</td>
+</tr>
+<tr>
+<td colspan="2">
+Missing features in EF Core v1
+<ul>
+<li>Lazy loading (big one for an ORM!)</li>
+<li>Complex types</li>
+<li>Lots of other things...</li>
+</ul>
+</td>
+</tr>
+</table>
+
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

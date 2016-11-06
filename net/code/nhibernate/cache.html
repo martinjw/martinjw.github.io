@@ -1,0 +1,130 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>NHibernate Caching</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../index.html">Code &gt;</a></li>
+<li><a href="index.html">NHibernate</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>NHibernate Caching</h2>
+<p>There are two levels of caching.</p>
+<h4>First level cache</h4>
+<p>First level cache is the session's identity map of entities - it is local to the session and destroyed with it. StatelessSessions don't use it.<br/>
+session.Get and session.Load check the first level cache (Get will save a database hit).</p>
+<h4>Second level cache</h4>
+<p><a href="http://nhforge.org/doc/nh/en/index.html#caches">Second level cache</a> is common to all sessions (in asp.net terms, equivalent to Cache or Application objects). It doesn't cache the entities, only a map of ids and property values.</p>
+<ul>
+<li>You need a provider</li>
+<li>You need to explicitly turn it on.</li>
+<li>You need to explicitly mark which classes and queries are cached</li>
+</ul>
+<h3>Providers</h3>
+<ul>
+<li>You need a provider. There is an inbuilt NHibernate.Cache.HashtableCacheProvider which is memory only.</li>
+<li><a href="http://sourceforge.net/projects/nhcontrib/files/NHibernate.Caches/">Download other caches from NHContrib.</a></li>
+<li>SysCache uses asp.net's Cache</li>
+<li>SysCache2 is Sqlserver only (but does allow SqlDependencies)</li>
+<li>For 32-bit 2-server web farms, NCache Express is free.</li>
+<li>There is an memcache and a velocity/AppFabric driver.</li>
+</ul>
+<p>After you've referenced the provider, you need to configure it.</p>
+<h3>Configure second level cache=true</h3>
+<p>For Syscache and other providers, you have priorities 1-5 (low to high, 3 is normal) and can specify "regions" with different expirations.</p>
+<p>In config xml:</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">hibernate-configuration</span><span style="color: blue;"> </span><span style="color: red;">xmlns</span><span style="color: blue;">=</span>"<span style="color: blue;">urn:nhibernate-configuration-2.2</span>"<span style="color: blue;"> &gt;</span><br/>
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">session-factory</span><span style="color: blue;">&gt;</span><br/>
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">property</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">connection.driver_class</span>"<span style="color: blue;">&gt;</span>NHibernate.Driver.SqlClientDriver<span style="color: blue;">&lt;/</span><span style="color: #a31515;">property</span><span style="color: blue;">&gt;</span><br/>
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">property</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">dialect</span>"<span style="color: blue;">&gt;</span>NHibernate.Dialect.MsSql2008Dialect<span style="color: blue;">&lt;/</span><span style="color: #a31515;">property</span><span style="color: blue;">&gt;</span><br/>
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">property</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">connection.connection_string_name</span>"<span style="color: blue;">&gt;</span>Northwind<span style="color: blue;">&lt;/</span><span style="color: #a31515;">property</span><span style="color: blue;">&gt;</span><br/>
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">property</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">current_session_context_class</span>"<span style="color: blue;">&gt;</span>web<span style="color: blue;">&lt;/</span><span style="color: #a31515;">property</span><span style="color: blue;">&gt;</span><br/>
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">property</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">show_sql</span>"<span style="color: blue;">&gt;</span>true<span style="color: blue;">&lt;/</span><span style="color: #a31515;">property</span><span style="color: blue;">&gt;</span><br/>
+<span style="color: blue;">&nbsp; &nbsp; &lt;!--</span><span style="color: green;"> use caching </span><span style="color: blue;">--&gt;</span><br/>
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">property</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">cache.provider_class</span>"<span style="color: blue;">&gt;</span>NHibernate.Caches.SysCache.SysCacheProvider, NHibernate.Caches.SysCache<span style="color: blue;">&lt;/</span><span style="color: #a31515;">property</span><span style="color: blue;">&gt;</span><br/>
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">property</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">cache.use_second_level_cache</span>"<span style="color: blue;">&gt;</span>true<span style="color: blue;">&lt;/</span><span style="color: #a31515;">property</span><span style="color: blue;">&gt;</span><br/>
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">property</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">cache.use_query_cache</span>"<span style="color: blue;">&gt;</span>true<span style="color: blue;">&lt;/</span><span style="color: #a31515;">property</span><span style="color: blue;">&gt;</span><br/>
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">session-factory</span><span style="color: blue;">&gt;</span><br/>
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">hibernate-configuration</span><span style="color: blue;">&gt;</span></p>
+</div>
+<p>In Fluent NHibernate:</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #2b91af;">ISessionFactory</span> FluentlyConfigure()<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: #2b91af;">Fluently</span>.Configure()<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//which database</span><br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .Database(<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">MsSqlConfiguration</span>.MsSql2008<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//connection string from app.config</span><br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .ConnectionString(<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; cs =&gt; cs.FromConnectionStringWithKey(<span style="color: #a31515;">"Northwind"</span>))<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .ShowSql())<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//2nd level cache</span><br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .Cache(<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; c =&gt; c.UseQueryCache()<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .UseSecondLevelCache()<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .ProviderClass&lt;NHibernate.Caches.SysCache.<span style="color: #2b91af;">SysCacheProvider</span>&gt;())<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//find the mappings</span><br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .Mappings(m =&gt; m.FluentMappings.AddFromAssemblyOf&lt;<span style="color: #2b91af;">CategoryMapping</span>&gt;())<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .BuildSessionFactory();<br/>
+}</p>
+</div>
+
+<h3>Configure classes</h3>
+<p>You can cache an entire class (e.g. a reference class that seldom changes).<br/>
+Caching can be read-only, read-write (NB: doesn't lock, doesn't work in a webfarm and only on transaction.Commit) and nonstrict-read-write (expect stale data)<br/>
+For read-only caches, the classes should be mutable=false<br/>
+Important: if the cached classes have lazy associations, you can easily get N+1 SQL being fired on every session. Either don't map the associations, or cache the entire object graph.</p>
+<p>In hbm.xml</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">hibernate-mapping</span><span style="color: blue;"> </span><span style="color: red;">xmlns</span><span style="color: blue;">=</span>"<span style="color: blue;">urn:nhibernate-mapping-2.2</span>"<span style="color: blue;"> </span><span style="color: red;">namespace</span><span style="color: blue;">=</span>"<span style="color: blue;">Northwind</span>"<span style="color: blue;"> </span><span style="color: red;">assembly</span><span style="color: blue;">=</span>"<span style="color: blue;">Northwind</span>"<span style="color: blue;">&gt;</span><br/>
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">class</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Category</span>"<span style="color: blue;"> </span><span style="color: red;">table</span><span style="color: blue;">=</span>"<span style="color: blue;">`Categories`</span>"<span style="color: blue;"> </span><span style="color: red;">schema</span><span style="color: blue;">=</span>"<span style="color: blue;">`dbo`</span>"<span style="color: blue;"> </span><span style="color: red;">mutable</span><span style="color: blue;">=</span>"<span style="color: blue;">false</span>"<span style="color: blue;">&gt;</span><br/>
+<span style="color: blue;">&nbsp; &nbsp; &lt;!--</span><span style="color: green;"> read-only, read-write, nonstrict-read-write </span><span style="color: blue;">--&gt;</span><br/>
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">cache</span><span style="color: blue;"> </span><span style="color: red;">usage</span><span style="color: blue;">=</span>"<span style="color: blue;">read-only</span>"<span style="color: blue;"> </span><span style="color: red;">region</span><span style="color: blue;">=</span>"<span style="color: blue;">Hour</span>"<span style="color: blue;"> /&gt;</span></p>
+</div>
+<p>In Fluent NHibernate:</p>
+<div class="code">
+<p><span style="color: blue;">public</span> CategoryMapping()<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp; Table(<span style="color: #a31515;">"Categories"</span>);<br/>
+&nbsp;&nbsp;&nbsp; Cache.ReadOnly();<br/>
+&nbsp;&nbsp;&nbsp; ReadOnly(); <span style="color: green;">//mutable=false</span></p>
+</div>
+<p>Remember that use_second_level_cache=true only means session.Get and session.Load use the cache. For queries to use the cache, you must set use_query_cache=true.</p>
+
+<h3>Query caching</h3>
+<p>Common queries can also be cached (specifically, it stores the result ids- so you could easily have a select N+1 here if the class is not cached). <br/>
+Remember to set use_query_cache=true</p>
+<div class="code">
+<p><span style="color: blue;">var</span> activeProducts =<br/>
+&nbsp;&nbsp; session.Query&lt;<span style="color: #2b91af;">Product</span>&gt;()<br/>
+&nbsp;&nbsp;&nbsp; .Where(x =&gt; x.Discontinued == <span style="color: blue;">false</span>)<br/>
+&nbsp;&nbsp;&nbsp; .Cacheable();<br/>
+&nbsp;<br/>
+<span style="color: blue;">var</span> activeCriteria =<br/>
+&nbsp;&nbsp;&nbsp; session.CreateCriteria&lt;<span style="color: #2b91af;">Product</span>&gt;()<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .Add(<span style="color: #2b91af;">Restrictions</span>.Eq(<span style="color: #a31515;">"Discontinued"</span>, <span style="color: blue;">false</span>))<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .SetCacheable(<span style="color: blue;">true</span>)<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .List&lt;<span style="color: #2b91af;">Product</span>&gt;();</p>
+</div>
+
+
+</div>
+<div class="Footer">
+
+</div></body>
+</html>

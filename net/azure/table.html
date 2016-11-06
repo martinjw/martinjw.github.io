@@ -1,0 +1,182 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Azure Table Storage</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="index.html">Azure &gt;</a></li>
+<li><a href="blob.html">Blob storage</a></li>
+<li><a href="table.html">Table storage</a></li>
+<li><a href="queue.html">Queue storage</a></li>
+<li><a href="cache.html">Cache</a></li>
+<li><a href="servicebus.html">Service Bus</a></li>
+<li><a href="diagnostics.html">Diagnostics</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Table Storage</h2>
+<p>NB: based on API v2</p>
+<h3>TableEntity</h3>
+<p>Entities are based on Microsoft.WindowsAzure.Storage.Table.TableEntity, which has a composite key based on string PartitionKey and string RowKey. All rows in one partition will live on one machine together.</p>
+<p>Key strings must be maximum 1k length, and not include the characters \ / # ?</p>
+<p>There is also a timestamp and 252 other properties, but they aren't easily searchable (in the new API- no more linq)</p>
+<div class="code">
+<p><span style="color: blue;">using</span> System;<br />
+<span style="color: blue;">using</span> Microsoft.WindowsAzure.Storage.Table;<br />
+&nbsp;<br />
+<span style="color: blue;">namespace</span> MartinWeb.Cloud<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">LogEntry</span> : <span style="color: #2b91af;">TableEntity</span><br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> LogEntry()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//must have default ctor</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; EventDate = DateTime.UtcNow;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; PartitionKey = EventDate.Date.ToString(<span style="color: #a31515;">"yyyyMMdd"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//ensure it is unique</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; RowKey = EventDate.ToString(<span style="color: #a31515;">"HHmmss"</span>) + Guid.NewGuid();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> LogEntry(DateTime eventDate, <span style="color: blue;">string</span> message)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; EventDate = eventDate;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Message = message;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; PartitionKey = EventDate.Date.ToString(<span style="color: #a31515;">"yyyyMMdd"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//ensure it is unique</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; RowKey = EventDate.ToString(<span style="color: #a31515;">"HHmmss"</span>) + Guid.NewGuid();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">string</span> Message { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//don't set the property (partitionKeys are fixed)</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> DateTime EventDate { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+<h3>Store operations</h3>
+<p>Create a TableClient, then a CloudTable. The common operations:</p>
+<div class="code">
+<p><span style="color: blue;">using</span> System;<br />
+<span style="color: blue;">using</span> System.Collections.Generic;<br />
+<span style="color: blue;">using</span> System.Linq;<br />
+<span style="color: blue;">using</span> Microsoft.WindowsAzure;<br />
+<span style="color: blue;">using</span> Microsoft.WindowsAzure.Storage;<br />
+<span style="color: blue;">using</span> Microsoft.WindowsAzure.Storage.Table;<br />
+&nbsp;<br />
+<span style="color: blue;">namespace</span> MartinWeb.Cloud<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">TableStore</span>&lt;T&gt; <span style="color: blue;">where</span> T : <span style="color: #2b91af;">TableEntity</span>, <span style="color: blue;">new</span>()<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">readonly</span> <span style="color: blue;">string</span> _tableName;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> TableStore(<span style="color: blue;">string</span> tableName)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; _tableName = tableName;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: #2b91af;">CloudTable</span> FindTable()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> connectionString =<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">CloudConfigurationManager</span>.GetSetting(<span style="color: #a31515;">"StorageConnectionString"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> storageAccount = <span style="color: #2b91af;">CloudStorageAccount</span>.Parse(connectionString);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> tableClient = storageAccount.CreateCloudTableClient();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> table = tableClient.GetTableReference(_tableName);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; table.CreateIfNotExists();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> table;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> Add(T entity)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> table = FindTable();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> operation = <span style="color: #2b91af;">TableOperation</span>.Insert(entity);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; table.Execute(operation);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> Add(<span style="color: #2b91af;">ICollection</span>&lt;T&gt; entities)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!entities.Any()) <span style="color: blue;">return</span>;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> partitionKey = entities.First().PartitionKey;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (entities.Any(x =&gt; x.PartitionKey != partitionKey))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">throw</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">InvalidOperationException</span>(<span style="color: #a31515;">"All entities in batch must have same partitiion key"</span>);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> table = FindTable();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> operation = <span style="color: blue;">new</span> <span style="color: #2b91af;">TableBatchOperation</span>();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">foreach</span> (<span style="color: blue;">var</span> entity <span style="color: blue;">in</span> entities)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; operation.Insert(entity);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; table.ExecuteBatch(operation);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> Update(T entity)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> table = FindTable();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> operation = <span style="color: #2b91af;">TableOperation</span>.Replace(entity);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; table.Execute(operation);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> Delete(T entity)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> table = FindTable();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> operation = <span style="color: #2b91af;">TableOperation</span>.Delete(entity);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; table.Execute(operation);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> T Get(<span style="color: blue;">string</span> partitionKey, <span style="color: blue;">string</span> rowKey)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> table = FindTable();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> operation = <span style="color: #2b91af;">TableOperation</span>.Retrieve&lt;T&gt;(partitionKey, rowKey);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> result = table.Execute(operation);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> (T)result.Result; <span style="color: green;">//could be null</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: #2b91af;">IEnumerable</span>&lt;T&gt; Query(<span style="color: blue;">string</span> partitionStart, <span style="color: blue;">string</span> partitionEnd = <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> table = FindTable();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> filter =<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">TableQuery</span>.GenerateFilterCondition(<span style="color: #a31515;">"PartitionKey"</span>, <span style="color: #2b91af;">QueryComparisons</span>.GreaterThanOrEqual, partitionStart);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!<span style="color: blue;">string</span>.IsNullOrWhiteSpace(partitionEnd))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> end =<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">TableQuery</span>.GenerateFilterCondition(<span style="color: #a31515;">"PartitionKey"</span>, <span style="color: #2b91af;">QueryComparisons</span>.LessThanOrEqual, partitionEnd);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; filter = <span style="color: #2b91af;">TableQuery</span>.CombineFilters(filter, <span style="color: #2b91af;">TableOperators</span>.And, end);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> query = <span style="color: blue;">new</span> <span style="color: #2b91af;">TableQuery</span>&lt;T&gt;()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .Where(filter);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> table.ExecuteQuery(query);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+<p>Use:</p>
+<div class="code">
+<p><span style="color: blue;">var</span> store = <span style="color: blue;">new</span> <span style="color: #2b91af;">TableStore</span>&lt;<span style="color: #2b91af;">LogEntry</span>&gt;(<span style="color: #a31515;">"LogEntries"</span>);<br />
+<span style="color: blue;">var</span> entity = store.Get(pKey, rowKey);<br />
+store.Delete(entity);<br />
+store.Add(<span style="color: blue;">new</span> <span style="color: #2b91af;">LogEntry</span>(<span style="color: blue;">new</span> DateTime(2012, 10, 21, 23, 34, 9), <span style="color: #a31515;">"Error"</span>));</p>
+</div>
+
+
+</div>
+<div class="Footer"><script type="text/javascript">
+//<![CDATA[
+
+
+prettyPrint();
+//]]>
+</script></div>
+</body>
+</html>

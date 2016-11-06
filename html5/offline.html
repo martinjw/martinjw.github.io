@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>HTML5 AppCache</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+<link rel="stylesheet" type="text/css" href="../js/prettify.css" />
+<script type="text/javascript" src="../utilities.js">
+</script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../index.html">Home &gt;</a></li>
+<li><a href="index.html">HTML5</a></li>
+<li><a href="forms.html">Forms</a></li>
+<li><a href="offline.html">AppCache</a></li>
+<li><a href="storage.html">LocalStorage and IndexedDB</a></li>
+<li><a href="webworkers.html">WebWorkers</a></li>
+<li><a href="fileapi.html">File API</a></li>
+<li><a href="canvas.html">Canvas</a></li>
+<li><a href="css3effects.html">CSS3 Visual Effects</a></li>
+<li><a href="css3layout.html">CSS3 Layout</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>HTML5 AppCache</h2>
+
+<h3>Application Cache</h3>
+<ul>
+<li><a href="http://diveintohtml5.info/offline.html">DiveIntoHtml5</a></li>
+<li><a href="https://developer.mozilla.org/en-US/docs/HTML/Using_the_application_cache">MDN</a></li>
+<li>You can easily run into tricky issues with appcache vs HTTP caching/expiry</li>
+<li>IE 10+. Firefox gives a user prompt when it's used. Chrome doesn't.</li>
+</ul>
+<pre class="prettyprint">
+&lt;!DOCTYPE html&gt;
+&lt;html manifest="html5offline.manifest"&gt;
+</pre>
+<ul>
+<li>The manifest file is a text list of absolute or relative URLs (optional sections are NETWORK and FALLBACK).</li>
+<li>The manifest must be served with text/cache-manifest MIME type.</li>
+<li>The referring page is implicitly in the manifest (you can have "lazy" caching).</li>
+</ul>
+
+
+<pre>
+CACHE MANIFEST
+# version 1.0 - 2012-09-09
+html5offline.html
+style.css
+utilities.js
+
+# Always try the network, never cache
+NETWORK:
+*
+
+# If [left] unavailable, use [right]
+FALLBACK:
+/ html5offline.html
+</pre>
+<div class="alert">You can only change cached items by changing the manifest. Best practice is to use a version comment line</div>
+<p>window.applicationCache fires various events:</p>
+<pre class="prettyprint">
+var appCache = window.applicationCache;
+if (appCache) {
+    if (appCache.status == appCache.UNCACHED) {
+        document.getElementById("log").innerHTML = "Not cached";
+    }
+	appCache.addEventListener('noupdate', function() {
+		document.getElementById("log").innerHTML = "Loaded from cache";
+	});
+	appCache.addEventListener('updateready', function() {
+		document.getElementById("log").innerHTML = "Loaded from web and cached";
+	});
+}
+</pre>
+
+</div>
+<div class="Footer"><script type="text/javascript" src="../js/prettify.js">
+</script>
+<script type="text/javascript">
+prettyPrint();
+</script>
+</div>
+</body>
+</html>

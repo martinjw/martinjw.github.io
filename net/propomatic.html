@@ -1,0 +1,862 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Prop-o-matic: generate your properties in C#, VB6/.Net, Asp, Html...</title>
+<link rel="stylesheet" type="text/css" href="../style.css" />
+<script type="text/javascript" src="../utilities.js">
+</script>
+<script type="text/javascript" src="../mufx.js">
+</script>
+<script type="text/javascript" src="aspvalidation.js">
+</script>
+<script type="text/javascript" src="propomatic.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../index.html">Main &gt;</a></li>
+<li><a href="dotnet.html">.Net</a></li>
+<li><a href="dotnetlinks.html">.Net Links</a></li>
+<li><a href="visualstudio.html">Visual Studio</a></li>
+<li><a href="string.html">Strings</a></li>
+<li><a href="io.html">Data &gt;</a></li>
+<li><a href="wcf/wcf.html">WCF &gt;</a></li>
+<li><a href="dotnetwinform.html">Winforms.Net</a></li>
+<li><a href="wpf/index.html">WPF</a></li>
+<li><a href="propomatic.html">Prop-o-matic</a></li>
+<li><a href="fcl/index.html">Other FCL &gt;</a></li>
+<li><a href="asp/aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="code/index.html">Code &gt;</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Prop-o-matic</h2>
+<p>Generates properties from a list of names (one per line; use the button to fix up comma separated properties). </p>
+<ul>
+<li>Code (properties for C#, VB.Net and VB6; use Templates for a <em>very basic</em> data access class). </li>
+<li>SQL (select/insert/update/delete statements - put an asterisk anywhere on the line for a primary key)</li>
+<li>You can also generate web markup (HTML as divs or tables, asp.net and even asp3). </li>
+</ul>
+<input type="button" value="More" id="ShowDetails" onclick="toggleDetails()" />
+<div id="Details" style="display:none">
+<p>The input is designed for a simple list of names, or common formats including Create Table DDL. There are no checks for language reserved words, and very simple capitalization/cleaning of names.</p>
+<p>If the column datatype is appended (after a space or tab), it tries to work out an appropriate datatype (data length is used for strings; precision/scale is only used for detecting booleans). For code (not C# compact), simple string validators are added is it is a string datatype. Asp.Net also uses the datatype for validators created using <a href="asp/aspvalidation.html">Validomatic</a>.</p> 
+<p>The text " NOT NULL" on the same line (as in DDL) makes string properties mandatory (code properties throw an exception if null or empty string).</p>
+<p>C# Compact has less lines than C#, and no validation (for 3.5, just use automatic properties). C# Compact is not silently ignore with Use Templates.</p>
+<p>The templates include ado select/insert/updates using datareaders and are only intended for cut'n'paste.</p>
+<p>For Oracle: <code>select column_name, data_type || '(' || data_length || data_precision || ',' || data_scale || ')', table_name from USER_TAB_COLUMNS where table_name = 'pubs';</code><br /> or extract from <code>select dbms_metadata.get_ddl('TABLE','pubs') from dual;</code></p>
+<p>For SQL-Server: <code>sp_columns @table_name=pubs</code></p>
+<p>For MySQL: <code>show columns from pubs</code></p>
+</div>
+<label for="Input">Paste in table columns <br />
+<textarea rows="6" cols="40" name="Input" id="Input" title="One column/property per line">
+OrderID int IDENTITY(1,1)*
+OrderDate datetime
+ShipName nvarchar(40)
+Freight money
+
+</textarea></label><input type="button" value="CSV to lines" onclick="commaSplit()" />
+<label for="UseTemplate" title="Adds DAL-type code for VB6,VB and C#- isDirty flags etc" id="UseTemplateQ">Use templates <input type="checkbox" name="UseTemplate" id="UseTemplate" /></label>
+<input type="button" value="Show Templates" onclick="showTemplates()" id="ShowTemplates" />
+<br />
+<select name="Language" id="Language" onchange="LangChange()">
+<optgroup label="Code">
+<option value="C#" title=".Net 1.0/2.0">C#</option>
+<option value="C#inpc" title=".Net 1.0/2.0">C# with INotifyPropertyChanged</option>
+<option value="C#C" title=".Net 1.0/2.0 with fewer lines">C# (Compact)</option>
+<option value="VIEWSTATE" title=".Net 1.0/2.0 with viewstate backing">C#  / ViewState</option>
+<option value="VB" title=".Net 1.0/2.0">VB.Net</option>
+<option value="VB6" title="Legacy">VB6</option>
+</optgroup>
+<optgroup label="MarkUp">
+<option value="DIV" title="Html with fields in DIVs">HTML Div</option>
+<option value="HTML" title="Html with fields in table rows">HTML Table</option>
+<option value="ASPX" title="Aspx/Html with validators">ASP.Net</option>
+<option value="RZR" title="MVC Razor View">MVC Razor View</option>
+<option value="ASP3" title="Legacy Asp">ASP3/VBScript</option>
+</optgroup>
+<optgroup label="Other">
+<option value="SQL" title="Select/Insert/Update statements">SQL</option>
+<option value="DATATABLE" title="DataTable column mappings">ADO DataTable</option>
+<option value="ASPGRIDVIEW" title="Asp.Net2 GridView with BoundField">ASP GridView (BoundFields)</option>
+<option value="HBM" title="NHibernate mappings">NHibernate Mapping</option>
+</optgroup>
+</select>
+<input type="button" value="Generate" onclick="generate()" />
+<div id="SQLTemplates" style="display:none">
+<fieldset>
+<legend>SQL templates</legend>
+<div><label for="TableName">Name of Table in SQL</label>
+<input type="text" name="TableName" id="TableName" value="Table" /></div>
+</fieldset>
+</div>
+<div id="Templates" style="display:none">
+<fieldset>
+<legend>Templates for C# and VB</legend>
+<div><label for="IsDirty">IsDirty Membername</label>
+<input type="text" name="IsDirty" id="IsDirty" value="IsDirty" /></div>
+<p>The full templates. The tokens are %LOCALS% (private member variables defined)<br />
+%TABLE% (table / class name)<br />
+%PROPS% (getter/setter properties)<br />
+%INIT% (initialize all private members to default values))<br />
+%VALID% (validation rules - null, string length)<br />
+%ADOALLPARAMETERS% (create ado parameters for all columns)<br />
+%ADOPKPARAMETERS% (create ado parameters just for primary keys)<br />
+%ADOFILL% (read the ado datareader/recordset into private member variables)<br />
+%SELECTSQL% (sql select statement)<br />
+%INSERTSQL% (sql insert statement)<br />
+%UPDATESQL% (sql update statement)<br />
+%DELETESQL% (sql delete statement)</p>
+<p>These are self-contained "ActiveRecord" classes. Basic pattern is to pass in connection string or an active connection, set the primary key properties and call load (or delete), and set or change properties and call Save (insert or update based on whether loaded). In reality the .net ones should be based on abstract classes for most of the boilerplate, and anyway you'll probably just cut'n'copy snippets from this.</p>
+<div>
+<label for="VB6Template">VB6 Template</label>
+<textarea rows="6" cols="60" name="VB6Template" id="VB6Template">
+Option Explicit
+
+'these are exposed via public properties
+Private m_ActiveConnection As ADODB.Connection
+Private m_ConnectionString As String
+Private m_IsNew As Boolean 'new or existing object
+%LOCALS%
+
+'Property ActiveConnection --------------------------------
+Public Property Set ActiveConnection(ByVal vData As ADODB.Connection)
+    Set m_ActiveConnection = vData
+    Me.IsDirty = True
+End Property
+Public Property Get ActiveConnection() As ADODB.Connection
+    Set ActiveConnection = m_ActiveConnection
+End Property
+'End Property ActiveConnection---------
+
+'Property ConnectionString --------------------------------
+Public Property Let ConnectionString(ByVal vData As String)
+    m_ConnectionString = vData
+    Me.IsDirty = True
+End Property
+Public Property Get ConnectionString() As String
+    ConnectionString = m_ConnectionString
+End Property
+'End Property ConnectionString---------
+
+'Property IsNew --------------------------------
+Public Property Let IsNew(ByVal vData As Boolean)
+    m_IsNew = vData
+    Me.IsDirty = False
+End Property
+Public Property Get IsNew() As Boolean
+    IsNew = m_IsNew
+End Property
+'End Property IsNew---------
+
+'Property IsValid --------------------------------
+Public Property Get IsValid() As Boolean
+    'extend this method with business logic
+    Dim l_IsValid As Boolean
+%VALID%
+	'business rules go here
+    l_IsValid = True
+    IsValid = l_IsValid
+End Property
+'End Property IsValid---------
+
+%PROPS%
+
+Private Sub Class_Initialize()
+    Call Init
+End Sub
+
+Public Sub Init()
+%INIT%
+    Me.IsNew = True 'also sets IsDirty false
+End Sub
+
+Private Function OpenConnection() As ADODB.Connection
+    'if not using Active Connection open a new connection
+    Dim cn As New ADODB.Connection
+    If m_ActiveConnection Is Nothing Then
+        Call cn.Open(m_ConnectionString)
+    Else
+        Set cn = m_ActiveConnection
+    End If
+    Set OpenConnection = cn
+End Function
+Private Sub CloseConnection(ByVal cn As ADODB.Connection)
+    'only close if not using Active Connection
+    If m_ActiveConnection Is Nothing Then
+        cn.Close
+    End If
+End Sub
+
+'Set PKs via the properties- but you could put arguments here
+Public Function Load() As Boolean
+    Dim sql As String
+    Dim cn As New ADODB.Connection
+    Dim rs As New ADODB.Recordset
+    Dim cmd As New ADODB.Command
+    Dim par As ADODB.Parameter
+    Dim lngRecordsAffected As Long
+    
+    On Error GoTo Load_Error
+    Call Init
+    sql = "%SELECTSQL%"
+    Set cn = OpenConnection
+    With cmd
+        .ActiveConnection = cn
+        .CommandText = sql
+        .CommandType = adCmdText
+%ADOPKPARAMETERS%
+    End With
+    Set par = Nothing
+    
+    Set rs = cmd.Execute()
+    
+    If Not rs.EOF Then
+        'populate Me
+%ADOFILL%
+        Load = True
+        Me.IsNew = False
+    Else
+        Load = False 'none found
+    End If
+CleanUp:
+    Call CloseConnection(cn)
+    Set rs = Nothing
+    Set cmd = Nothing
+    Set cn = Nothing
+    Exit Function
+Load_Error:
+    Load = False
+    GoTo CleanUp
+End Function
+
+Private Function Insert() As Boolean
+    Dim sql As String
+    Dim cn As New ADODB.Connection
+    Dim cmd As New ADODB.Command
+    Dim lngRecordsAffected As Long
+    
+    On Error GoTo Insert_Error
+    sql = "%INSERTSQL%"
+    Set cn = OpenConnection
+    With cmd
+        .ActiveConnection = cn
+        .CommandText = sql
+        .CommandType = adCmdText
+%ADOALLPARAMETERS%
+    End With
+    
+    Call cmd.Execute(lngRecordsAffected)
+    
+    Insert = IIf(lngRecordsAffected &gt; 0, True, False)
+    Me.IsNew = False
+CleanUp:
+    Call CloseConnection(cn)
+    Set cmd = Nothing
+    Set cn = Nothing
+    Exit Function
+Insert_Error:
+    Insert = False
+    GoTo CleanUp
+End Function
+
+Private Function Update() As Boolean
+    Dim sql As String
+    Dim cn As New ADODB.Connection
+    Dim cmd As New ADODB.Command
+    Dim lngRecordsAffected As Long
+    
+    On Error GoTo Update_Error
+    sql = "%UPDATESQL%"
+    Set cn = OpenConnection
+    With cmd
+        .ActiveConnection = cn
+        .CommandText = sql
+        .CommandType = adCmdText
+%ADOALLPARAMETERS%
+    End With
+    
+    Call cmd.Execute(lngRecordsAffected)
+    
+    Update = IIf(lngRecordsAffected &gt; 0, True, False)
+    Me.IsDirty = False
+CleanUp:
+    Call CloseConnection(cn)
+    Set cmd = Nothing
+    Set cn = Nothing
+    Exit Function
+Update_Error:
+    Update = False
+    GoTo CleanUp
+End Function
+
+Public Function Delete() As Boolean
+'Primary keys must be set first. No checks for this.
+'NB you can delete without loading an existing record
+    Dim sql As String
+    Dim cn As New ADODB.Connection
+    Dim cmd As New ADODB.Command
+    Dim lngRecordsAffected As Long
+    
+    On Error GoTo Delete_Error
+    sql = "%DELETESQL%"
+    Set cn = OpenConnection
+    With cmd
+        .ActiveConnection = cn
+        .CommandText = sql
+        .CommandType = adCmdText
+%ADOPKPARAMETERS%
+    End With
+    
+    Call cmd.Execute(lngRecordsAffected)
+    
+    Delete = IIf(lngRecordsAffected &gt; 0, True, False)
+    Me.IsDirty = False
+CleanUp:
+    Call CloseConnection(cn)
+    Set cmd = Nothing
+    Set cn = Nothing
+    Exit Function
+Delete_Error:
+    Delete = False
+    GoTo CleanUp
+End Function
+
+Public Function Save() As Boolean
+    If Me.IsValid = False Then
+        Save = False
+    ElseIf m_IsNew Then
+        Save = Insert()
+    Else
+        Save = Update()
+    End If
+End Function
+
+</textarea>
+</div>
+<div>
+<label for="CTemplate">C# Template</label>
+<textarea rows="6" cols="60" name="CTemplate" id="CTemplate">
+using System;
+using System.ComponentModel;
+using System.Data;
+using System.Data.Common;
+using System.Data.SqlClient; //can use DbFactories or OracleClient
+
+namespace %TABLE%Namespace
+{
+	/// &lt;summary&gt;
+	/// An activeRecord (crud) wrapper of a Sql table record
+	/// &lt;/summary&gt;
+	public class %TABLE% : INotifyPropertyChanged
+	{
+        #region INotifyPropertyChanged Members
+        public event PropertyChangedEventHandler PropertyChanged;
+        #endregion
+		#region Common Properties
+		private SqlConnection  _activeConnection;
+		private SqlConnection  _privateConnection;
+		private string _connectionString;
+		private bool _isNew;
+        #endregion
+		
+		#region Constructor
+		/// &lt;summary&gt;
+		/// Default constructor
+		/// &lt;/summary&gt;
+		public %TABLE%()
+		{
+			Init();
+		}
+		#endregion
+		
+		#region CRUD operations
+		/// &lt;summary&gt;
+		/// Initialize stuff
+		/// &lt;/summary&gt;
+		private void Init() {
+			_isNew = true;
+%INIT%
+		}
+		
+		/// &lt;summary&gt;
+		/// Load from database into this object. If not in database (returns false), you have an empty new record.
+		/// &lt;/summary&gt;
+		/// &lt;returns&gt;true if loaded, false if failed&lt;/returns&gt;
+		public bool Load(%PKTYPE% primaryKey) {
+			const string sql = @"%SELECTSQL%";
+			//initialize an empty record
+			Init();
+		    %PKNAME% = primaryKey;
+			//grab the data
+			SqlCommand cmd = new SqlCommand(sql, OpenConnection());
+			try {
+%ADOPKPARAMETERS%
+				
+				//singlerow hint - not used for sqlserver
+				using (SqlDataReader dr = cmd.ExecuteReader(CommandBehavior.SingleRow)) {
+					
+					if (dr.HasRows) { //.net 1.1
+						dr.Read();//Advance to the one and only row
+%ADOFILL%
+						_isNew= false;
+					} else {
+						//in a using block, so everything should close
+						return false;
+					}
+				}
+			} finally {
+				cmd.Dispose();
+				CloseConnection();
+			}
+			return true;
+		}
+		
+		/// &lt;summary&gt;
+		/// Saves the record to database. 
+		/// &lt;/summary&gt;
+		/// &lt;returns&gt;True if saved, false if didn't&lt;/returns&gt;
+		public bool Save() {
+			if(!IsValid)
+				return false;
+			if(_isNew)
+				return Insert();
+			else
+				return Update();
+		}
+		
+		private bool Insert() {
+			string sql = @"%INSERTSQL%";
+			bool ret = false;
+			SqlCommand cmd = new SqlCommand(sql, OpenConnection());
+			try {
+%ADOALLPARAMETERS%
+%ADOPKORIDENTITYPARAMETER%
+				if (cmd.ExecuteNonQuery() &gt; 0) {
+					_isDirty = false; //not dirty anymore
+					%READIDENTITY%
+					ret = true;
+				}
+			} finally {
+				cmd.Dispose();
+				CloseConnection();
+			}
+			return ret;
+		}
+		
+		/// &lt;summary&gt;
+		/// Update an existing record in database
+		/// &lt;/summary&gt;
+		private bool Update() {
+			string sql = @"%UPDATESQL%";
+			bool ret = false;
+			SqlCommand cmd = new SqlCommand(sql, OpenConnection());
+			try {
+%ADOALLPARAMETERS%
+				//primary key
+%ADOPKPARAMETERS%
+				if (cmd.ExecuteNonQuery() &gt; 0) {
+					_isDirty = false; //not dirty anymore
+					ret = true;
+				}
+			} finally {
+				cmd.Dispose();
+				CloseConnection();
+			}
+			return ret;
+		}
+		
+		/// &lt;summary&gt;
+		/// Delete this record from database. You don't need to Load the record first- just set the primary key(s)
+		/// &lt;/summary&gt;
+		/// &lt;returns&gt;Returns true if deleted, or false if no records updated&lt;/returns&gt;
+		public bool Delete() {
+			string sql = @"%DELETESQL%";
+			bool ret = false;
+			SqlCommand cmd = new SqlCommand(sql, OpenConnection());
+			try {
+%ADOPKPARAMETERS%
+			
+			if (cmd.ExecuteNonQuery() &gt; 0) {
+				_isDirty = false; //not dirty anymore
+				ret= true;
+			}
+			} finally {
+				cmd.Dispose();
+				CloseConnection();
+			}
+			return ret;
+		}
+		#endregion
+		
+		#region Private Connection Methods
+		/// &lt;summary&gt;
+		/// Use either the ActiveConnection or create one from ConnectionString
+		/// &lt;/summary&gt;
+		private SqlConnection OpenConnection() {
+			//if closed, open it (there are also states of broken, connecting etc)
+			if (_activeConnection != null &amp;&amp; _activeConnection.State == ConnectionState.Closed) {
+				_activeConnection.Open();
+			} else if (String.IsNullOrEmpty(_connectionString)) {
+				//for 1.1 = if(_connectionString == null || _connectionString == "")
+				throw new InvalidOperationException("No connection string");
+			} else {
+				//create a local connection which will we will close when done
+				_privateConnection = new SqlConnection(_connectionString);
+				_privateConnection.Open();
+				return _privateConnection;
+			}
+			return _activeConnection;
+		}
+		
+		/// &lt;summary&gt;
+		/// Close the connection (local only- do not close a public connection)
+		/// &lt;/summary&gt;
+		private void CloseConnection() {
+			if (_privateConnection != null) {
+				_privateConnection.Close();
+			} else {
+				//this connection may be used for something else, so don't close it
+			}
+		}
+		#endregion		
+		
+
+		#region Common Properties
+
+		///&lt;summary&gt;
+		///ActiveConnection
+		///&lt;/summary&gt;
+		public SqlConnection ActiveConnection
+		{
+			get { return _activeConnection; }
+			set { _activeConnection = value; }
+		}
+
+		///&lt;summary&gt;
+		///ConnectionString
+		///&lt;/summary&gt;
+		public string ConnectionString
+		{
+			get { return _connectionString; }
+			set
+			{
+				if(String.IsNullOrEmpty(value)) {
+					throw new ArgumentNullException("value","Must not be null");
+				}
+				_connectionString = value;
+			}
+		}
+
+		///&lt;summary&gt;
+		///Is this new or an existing (via Load)instance
+		///&lt;/summary&gt;
+		public bool IsNew
+		{
+			get { return _isNew; }
+			set { _isNew = value; }
+		}
+
+		///&lt;summary&gt;
+		///Is this valid to save?
+		///&lt;/summary&gt;
+		public bool IsValid
+		{
+			get
+			{
+				bool _isValid = true;
+%VALID%
+				//business rules go here
+				return _isValid;
+			}
+		}
+
+		#endregion
+
+		
+		#region Record Properties
+%LOCALS%
+
+%PROPS%
+		#endregion
+	}
+
+}
+</textarea>
+</div>
+<div>
+<label for="VBTemplate">VB Template</label>
+<textarea rows="6" cols="60" name="CTemplate" id="VBTemplate">
+Imports System
+Imports System.Data
+Imports System.Data.Common
+Imports System.Data.SqlClient 'use DbFactories or OracleClient if rqd
+Namespace %TABLE%Namespace
+	''' &lt;summary&gt;
+	''' An activeRecord (crud) wrapper of a Sql table record
+	''' &lt;/summary&gt;
+	Public Class %TABLE%
+		''' &lt;summary&gt;
+		''' Default constructor
+		''' &lt;/summary&gt;
+		Public Sub New()
+			Init()
+		End Sub
+
+		#Region "CRUD operations"
+		''' &lt;summary&gt;
+		''' Initialize stuff
+		''' &lt;/summary&gt;
+		Private Sub Init()
+			_IsNew = True
+%INIT%
+		End Sub
+
+		''' &lt;summary&gt;
+		''' Load from database into this object. If not in database (returns false), you have an empty new record.
+		''' &lt;/summary&gt;
+		''' &lt;returns&gt;true if loaded, false if failed&lt;/returns&gt;
+		Public Function Load(ByVal primaryKey As %PKTYPE%) As Boolean
+			Dim sql As String = "%SELECTSQL%"
+			'initialize an empty record
+			Init()
+		    %PKNAME% = primaryKey
+			'grab the data
+			Dim cmd As New SqlCommand(sql, OpenConnection())
+			Try
+%ADOPKPARAMETERS%
+
+				'singlerow hint - not used for sqlserver
+				Using dr As SqlDataReader = cmd.ExecuteReader(CommandBehavior.SingleRow)
+
+					If dr.HasRows Then
+						'.net 1.1
+						dr.Read()
+						'Advance to the one and only row
+%ADOFILL%
+						_IsNew = False
+					Else
+						'in a using block, so everything should close
+						Return False
+					End If
+				End Using
+			Catch ex As Exception
+					'just rethrow so I can see it
+				Throw
+			Finally
+				cmd.Dispose()
+				CloseConnection()
+			End Try
+			Return True
+		End Function
+
+		''' &lt;summary&gt;
+		''' Saves the record to database. 
+		''' &lt;/summary&gt;
+		''' &lt;returns&gt;True if saved, false if didn't&lt;/returns&gt;
+		Public Function Save() As Boolean
+			If Not IsValid() Then
+				Return False
+			Else If _IsNew Then
+				Return Insert()
+			Else
+				Return Update()
+			End If
+		End Function
+
+		Private Function Insert() As Boolean
+			Dim sql As String = "%INSERTSQL%"
+			Dim ret As Boolean = False
+			Dim cmd As New SqlCommand(sql, OpenConnection())
+			Try
+%ADOALLPARAMETERS%
+%ADOPKORIDENTITYPARAMETER%
+
+				If cmd.ExecuteNonQuery() &gt; 0 Then
+					_IsDirty = False
+					'not dirty anymore
+					ret = True
+				End If
+			Catch ex As Exception
+					'rethrow
+				Throw
+			Finally
+				cmd.Dispose()
+				CloseConnection()
+			End Try
+			Return ret
+		End Function
+
+		''' &lt;summary&gt;
+		''' Update an existing record in database
+		''' &lt;/summary&gt;
+		''' &lt;returns&gt;&lt;/returns&gt;
+		Private Function Update() As Boolean
+			Dim sql As String = "%UPDATESQL%"
+			Dim ret As Boolean = False
+			Dim cmd As New SqlCommand(sql, OpenConnection())
+			Try
+%ADOALLPARAMETERS%
+            'primary key
+%ADOPKPARAMETERS%
+				If cmd.ExecuteNonQuery() &gt; 0 Then
+					_IsDirty = False
+					'not dirty anymore
+					ret = True
+				End If
+			Catch ex As Exception
+					'rethrow
+				Throw
+			Finally
+				cmd.Dispose()
+				CloseConnection()
+			End Try
+			Return ret
+		End Function
+
+		''' &lt;summary&gt;
+		''' Delete this record from database. You don't need to Load the record first- just set the primary key(s)
+		''' &lt;/summary&gt;
+		''' &lt;returns&gt;Returns true if deleted, or false if no records updated&lt;/returns&gt;
+		Public Function Delete() As Boolean
+			Dim sql As String = "%DELETESQL%"
+			Dim ret As Boolean = False
+			Dim cmd As New SqlCommand(sql, OpenConnection())
+			Try
+%ADOPKPARAMETERS%
+
+				If cmd.ExecuteNonQuery() &gt; 0 Then
+					_IsDirty = False
+					'not dirty anymore
+					ret = True
+				End If
+			Catch ex As Exception
+				Throw	'rethrow
+			Finally
+				cmd.Dispose()
+				CloseConnection()
+			End Try
+			Return ret
+		End Function
+		#End Region
+
+		#Region "Private Connection Methods"
+		''' &lt;summary&gt;
+		''' Use either the ActiveConnection or create one from ConnectionString
+		''' &lt;/summary&gt;
+		Private Function OpenConnection() As SqlConnection
+			'if closed, open it (there are also states of broken, connecting etc)
+			If _ActiveConnection IsNot Nothing AndAlso _ActiveConnection.State = ConnectionState.Closed Then
+				_ActiveConnection.Open()
+ElseIf [String].IsNullOrEmpty(_ConnectionString) Then
+				'for 1.1 = if(_ConnectionString == null || _ConnectionString == "")
+				Throw New ApplicationException("No connection string")
+			Else
+				'create a local connection which will we will close when done
+				_PrivateConnection = New SqlConnection(_ConnectionString)
+				_PrivateConnection.Open()
+				Return _PrivateConnection
+			End If
+			Return _ActiveConnection
+		End Function
+
+		''' &lt;summary&gt;
+		''' Close the connection (local only- do not close a public connection)
+		''' &lt;/summary&gt;
+		Private Sub CloseConnection()
+			If _PrivateConnection IsNot Nothing Then
+				_PrivateConnection.Close()
+					'this connection may be used for something else, so don't close it
+			Else
+			End If
+		End Sub
+		#End Region
+
+
+		#Region "Common Properties"
+		Private _ActiveConnection As SqlConnection
+		Private _PrivateConnection As SqlConnection
+		Private _ConnectionString As String
+		Private _IsNew As Boolean
+
+		'''&lt;summary&gt;
+		'''ActiveConnection
+		'''&lt;/summary&gt;
+		Public Property ActiveConnection() As SqlConnection
+			Get
+				Return _ActiveConnection
+			End Get
+			Set
+				_ActiveConnection = value
+			End Set
+		End Property
+
+		'''&lt;summary&gt;
+		'''ConnectionString
+		'''&lt;/summary&gt;
+		Public Property ConnectionString() As String
+			Get
+				Return _ConnectionString
+			End Get
+			Set
+				If [String].IsNullOrEmpty(value) Then
+					Throw New ArgumentNullException("value", "Must not be null")
+				End If
+				_ConnectionString = value
+			End Set
+		End Property
+
+		'''&lt;summary&gt;
+		'''Is New instance (or via Load)
+		'''&lt;/summary&gt;
+		Public Property IsNew() As Boolean
+			Get
+				Return _IsNew
+			End Get
+			Set
+				_IsNew = value
+			End Set
+		End Property
+
+		'''&lt;summary&gt;
+		'''Is this valid to save?
+		'''&lt;/summary&gt;
+		Public Property IsValid() As Boolean
+			Get
+				Dim _IsValid As Boolean = False
+%VALID%
+				'business rules go here
+				Return _IsValid
+			End Get
+		End Property
+
+		#End Region
+
+		#Region "Record Properties"
+%LOCALS%
+
+%PROPS%
+		#End Region
+	End Class
+
+End Namespace
+</textarea>
+</div>
+</fieldset>
+</div>
+<br />
+<textarea rows="20" cols="60" name="Output" id="Output">
+
+</textarea>
+
+
+</div>
+<div class="Footer">
+
+</div></body>
+</html>

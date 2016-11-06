@@ -1,0 +1,206 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Entity Framework Code First Migrations</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../io.html">Data &gt;</a></li>
+<li><a href="ef.html">Entity Framework &gt;</a></li>
+<li><a href="efcodefirst.html">EF Code First</a></li>
+<li><a href="efcodefirstvalidation.html">Validation</a></li>
+<li><a href="efcodefirstdb.html">Databases</a></li>
+<li><a href="efcodefirstmapping.html">Mapping</a></li>
+<li><a href="efcodefirstmigrations.html">Migrations</a></li>
+<li><a href="efcodefirstlogging.html">Logging</a></li>
+<li><a href="efcodefirstconfig.html">Configuration</a></li>
+<li><a href="efcodefirstoptimize.html">Optimization</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Entity Framework Code First Migrations</h2>
+
+<h3>Migrations (EF 4.3+)</h3>
+<ul>
+<li><a href="http://blogs.msdn.com/b/adonet/archive/2012/02/09/ef-4-3-code-based-migrations-walkthrough.aspx">Ado.Net team RTM Walkthrough</a></li>
+<li><a href="http://blogs.msdn.com/b/adonet/archive/2012/02/09/ef-4-3-automatic-migrations-walkthrough.aspx">Ado.Net team RTM walkthrough- automatic migrations</a></li>
+</ul>
+<p>You need to use NuGet's Package Manager Console. Get used to lots of typos.</p>
+<ul>
+<li><strong>Install-Package EntityFramework</strong></li>
+<li><strong>Enable-Migrations [-EnableAutomaticMigrations] </strong><br />
+Generates Migrations/Configuration.<br />
+If the database was created by EF CF (there's a __MigrationHistory table) you'll get an InitialCreate migration <ul>
+<li><strong>-ProjectName MyProjectWithContext</strong> : You may need to set the project name, or you'll get "No classes deriving from DbContext found" and migrations in the wrong project.</li>
+<li><strong>-ContextTypeName MyContext</strong> : If you have more than one context in a project</li>
+</ul></li>
+<li><strong>Add-Migration <em>name</em> </strong>: adds a migration (if automatic migrations, scaffolds it)<br />
+If you have error <q>Unable to generate an explicit migration because the following explicit migrations are pending: [201202100921137_Initial]. Apply the pending explicit migrations before attempting to generate a new explicit migration.</q>:<br />
+<ul>
+<li><strong>-ProjectName MyProjectWithContext</strong> : as above</li>
+<li><strong>-StartUpProjectName:ProjectWithConfig</strong> : where the config file is. A UI, console or test project.</li>
+<li><strong>-IgnoreChanges</strong> : from 4.3.1.0, generate an empty migration. Useful for a existing database.</li>
+<li><strong>-Context</strong>: Specify a content if multi-context</li>
+</ul>
+</li>
+<li>EF &lt;7: <strong>Update-Database</strong> : runs a migration<ul>
+<li><strong>-Verbose</strong> : show Sql</li>
+<li><strong>-TargetMigration:"migrationName" -Force</strong> : migrate to named migration</li>
+<li><strong>-Script</strong> : script from last migration</li>
+<li><strong>-Script -SourceMigration:$InitialDatabase -TargetMigration:name</strong>  script from/to.<br/>
+Use this to generate a script over a number of migrations ("all migrations for version 2")</li>
+<li><strong>Update-Database -TargetMigration:$InitialDatabase</strong> (or 0) rolls back to the start.</li>
+</ul></li>
+<li>EF 7+: <strong>Apply-Migration</strong><ul>
+<li>For scripts, instead use <strong>Script-Migration</strong></li>
+</ul></li>
+</ul>
+
+<h4>Migrations via Database.SetInitializer</h4>
+<p>This generated Migrations.Configuration class is internal sealed- if you have a Database.SetInitializer with a  outside the data project, you can change it to public. You don't need to do it if you configure in the app.config.<br />
+The <span style="color: #2b91af;">MigrateDatabaseToLatestVersion</span> initializer requires the DbContext and Configuration.</p>
+<div class="code">
+<p><span style="color: #2b91af;">Database</span>.SetInitializer(<span style="color: blue;">new</span> <span style="color: #2b91af;">MigrateDatabaseToLatestVersion</span>&lt;<span style="color: #2b91af;">NorthwindContext</span>, Migrations.<span style="color: #2b91af;">Configuration</span>&gt;());</p>
+</div>
+<p>You can also configure the initializer in the app.config. (<a href="http://msdn.microsoft.com/en-us/data/jj556606.aspx">MSDN</a>)</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">entityFramework</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">contexts</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;!--</span><span style="color: green;">&lt;context type="Data.Context.MyContext, Data" disableDatabaseInitialization="true" /&gt;</span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">context</span><span style="color: blue;"> </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">Data.Context.MyContext, Data</span>"<span style="color: blue;"> </span><span style="color: red;">disableDatabaseInitialization</span><span style="color: blue;">=</span>"<span style="color: blue;">false</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">databaseInitializer</span><span style="color: blue;"> </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">System.Data.Entity.MigrateDatabaseToLatestVersion`2[[Data.Context.MyContext, Data], [Data.Migrations.Configuration, Data]], EntityFramework</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">context</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">contexts</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">entityFramework</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+
+
+<h4>Automatic Migrations</h4>
+
+
+<p>Once you have an initial migration, it tracks all changes so there are no further explicit migrations. <em>Unless</em> you have an existing database- you'll need to add-migration Initial -IgnoreChanges and update-migration to get the __migrationHistory table initialized. See below!<br />
+If you delete columns (=dropping a column) it throws an AutomaticDataLossException. You can suppress this in configuration (but consider it carefully...).</p>
+<div class="code">
+<p><span style="color: blue;">public</span> Configuration()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; AutomaticMigrationsEnabled = <span style="color: blue;">true</span>;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//if you drop columns - consider this carefully...</span><br />
+&nbsp;&nbsp;&nbsp; AutomaticMigrationDataLossAllowed = <span style="color: blue;">true</span>;<br />
+}</p>
+</div>
+
+<h4>Migration Code</h4>
+<p>You can't refer to the actual entities (you must follow the naming conventions or map manually). The overuse of lambda expressions is awkward, but you can do lower-level things like naming foreign key constraints and add indexes.</p>
+<p>Extensibility is limited. You cannot define new MigrationOperations (DbMigration.AddOperation is private), only anonymous arguments to the existing builder methods.</p>
+
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">override</span> <span style="color: blue;">void</span> Up()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; CreateTable(<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #a31515;">&quot;Products&quot;</span>,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; cb =&gt; <span style="color: blue;">new</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Id = cb.Int(nullable: <span style="color: blue;">false</span>, identity: <span style="color: blue;">true</span>),<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; ProductName = cb.String(nullable: <span style="color: blue;">false</span>, maxLength: 20),<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; CategoryId = cb.Int(nullable: <span style="color: blue;">true</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; })<br />
+&nbsp;&nbsp;&nbsp; .PrimaryKey(t =&gt; t.Id)<br />
+&nbsp;&nbsp;&nbsp; .ForeignKey(<span style="color: #a31515;">&quot;Categories&quot;</span>, <br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; t =&gt; t.CategoryId, <br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; name: <span style="color: #a31515;">&quot;FK_Products_Category&quot;</span>);<br />
+}</p>
+</div>
+
+
+<h3>Migrations in Code</h3>
+
+<p>To run an update in code, use a DbMigrator.</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">void</span> RunUpdate(<span style="color: blue;">string</span> connectionName)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> configuration = <span style="color: blue;">new</span> <span style="color: #2b91af;">Configuration</span>();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//will use app.config/connectionStrings/add[@name=connectionName]</span><br />
+&nbsp;&nbsp;&nbsp; configuration.TargetDatabase =<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> System.Data.Entity.Infrastructure.<span style="color: #2b91af;">DbConnectionInfo</span>(connectionName);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> migrator = <span style="color: blue;">new</span> <span style="color: #2b91af;">DbMigrator</span>(configuration);<br />
+&nbsp;&nbsp;&nbsp; migrator.Update();<br />
+}</p>
+</div>
+<p>Note that DbMigrator exposes three methods:  </p>
+<ul>
+<li>GetLocalMigrations() -reflects what's in the Migrations folder</li>
+<li>GetDatabaseMigrations() - reads what's in the database (__MigrationHistory).<br />
+NB: check where it's looking- it may be looking for .\SQLEXPRESS\Mynamespace.MyContext<br />
+In the console you may have to set StartUpProjectName; in code set the TargetDatabase</li>
+<li>GetPendingMigrations() - the difference between what's in Local but not in Database</li>
+</ul>
+<p>It won't let you AddMigration if there are pending migrations ("Apply the pending explicit migrations" error quoted above).<br />
+You can control the migration SQL generation. The hook is in Migrations.Configuration:</p>
+<div class="code">
+<p><span style="color: blue;">internal</span> <span style="color: blue;">sealed</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">Configuration</span> : <span style="color: #2b91af;">DbMigrationsConfiguration</span>&lt;<span style="color: #2b91af;">EntitiesContext</span>&gt;<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> Configuration()<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; AutomaticMigrationsEnabled = <span style="color: blue;">false</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; SetSqlGenerator(<span style="color: #a31515;">&quot;System.Data.SqlClient&quot;</span>, <span style="color: blue;">new</span> <span style="color: #2b91af;">CustomizedSqlGenerator</span>());<br />
+&nbsp;&nbsp;&nbsp; }</p>
+</div>
+<p>The customized SQL generator must derive from MigrationSqlGenerator (or the SqlServer version <a href="http://msdn.microsoft.com/en-us/library/system.data.entity.migrations.sql.sqlservermigrationsqlgenerator%28v=vs.103%29.aspx">SqlServerMigrationSqlGenerator</a>) and then override the Generate methods.</p>
+
+
+<h3>Scripting</h3>
+<p>You can take control of the scripts as long as you use insert the __MigrationHistory row. In the console use <strong>Update-Database -Script</strong> or script as follows:</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">string</span> WriteCreateDatabaseScript(<span style="color: #2b91af;">DbContext</span> context)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> objectContext = ((System.Data.Entity.Infrastructure.<span style="color: #2b91af;">IObjectContextAdapter</span>)context).ObjectContext;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> objectContext.CreateDatabaseScript();<br />
+}<br />
+&nbsp;<br />
+<span style="color: blue;">public</span> <span style="color: blue;">string</span> WriteMigrationScript()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> configuration = <span style="color: blue;">new</span> <span style="color: #2b91af;">Configuration</span>();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> migrator = <span style="color: blue;">new</span> <span style="color: #2b91af;">DbMigrator</span>(configuration);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> scriptor =<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> System.Data.Entity.Migrations.Infrastructure.<span style="color: #2b91af;">MigratorScriptingDecorator</span>(migrator);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//source, target migration names</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> script = scriptor.ScriptUpdate(<span style="color: blue;">null</span>, <span style="color: blue;">null</span>);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> script;<br />
+}</p>
+</div>
+
+<h3>Code First for an existing database</h3>
+<p>DbMigrator presumes it has control of the database. Since EF 6.1, you can have multiple contexts per database with the migration ContextKey (you cannot have overlapping tables - it's not true multi-tenant).</p>
+<ul>
+<li>Make sure the OnModelCreating mappings are all correct. Or generate it by using <a href="http://dbschemareader.codeplex.com/">DatabaseSchemaReader's CodeGen</a></li>
+<li>Enable migrations, create an initial migration and get the script:<br />
+PM&gt; <strong>Enable-Migrations</strong><br />
+Code First Migrations enabled for project Northwind.<br />
+PM&gt; <strong>Add-Migration Initial -IgnoreChanges</strong><br />
+Scaffolding migration 'Initial'.<br />
+The Designer Code for this migration file includes a snapshot of your current Code First model. This snapshot is used to calculate the changes to your model when you scaffold the next migration. If you make additional changes to your model that you want to include in this migration, then you can re-scaffold it by running 'Add-Migration 201202100921137_Initial' again.<br />
+PM&gt; <strong>Update-Database</strong><br />
+Applying explicit migrations: [201202100921137_Initial].<br />
+Applying explicit migration: 201202100921137_Initial.<br />
+</li>
+</ul>
+<p>To port this to a remote database, use <strong>Update-Database -Script</strong> which should just contain the __MigrationHistory DDL and INSERT. From here on, Code First thinks it owns the database.<br />
+The script may fail: "Conversion failed when converting date and/or time from character string". This is because the migrationHistory insert is in the form '2012-03-03T15:07:35.431Z' and the database is set to compatibility with SqlServer 2000. You have to fix the databse: in SqlServer Management Studio, right click database, Properties-Options-Compatibility Level set to SqlServer 2005 (90) or above.</p>
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

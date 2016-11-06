@@ -1,0 +1,167 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Security- Encryption and Signing</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="dotnetcollections.html">Collections</a></li>
+<li><a href="events.html">Events</a></li>
+<li><a href="globaldotnet.html">Globalization</a></li>
+<li><a href="reflection.html">Reflection</a></li>
+<li><a href="dotnetsecurity.html">Security</a></li>
+<li><a href="claims.html">Claims Security</a></li>
+<li><a href="dotnetsecurity_crypto.html">Crypto+ signing</a></li>
+<li><a href="serialization.html">Serialization</a></li>
+<li><a href="dotnetthreads.html">Threading</a></li>
+<li><a href="async.html">Async</a></li>
+</ul>
+
+</div>
+<div class="content">
+
+<h2>Security- Encryption and Signing</h2>
+<ul>
+<li><a href="http://msdn2.microsoft.com/en-us/library/93bskf9z.aspx">msdn cryptography</a></li>
+<li><a href="http://msdn2.microsoft.com/en-us/library/ms172378.aspx">msdn security how-to</a></li>
+</ul>
+<h3>Hashing, signing and encryption- which algorithm is what?</h3>
+<table>
+<tr><th>Type</th><th>Algorithms</th></tr>
+<tr><td>Hashes
+</td>
+<td>MD5 (128bit) or SHA (160bit+, so stronger)<br />
+You use a ComputeHash method<br />
+NB: System.Object.GetHashCode isn't strong</td></tr>
+<tr><td>Signing</td>
+<td>DSA (SignData or SignHash)<br />
+Message Authentication Code (MAC) is a sort of hash for messages (like signing, but the hash has a symmetric key). HMACSHA has the biggest key (160bits)</td></tr>
+<tr><td>Encryption: Symmetric<br /> (shared key)</td>
+<td>3DES, Rijndael (=AES, better)</td></tr>
+<tr><td>Encryption: Assymmetric<br /> (public/private keys)</td>
+<td>RSA</td></tr>
+</table>
+<h3>
+Strong Names and the GAC</h3>
+<ul>
+<li>Create private/public keys: <code>sn -k Keys.snk</code><br />
+More secure- use a Crypto provider (CSP): <code>sn -i Keys.snk cspName</code></li>
+<li>Sign assembly: one of <ul>
+<li>AssemblyInfo.cs (in VStudio): <code>[assembly: AssemblyKeyFile(@"..\path\keys.snk")]</code><br />
+CSP: AssemblyKeyName</li>
+<li>Assembly linker: <code>al /keyfile:keys.snk</code></li>
+<li>Or in csc compiler</li>
+</ul></li>
+<li>Delay signing: <ul>
+<li>Extract public key (for delay signing): <code>sn -p Keys.snk PublicKey.snk</code><br />
+(from CSP- sn -pc )</li>
+<li>Either: <ul>
+<li>AssemblyInfo.cs (in VStudio): <code>[assembly: AssemblyDelaySign(true)]</code> (use public key)</li>
+<li>Assembly linker: <code>al /delaysign+</code> (warning: delay- and default is to fully sign)</li>
+</ul>
+</li>
+<li>Turn off verification: <code>sn -Vr myLib.dll</code></li>
+<li>Deployment- sign private key: <code>sn -R myLib.dll PrivateKey.snk</code></li>
+<li>Deployment- turn on verification: <code>sn -Vu myLib.dll</code></li>
+</ul>
+</li>
+</ul>
+<p>Ensure code can only be called by your assemblies: use CAS StrongNameIdentityPermission with the public key (read it using sn -tp Keys.snk). (You can also create a custom code group with membership condition)</p>
+<h3>Encrypting Data</h3>
+<h4>Generate a key from password</h4>
+<div class="code">
+<p><span style="color: blue;">string</span> password = <span style="color: #a31515;">"Secret"</span>;<br />
+<span style="color: blue;">byte</span>[] salt = <span style="color: #2b91af;">Encoding</span>.ASCII.GetBytes(<span style="color: #a31515;">"The salt"</span>);<br />
+<span style="color: green;">//better- use Rfc2898DeriveBytes </span><br />
+<span style="color: blue;">var</span> deriver = <span style="color: blue;">new</span> <span style="color: #2b91af;">PasswordDeriveBytes</span>(password, salt, <span style="color: #a31515;">"SHA1"</span>, 3);<br />
+<span style="color: green;">//use the length required by the algorithm </span><br />
+<span style="color: green;">//(alg.KeySize/8 for the key, alg.BlockSize/8 for the IV)</span><br />
+<span style="color: blue;">byte</span>[] key = deriver.GetBytes(16);</p>
+</div>
+<p>Don't use the password for the IV (the IV doesn't have to be secret).<br />
+Note symmetric algorithms generate a Key as soon as they are created.</p>
+<h3>Symmetric</h3>
+<p>Use triple DES or (XP or higher) Rijndael (AES- managed). </p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">void</span> EncryptFile(<span style="color: blue;">string</span> unencryptedFileName, <span style="color: blue;">string</span> encryptedFileName)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//Encrypt (decrypt) a file</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">// Step 1: Create the Stream objects </span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">FileStream</span> unencryptedFile = <span style="color: blue;">new</span> <span style="color: #2b91af;">FileStream</span>(unencryptedFileName,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">FileMode</span>.Open, <span style="color: #2b91af;">FileAccess</span>.Read);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">FileStream</span> encryptedFile = <span style="color: blue;">new</span> <span style="color: #2b91af;">FileStream</span>(encryptedFileName,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">FileMode</span>.OpenOrCreate, <span style="color: #2b91af;">FileAccess</span>.Write);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">// Step 2: Create the SymmetricAlgorithm object</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">SymmetricAlgorithm</span> myAlg = <span style="color: blue;">new</span> <span style="color: #2b91af;">RijndaelManaged</span>();<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">// Step 3: Specify the algorithm's key, the initialization vector, or both</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">// if decrypting - read in key, IV</span><br />
+&nbsp;&nbsp;&nbsp; myAlg.GenerateKey(); <span style="color: green;">//optional</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">// Step 4: Create the ICryptoTransform object</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">// for decryption- myAlg.CreateDecryptor();</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">ICryptoTransform</span> encryptor = myAlg.CreateEncryptor();<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">// Step 5: Create the CryptoStream object </span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">// for decryption- CryptoStreamMode.Read</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">CryptoStream</span> encryptStream = <span style="color: blue;">new</span> <span style="color: #2b91af;">CryptoStream</span>(encryptedFile,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; encryptor, <span style="color: #2b91af;">CryptoStreamMode</span>.Write);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">// Step 6: Write the contents to the CryptoStream </span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">// Read the unencrypted file into fileData</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">byte</span>[] fileData = <span style="color: blue;">new</span> <span style="color: blue;">byte</span>[unencryptedFile.Length];<br />
+&nbsp;&nbsp;&nbsp; unencryptedFile.Read(fileData, 0, (<span style="color: blue;">int</span>)unencryptedFile.Length);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; encryptStream.Write(fileData, 0, (<span style="color: blue;">int</span>)unencryptedFile.Length); <br />
+}</p>
+</div>
+
+<h3>Asymmetric (and signing)</h3>
+<p>AsymmetricAlgorithm base has 2 implementations- RSACryptoServiceProvider + DSACryptoServiceProvider</p>
+
+<p>For messages (one-off key, not saved)</p>
+<div class="code">
+<p><span style="color: #2b91af;">RSACryptoServiceProvider</span> rsa = <span style="color: blue;">new</span> <span style="color: #2b91af;">RSACryptoServiceProvider</span>();<br />
+<span style="color: green;">//automatically generates strongest key-export public key</span><br />
+<span style="color: green;">//parameters = the key in a byte-array structure</span><br />
+<span style="color: #2b91af;">RSAParameters</span> key = rsa.ExportParameters(<span style="color: blue;">false</span>); <span style="color: green;">//true = private key as well..</span><br />
+<span style="color: blue;">string</span> xml = rsa.ToXmlString(<span style="color: blue;">false</span>);</p>
+</div>
+
+
+<p>To save private key, create a CspParameters object with a KeyContainerName and pass that into the RSACsp constructor, and set r.PersistKeyInCsp=true.
+</p>
+
+<p>Encyrpt + Decrypt methods take/return bytes arrays (convert a string using System.Text.Encoding.Unicode.GetBytes and back with .GetString).
+</p>
+
+<p>These AsymmetricAlgorithm classes can also be used for digitally signing (SignData/ VerifyData)</p>
+
+<h3>Hashes</h3>
+<p>For storing passwords, checking file changes etc</p>
+<div class="code">
+<p><span style="color: green;">//MD5 or various SHA versions-&nbsp; pass in a key for a keyed version</span><br />
+<span style="color: blue;">var</span> hasher = <span style="color: blue;">new</span> <span style="color: #2b91af;">MD5CryptoServiceProvider</span>();<br />
+hasher.ComputeHash(bytes);<br />
+<span style="color: blue;">byte</span>[] hash=&nbsp; hasher.Hash;<br />
+<span style="color: blue;">string</span> sHash = <span style="color: #2b91af;">Convert</span>.ToBase64String(hash);</p>
+</div>
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

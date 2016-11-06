@@ -1,0 +1,86 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP Errors</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="aspcache.html">Asp Cache</a></li>
+<li><a href="asp2config.html">Asp 2 config</a></li>
+<li><a href="aspdotneterr.html">Asp Errors</a></li>
+<li><a href="dataannotations.html">Data Annotations</a></li>
+<li><a href="aspjobs.html">Background jobs</a></li>
+<li><a href="aspsecurity.html">Asp Security &gt;</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>ASP Errors</h2>
+<p>See <a href="../code/asperrors.html">log ASP errors with log4net</a> or <a href="../code/asperrorshealth.html">log ASP errors with health monitoring</a>.</p>
+<h3>Errors</h3>
+<ul>
+<li>Page level: <strong>Page_Error event</strong> (Server.ClearError if you don't want it to bubble up)</li>
+<li>Page level: <strong>Page directive</strong> &lt;%@ Page ErrorPage="SpecificErrorPage.aspx" %&gt;</li>
+<li>Application level: <strong>Application_Error() event</strong> in global.asax (NB error is InnerException as a HttpUnhandledException is wrapping it)</li>
+<li>Application level: web.config:
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">system.web</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">customErrors</span><span style="color: blue;"> </span><span style="color: red;">mode</span><span style="color: blue;">=</span>"<span style="color: blue;">On</span>"<span style="color: blue;"> </span><span style="color: red;">defaultRedirect</span><span style="color: blue;">=</span>"<span style="color: blue;">/Error.html</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">error</span><span style="color: blue;"> </span><span style="color: red;">statusCode</span><span style="color: blue;">=</span>"<span style="color: blue;">404</span>"<span style="color: blue;"> </span><span style="color: red;">redirect</span><span style="color: blue;">=</span>"<span style="color: blue;">/Error.html</span>"<span style="color: blue;">/&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">error</span><span style="color: blue;"> </span><span style="color: red;">statusCode</span><span style="color: blue;">=</span>"<span style="color: blue;">413</span>"<span style="color: blue;"> </span><span style="color: red;">redirect</span><span style="color: blue;">=</span>"<span style="color: blue;">/UploadError.html</span>"<span style="color: blue;">/&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">customErrors</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">system.web</span><span style="color: blue;">&gt;</span></p>
+</div>
+<p>To see the "yellow screen of death" always:</p>
+<div class="code">
+<span style="color: blue;">&lt;</span><span style="color: #a31515;">system.web</span><span style="color: blue;">&gt;</span><br/>
+&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">customErrors</span> <span style="color: red;">mode</span><span style="color: blue;">=</span>"<span style="color: blue;">Off</span>"<span style="color: blue;">/&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: #a31515;">/system.web</span><span style="color: blue;">&gt;</span><br/>
+<span style="color: blue;">&lt;</span><span style="color: #a31515;">system.webServer</span><span style="color: blue;">&gt;</span><br/>
+&nbsp;  <span style="color: blue;">&lt;</span><span style="color: #a31515;">httpErrors</span> <span style="color: red;">errorMode</span><span style="color: blue;">=</span>"<span style="color: blue;">Detailed</span>"<span style="color: blue;">/&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: #a31515;">/system.webServer</span><span style="color: blue;">&gt;</span>
+</div>
+</li>
+<li>IIS level: configuration/system.webServer/httpErrors[@existingResponse="PassThrough"]<br/>
+May need to unlock: in C:\Windows\System32\inetsrv <code>appcmd unlock config /section:httpErrors</code><br/>
+For IIS 7.5+ Response.TrySkipIiisCustomErrors=true</li>
+</ul>
+<h3>Error Logging</h3>
+<p>NB: Web.config customErrors/@defaultRedirect can't log (implicit Server.ClearError)</p>
+<p>Global.asax Application_Error. This can obviate the customErrors/@defaultRedirect directive if you Server.ClearError() and redirect. See <a href="../code/asperrors.html">an example with log4net</a> or <a href="../code/asperrorshealth.html">an example with asp 2 health monitoring</a>.</p>
+
+<p>In ASP 2, put WebEventProviders in the web.config. (<a href="http://www.asp.net/QuickStart/aspnet/doc/monitoring/webevents.aspx">Quickstart</a>, <a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dnpag2/html/paght000011.asp">msdn</a>)</p>
+<p class="alert"> "All Errors" doesn't pick up handled errors. Including those handled by Server.ClearError in Global.Application_Error</p>
+ 
+ 
+<h4>Event Log</h4>
+<p>ASP.Net cannot by default create a event log source (unless you use the ASP.Net 2 Health Monitoring source). (<a href="http://support.microsoft.com/default.aspx?scid=kb;en-us;329291">KB</a>- either create a registry entry for it, or use System.Diagnostics.EventLogInstaller).</p>
+
+<h3>Async Disconnect Errors (.net 4.5)</h3>
+<p>In .net 4.5 you can use async Task actions. Because they are async, disconnects trigger the standard escalation policy to terminate the process. Opps. Put this in Global.asax Application_Start:</p>
+<div class="code">
+<p><span style="color: green;">//log and swallow the async disconnect errors "The remote host closed the connection. The error code is 0x80070057."</span><br />
+<span style="color: #2b91af;">TaskScheduler</span>.UnobservedTaskException += (sender, e) =&gt;<br />
+{<br />
+&nbsp;&nbsp;&nbsp; e.SetObserved();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Trace</span>.TraceError(e.Exception.ToString());<br />
+};</p>
+</div>
+
+
+</div>
+<div class="Footer">
+
+</div></body>
+</html>

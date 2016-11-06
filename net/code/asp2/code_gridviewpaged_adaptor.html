@@ -1,0 +1,82 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Paged GridView: ObjectAdaptor</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main</a></li>
+<li><a href="../../dotnet.html">.Net</a></li>
+<li><a href="../index.html">Code</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>Paged GridView: ObjectAdaptor</h2>
+<p>Utility class used by the <a href="code_gridviewpaged.html">paged GridView</a>. You only directly work with <a href="code_gridviewpaged_filler.html">GridViewFiller</a>.</p>
+<div class="code">
+<p><span style="color: blue;">using</span> System.Collections.Generic;<br />
+<span style="color: blue;">using</span> System.ComponentModel;<br />
+<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> A generic adaptor for paged binding across any sort of object</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+[<span style="color: #2b91af;">DataObject</span>]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">ObjectAdaptor</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">readonly</span> <span style="color: #2b91af;">IList</span>&lt;<span style="color: blue;">object</span>&gt; _list;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">readonly</span> <span style="color: blue;">int</span> _count;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> ObjectAdaptor(<span style="color: #2b91af;">IList</span>&lt;<span style="color: blue;">object</span>&gt; list, <span style="color: blue;">int</span> count)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; _list = list;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; _count = count;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">int</span> Count()<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> _count;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; #region</span> Select overloads used by the ObjectDataSource (all do exactly the same)<br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">DataObjectMethod</span>(<span style="color: #2b91af;">DataObjectMethodType</span>.Select, <span style="color: blue;">true</span>)]<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: #2b91af;">IList</span>&lt;<span style="color: blue;">object</span>&gt; Select()<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> _list;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">DataObjectMethod</span>(<span style="color: #2b91af;">DataObjectMethodType</span>.Select, <span style="color: blue;">false</span>)]<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: #2b91af;">IList</span>&lt;<span style="color: blue;">object</span>&gt; Select(<span style="color: blue;">int</span> startRowIndex, <span style="color: blue;">int</span> maximumRows)<br />
+&nbsp;&nbsp;&nbsp; { <span style="color: green;">//startRowIndex and maximumRows are the default names that asp uses</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> _list;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">DataObjectMethod</span>(<span style="color: #2b91af;">DataObjectMethodType</span>.Select, <span style="color: blue;">false</span>)]<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: #2b91af;">IList</span>&lt;<span style="color: blue;">object</span>&gt; Select(<span style="color: blue;">string</span> sortBy, <span style="color: blue;">int</span> startRowIndex, <span style="color: blue;">int</span> maximumRows)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> _list;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">DataObjectMethod</span>(<span style="color: #2b91af;">DataObjectMethodType</span>.Select, <span style="color: blue;">false</span>)]<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: #2b91af;">IList</span>&lt;<span style="color: blue;">object</span>&gt; Select(<span style="color: blue;">string</span> sortBy)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> _list;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; #endregion</span><br />
+}</p>
+</div>
+
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP.Net Core in IIS</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="core.html">DotNet Core</a></li>
+<li><a href="mvc.html">MVC</a></li>
+<li><a href="project.html">Core Project</a></li>
+<li><a href="startup.html">Startup</a></li>
+<li><a href="config.html">Config Settings</a></li>
+<li><a href="iis.html">IIS</a></li>
+<li><a href="controllers.html">Controllers</a></li>
+<li><a href="views.html">Views</a></li>
+<li><a href="di.html">Dependency Injection</a></li>
+<li><a href="security.html">Security</a></li>
+<li><a href="logging.html">Logging</a></li>
+<li><a href="localization.html">Localization</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>ASP.Net Core in IIS</h2>
+
+<p><a href="https://docs.asp.net/en/latest/fundamentals/servers.html">docs.asp.net</a></p>
+<div class="alert">References to "Dnx" in the web.config will change in RC2</div>
+
+<p>Asp.net Core always runs using it's own web server, Kestrel. It can then be self-hosted, or run on Linux, but for most windows servers, you'll probably run it with IIS, as asp.net always has been.</p>
+<p>See <a href="http://www.strathweb.com/2015/12/running-asp-net-5-website-on-iis/">Strathweb.com for details and potential errors</a></p>
+<h3>Installation</h3>
+<ul>
+<li>On server, <strong>you must install ASP.NET Core Module for IIS</strong> (the module in the web.config below). It's not part of the standard windows or standard .net install (but it is installed in the .net Core SDK/Visual Studio). <a href="https://www.microsoft.com/net/download">Downloads</a></li>
+<li>Nuget package is <strong>Microsoft.AspNetCore.Server.IISIntegration</strong></li>
+<li>In Startup.<strong>Configure</strong> add app.UseIISIntegration() to allow windows authentication to be passed through from IIS.<ul>
+<li>in rc1 it was UseIISPlatformHandlerUrl()</li>
+</ul></li>
+</ul>
+
+<div class="code">
+<p><span style="color:blue;">public</span>&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:darkcyan;">Main</span>(<span style="color:blue;">string</span>[]&nbsp;args)<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;host&nbsp;=&nbsp;new <span style="color:#2b91af;">WebHostBuilder</span>(args)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.UseKestrel()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.UseContentRoot(<span style="color:#2b91af;">Directory</span>.GetCurrentDirectory())<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.UseIISIntegration()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.UseStartup&lt;<span style="color:#2b91af;">Startup</span>&gt;()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.Build();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;host.Run();<br/>
+}</p>
+</div>
+
+<h3>IIS</h3>
+<ul>
+<li>IIS becomes a reverse proxy, using the IIS native module <strong>AspNetCoreModule</strong> (min:  IIS 7.5- Windows Server 2008 R2/Windows 7)</li>
+<li>AspNetCoreModule is a fork of HttpPlatformHandler, which was created for Azure to run Node, and now is part of IIS. It just calls an .exe in a child process (in this case, .net Core running the Kestrel webserver).</li>
+<li>AspNetCoreModule is in the package <strong>Microsoft.AspNetCore.Server.IISIntegration</strong></li>
+<li>Asp.Net always runs in Kestrel, either behind IIS, or run directly, in a console or windows service, or on Linux. </li>
+<li>There is still a minimal xml web.config, which tells IIS to hand over to the platform handler.
+<div class="code">
+<p><span style="color:blue;">&lt;</span><span style="color:#a31515;">configuration</span><span style="color:blue;">&gt;</span><br/>
+<span style="color:blue;">&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">system.webServer</span><span style="color:blue;">&gt;</span><br/>
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">handlers</span><span style="color:blue;">&gt;</span><br/>
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">add</span>&nbsp;<span style="color:red;">name</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">aspNetCore</span>&quot;&nbsp;<span style="color:red;">path</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">*</span>&quot;&nbsp;<span style="color:red;">verb</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">*</span>&quot;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:red;">modules</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">AspNetCoreModule</span>&quot;&nbsp;<span style="color:red;">resourceType</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">Unspecified</span>&quot;<span style="color:blue;">/&gt;</span><br/>
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;/</span><span style="color:#a31515;">handlers</span><span style="color:blue;">&gt;</span><br/>
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">aspNetCore</span>&nbsp;<span style="color:red;">processPath</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">%LAUNCHER_PATH%</span>&quot;&nbsp;<span style="color:red;">arguments</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">%LAUNCHER_ARGS%</span>&quot;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:red;">stdoutLogEnabled</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">false</span>&quot;&nbsp;<span style="color:red;">forwardWindowsAuthToken</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">false</span>&quot;<span style="color:blue;">/&gt;</span><br/>
+<span style="color:blue;">&nbsp;&nbsp;&lt;/</span><span style="color:#a31515;">system.webServer</span><span style="color:blue;">&gt;</span><br/>
+<span style="color:blue;">&lt;/</span><span style="color:#a31515;">configuration</span><span style="color:blue;">&gt;</span></p>
+</div> 
+<p>When you deploy, the aspnetCore line is changed:</p>
+<div class="core">
+<p><span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">aspNetCore</span>&nbsp;<span style="color:red;">processPath</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">dotnet</span>&quot;&nbsp;<span style="color:red;">arguments</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">.\MyWebProject.dll</span>&quot;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:red;">stdoutLogEnabled</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">false</span>&quot;&nbsp;<span style="color:red;">forwardWindowsAuthToken</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">false</span>&quot;<span style="color:blue;">/&gt;</span><br/>
+</p>
+</div></li>
+<li>IIS no longer handles static files, security, default documents, url rewriting... application pools don't run CLR at all ("No managed code" but can be .net v2 or v4, doesn't matter) </li>
+<li>IIS just does only basic throttling and process management (memory limits, recycling the process etc) AND flowing the auth handles into .net.</li>
+<li>Environmental variables can be set just in the process (not machine wide).</li>
+<li>See announcements <a href="https://github.com/aspnet/Announcements/issues/69">69</a> and <a href="https://github.com/aspnet/Announcements/issues/164">164</a><ul>
+<li>In RC1, web.config lived in wwwroot only (and publishing was to \artifacts)</li>
+<li>From RC2, web.config lives in the project folder. Publishing is to /bin/Release/PublishOutputs/, with wwwroot as a subfolder. </li>
+</ul></li>
+</ul>
+
+
+
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

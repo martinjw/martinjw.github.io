@@ -1,0 +1,93 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP 2 Errors with health monitoring</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main</a></li>
+<li><a href="../dotnet.html">.Net</a></li>
+<li><a href="index.html">Code</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>ASP 2 Errors with health monitoring</h2>
+<h3>Logging Errors</h3>
+<p>Remember to remove any custom logging from Global.asax (All Error Default is only *unhandled* errors). This is BOTH email (define the System.Net section) and SQL logging (redefining the SqlWebEventProvider - if you are not using the default local SQLExpress instance).</p>
+
+<div class="code">
+<span style="color:Blue">&lt;</span><span style="color:Maroon">healthMonitoring</span> <span style="color:Red">enabled</span><span style="color:Blue">=</span>"<span style="color:Blue">true</span>"<span style="color:Blue"> &gt;<br />
+&nbsp;&nbsp;&lt;</span><span style="color:Maroon">providers</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:Maroon">add</span> <span style="color:Red">name</span><span style="color:Blue">=</span>"<span style="color:Blue">MailEventProvider</span>" <span style="color:Red">type</span><span style="color:Blue">=</span>"<span style="color:Blue">System.Web.Management.SimpleMailWebEventProvider</span><span style="color:Black">"<br />
+</span><span style="color:Blue">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Red">from</span><span style="color:Blue">=</span>"<span style="color:Blue">email@domain.com</span>" <span style="color:Red">to</span><span style="color:Blue">=</span>"<span style="color:Blue">email@domain.com</span>"<span style="color:Blue"> <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Red">bodyHeader</span><span style="color:Blue">=</span>"<span style="color:Blue">An error occurred</span><span style="color:Black">"<br />
+</span><span style="color:Blue">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Red">bodyFooter</span><span style="color:Blue">=</span>"<span style="color:Blue">Health Monitoring Provider</span><span style="color:Black">"<br />
+</span><span style="color:Blue">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Red">subjectPrefix</span><span style="color:Blue">=</span>"<span style="color:Blue">Error recorded.</span><span style="color:Black">"<br />
+</span><span style="color:Blue">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Red">maxEventLength</span><span style="color:Blue">=</span>"<span style="color:Blue">4096</span>" <span style="color:Red">maxMessagesPerNotification</span><span style="color:Blue">=</span>"<span style="color:Blue">1</span>" <span style="color:Red">buffer</span><span style="color:Blue">=</span>"<span style="color:Blue">false</span>"<span style="color:Blue"> /&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:Maroon">remove</span> <span style="color:Red">name</span><span style="color:Blue">=</span>"<span style="color:Blue">SqlWebEventProvider</span>"<span style="color:Blue">/&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:Maroon">add</span> <span style="color:Red">name</span><span style="color:Blue">=</span>"<span style="color:Blue">SqlWebEventProvider</span><span style="color:Black">"<br />
+</span><span style="color:Blue">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Red">type</span><span style="color:Blue">=</span>"<span style="color:Blue">System.Web.Management.SqlWebEventProvider</span><span style="color:Black">"<br />
+</span><span style="color:Blue">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Red">connectionStringName</span><span style="color:Blue">=</span>"<span style="color:Blue"></span><span style="color:Black">"<br />
+</span><span style="color:Blue">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Red">maxEventDetailsLength</span><span style="color:Blue">=</span>"<span style="color:Blue">1073741823</span><span style="color:Black">"<br />
+</span><span style="color:Blue">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Red">buffer</span><span style="color:Blue">=</span>"<span style="color:Blue">false</span>"<span style="color:Blue"> /&gt;<br />
+&nbsp;&nbsp;&lt;/</span><span style="color:Maroon">providers</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&lt;</span><span style="color:Maroon">rules</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;!--</span><span style="color:Green"> All Errors Default is defined in <br />
+&nbsp;&nbsp;&nbsp;&nbsp;C:\WINDOWS\Microsoft.NET\Framework\v2.0.50727\CONFIG\Web.config </span><span style="color:Blue">--&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:Maroon">remove</span> <span style="color:Red">name</span><span style="color:Blue">=</span>"<span style="color:Blue">All Errors Default</span>"<span style="color:Blue">/&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:Maroon">add</span> <span style="color:Red">name</span><span style="color:Blue">=</span>"<span style="color:Blue">All Errors to SQL</span>" <span style="color:Red">eventName</span><span style="color:Blue">=</span>"<span style="color:Blue">All Errors</span>" <span style="color:Red">provider</span><span style="color:Blue">=</span>"<span style="color:Blue">SqlWebEventProvider</span>" <span style="color:Red">profile</span><span style="color:Blue">=</span>"<span style="color:Blue">Default</span>" <span style="color:Red">minInterval</span><span style="color:Blue">=</span>"<span style="color:Blue">00:00:30</span>"<span style="color:Blue"> /&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:Maroon">add</span> <span style="color:Red">name</span><span style="color:Blue">=</span>"<span style="color:Blue">All Errors To Email</span>" <span style="color:Red">eventName</span><span style="color:Blue">=</span>"<span style="color:Blue">All Errors</span>" <span style="color:Red">provider</span><span style="color:Blue">=</span>"<span style="color:Blue">MailEventProvider</span>"<span style="color:Blue"> /&gt;<br />
+&nbsp;&nbsp;&lt;/</span><span style="color:Maroon">rules</span><span style="color:Blue">&gt;<br />
+&lt;/</span><span style="color:Maroon">healthMonitoring</span><span style="color:Blue">&gt;</span>
+</div>
+
+
+<h3>Viewing Errors</h3>
+
+<div class="code">
+<span style="color:Blue">&lt;</span><span style="color:Maroon">asp</span><span style="color:Blue">:</span><span style="color:Maroon">GridView</span> <span style="color:Red">ID</span><span style="color:Blue">="GridView1"</span> <span style="color:Red">runat</span><span style="color:Blue">="server"</span> <span style="color:Red">AllowPaging</span><span style="color:Blue">="True"</span> <span style="color:Red">AllowSorting</span><span style="color:Blue">="True"<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Red">AutoGenerateColumns</span><span style="color:Blue">="False"</span> <span style="color:Red">DataSourceID</span><span style="color:Blue">="SqlDataSource1"</span> <span style="color:Red">DataKeyNames</span><span style="color:Blue">="EventId"&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">&lt;</span><span style="color:Maroon">Columns</span><span style="color:Blue">&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">&lt;</span><span style="color:Maroon">asp</span><span style="color:Blue">:</span><span style="color:Maroon">BoundField</span> <span style="color:Red">DataField</span><span style="color:Blue">="EventTimeUtc"</span> <span style="color:Red">DataFormatString</span><span style="color:Blue">="{0:d}"</span> <span style="color:Red">HeaderText</span><span style="color:Blue">="EventTimeUtc"<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Red">HtmlEncode</span><span style="color:Blue">="False"</span> <span style="color:Red">SortExpression</span><span style="color:Blue">="EventTimeUtc"</span> <span style="color:Blue">/&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">&lt;</span><span style="color:Maroon">asp</span><span style="color:Blue">:</span><span style="color:Maroon">BoundField</span> <span style="color:Red">DataField</span><span style="color:Blue">="ExceptionType"</span> <span style="color:Red">HeaderText</span><span style="color:Blue">="ExceptionType"</span> <span style="color:Red">SortExpression</span><span style="color:Blue">="ExceptionType"</span> <span style="color:Blue">/&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">&lt;</span><span style="color:Maroon">asp</span><span style="color:Blue">:</span><span style="color:Maroon">CommandField</span> <span style="color:Red">ButtonType</span><span style="color:Blue">="Button"</span> <span style="color:Red">ShowSelectButton</span><span style="color:Blue">="True"</span> <span style="color:Blue">/&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">&lt;/</span><span style="color:Maroon">Columns</span><span style="color:Blue">&gt;<br />
+</span><span style="color:Blue">&lt;/</span><span style="color:Maroon">asp</span><span style="color:Blue">:</span><span style="color:Maroon">GridView</span><span style="color:Blue">&gt;<br />
+</span><span style="color:Blue">&lt;</span><span style="color:Maroon">asp</span><span style="color:Blue">:</span><span style="color:Maroon">DetailsView</span> <span style="color:Red">ID</span><span style="color:Blue">="DetailsView1"</span> <span style="color:Red">runat</span><span style="color:Blue">="server"</span> <span style="color:Red">AutoGenerateRows</span><span style="color:Blue">="False"</span> <span style="color:Red">DataSourceID</span><span style="color:Blue">="SqlDataSource2"
+</span><span style="color:Blue">&gt;</span><br />
+<span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">&lt;</span><span style="color:Maroon">Fields</span><span style="color:Blue">&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">&lt;</span><span style="color:Maroon">asp</span><span style="color:Blue">:</span><span style="color:Maroon">TemplateField</span> <span style="color:Red">HeaderText</span><span style="color:Blue">="Details"</span> <span style="color:Red">SortExpression</span><span style="color:Blue">="Details"</span> <span style="color:Red">ShowHeader</span><span style="color:Blue">="false"&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">&lt;</span><span style="color:Maroon">ItemTemplate</span><span style="color:Blue">&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">&lt;</span><span style="color:Maroon">pre</span> <span style="color:Red">style</span><span style="color:Blue">="white-space: pre-wrap;white-space: -moz-pre-wrap;word-wrap: break-word; "&gt;&lt;</span><span style="color:Maroon">asp</span><span style="color:Blue">:</span><span style="color:Maroon">Literal</span> <span style="color:Red">ID</span><span style="color:Blue">="Label1"</span> <span style="color:Red">runat</span><span style="color:Blue">="server"</span> <span style="color:Red">Text</span><span style="color:Blue">='</span><span style="color:Black">&lt;%# Eval("Details") %&gt;</span><span style="color:Blue">'/&gt;&lt;/</span><span style="color:Maroon">pre</span><span style="color:Blue">&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">&lt;/</span><span style="color:Maroon">ItemTemplate</span><span style="color:Blue">&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">&lt;/</span><span style="color:Maroon">asp</span><span style="color:Blue">:</span><span style="color:Maroon">TemplateField</span><span style="color:Blue">&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">&lt;/</span><span style="color:Maroon">Fields</span><span style="color:Blue">&gt;<br />
+</span><span style="color:Blue">&lt;/</span><span style="color:Maroon">asp</span><span style="color:Blue">:</span><span style="color:Maroon">DetailsView</span><span style="color:Blue">&gt;<br />
+</span><br />
+<span style="color:Blue">&lt;</span><span style="color:Maroon">asp</span><span style="color:Blue">:</span><span style="color:Maroon">SqlDataSource</span> <span style="color:Red">ID</span><span style="color:Blue">="SqlDataSource2"</span> <span style="color:Red">runat</span><span style="color:Blue">="server"</span> <span style="color:Red">ConnectionString</span><span style="color:Blue">="</span><span style="color:Black">&lt;%$ ConnectionStrings: MyConnectionString %&gt;</span><span style="color:Blue">"<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Red">SelectCommand</span><span style="color:Blue">="SELECT Details FROM aspnet_WebEvent_Events WHERE (EventId = @EventId)"&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">&lt;</span><span style="color:Maroon">SelectParameters</span><span style="color:Blue">&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">&lt;</span><span style="color:Maroon">asp</span><span style="color:Blue">:</span><span style="color:Maroon">ControlParameter</span> <span style="color:Red">ControlID</span><span style="color:Blue">="GridView1"</span> <span style="color:Red">Name</span><span style="color:Blue">="EventId"</span> <span style="color:Red">PropertyName</span><span style="color:Blue">="SelectedValue"</span> <span style="color:Blue">/&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">&lt;/</span><span style="color:Maroon">SelectParameters</span><span style="color:Blue">&gt;<br />
+</span><span style="color:Blue">&lt;/</span><span style="color:Maroon">asp</span><span style="color:Blue">:</span><span style="color:Maroon">SqlDataSource</span><span style="color:Blue">&gt;<br />
+</span><span style="color:Blue">&lt;</span><span style="color:Maroon">asp</span><span style="color:Blue">:</span><span style="color:Maroon">SqlDataSource</span> <span style="color:Red">ID</span><span style="color:Blue">="SqlDataSource1"</span> <span style="color:Red">runat</span><span style="color:Blue">="server"</span> <span style="color:Red">ConnectionString</span><span style="color:Blue">="</span><span style="color:Black">&lt;%$ ConnectionStrings:MyConnectionString %&gt;</span><span style="color:Blue">"<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Red">SelectCommand</span><span style="color:Blue">="SELECT TOP 100 EventId, EventTimeUtc, ExceptionType, Details FROM aspnet_WebEvent_Events WHERE (EventCode = '3005') ORDER BY EventTimeUtc DESC"&gt;<br />
+</span><span style="color:Blue">&lt;/</span><span style="color:Maroon">asp</span><span style="color:Blue">:</span><span style="color:Maroon">SqlDataSource</span><span style="color:Blue">&gt;</span>
+</div>
+</div>
+
+<div class="Footer">
+
+</div>
+</body>
+</html>

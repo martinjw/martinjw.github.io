@@ -1,0 +1,133 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP.Net Core Localization</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="core.html">DotNet Core</a></li>
+<li><a href="mvc.html">MVC</a></li>
+<li><a href="project.html">Core Project</a></li>
+<li><a href="startup.html">Startup</a></li>
+<li><a href="config.html">Config Settings</a></li>
+<li><a href="iis.html">IIS</a></li>
+<li><a href="controllers.html">Controllers</a></li>
+<li><a href="views.html">Views</a></li>
+<li><a href="di.html">Dependency Injection</a></li>
+<li><a href="security.html">Security</a></li>
+<li><a href="logging.html">Logging</a></li>
+<li><a href="localization.html">Localization</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>ASP.Net Core Localization</h2>
+
+<ul>
+<li><a href="http://docs.asp.net/en/dev/fundamentals/localization.html">Docs</a></li>
+</ul>
+<p>See <a href="https://github.com/aspnet/Localization">github source</a>, <a href="https://github.com/aspnet/Entropy/tree/dev/samples/Localization.StarterWeb">sample</a></p>
+<div class="alert">TODO: based on pre-release RC2, to be updated to RTM</div>
+
+<h3>Nuget packages</h3>
+<ul>
+<li>"Microsoft.Extensions.Localization"</li>
+<li>"Microsoft.AspNetCore.Localization"</li>
+</ul>
+
+<h3>RequestLocalizationOptions</h3>
+<p>RequestLocalizationOptions are configured in Startup.</p>
+<p>There are 3 built-in providers to set the culture of a request: QueryStringRequestCultureProvider, CookieRequest ("ASPNET_CULTURE" cookie) and AcceptLanguageHeader</p>
+<p>You can set the cookie in an action method</p>
+<pre>
+  [HttpPost]
+        public IActionResult SetLanguage(string culture, string returnUrl)
+        {
+            Response.Cookies.Append(
+                CookieRequestCultureProvider.DefaultCookieName,
+                CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture)),
+                new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(1) }
+            );
+
+            return LocalRedirect(returnUrl);
+        }
+</pre>
+
+<h3>Startup</h3>
+<ul>
+<li>Startup.<strong>ConfigureServices</strong>: services.AddLocalization(options => options.ResourcesPath = "ResourcesFolder")<br />
+The ResourcesPath is the folder containing the .resx files.<br/>
+<pre>
+services.AddMvc()
+                // Add support for finding localized views, based on file name suffix, e.g. Index.fr.cshtml
+                .AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix)
+                // Add support for localizing strings in data annotations (e.g. validation messages)
+                .AddDataAnnotationsLocalization();
+
+</pre>
+</li>
+<li>Startup.<strong>Configure</strong>: 
+<pre>
+				
+app.UseRequestLocalization(new RequestLocalizationOptions
+            {
+                DefaultRequestCulture = new RequestCulture("en-US"),
+
+                SupportedCultures = new List&lt;CultureInfo&gt;
+                {
+                    new CultureInfo("en-US"),
+                    new CultureInfo("en-GB")
+				}
+			});
+</pre></li>
+</ul>
+<p>In controllers, the ctor asks for IHtmlLocalizer&lt;resourceName&gt;.</p>
+<pre>
+    public class AboutController : Controller
+    {
+        private IHtmlLocalizer&lt;AmazingResource&gt; _htmlLocalizer;
+ 
+        public AboutController(IHtmlLocalizer&lt;AmazingResource&gt; localizer)
+        {
+            _htmlLocalizer = localizer;
+        }
+ 
+        [HttpGet]
+        public string Get()
+        {
+            return _htmlLocalizer["Name"];
+        }
+    }
+</pre>
+<p>Access localization via features</p>
+<pre>
+var requestCultureFeature = context.Features.Get&lt;IRequestCultureFeature&gt;();
+var requestCulture = requestCultureFeature.RequestCulture;
+</pre>
+
+<h3>Views</h3>
+<p>The one nice use-case for <a href="di.html">dependency injection</a> into views, and there's a tag-helper (the string is the key).</p>
+<pre>
+@inject IViewLocalizer Localizer
+
+@{
+    ViewData["Title"] = Localizer["Home Page"];
+}
+&lt;p&gt;@Localizer("Will be localized") &lt;/p&gt;
+&lt;p asp-loc&gt;This will be localized&lt;/p&gt;
+</pre>
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

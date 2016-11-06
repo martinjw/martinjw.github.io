@@ -1,0 +1,204 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ActiveRecord</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../index.html">Code &gt;</a></li>
+<li><a href="index.html">NHibernate</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>ActiveRecord</h2>
+<p>As a comparison to the <a href="mapping.html">hbm mapping files</a>, here's the <a href="sampleentities.html">Category and Product entities</a> marked up for ActiveRecord. See the <a href="activerecordappconfig.html">App.Config</a></p>
+<h3>Category</h3>
+<div class="code">
+<p style="margin: 0px;"><span style="color: blue;">using</span> System;<br />
+<span style="color: blue;">using</span> System.Collections.Generic;<br />
+<span style="color: blue;">using</span> System.Diagnostics;<br />
+<span style="color: blue;">using</span> Castle.ActiveRecord;<br />
+&nbsp;<br />
+<span style="color: blue;">namespace</span> NorthwindActive<br />
+{<br />
+&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> Class representing Categories table</span><br />
+&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp; [<span style="color: #2b91af;">Serializable</span>]<br />
+&nbsp;&nbsp; [<span style="color: #2b91af;">ActiveRecord</span>(<span style="color: #a31515;">"`Categories`"</span>, Lazy = <span style="color: blue;">true</span>)]<br />
+&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">Category</span> : <span style="color: #2b91af;">ActiveRecordBase</span>&lt;<span style="color: #2b91af;">Category</span>&gt;<br />
+&nbsp;&nbsp; {<br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp; #region</span> Fields<br />
+&nbsp;&nbsp;&nbsp; &nbsp; [<span style="color: #2b91af;">DebuggerBrowsable</span>(<span style="color: #2b91af;">DebuggerBrowsableState</span>.Never)]<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: blue;">private</span> <span style="color: #2b91af;">IList</span>&lt;<span style="color: #2b91af;">Product</span>&gt; _productCollection = <span style="color: blue;">new</span> <span style="color: #2b91af;">List</span>&lt;<span style="color: #2b91af;">Product</span>&gt;();<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp; #endregion</span><br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp; #region</span> Properties<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> CategoryID (Key)</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; [<span style="color: #2b91af;">PrimaryKey</span>(<span style="color: #a31515;">"`CategoryID`"</span>)]<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: blue;">public</span> <span style="color: blue;">virtual</span> <span style="color: blue;">int</span> CategoryId { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> CategoryName (Required)</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; [<span style="color: #2b91af;">Property</span>(<span style="color: #a31515;">"`CategoryName`"</span>)]<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: blue;">public</span> <span style="color: blue;">virtual</span> <span style="color: blue;">string</span> CategoryName { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> Description</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; [<span style="color: #2b91af;">Property</span>(<span style="color: #a31515;">"`Description`"</span>, ColumnType=<span style="color: #a31515;">"StringClob"</span>)]<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: blue;">public</span> <span style="color: blue;">virtual</span> <span style="color: blue;">string</span> Description { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> Picture</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; [<span style="color: #2b91af;">Property</span>(<span style="color: #a31515;">"`Picture`"</span>)]<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: blue;">public</span> <span style="color: blue;">virtual</span> System.<span style="color: #2b91af;">Byte</span>[] Picture { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> Foreign Key Collection</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; [<span style="color: #2b91af;">HasMany</span>(<span style="color: blue;">typeof</span>(<span style="color: #2b91af;">Product</span>), <span style="color: #a31515;">"CategoryId"</span>, <span style="color: #a31515;">"`Products`"</span> , Lazy = <span style="color: blue;">true</span>, Inverse = <span style="color: blue;">true</span>, Cascade = <span style="color: #2b91af;">ManyRelationCascadeEnum</span>.AllDeleteOrphan, Access=<span style="color: #2b91af;">PropertyAccess</span>.NosetterCamelcaseUnderscore)]<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: blue;">public</span> <span style="color: blue;">virtual</span> <span style="color: #2b91af;">IList</span>&lt;<span style="color: #2b91af;">Product</span>&gt; ProductCollection<br />
+&nbsp;&nbsp;&nbsp; &nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">get</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <span style="color: blue;">return</span> _productCollection;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp; }<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp; #endregion</span><br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp; #region</span> overrides<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: blue;">public</span> <span style="color: blue;">override</span> <span style="color: blue;">string</span> ToString()<br />
+&nbsp;&nbsp;&nbsp; &nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: #a31515;">"Category = "</span> + CategoryId;<br />
+&nbsp;&nbsp;&nbsp; &nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: blue;">public</span> <span style="color: blue;">override</span> <span style="color: blue;">int</span> GetHashCode()<br />
+&nbsp;&nbsp;&nbsp; &nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (CategoryId == 0) <span style="color: blue;">return</span> <span style="color: blue;">base</span>.GetHashCode();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> CategoryId;<br />
+&nbsp;&nbsp;&nbsp; &nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: blue;">public</span> <span style="color: blue;">override</span> <span style="color: blue;">bool</span> Equals(<span style="color: blue;">object</span> obj)<br />
+&nbsp;&nbsp;&nbsp; &nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Category</span> x = obj <span style="color: blue;">as</span> <span style="color: #2b91af;">Category</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (x == <span style="color: blue;">null</span>) <span style="color: blue;">return</span> <span style="color: blue;">false</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (CategoryId == 0 &amp;&amp; x.CategoryId == 0) <span style="color: blue;">return</span> <span style="color: blue;">object</span>.ReferenceEquals(<span style="color: blue;">this</span>, x);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> (CategoryId == x.CategoryId);<br />
+&nbsp;&nbsp;&nbsp; &nbsp; }<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp; #endregion</span><br />
+&nbsp;&nbsp; } <span style="color: green;">//class</span><br />
+} <span style="color: green;">//namespace</span></p>
+</div>
+
+<h3>Product</h3>
+<div class="code">
+<p style="margin: 0px;"><span style="color: blue;">using</span> System;<br />
+<span style="color: blue;">using</span> System.Collections.Generic;<br />
+<span style="color: blue;">using</span> System.Diagnostics;<br />
+<span style="color: blue;">using</span> Castle.ActiveRecord;<br />
+&nbsp;<br />
+<span style="color: blue;">namespace</span> NorthwindActive<br />
+{<br />
+&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> Class representing Products table</span><br />
+&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp; [<span style="color: #2b91af;">Serializable</span>]<br />
+&nbsp;&nbsp; [<span style="color: #2b91af;">ActiveRecord</span>(<span style="color: #a31515;">"`Products`"</span>, Lazy = <span style="color: blue;">true</span>)]<br />
+&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">Product</span> : <span style="color: #2b91af;">ActiveRecordBase</span>&lt;<span style="color: #2b91af;">Product</span>&gt;<br />
+&nbsp;&nbsp; {<br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp; #region</span> Properties<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> ProductID (Key)</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; [<span style="color: #2b91af;">PrimaryKey</span>(<span style="color: #a31515;">"`ProductID`"</span>)]<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: blue;">public</span> <span style="color: blue;">virtual</span> <span style="color: blue;">int</span> ProductId { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> ProductName (Required)</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; [<span style="color: #2b91af;">Property</span>(<span style="color: #a31515;">"`ProductName`"</span>)]<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: blue;">public</span> <span style="color: blue;">virtual</span> <span style="color: blue;">string</span> ProductName { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: green;">///// &lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: green;">///// Foreign Key Entity for SupplierId (Optional)</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: green;">///// &lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: green;">//[BelongsTo("`SupplierID`")]</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: green;">//public virtual Supplier Supplier { get; set; }</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> Foreign Key Entity for CategoryId (Optional)</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; [<span style="color: #2b91af;">BelongsTo</span>(<span style="color: #a31515;">"`CategoryID`"</span>)]<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: blue;">public</span> <span style="color: blue;">virtual</span> <span style="color: #2b91af;">Category</span> Category { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> QuantityPerUnit</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; [<span style="color: #2b91af;">Property</span>(<span style="color: #a31515;">"`QuantityPerUnit`"</span>)]<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: blue;">public</span> <span style="color: blue;">virtual</span> <span style="color: blue;">string</span> QuantityPerUnit { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> UnitPrice</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; [<span style="color: #2b91af;">Property</span>(<span style="color: #a31515;">"`UnitPrice`"</span>)]<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: blue;">public</span> <span style="color: blue;">virtual</span> <span style="color: blue;">decimal</span>? UnitPrice { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> UnitsInStock</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; [<span style="color: #2b91af;">Property</span>(<span style="color: #a31515;">"`UnitsInStock`"</span>)]<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: blue;">public</span> <span style="color: blue;">virtual</span> <span style="color: blue;">short</span>? UnitsInStock { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> UnitsOnOrder</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; [<span style="color: #2b91af;">Property</span>(<span style="color: #a31515;">"`UnitsOnOrder`"</span>)]<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: blue;">public</span> <span style="color: blue;">virtual</span> <span style="color: blue;">short</span>? UnitsOnOrder { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> ReorderLevel</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; [<span style="color: #2b91af;">Property</span>(<span style="color: #a31515;">"`ReorderLevel`"</span>)]<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: blue;">public</span> <span style="color: blue;">virtual</span> <span style="color: blue;">short</span>? ReorderLevel { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> Discontinued (Required)</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp; [<span style="color: #2b91af;">Property</span>(<span style="color: #a31515;">"`Discontinued`"</span>)]<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: blue;">public</span> <span style="color: blue;">virtual</span> <span style="color: blue;">bool</span> Discontinued { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; #endregion</span><br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp; #region</span> overrides<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: blue;">public</span> <span style="color: blue;">override</span> <span style="color: blue;">string</span> ToString()<br />
+&nbsp;&nbsp;&nbsp; &nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: #a31515;">"Product = "</span> + ProductId;<br />
+&nbsp;&nbsp;&nbsp; &nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: blue;">public</span> <span style="color: blue;">override</span> <span style="color: blue;">int</span> GetHashCode()<br />
+&nbsp;&nbsp;&nbsp; &nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (ProductId == 0) <span style="color: blue;">return</span> <span style="color: blue;">base</span>.GetHashCode();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> ProductId;<br />
+&nbsp;&nbsp;&nbsp; &nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp; <span style="color: blue;">public</span> <span style="color: blue;">override</span> <span style="color: blue;">bool</span> Equals(<span style="color: blue;">object</span> obj)<br />
+&nbsp;&nbsp;&nbsp; &nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Product</span> x = obj <span style="color: blue;">as</span> <span style="color: #2b91af;">Product</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (x == <span style="color: blue;">null</span>) <span style="color: blue;">return</span> <span style="color: blue;">false</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (ProductId == 0 &amp;&amp; x.ProductId == 0) <span style="color: blue;">return</span> <span style="color: blue;">object</span>.ReferenceEquals(<span style="color: blue;">this</span>, x);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> (ProductId == x.ProductId);<br />
+&nbsp;&nbsp;&nbsp; &nbsp; }<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp; #endregion</span><br />
+&nbsp;&nbsp; } <span style="color: green;">//class</span><br />
+} <span style="color: green;">//namespace</span></p>
+</div>
+
+</div>
+<div class="Footer">
+
+</div></body>
+</html>

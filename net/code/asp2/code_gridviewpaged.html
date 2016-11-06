@@ -1,0 +1,41 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Paged GridView</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main</a></li>
+<li><a href="../../dotnet.html">.Net</a></li>
+<li><a href="../index.html">Code</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>Paged GridView</h2>
+<p>The <a href="code_gridviewbasic.html">basic GridView bound to a collection</a> has to load the entire data to page. To bind with just a single page of data and show paging, GridViews must use an ObjectDataSource (you can fake it with your own paging user control positioned below the GridView).<br />
+The ODS creates your object with the default parameterless constructor- but you can fix that by handling the ObjectCreating event.<br />
+The <a href="code_gridviewpaged_filler.html">GridViewFiller</a> (and <a href="code_gridviewpaged_adaptor.html">ObjectAdaptor</a>) does it programmatically. Note it requires the data to be in an IList&lt;Object&gt; - just copy the paged data to the list (you could create a version for a more specific type, but you'd need a different utiliy (and [Object]Adaptor) for each type.</p>
+<h3>Full demonstration code</h3>
+<ul>
+<li><a href="code_gridviewpaged_filler.html">The utility that fills the GridView (creates an ObjectDataSource)</a> and <a href="code_gridviewpaged_adaptor.html">ObjectAdaptor</a></li>
+<li><a href="code_gridviewpaged_asp.html">The ASP markup (a simple templated gridview)</a></li>
+<li><a href="code_gridviewpaged_page.html">The code behind (gridview events)</a></li>
+<li><a href="code_gridviewpaged_fakedal.html">The fake data access layer (returns paged and sorted data- details unimportant)</a></li>
+</ul>
+
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

@@ -1,0 +1,213 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ADO.Net</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="io.html">IO</a></li>
+<li><a href="xml.html">Xml</a></li>
+<li><a href="xmlpatterns.html">Xml Patterns</a></li>
+<li><a href="adodotnet.html">ADO.Net</a></li>
+<li><a href="adopatterns.html">ADO Patterns</a></li>
+<li><a href="transactions.html">Transactions</a></li>
+<li><a href="sql.html">SQL</a></li>
+<li><a href="ef/ef.html">EF/Linq2Sql &gt;</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>ADO.Net</h2>
+<ul>
+<li><a href="../asp/aspdotnetbind.html">ASP DataBinding notes</a></li>
+<li><a href="adoeg.html">ADO examples</a></li>
+<li><a href="../code/readexcel.html">Read Excel into DataTables</a></li>
+<li><a href="../code/convertdatatable.html">Convert List&lt;T&gt; to DataTable</a> and back again</li>
+<li><a href="../code/reflection/entityfiller.html">EntityFiller: ADO DataReader to entities with reflection</a></li>
+<li><a href="transactions.html">Transactions</a></li>
+</ul>
+
+<h3>Connection Strings</h3>
+<ul>
+<li><a href="http://connectionstrings.com/">ConnectionStrings.com</a></li>
+<li>SQLServer Express<br />
+<code>Data Source=.\SQLEXPRESS;Integrated Security=true;Initial Catalog=Northwind</code></li>
+<li>SQLServer Express attaching a local database file (in Data Directory)<br />
+<code>Data Source=.\SQLEXPRESS;AttachDbFilename=|DataDirectory|\Database1.mdf;Integrated Security=True;User Instance=True</code></li>
+<li>Oracle XE without tnsnames.ora (User Id is CASE SENSITIVE): <br />
+<code>Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=localhost)(PORT=1521))(CONNECT_DATA=(SID=XE)));User Id=MYID;Password=secret;</code></li>
+</ul>
+
+<h3>Tips</h3>
+<ul>
+<li>Use "using" (calls Dispose) or try/catch/finally (and if (SqlConnection!=null) SqlConnection.Close(). Use parameters, even in raw sql, to stop injection attacks.</li>
+<li>Connection pooling is automatic but connections strings must be identical (use System.ConfigurationSettings.AppSettings["ConnStr"], preferably encrypted)</li>
+<li>Database Nulls: use System.DBNull.Value (do not use null/Nothing). 
+<div class="code">
+<p><span style="color: blue;">if</span> (!rdr.IsDBNull(0)) s = rdr.GetString(0);</p>
+<p><span style="color: green;">//or</span></p>
+<p><span style="color: blue;">if</span> (rdr[<span style="color: #a31515;">"myId"</span>] == <span style="color: #2b91af;">DBNull</span>.Value) s = <span style="color: #a31515;">""</span>;</p>
+<p><span style="color: blue;">else</span> s = (<span style="color: blue;">string</span>) rdr[<span style="color: #a31515;">"myId"</span>];</p>
+</div>
+
+<br />Always test with DataRow.IsNull or use strongly typed dataset IsXNull and SetXNull methods.</li>
+</ul>
+<p>For inserting/updating nullable fields, I use this helper (here as a 3.5 extension method)</p>
+<div class="code">
+<p><span style="color: blue;">internal</span> <span style="color: blue;">static</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">SqlParameterExtensions</span></p>
+<p>{</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: green;">//nb instance methods always win over extension methods so you can't add a AddWithValue "overload"</span></p>
+<p>&nbsp;</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">internal</span> <span style="color: blue;">static</span> <span style="color: #2b91af;">SqlParameter</span> AddWithNullableValue(<span style="color: blue;">this</span> <span style="color: #2b91af;">SqlParameterCollection</span> col, <span style="color: blue;">string</span> parameterName, <span style="color: blue;">object</span> value)</p>
+<p>&nbsp;&nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//everything else</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> col.Add(<span style="color: blue;">new</span> <span style="color: #2b91af;">SqlParameter</span>(parameterName, value ?? <span style="color: #2b91af;">DBNull</span>.Value));</p>
+<p>&nbsp;&nbsp;&nbsp; }</p>
+<p>}</p>
+</div>
+
+<h3>Concurrency</h3>
+<ul>
+<li><strong>None:</strong> last one wins. Most scalable!</li>
+<li><strong>Pessimistic:</strong> lock the record. Use a transaction (see below) or manually write to a lock table (with an expiring timestamp).</li>
+<li><strong>Optimistic:</strong> check whether record changed and report it. 
+<ul>
+<li>Select and manually check before update. </li>
+<li>Update ... where... with all prior values (or a subset). <em>NULLable fields need (col is null and origCol is null) or (col = origCol)</em></li>
+<li>Timestamp/version column (sql timestamps are actually byte[])</li>
+</ul>
+You mostly do it manually (apart from SQLDataSource's wizard), unless you use an ORM
+<ul>
+<li><strong>DataAdaptor:</strong> Specify the sql manually in the UpdateCommand and in the RowUpdated event check the RecordsAffected</li>
+<li><strong>SQLDataSource:</strong> Has a <em>ConflictDetection</em> property (default OverwriteChanges; or CompareAllValues). There is also an <em>OldValuesParameterFormatString</em>. The wizard has an optimistic checkbox. In the <em>RowUpdated</em> event, check AffectedRows. NB: doesn't properly check for NULLable fields</li>
+<li><strong>GridViews</strong>: Put the timestamp on the DataKeyNames otherwise it won't get passed.</li>
+</ul>
+</li>
+</ul>
+
+
+
+<h3>Paging and Identity</h3>
+<ul>
+<li>Paging. Use a stored procedure: SET ROWCOUNT @pageSize and pass in the starting point in the unique key(s) (where key &gt; @startKey). Don't use SqlDataAdapter.Fill with start/end as all it does it filter the full query.</li>
+<li>Get the identity from the last added row. Add  <code>SET @IdentityID = SCOPE_IDENTITY()</code> to the INSERT. Don't use @@IDENTITY (SQLServer 7) because that's the last identity created- a trigger or concurrency could mean it's another table entirely.</li>
+</ul>
+<h3>Dataset Trivia</h3>
+<ul>
+<li>Filter and Sort<ul>
+<li>DataTables have a .Select(sql) but it returns a DataRow array (no binding!)</li>
+<li>DataTable RowCollections has a Find, but ensure you have set .PrimaryKey= col</li>
+<li>DataViews have properties to .Sort (colname + ASC, DESC) and .RowFilter (sql)</li>
+<li>DataViews also have a .RowStateFilter (default is CurrentRows=Unchanged+Added+ModifiedCurrent; compare ModifiedCurrent with ModifiedOriginal)</li>
+</ul></li>
+<li><strong>DataAdaptor1.MissingSchemaAction</strong>= MissingSchemaAction.AddWithKey gets the schema as well (useful to work with primary keys-<br />
+eg <strong>DataView1.ApplyDefaultSort</strong> = true will sort by primary key (make sure DataView1.Sort= "")</li>
+<li>Output parameters are only available AFTER the datareader is closed (<a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/cpguide/html/cpconTheADONETDataReader.asp">msdn</a>):
+<pre>reader.Close(); //must be first
+TextBox1.Text = com.Parameters["@myoutput"].Value.ToString()</pre></li>
+<li>SQLCommandBuilder generates update/insert/delete sql from your select. It only works for single table with a primary key. Just create it using the dataAdaptor:
+<div class="code">
+<p><span style="color: #2b91af;">SqlConnection</span> cn = <span style="color: blue;">new</span> <span style="color: #2b91af;">SqlConnection</span>(<span style="color: #a31515;">@"Server=localhost;Initial Catalog=Northwind;Integrated Security=True"</span>);</p>
+<p><span style="color: #2b91af;">SqlDataAdapter</span> da = <span style="color: blue;">new</span> <span style="color: #2b91af;">SqlDataAdapter</span>();</p>
+<p>da.SelectCommand = <span style="color: blue;">new</span> <span style="color: #2b91af;">SqlCommand</span>(<span style="color: #a31515;">"SELECT * FROM customers"</span>, cn);</p>
+<p><span style="color: #2b91af;">SqlCommandBuilder</span> cb = <span style="color: blue;">new</span> <span style="color: #2b91af;">SqlCommandBuilder</span>(da);</p>
+<p>cb.ConflictOption = <span style="color: #2b91af;">ConflictOption</span>.OverwriteChanges; <span style="color: green;">//only PK</span></p>
+<p><span style="color: #2b91af;">SqlCommand</span> updateCommand = cb.GetUpdateCommand();</p>
+<p><span style="color: #2b91af;">Debug</span>.WriteLine(updateCommand.CommandText); <span style="color: green;">//UPDATE [customers] SET [CustomerID] = @p1, [CompanyName] = @p2, ...</span></p>
+</div>
+</li>
+</ul>
+
+<h3>UPSERTs</h3>
+<p>Doing an insert or update in SQL Server (here the update is just a select to get the identity). The lock hints are important to avoid race problems: see <a href="http://samsaffron.com/blog/archive/2007/04/04/14.aspx">this Sam Saffron post from 2007</a></p>
+<div class="code">
+<p><span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: blue;">int</span> Upsert(<span style="color: blue;">string</span> naturalKey)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">const</span> <span style="color: blue;">string</span> sql = <span style="color: #a31515;">@"</span><br />
+<span style="color: #a31515;">DECLARE @Id int = null;</span><br />
+&nbsp;<br />
+<span style="color: #a31515;">IF EXISTS(</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; SELECT * </span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; FROM TestTable WITH (UPDLOCK, SERIALIZABLE) </span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; WHERE [NaturalKey] = @NaturalKey)</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; BEGIN</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; SELECT @Id = [Id] </span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; FROM TestTable</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; WHERE [NaturalKey] = @NaturalKey;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; END</span><br />
+<span style="color: #a31515;">ELSE</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; BEGIN</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; INSERT INTO TestTable&nbsp; </span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; ([NaturalKey])</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; VALUES </span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; (@NaturalKey);</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; SELECT @Id = CAST(SCOPE_IDENTITY() AS int);</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; END</span><br />
+<span style="color: #a31515;">SELECT @Id AS Id"</span>;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">int</span> id;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: blue;">var</span> con = <span style="color: blue;">new</span> <span style="color: #2b91af;">SqlConnection</span>(ConnectionString))<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: blue;">var</span> cmd = <span style="color: blue;">new</span> <span style="color: #2b91af;">SqlCommand</span>(sql, con))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; cmd.Parameters.AddWithValue(<span style="color: #a31515;">"@NaturalKey"</span>, naturalKey);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; con.Open();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; id = (<span style="color: blue;">int</span>)cmd.ExecuteScalar();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> id;<br />
+}</p>
+</div>
+<p>From SQLServer 2008 you can use the MERGE command, but you still need the lock hints.</p>
+<div class="code">
+<p><span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: blue;">int</span> Merge(<span style="color: blue;">string</span> naturalKey)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">const</span> <span style="color: blue;">string</span> sql = <span style="color: #a31515;">@"</span><br />
+<span style="color: #a31515;">DECLARE @Id int = null;</span><br />
+&nbsp;<br />
+<span style="color: #a31515;">MERGE INTO TestTable WITH ( HOLDLOCK, SERIALIZABLE ) AS target</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; --this is the ...WHERE...</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; USING (SELECT @NaturalKey) AS source (NaturalKey)</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; ON (target.NaturalKey = source.NaturalKey)</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; WHEN MATCHED THEN</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; UPDATE SET [LastUpdated] = @LastUpdated</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; ,@Id = [Id] -- cleverly set the id here</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; WHEN NOT MATCHED THEN</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; INSERT ([NaturalKey],&nbsp; [LastUpdated] )</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; VALUES (@NaturalKey, @LastUpdated);</span><br />
+&nbsp;<br />
+<span style="color: #a31515;">--if id is not set in UPDATE, then grab scope identity</span><br />
+<span style="color: #a31515;">SET @Id = ISNULL(@Id, CAST(SCOPE_IDENTITY() AS int));</span><br />
+&nbsp;<br />
+<span style="color: #a31515;">SELECT @Id AS Id"</span>;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">int</span> id;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: blue;">var</span> con = <span style="color: blue;">new</span> <span style="color: #2b91af;">SqlConnection</span>(ConnectionString))<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: blue;">var</span> cmd = <span style="color: blue;">new</span> <span style="color: #2b91af;">SqlCommand</span>(sql, con))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; cmd.Parameters.AddWithValue(<span style="color: #a31515;">"@NaturalKey"</span>, naturalKey);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; cmd.Parameters.AddWithValue(<span style="color: #a31515;">"@LastUpdated"</span>, DateTime.UtcNow);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; con.Open();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; id = (<span style="color: blue;">int</span>)cmd.ExecuteScalar();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> id;<br />
+}</p>
+</div>
+
+</div>
+<div class="Footer">
+
+</div></body>
+</html>

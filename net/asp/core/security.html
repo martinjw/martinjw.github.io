@@ -1,0 +1,178 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP.Net Core Security</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="core.html">DotNet Core</a></li>
+<li><a href="mvc.html">MVC</a></li>
+<li><a href="project.html">Core Project</a></li>
+<li><a href="startup.html">Startup</a></li>
+<li><a href="config.html">Config Settings</a></li>
+<li><a href="iis.html">IIS</a></li>
+<li><a href="controllers.html">Controllers</a></li>
+<li><a href="views.html">Views</a></li>
+<li><a href="di.html">Dependency Injection</a></li>
+<li><a href="security.html">Security</a></li>
+<li><a href="logging.html">Logging</a></li>
+<li><a href="localization.html">Localization</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>ASP.Net Core Security</h2>
+
+<ul>
+<li><a href="https://docs.asp.net/en/latest/security/index.html">docs.asp.net Security</a>. <a href="https://github.com/blowdart/AspNetAuthorizationWorkshop">Workshop</a></li>
+</ul>
+<h3>Nuget packages</h3>
+<ul>
+<li>Microsoft.AspNetCore.Authorization</li>
+<li>Microsoft.AspNetCore.Authentication.Cookies</li>
+</ul>
+<h3>Startup Configuration</h3>
+<ul>
+<li>In ConfigureServices, services.AddAuthorization();</li>
+<li>In Configure, app.UseCookieAuthentication(options => { options.AuthenticationScheme = "Cookie"; ...
+<ul>
+<li>For login page, set the options.LoginPath = new PathString("/Account/Login/"); //unauthenticated/ 401</li>
+<li>For "not authorized" page, set the options.AccessDeniedPath = new PathString("/Account/Forbidden/"); //unauthorized/ 403</li>
+<li>See <a href="https://docs.asp.net/en/latest/security/authorization/limitingidentitybyscheme.html">docs</a> for Bearer (js)/Cookie (html) schemes - you have to set options.AutomaticAuthenticate = false when you have two schemes</li>
+</ul></li>
+</ul>
+
+<h3>Policy</h3>
+<p>Policy is a richer than simple Role-based authorization.</p>
+<p>Configure in Startup.ConfigureServices</p>
+<pre>
+services.AddAuthorization(opts =>
+	opts.AddPolicy("PolicyName", policy => policy.RequireRole("Administrator")
+	);
+</pre>
+<p>You can have several named policies, which your Authorize attribute can add together.</p>
+<p>Policies can be more complex:</p>
+<div class="code">
+<p><span style="color:blue;">public</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:darkcyan;">ConfigureServices</span>(IServiceCollection&nbsp;services)<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;services.AddAuthorization(options&nbsp;=&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//a&nbsp;role</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;options.AddPolicy(<span style="color:#a31515;">&quot;AdministratorOnly&quot;</span>,&nbsp;policy&nbsp;=&gt;&nbsp;policy.RequireRole(<span style="color:#a31515;">&quot;Administrator&quot;</span>));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//a&nbsp;specific&nbsp;claim&nbsp;with&nbsp;paramarray&nbsp;of&nbsp;acceptible&nbsp;values</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;options.AddPolicy(<span style="color:#a31515;">&quot;EmployeeId&quot;</span>,&nbsp;policy&nbsp;=&gt;&nbsp;policy.RequireClaim(<span style="color:#a31515;">&quot;EmployeeId&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;123&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;456&quot;</span>));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//a&nbsp;custom&nbsp;requirement</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;options.AddPolicy(<span style="color:#a31515;">&quot;Over21Only&quot;</span>,&nbsp;policy&nbsp;=&gt;&nbsp;policy.Requirements.Add(<span style="color:blue;">new</span>&nbsp;MinimumAgeRequirement(21)));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;});<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;services.AddMvc(config&nbsp;=&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//For&nbsp;MVC&nbsp;config,&nbsp;build&nbsp;a&nbsp;policy&nbsp;(here,&nbsp;must&nbsp;be&nbsp;authenticated)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;policy&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;AuthorizationPolicyBuilder()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.RequireAuthenticatedUser()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.Build();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Add&nbsp;a&nbsp;global&nbsp;filter</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;config.Filters.Add(<span style="color:blue;">new</span>&nbsp;AuthorizeFilter(policy));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;});<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//register&nbsp;the&nbsp;custom&nbsp;handlers&nbsp;that&nbsp;know&nbsp;what&nbsp;to&nbsp;do&nbsp;with&nbsp;custom&nbsp;requirements</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;services.AddSingleton&lt;IAuthorizationHandler,&nbsp;MinimumAgeHandler&gt;();<br/>
+}</p>
+</div>
+
+<h3>Custom Requirements</h3>
+<p>Custom requirements have the IAuthorizationRequirement marker interface </p>
+<div class="code">
+<p><span style="color:blue;">public</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">MinimumAgeRequirement</span>&nbsp;:&nbsp;IAuthorizationRequirement<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;MinimumAgeRequirement(<span style="color:blue;">int</span>&nbsp;age)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MinimumAge&nbsp;=&nbsp;age;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">int</span>&nbsp;<span style="color:purple;">MinimumAge</span>&nbsp;{&nbsp;<span style="color:darkcyan;">get</span>;&nbsp;<span style="color:darkcyan;">set</span>;&nbsp;}<br/>
+}</p>
+</div>
+<p>And an handler (which must be registered in ConfigureServices). If there are 2 handlers for the same requirement, the request is authorized if either succeeds ("or").</p>
+<div class="code">
+<p><span style="color:blue;">public</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">MinimumAgeHandler</span>&nbsp;:&nbsp;AuthorizationHandler&lt;<span style="color:#2b91af;">MinimumAgeRequirement</span>&gt;<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">protected</span>&nbsp;<span style="color:blue;">override</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:darkcyan;">Handle</span>(AuthorizationContext&nbsp;context,&nbsp;<span style="color:#2b91af;">MinimumAgeRequirement</span>&nbsp;requirement)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//check&nbsp;the&nbsp;claim&nbsp;(and&nbsp;issuer).&nbsp;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(!context.User.HasClaim(<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c&nbsp;=&gt;&nbsp;c.Type&nbsp;==&nbsp;ClaimTypes.Age&nbsp;&amp;&amp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c.Issuer&nbsp;==&nbsp;<span style="color:#a31515;">&quot;http://contoso.com&quot;</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">return</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//find&nbsp;the&nbsp;claim</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;age&nbsp;=&nbsp;Convert.ToInt32(context.User.FindFirst(<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c&nbsp;=&gt;&nbsp;c.Type&nbsp;==&nbsp;ClaimTypes.Age&nbsp;&amp;&amp;&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c.Issuer&nbsp;==&nbsp;<span style="color:#a31515;">&quot;http://contoso.com&quot;</span>).Value);<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//test&nbsp;the&nbsp;claim</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(age&nbsp;&gt;=&nbsp;requirement.MinimumAge)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;context.Succeed(requirement);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//if&nbsp;fails,&nbsp;don&#39;t&nbsp;do&nbsp;anything</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+}</p>
+</div>
+<h3>Controllers</h3>
+<p>Old-style [Authorize] attribute and [AllowAnonymous] are still used (there's no Authorize(Users=...) though)</p>
+<div class="code">
+<p>[Authorize(Roles&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Admin,Reader&quot;</span>)]&nbsp;<span style="color:green;">//classic&nbsp;style</span><br/>
+[Authorize(Policy&nbsp;=&nbsp;<span style="color:#a31515;">&quot;AdminPolicy&quot;</span>)]<br/>
+[Authorize(AuthenticationSchemes&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Cookie,Bearer&quot;</span>)]</p>
+</div>
+<p>For login, create a ClaimsPrincipal and await HttpContext.Authentication.SignInAsync("Cookie", userPrincipal,new AuthenticationProperties...</p>
+
+<h3>Resource authorisation</h3>
+<p><a href="https://docs.asp.net/en/latest/security/authorization/resourcebased.html">docs.asp.net</a>. Conditional authorisation (for instance, user is only able to see their own files)</p>
+<p>Controller/Service:</p>
+<ul>
+<li>take an IAuthorizationService argument in DI</li>
+<li>call <span style="color:blue;">await</span>&nbsp;<span style="color:purple;">_authorizationService</span>.<span style="color:darkcyan;">AuthorizeAsync</span>(<span style="color:purple;">User</span>,&nbsp;document,&nbsp;<span style="color:#a31515;">&quot;policyName&quot;</span>)</li>
+</ul>
+
+<div class="code">
+<p><span style="color:blue;">public</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:darkblue;">FileController</span>&nbsp;:&nbsp;<span style="color:darkblue;">Controller</span><br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">readonly</span>&nbsp;<span style="color:darkblue;">IAuthorizationService</span>&nbsp;<span style="color:purple;">_authorizationService</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">readonly</span>&nbsp;<span style="color:darkblue;">IFileService</span>&nbsp;<span style="color:purple;">_fileService</span>;<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:darkblue;">FileController</span>(<span style="color:darkblue;">IAuthorizationService</span>&nbsp;authorizationService,&nbsp;<span style="color:darkblue;">IFileService</span>&nbsp;fileService)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:purple;">_authorizationService</span>&nbsp;=&nbsp;authorizationService;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:purple;">_fileService</span>&nbsp;=&nbsp;fileService;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">async</span>&nbsp;<span style="color:darkblue;">Task</span>&lt;<span style="color:darkblue;">IActionResult</span>&gt;&nbsp;<span style="color:darkcyan;">Edit</span>(<span style="color:blue;">int</span>&nbsp;id)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;document&nbsp;=&nbsp;<span style="color:purple;">_fileService</span>.<span style="color:darkcyan;">Find</span>(id);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(<span style="color:blue;">await</span>&nbsp;<span style="color:purple;">_authorizationService</span>.<span style="color:darkcyan;">AuthorizeAsync</span>(<span style="color:purple;">User</span>,&nbsp;document,&nbsp;<span style="color:#a31515;">&quot;EditPolicy&quot;</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">return</span>&nbsp;<span style="color:darkcyan;">View</span>(document);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">return</span>&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:darkblue;">ChallengeResult</span>();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+}</p>
+</div>
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

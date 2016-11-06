@@ -1,0 +1,123 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>NHibernate HTTPModule</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../index.html">Code &gt;</a></li>
+<li><a href="index.html">NHibernate</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>NHibernate Module</h2>
+<p>When using NHibernate with ASP.Net, you can use Global.asax or a simple HttpModule as shown. The sessionManager I use is <a href="sessionmanager.html">this one</a>.</p>
+
+<div class="code">
+<p><span style="color: blue;">using</span> System;<br />
+<span style="color: blue;">using</span> System.Web;<br />
+<span style="color: blue;">using</span> NHibernate;<br />
+<span style="color: blue;">using</span> NHibernate.Context;<br />
+<span style="color: blue;">using</span> Northwind;<br />
+&nbsp;<br />
+<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> A simple HttpModule which loads NHibernate session</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+<span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">NHibernateModule</span> : <span style="color: #2b91af;">IHttpModule</span><br />
+{<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; #region</span> Implementation of IHttpModule<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> Initializes a module and prepares it to handle requests.</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;param name="context"&gt;</span><span style="color: green;">An </span><span style="color: gray;">&lt;see cref="T:System.Web.HttpApplication"/&gt;</span><span style="color: green;"> that provides access to the methods, properties, and events common to all application objects within an ASP.NET application </span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/param&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> Init(<span style="color: #2b91af;">HttpApplication</span> context)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; context.BeginRequest += context_BeginRequest;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; context.EndRequest += context_EndRequest;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> context_BeginRequest(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">EventArgs</span> e)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//use my session manager</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">ISession</span> session = <span style="color: #2b91af;">SessionManager</span>.Instance.OpenSession();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">CurrentSessionContext</span>.Bind(session);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> context_EndRequest(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">EventArgs</span> e)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">ISessionFactory</span> sessionFactory = <span style="color: #2b91af;">SessionManager</span>.Instance.SessionFactory;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">ISession</span> session = <span style="color: #2b91af;">CurrentSessionContext</span>.Unbind(sessionFactory);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (session == <span style="color: blue;">null</span>) <span style="color: blue;">return</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (session.Transaction != <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (session.Transaction.IsActive)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//if there is an active session, commit it</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; session.Transaction.Commit();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">else</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; session.Transaction.Rollback();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; session.Close();<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> Disposes of the resources (other than memory) used by the module that implements </span><span style="color: gray;">&lt;see cref="T:System.Web.IHttpModule"/&gt;</span><span style="color: green;">.</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> Dispose()<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; #endregion</span><br />
+}</p>
+</div>
+
+<h3>Web.config</h3>
+<p>It needs to include these lines...</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">configuration</span><span style="color: blue;">&gt;</span></p>
+    <p><span style="color: blue;">&nbsp;&nbsp; &lt;!--</span><span style="color: green;"> 
+        IIS 6 </span><span style="color: blue;">--&gt;</span><br />
+        <span style="color: blue;">&nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">system.web</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">httpModules</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">NHibernateModule</span>"<span style="color: blue;"> </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">NHibernateModule</span>"<span style="color: blue;">/&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;/</span><span style="color: #a31515;">httpModules</span><span style="color: blue;">&gt;</span><br />
+&nbsp;<span style="color: blue;">&nbsp;&nbsp;&nbsp; &lt;/</span><span style="color: #a31515;">system.web</span><span style="color: blue;">&gt;</span><br />
+&nbsp;<span style="color: blue;">&nbsp;&nbsp;&nbsp; &lt;!--</span><span style="color: green;"> IIS 7 and Cassini. </span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">system.webServer</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">modules</span><span style="color: blue;">&gt;</span><br />
+        <span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">NHibernateModule</span>"<span style="color: blue;"> </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">NHibernateModule</span>"<span style="color: blue;">/&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;/</span><span style="color: #a31515;">modules</span><span style="color: blue;">&gt;</span><br />
+        <span style="color: blue;">&nbsp;&nbsp;&nbsp; &lt;/</span><span style="color: #a31515;">system.webServer</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">configuration</span><span style="color: blue;">&gt;</span></p>
+</div>
+    <h3>NHibernate configuration</h3>
+<p>The config file needs to include this line.</p>
+<div class="code">
+    <span style="color: blue;">&lt;</span><span style="color: #a31515;">property</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">current_session_context_class</span>"<span style="color: blue;">&gt;</span><br />
+    web<br />
+    <span style="color: blue;">&lt;/</span><span style="color: #a31515;">property</span><span style="color: blue;">&gt;</span><br />
+</div>
+</div>
+<div class="Footer">
+
+</div></body>
+</html>

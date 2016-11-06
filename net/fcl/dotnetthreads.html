@@ -1,0 +1,219 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>.Net Threading</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="dotnetcollections.html">Collections</a></li>
+<li><a href="events.html">Events</a></li>
+<li><a href="globaldotnet.html">Globalization</a></li>
+<li><a href="reflection.html">Reflection</a></li>
+<li><a href="dotnetsecurity.html">Security</a></li>
+<li><a href="claims.html">Claims Security</a></li>
+<li><a href="dotnetsecurity_crypto.html">Crypto+ signing</a></li>
+<li><a href="serialization.html">Serialization</a></li>
+<li><a href="dotnetthreads.html">Threading</a></li>
+<li><a href="async.html">Async</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>.Net Threading</h2>
+<p>This is the low-level threading to support async operations. The framework classes provide higher level APIs (eg Begin/End Async). From .net 4.5, when almost everything can be made easily awaitable.</p>
+<ul>
+<li>.Net 1-3.5: <a href="http://msdn.microsoft.com/en-us/library/6kac2kdh.aspx">msdn</a></li>
+<li>.Net 4+: <a href="http://msdn.microsoft.com/en-us/library/dd460717.aspx">Task Parallel Library</a> and <a href="async.html">see here</a></li>
+</ul>
+<h3>Simple Threads</h3>
+<div class="code">
+<p><span style="color: #2b91af;">Thread</span> t = <span style="color: blue;">new</span> <span style="color: #2b91af;">Thread</span>(SlowMethod); <span style="color: green;">//ThreadStart delegate (no parameters)</span><br />
+t.Start(); <span style="color: green;">//start it</span><br />
+t.Join(); <span style="color: green;">//wait for it to finish</span><br />
+<span style="color: #2b91af;">Debug</span>.WriteLine(<span style="color: #2b91af;">Thread</span>.CurrentThread.Name + <span style="color: #a31515;">" Child threads finished"</span>);<br />
+<br />
+<span style="color: green;">//ParameterizedThreadStart delegate (one "object" parameter)</span><br />
+<span style="color: #2b91af;">Thread</span> tp = <span style="color: blue;">new</span> <span style="color: #2b91af;">Thread</span>(SlowMethodWithObjectParameter);<br />
+tp.Start(1000); <span style="color: green;">//pass in object start</span><br />
+tp.Join();<br />
+<br />
+<span style="color: green;">//Strongly typed with a delegate</span><br />
+<span style="color: #2b91af;">Thread</span> td = <span style="color: blue;">new</span> <span style="color: #2b91af;">Thread</span>(<span style="color: blue;">delegate</span>() { SlowMethodWithParameter(2000); });<br />
+td.Start(); <span style="color: green;">//start the delegate which starts the method</span><br />
+td.Join();</p>
+</div>
+<h4>ThreadPool</h4>
+<div class="code">
+<p><span style="color: green;">//optimize with ThreadPool (WaitCallback must have one "object" parameter)</span><br />
+<span style="color: #2b91af;">ThreadPool</span>.QueueUserWorkItem(SlowMethodWithObjectParameter);</p>
+</div>
+<h4>Async delegates</h4>
+<div class="code">
+<p><span style="color: green;">//simple async delegate</span><br />
+<span style="color: green;">//private delegate string WorkerDelegate(string s);</span><br />
+<span style="color: green;">//private string Worker(string s) { return s.ToUpper(); }</span><br />
+<span style="color: #2b91af;">WorkerDelegate</span> method = Worker;<br />
+<span style="color: #2b91af;">IAsyncResult</span> ar = method.BeginInvoke(<span style="color: #a31515;">"test"</span>, <span style="color: blue;">null</span>, <span style="color: blue;">null</span>);<br />
+<span style="color: green;">// do other stuff</span><br />
+<span style="color: blue;">string</span> uppercased = method.EndInvoke(ar);<br />
+<span style="color: green;">// ** or **</span><br />
+method.BeginInvoke(<span style="color: #a31515;">"test"</span>, DoneCallback, <span style="color: blue;">null</span>);<br />
+<span style="color: green;">/*static void DoneCallback(IAsyncResult ar)</span><br />
+<span style="color: green;">{Debug.WriteLine(((WorkerDelegate)ar.AsyncState).EndInvoke(ar));}*/</span></p>
+</div>
+<h4>Threading notes</h4>
+<ul>
+<li>To protect atomic operations from t.Abort(), call Thread.<cite>BeginCriticialRegion</cite>() (and End...())</li>
+<li>To stop child threads inheriting CurrentCulture, IPrincipal etc, call <cite>ExecutionContext.SuppressFlow</cite>() (also RestoreFlow())</li>
+<li>To change thread contexts, get instance - ec= ExecutionContext.<cite>Capture</cite>(), edit it and ExecutionContext.<cite>Run</cite>(ec, new ContextCallback(contxt), null);</li>
+<li>In 2.0, there's a SynchronizationContext (an abstraction over asp/winform thread models) 
+<pre>
+ctx = new SynchronizationContext.Current;
+ctx.Post(method, stateObject) //async - sync(blocking) version is .Send
+</pre>
+</li>
+<li>Forms 2.0: <a href="http://msdn.microsoft.com/en-us/library/system.componentmodel.backgroundworker.aspx">BackgroundWorker</a> component: set DoWork delegate, handle RunWorkerCompleted event (and ProgressChanged event), call .RunWorkerAsync(). In worker, call worker.ReportProgress</li>
+</ul>
+
+<h3>Timers</h3>
+<div class="code">
+<p>System.Threading.<span style="color: #2b91af;">Timer</span> tm = <span style="color: blue;">new</span> System.Threading.<span style="color: #2b91af;">Timer</span>(<span style="color: blue;">new</span> <span style="color: #2b91af;">TimerCallback</span>(Tick), <span style="color: #a31515;">"tock"</span>, 0, 0);<br />
+<span style="color: green;">//startTime - 0 to start immediately, period- 0 to execute once</span><br />
+&nbsp;<br />
+System.Timers.<span style="color: #2b91af;">Timer</span> tm2 = <span style="color: blue;">new</span> System.Timers.<span style="color: #2b91af;">Timer</span>(1000);<br />
+tm2.Elapsed += <span style="color: blue;">delegate</span> { <span style="color: #2b91af;">Debug</span>.WriteLine(<span style="color: #a31515;">"Tock"</span>); };<br />
+tm2.Enabled = <span style="color: blue;">true</span>;<br />
+<span style="color: green;">//do something</span><br />
+tm2.Enabled = <span style="color: blue;">false</span>; <span style="color: green;">//stop it</span><br />
+&nbsp;<br />
+<span style="color: green;">//remember System.Windows.Forms.Timer only works in WinForms and is actually singlethreaded</span></p>
+</div>
+
+<h3>Thread Sync</h3>
+<p><a href="http://msdn.microsoft.com/en-us/library/ms173179.aspx">msdn</a></p>
+<ul>
+<li><cite>Interlocked</cite>.Add() ( .Increment is ++) - simple arithmetic</li>
+<li>c# <cite>lock</cite>(_obj) {} (==vb SynLock). NB: don't lock public instances (this)- prefer private instances</li>
+<li><cite>Monitor</cite>.Enter(this) try/finally{ Monitor.Exit(this) }<br />
+C# lock is internally Monitor. Monitor.TryEnter has timeout</li>
+<li><cite>Mutex</cite> operates across AppDomain and process (unlike Monitor/ lock) but is very slow (derived from WaitHandle, and a win32 wrapper)
+
+<div class="code">
+<p><span style="color: #2b91af;">Mutex</span> m = <span style="color: blue;">new</span> <span style="color: #2b91af;">Mutex</span>();<br />
+<span style="color: green;">//or try Mutex.OpenExisting("NamedMutex");</span><br />
+<span style="color: blue;">if</span> (m.WaitOne(1000, <span style="color: blue;">false</span>))<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">try</span> { <span style="color: green;">/*work*/</span> }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">finally</span> { m.ReleaseMutex(); }<br />
+}</p>
+</div>
+</li>
+<li><cite>Semaphore</cite> class has a number of slots which can be filled (you can ,Release(numSlots)). 2.0</li>
+<li><a href="http://msdn.microsoft.com/en-us/library/system.threading.readerwriterlock.aspx">ReaderWriterLock</a> (and from 3.5 <a href="http://msdn.microsoft.com/en-us/library/system.threading.readerwriterlockslim.aspx">ReaderWriterLockSlim</a>) allows mutiple reads but makes writes exclusive.
+<div class="code">
+<p><span style="color: green;">// Declare at the class level to be visible to all threads</span><br />
+<span style="color: blue;">static</span> <span style="color: #2b91af;">ReaderWriterLock</span> rwl = <span style="color: blue;">new</span> <span style="color: #2b91af;">ReaderWriterLock</span>();<br />
+<span style="color: blue;">static</span> <span style="color: blue;">int</span> resource = 0;<br />
+<span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> Execute(<span style="color: blue;">int</span> timeOut, <span style="color: blue;">int</span> to)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//try</span><br />
+&nbsp;&nbsp;&nbsp; rwl.AcquireReaderLock(timeOut);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">int</span> read = resource;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//upgrading- save the cookie</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">LockCookie</span> cookie = rwl.UpgradeToWriterLock(to);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//try</span><br />
+&nbsp;&nbsp;&nbsp; resource++;<span style="color: green;">//work</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//finally</span><br />
+&nbsp;&nbsp;&nbsp; rwl.DowngradeFromWriterLock(<span style="color: blue;">ref</span> cookie);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//finally</span><br />
+&nbsp;&nbsp;&nbsp; rwl.ReleaseLock();<br />
+}</p>
+</div>
+
+</li>
+<li><a href="http://msdn.microsoft.com/en-us/library/system.threading.eventwaithandle.aspx">EventWaitHandle</a> (AutoEvent and ManualEvent). An event is unsignalled by one thread (.Set) and the others are blocked (on .WaitOne(timeout)) until it is signalled (.Reset). ManualEvent is signalled until manually Reset, AutoEvent is unsignalled as soon as the next thread (on WaitOne) picks it up</li>
+</ul>
+<h4>Asynchronous Patterns</h4>
+
+<p>The async patterns are wait (waithandle or EndInvoke), polling (IsCompleted) and Callback</p>
+<div class="code">
+<p><span style="color: blue;">protected</span> <span style="color: blue;">void</span> Main()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; Literal1.Text = <span style="color: #a31515;">"Load= "</span> + <span style="color: #2b91af;">Thread</span>.CurrentThread.ManagedThreadId;<br />
+&nbsp;&nbsp;&nbsp; Literal2.Text = <span style="color: #a31515;">"Begin/End= "</span> + TestAsync();<br />
+&nbsp;&nbsp;&nbsp; Literal3.Text = <span style="color: #a31515;">"Load= "</span> + <span style="color: #2b91af;">Thread</span>.CurrentThread.ManagedThreadId;<br />
+&nbsp;&nbsp;&nbsp; Literal4.Text = <span style="color: #a31515;">"Polling= "</span> + TestAsyncPolling();<br />
+&nbsp;&nbsp;&nbsp; Literal5.Text = <span style="color: #a31515;">"Load= "</span> + <span style="color: #2b91af;">Thread</span>.CurrentThread.ManagedThreadId;<br />
+&nbsp;&nbsp;&nbsp; Literal6.Text = <span style="color: #a31515;">"WaitHandle= "</span> + TestAsyncWaitHandle();<br />
+&nbsp;&nbsp;&nbsp; TestAsyncCallback();<br />
+&nbsp;&nbsp;&nbsp; Literal7.Text = <span style="color: #a31515;">"Callback= "</span> + _result;<br />
+&nbsp;&nbsp;&nbsp; Literal8.Text = <span style="color: #a31515;">"Load= "</span> + <span style="color: #2b91af;">Thread</span>.CurrentThread.ManagedThreadId;<br />
+}<br />
+&nbsp;<br />
+<span style="color: green;">//a normal method doing something slow</span><br />
+<span style="color: blue;">public</span> <span style="color: blue;">int</span> SlowMethod(<span style="color: blue;">int</span> sleep)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Thread</span>.Sleep(sleep);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: #2b91af;">Thread</span>.CurrentThread.ManagedThreadId;<br />
+}<br />
+&nbsp;<br />
+<span style="color: green;">//delegate with same signature</span><br />
+<span style="color: blue;">public</span> <span style="color: blue;">delegate</span> <span style="color: blue;">int</span> <span style="color: #2b91af;">SlowMethodDelegate</span>(<span style="color: blue;">int</span> sleep);<br />
+&nbsp;<br />
+<span style="color: blue;">public</span> <span style="color: blue;">int</span> TestAsync()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">SlowMethodDelegate</span> dg = SlowMethod; <span style="color: green;">//create delegate</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">IAsyncResult</span> ar = dg.BeginInvoke(2000, <span style="color: blue;">null</span>, <span style="color: blue;">null</span>); <span style="color: green;">//start</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Thread</span>.Sleep(1000); <span style="color: green;">//possibly do other work</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> dg.EndInvoke(ar); <span style="color: green;">//block until done</span><br />
+}<br />
+&nbsp;<br />
+<span style="color: blue;">public</span> <span style="color: blue;">int</span> TestAsyncPolling()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">SlowMethodDelegate</span> dg = SlowMethod; <span style="color: green;">//create delegate</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">IAsyncResult</span> ar = dg.BeginInvoke(2000, <span style="color: blue;">null</span>, <span style="color: blue;">null</span>); <span style="color: green;">//start</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">while</span> (!ar.IsCompleted)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Thread</span>.Sleep(500); <span style="color: green;">//possibly do other work</span><br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> dg.EndInvoke(ar);<br />
+}<br />
+&nbsp;<br />
+<span style="color: blue;">public</span> <span style="color: blue;">int</span> TestAsyncWaitHandle()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">SlowMethodDelegate</span> dg = SlowMethod; <span style="color: green;">//create delegate</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">IAsyncResult</span> ar = dg.BeginInvoke(2000, <span style="color: blue;">null</span>, <span style="color: blue;">null</span>); <span style="color: green;">//start</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Thread</span>.Sleep(500); <span style="color: green;">//possibly do other work</span><br />
+&nbsp;&nbsp;&nbsp; ar.AsyncWaitHandle.WaitOne(); <span style="color: green;">//block until done</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> dg.EndInvoke(ar);<br />
+}<br />
+&nbsp;<br />
+<span style="color: blue;">private</span> <span style="color: blue;">int</span> _result;<br />
+<span style="color: blue;">public</span> <span style="color: blue;">void</span> TestAsyncCallback()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">SlowMethodDelegate</span> dg = SlowMethod; <span style="color: green;">//create delegate</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">IAsyncResult</span> ar = dg.BeginInvoke(2000, CallBack, dg); <span style="color: green;">//start</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//end</span><br />
+}<br />
+<span style="color: blue;">private</span> <span style="color: blue;">void</span> CallBack(<span style="color: #2b91af;">IAsyncResult</span> ar)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">SlowMethodDelegate</span> dg = (<span style="color: #2b91af;">SlowMethodDelegate</span>) ar.AsyncState; <span style="color: green;">//our delegate back</span><br />
+&nbsp;&nbsp;&nbsp; _result = dg.EndInvoke(ar);<br />
+}</p>
+</div>
+
+
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

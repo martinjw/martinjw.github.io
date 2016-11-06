@@ -1,0 +1,148 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP Routing</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="aspmvc.html">Asp MVC</a></li>
+<li><a href="mvc/mvccontrollers.html">MVC Controllers</a></li>
+<li><a href="mvc/mvcactions.html">MVC Actions</a></li>
+<li><a href="asprouting.html">Asp Routing</a></li>
+<li><a href="aspmvcview.html">Asp MVC Views</a></li>
+<li><a href="mvc/htmlhelpers.html">HTML Helpers</a></li>
+<li><a href="mvc/bundles.html">Bundling</a></li>
+<li><a href="mvc/errors.html">MVC Errors</a></li>
+<li><a href="mvc/mvcvalidation.html">MVC Validation</a></li>
+<li><a href="mvc/simplepaging.html">Simple Paging</a></li>
+<li><a href="mvc/webapi.html">WebApi</a></li>
+<li><a href="mvc/webapiformat.html">WebApi Formatting</a></li>
+<li><a href="mvc/webapiclient.html">WebApi HttpClient</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>ASP Routing</h2>
+<p><a href="http://msdn.microsoft.com/en-us/library/dd535618.aspx">MSDN</a>, <a href="http://www.asp.net/mvc/tutorials/asp-net-mvc-routing-overview-cs">Asp.Net</a>. For debugging, <cite>Install-Package <a href="http://haacked.com/archive/2008/03/13/url-routing-debugger.aspx">routedebugger</a></cite></p>
+<p>In .net 4+ with a <a href="http://support.microsoft.com/kb/980368">Microsoft IIS patch</a> will make routing work, but otherwise you may have to set runAllManagedModulesForAllRequests (NB: this may mean static .css and .js are authenticated, and the login page becomes a little plain!).</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">system.webServer</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">modules</span><span style="color: blue;"> </span><span style="color: red;">runAllManagedModulesForAllRequests</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;"> /&gt;</span></p>
+</div>
+
+<h3>In Webforms</h3>
+<p>See <a href="http://msdn.microsoft.com/en-us/library/cc668177.aspx">MSDN</a></p>
+<h3>In MVC</h3>
+<p>Routes are defined in from global.asax Application_start: RegisterRoutes(<span style="color: #2b91af;">RouteTable</span>.Routes);</p>
+<p>Mvc uses the route conventions of {controller} and {action}, with defaults as required.</p>
+<div class="code">
+<p>routes.MapRoute(<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #a31515;">"Yearly"</span>,<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #a31515;">"{year}/{controller}/{action}/{id}"</span>,<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> { year = <span style="color: #2b91af;">DateTime</span>.Now.Year, controller = <span style="color: #a31515;">"Home"</span>, action = <span style="color: #a31515;">"IndexByYear"</span>, id = <span style="color: #2b91af;">UrlParameter</span>.Optional }<br />
+);</p>
+</div>
+<p>...will map http://site/1983/Products/display/123 to ProductsController (implementing IController) method Display, passing in parameter with name id=123 and year with default 2010.</p>
+<h4>Route Defaults and Constraints</h4>
+<div class="code">
+<p>routes.MapRoute(<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #a31515;">"Yearly"</span>,<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #a31515;">"{year}/{controller}/{action}/{id}"</span>,<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> { year = <span style="color: #2b91af;">DateTime</span>.Now.Year, controller = <span style="color: #a31515;">"Home"</span>, action = <span style="color: #a31515;">"IndexByYear"</span>, id = <span style="color: #2b91af;">UrlParameter</span>.Optional },<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> { year = <span style="color: #a31515;">@"\d{4}"</span> });</p>
+</div>
+
+<h4>Default/ 404 routes</h4>
+<p>Remember this should always be the last route.</p>
+<div class="code">
+<p>routes.MapRoute(<span style="color: #a31515;">"Error"</span>,<br /> 
+&nbsp;&nbsp;&nbsp; <span style="color: #a31515;">"{*url}"</span>,<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> { controller = <span style="color: #a31515;">"Error"</span>, action = <span style="color: #a31515;">"404"</span> }<br />
+    );
+</p></div>
+
+<h4>*Catchalls</h4>
+<div class="code">
+<p><span style="color: green;">//mydomain/Product/Index/A/Extra/More will invoke action </span><br/>
+<span style="color: green;">// public ActionResult Index(string id, string catchall)</span><br/>
+<span style="color: green;">// id = "A" and catchall = "Extra/More".</span><br/>
+routes.MapRoute(<span style="color: #a31515;">"MyCatchallRoute"</span>, <br/>
+&nbsp;&nbsp;&nbsp; <span style="color: #a31515;">"{controller}/{action}/{id}/{*catchall}"</span>,<br/>
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> { controller = <span style="color: #a31515;">"Home"</span>, action = <span style="color: #a31515;">"Index"</span>, id = <span style="color: #2b91af;">UrlParameter</span>.Optional });</p>
+</div>
+
+<h4>Duplicate controller names</h4>
+<p>If you have two "HomeControllers" in different namespaces you have a YSOD error. So add two routes and specify the namespaces (the namespace string array is not a hierarchy)</p>
+<div class="code">
+<p>routes.MapRoute(<span style="color: #a31515;">"MyRoute"</span>, <span style="color: #a31515;">"{controller}/{action}/{id}"</span>,<br/>
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> { controller = <span style="color: #a31515;">"Home"</span>, action = <span style="color: #a31515;">"Index"</span>, id = <span style="color: #2b91af;">UrlParameter</span>.Optional },<br/>
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span>[] { <span style="color: #a31515;">"MyPriorityNamespace.Controllers"</span> });<br/>
+&nbsp;</p>
+</div>
+<p>To stop searches (first match only)</p>
+<div class="code">
+<p><span style="color: green;">//To stop searching all namespaces</span><br/>
+myRoute.DataTokens[<span style="color: #a31515;">"UseNamespaceFallback"</span>] = <span style="color: blue;">false</span>;<br/>
+&nbsp;</p>
+</div>
+
+
+
+<h3>In controllers</h3>
+<p>Controllers have a RedirectToAction() method.</p>
+<h3>In Views</h3>
+<p>use Html.ActionLink or Html.RouteLink</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: maroon;">li</span><span style="color: blue;">&gt;&lt;</span><span style="color: maroon;">a</span> <span style="color: red;">href</span><span style="color: blue;">="/Home/About"&gt;</span>Go to About (manual link)<span style="color: blue;">&lt;/</span><span style="color: maroon;">a</span><span style="color: blue;">&gt;&lt;/</span><span style="color: maroon;">li</span><span style="color: blue;">&gt;</span><br />
+<p><span style="color: blue;">&lt;</span><span style="color: maroon;">li</span><span style="color: blue;">&gt;&lt;</span><span style="color: maroon;">a</span> <span style="color: red;">href</span><span style="color: blue;">="</span><span style="background: yellow;">@</span>Url.ActionLink(<span style="color: #a31515;">"About"</span>, <span style="color: #a31515;">"Home"</span>)<span style="color: blue;">"&gt;</span>Go to About (URL link)<span style="color: blue;">&lt;/</span><span style="color: maroon;">a</span><span style="color: blue;">&gt;&lt;/</span><span style="color: maroon;">li</span><span style="color: blue;">&gt;</span><br />
+</div>
+
+
+<p>ActionLinks</p>
+<div class="code">
+<span style="color: blue;">&lt;</span><span style="color: maroon;">li</span><span style="color: blue;">&gt;</span><span style="background: yellow;">@</span>Html.ActionLink(<span style="color: #a31515;">"Go to About"</span>, <span style="color: #a31515;">"About"</span>)<span style="color: blue;">&lt;/</span><span style="color: maroon;">li</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: maroon;">li</span><span style="color: blue;">&gt;</span>In another controller<span style="color: blue;">&lt;/</span><span style="color: maroon;">li</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: maroon;">li</span><span style="color: blue;">&gt;</span><span style="background: yellow;">@</span>Html.ActionLink(<span style="color: #a31515;">"Go to LogOn"</span>, <span style="color: #a31515;">"LogOn"</span>, <span style="color: #a31515;">"Account"</span>)<span style="color: blue;">&lt;/</span><span style="color: maroon;">li</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: maroon;">li</span><span style="color: blue;">&gt;</span>Below renders as /Home/Details/2 . The final null is important otherwise you get /Home/Details?Length=4<span style="color: blue;">&lt;/</span><span style="color: maroon;">li</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: maroon;">li</span><span style="color: blue;">&gt;</span><span style="background: yellow;">@</span>Html.ActionLink(<span style="color: #a31515;">"Go to Details with parameter"</span>, <span style="color: #a31515;">"Details"</span>, <span style="color: #a31515;">"Home"</span>, <span style="color: blue;">new</span> { id = 2 }, <span style="color: blue;">null</span>)<span style="color: blue;">&lt;/</span><span style="color: maroon;">li</span><span style="color: blue;">&gt;</span></p>
+</div>
+<p>RouteLinks</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: maroon;">li</span><span style="color: blue;">&gt;</span><span style="background: yellow;">@</span>Html.RouteLink(<span style="color: #a31515;">"Go to Logon"</span>, <span style="color: blue;">new</span> { controller = <span style="color: #a31515;">"Account"</span>, action = <span style="color: #a31515;">"Logon"</span> })<span style="color: blue;">&lt;/</span><span style="color: maroon;">li</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: maroon;">li</span><span style="color: blue;">&gt;</span><span style="background: yellow;">@</span>Html.RouteLink(<span style="color: #a31515;">"Use named route"</span>,<span style="color: #a31515;">"SpecialRoute"</span>)<span style="color: blue;">&lt;/</span><span style="color: maroon;">li</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: maroon;">li</span><span style="color: blue;">&gt;</span>Areas<span style="color: blue;">&lt;/</span><span style="color: maroon;">li</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: maroon;">li</span><span style="color: blue;">&gt;</span><span style="background: yellow;">@</span>Html.ActionLink(<span style="color: #a31515;">"Go to Admin area"</span>, <span style="color: #a31515;">"Index"</span>, <span style="color: #a31515;">"User"</span>, <span style="color: blue;">new</span> { area = <span style="color: #a31515;">"Admin"</span> }, <span style="color: blue;">null</span>)<span style="color: blue;">&lt;/</span><span style="color: maroon;">li</span><span style="color: blue;">&gt;</span></p>
+</div>
+<h4>WebAPI</h4>
+<p>WebApi routes in javascript (assuming default route name)</p>
+<div class="code">
+<p><span style="color: blue;">var</span> url = <span style="color: #a31515;">'</span><span style="background: yellow;">@</span>Url.HttpRouteUrl(<span style="color: #a31515;">"DefaultApi"</span>, <span style="color: blue;">new</span> { controller=<span style="color: #a31515;">"Data"</span>} )<span style="color: #a31515;">'</span>;</p>
+</div>
+<p>WebApi routes via html anchor (assuming default route name). Note the "httproute=true".</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: maroon;">p</span><span style="color: blue;">&gt;</span><span style="background: yellow;">@</span>Html.RouteLink(<span style="color: #a31515;">"Call my api"</span>, <span style="color: #a31515;">"DefaultApi"</span>, <span style="color: blue;">new</span> { controller = <span style="color: #a31515;">"Values"</span>, httproute= <span style="color: blue;">true</span>, id = 1 }, <span style="color: blue;">new</span> { @class = <span style="color: #a31515;">"btn btn-info"</span> }).<span style="color: blue;">&lt;/</span><span style="color: maroon;">p</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+
+<h3>Areas</h3>
+<p>AreaRegistration happens before other routes, so the areaName (first part) is matched before the other routes. Remember for actions to areas to specify the area (or "" for top level).</p>
+<div class="code">
+<p><span style="background: yellow;">@</span>Html.ActionLink(<span style="color: #a31515;">"Go to Admin area"</span>, <span style="color: #a31515;">"Index"</span>, <span style="color: #a31515;">"User"</span>, <span style="color: blue;">new</span> { area = <span style="color: #a31515;">"Admin"</span> }, <span style="color: blue;">null</span>)<br/>
+<span style="background: yellow;">@</span>Html.ActionLink(<span style="color: #a31515;">"Go to Home"</span>, <span style="color: #a31515;">"Index"</span>, <span style="color: #a31515;">"Home"</span>, <span style="color: blue;">new</span> { area = <span style="color: #a31515;">""</span> }, <span style="color: blue;">null</span>)</p>
+</div>
+
+</div>
+<div class="Footer">
+
+</div></body>
+</html>

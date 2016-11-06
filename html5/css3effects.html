@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>CSS3 Visual Effects</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+<link rel="stylesheet" type="text/css" href="../js/prettify.css" />
+<script type="text/javascript" src="../utilities.js">
+</script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js">
+</script>
+<style type="text/css">
+pre {
+max-height: 14em;
+}
+
+#textContainer {
+max-width: 400px;
+background-color: AntiqueWhite;
+text-align:justify;
+-webkit-hyphens: auto;
+-moz-hyphens: auto;
+-ms-hyphens: auto;
+hyphens: auto;
+}
+#textShadow {
+text-shadow: #333 0.5em 0.5em 0.8em;
+background-color: AntiqueWhite;
+padding: 5px;
+box-shadow: #333 0.5em 0.5em 0.8em;
+}
+#gradient {
+width:200px;
+height:60px;
+background: linear-gradient(to bottom right, orange, white);
+}
+#radialGradient {
+width:200px;
+height:60px;
+background: radial-gradient(yellow, red);
+}
+#transition {
+width:200px;
+height:60px;
+background-color: AntiqueWhite;
+color:red;
+-webkit-transition: background-color 1s, color 1s, width 3s 1s;
+transition: background-color 1s, color 1s, width 3s 1s;
+}
+#transition:hover {
+width:250px;
+background-color: aliceblue;
+color:orange;
+-webkit-transition: background-color 1s, color 1s, width 3s 1s;
+transition: background-color 1s, color 1s, width 3s 1s;
+}
+#animation {
+width:100px;
+height:60px;
+background-color: teal;
+border-radius: 50px;
+}
+.animated {
+-webkit-animation-name: moveIt;
+-webkit-animation-duration: 3s;
+-webkit-animation-direction: alternate;
+-webkit-animation-iteration-count: infinite;
+
+animation-name: moveIt;
+animation-duration: 3s;
+animation-direction: alternate;
+animation-iteration-count: infinite;
+}
+@keyframes moveIt {
+  from {    margin-left: 0%;  }
+ 
+  to {    margin-left: 60%;  }
+}
+
+#transform {
+width:100px;
+height:60px;
+background-color: teal;
+-webkit-transform: rotate(15deg) ;
+transform: rotate(15deg);
+transform-origin: bottom right;
+opacity: 0.7;
+}
+</style>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../index.html">Home &gt;</a></li>
+<li><a href="index.html">HTML5</a></li>
+<li><a href="forms.html">Forms</a></li>
+<li><a href="offline.html">AppCache</a></li>
+<li><a href="storage.html">LocalStorage and IndexedDB</a></li>
+<li><a href="webworkers.html">WebWorkers</a></li>
+<li><a href="fileapi.html">File API</a></li>
+<li><a href="canvas.html">Canvas</a></li>
+<li><a href="css3effects.html">CSS3 Visual Effects</a></li>
+<li><a href="css3layout.html">CSS3 Layout</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>CSS3 Visual Effects</h2>
+
+<div class="alert">
+Written September 2012- specs and browser support will change!
+</div>
+
+<h3>Text Effects</h3>
+<ul>
+<li>hyphens: auto | none | manual. Hyphens is prefixed (-webkit-, -moz-, -ms-). NB: Chrome has no localized dictionaries, so cannot hyphenate properly.<br/>
+Older syntax for breaking at any character: word-break: break-all;</li>
+<li><a href="https://developer.mozilla.org/en-US/docs/CSS/hyphens">MDN Hyphens</a></li>
+<li><a href="http://msdn.microsoft.com/en-us/library/ie/hh673564(v=vs.85).aspx">MSDN</a></li>
+</ul>
+<div id="textContainer">
+This property controls whether hyphenation is allowed to create more soft wrap opportunities within a line of text. Values have the following meanings: ‘none’ Words are not hyphenated, even if characters inside the word explicitly define hyphenation opportunities. ‘manual’ Words are only hyphenated where there are characters inside the word that explicitly suggest hyphenation opportunities (&amp;shy;). ‘auto’ Words may be broken at appropriate hyphenation points either as determined by hyphenation characters inside the word or as determined automatically by a language-appropriate hyphenation resource. Conditional hyphenation characters inside a word, if present, take priority over automatic resources when determining hyphenation opportunities within the word.
+</div>
+<pre class="prettyprint">
+/* break according to localized dictionaries */
+-webkit-hyphens: auto;
+-moz-hyphens: auto;
+-ms-hyphens: auto;
+hyphens: auto;
+</pre>
+<p><a href="http://www.w3.org/Style/Examples/007/text-shadow">Text-shadow</a> is like box-shadow, a color and three lengths: Xoffset Yoffset blur (optional)<br/>
+You can comma delimit multiple shadows.</p>
+<p id="textShadow">text-shadow: #333 0.5em 0.5em 0.8em;</p>
+
+<h3>Gradients</h3>
+<ul>
+<li>On background-image. </li>
+<li><a href="https://developer.mozilla.org/en-US/docs/CSS/Using_CSS_gradients">MDN</a></li>
+<li><a href="http://msdn.microsoft.com/en-us/library/ie/hh673532(v=vs.85).aspx">MSDN</a></li>
+<li>"to" syntax is not supported by Chrome (there is an obsolete "from" syntax)</li>
+</ul>
+<div id="gradient">
+background: linear-gradient(to bottom right, orange, white);
+</div>
+<pre class="prettyprint">
+background-image: linear-gradient( 120deg, orange, white);
+background: linear-gradient(to bottom right, orange, white);
+</pre>
+<div id="radialGradient">
+background: radial-gradient(yellow, red);
+</div>
+<pre class="prettyprint">
+/* 
+shape: [circle] | ellipse
+*at* origin: [center] | position eg 10% 40% 
+size:  [farthest-corner] | farthest-side etc (see docs)
+color-stops
+*/
+background: radial-gradient(orange, white);
+background-image: radial-gradient(farthest-corner circle at center orange, white);
+</pre>
+<h3>Transitions</h3>
+<ul>
+<li>Firefox, IE10 not prefixed; Chrome/Safari has -webkit-.</li>
+<li><a href="https://developer.mozilla.org/en-US/docs/CSS/Using_CSS_transitions">MDN</a></li>
+<li><a href="http://msdn.microsoft.com/en-us/library/ie/hh673535(v=vs.85).aspx">MSDN</a></li>
+<li>Can obvious be used for :hover animations, but also when changing css classes through javascript.</li>
+</ul>
+<div id="transition">
+transition: background-color 1s, color 1s, width 3s 1s;
+<br/>
+Click or hover
+</div>
+<script type="text/javascript">
+    $(function () {
+        $("#transition").click(function () {
+            $(this).css("transition", "background-color 1s, color 1s, width 3s 1s")
+        });
+    });
+</script>
+
+<pre class="prettyprint">
+transition-property: color;
+transition-duration: 5s;
+transition-delay: 1s;
+transition-timing-function: linear; /*ease*/
+</pre>
+
+<h3>Animations</h3>
+<ul>
+<li><a href="https://developer.mozilla.org/en-US/docs/CSS/Using_CSS_animations">MDN</a></li>
+<li><a href="http://msdn.microsoft.com/en-us/library/ie/hh673530(v=vs.85).aspx">MSDN</a></li>
+<li>Uses @keyframes (as %: 0%=from 100%=to)</li>
+</ul>
+<div id="animation">
+</div>
+<div><input type="button" value="Start animation" id="startAnimation" /></div>
+<script type="text/javascript">
+    $(function () {
+        $("#startAnimation").click(function () {
+            $("#animation").toggleClass("animated");
+        });
+    });
+</script>
+<pre class="prettyprint">
+.animated {
+animation-name: moveIt;
+animation-duration: 3s;
+animation-direction: alternate;
+animation-iteration-count: infinite;
+}
+@keyframes moveIt {
+  from {  margin-left: 0%;  }
+  to {    margin-left: 60%; }
+}
+</pre>
+
+
+<h3>Transforms</h3>
+<ul>
+<li>Chrome/Safari/IE9 are prefixed, Firefox and IE10 are not prefixed</li>
+<li><a href="https://developer.mozilla.org/en-US/docs/CSS/Using_CSS_transforms">MDN</a></li>
+<li><a href="http://msdn.microsoft.com/en-us/library/ie/hh673529(v=vs.85).aspx">MSDN</a></li>
+<li>The different transforms (and perspective for 3D) are complex, so use a <a href="http://www.css3maker.com/css3-transform.html">generator</a>.</li>
+</ul>
+<div id="transform">
+transform: rotate(15deg);
+transform-origin: bottom right;
+</div>
+<pre class="prettyprint">
+transform: rotate(15deg);
+transform-origin: bottom right;
+</pre>
+
+
+
+<div class="Footer"><script type="text/javascript" src="../js/prettify.js">
+</script>
+<script type="text/javascript">
+prettyPrint();
+</script>
+</div>
+</body>
+</html>

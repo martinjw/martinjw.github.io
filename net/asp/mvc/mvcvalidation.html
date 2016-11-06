@@ -1,0 +1,128 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP MVC Validation</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="../aspmvc.html">Asp MVC</a></li>
+<li><a href="mvccontrollers.html">MVC Controllers</a></li>
+<li><a href="mvcactions.html">MVC Actions</a></li>
+<li><a href="../asprouting.html">Asp Routing</a></li>
+<li><a href="../aspmvcview.html">Asp MVC Views</a></li>
+<li><a href="htmlhelpers.html">HTML Helpers</a></li>
+<li><a href="bundles.html">Bundling</a></li>
+<li><a href="errors.html">MVC Errors</a></li>
+<li><a href="mvcvalidation.html">MVC Validation</a></li>
+<li><a href="simplepaging.html">Simple Paging</a></li>
+<li><a href="webapi.html">WebApi</a></li>
+<li><a href="webapiformat.html">WebApi Formatting</a></li>
+<li><a href="webapiclient.html">WebApi HttpClient</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>ASP MVC Validation</h2>
+
+<h3>Config</h3>
+<p>In MVC 3+ it's on by default:</p>
+<div class="code">
+<p><span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><span style="color: red;">key</span><span style="color: blue;">=</span>"<span style="color: blue;">ClientValidationEnabled</span>"<span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><span style="color: red;">key</span><span style="color: blue;">=</span>"<span style="color: blue;">UnobtrusiveJavaScriptEnabled</span>"<span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;"> /&gt;</span></p>
+</div>
+
+<h3>Model</h3>
+<p>Use <a href="../dataannotations.html">Data Annotations</a> (Required, StringLength, RegularExpression, Range). NB: [DataType] is just a UI hint, it won't enforce numbers etc.</p>
+
+<h3>View Layout</h3>
+<p>For client side validation, you need jquery.validate.min.js (<a href="https://github.com/jzaefferer/jquery-validation">github for localizations</a>) and jquery.validate.unobtrusive.min.js. They are already installed (but update in Nuget).</p>
+<div class="code">
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: maroon;">script</span> <span style="color: red;">src</span><span style="color: blue;">="</span><span style="background: yellow;">@</span><span style="color: blue;">Url.Content("~/Scripts/jquery-1.7.2.min.js")"</span> <span style="color: red;">type</span><span style="color: blue;">="text/javascript"&gt;&lt;/</span><span style="color: maroon;">script</span><span style="color: blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: maroon;">script</span> <span style="color: red;">src</span><span style="color: blue;">="</span><span style="background: yellow;">@</span><span style="color: blue;">Url.Content("~/Scripts/jquery.validate.min.js")"</span> <span style="color: red;">type</span><span style="color: blue;">="text/javascript"&gt;&lt;/</span><span style="color: maroon;">script</span><span style="color: blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: maroon;">script</span> <span style="color: red;">src</span><span style="color: blue;">="</span><span style="background: yellow;">@</span><span style="color: blue;">Url.Content("~/Scripts/jquery.validate.unobtrusive.min.js")"</span> <span style="color: red;">type</span><span style="color: blue;">="text/javascript"&gt;&lt;/</span><span style="color: maroon;">script</span><span style="color: blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: maroon;">script</span> <span style="color: red;">src</span><span style="color: blue;">="</span><span style="background: yellow;">@</span><span style="color: blue;">Url.Content("~/Scripts/modernizr-2.5.3.js")"</span> <span style="color: red;">type</span><span style="color: blue;">="text/javascript"&gt;&lt;/</span><span style="color: maroon;">script</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+<div class="alert">
+<p>You can't put the Html.BeginForm() and <span style="background: yellow;">@</span>Html.ValidationSummary() in the _Layout.cshtml.<br/>
+It needs to be in the page view for unobtrusive validation to work. </p>
+</div>
+
+<h3>Views</h3>
+
+<div class="code">
+<p><span style="background: yellow;">@</span><span style="color: blue;">using</span> (Html.BeginForm()) {<br/>
+&nbsp;&nbsp;&nbsp; <span style="background: yellow;">@</span>Html.ValidationSummary()<br/>
+&nbsp;&nbsp;&nbsp; <span style="background: yellow;">@</span>Html.EditorForModel(Model)<br/>
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: maroon;">input</span> <span style="color: red;">type</span><span style="color: blue;">="submit"</span> <span style="color: red;">value</span><span style="color: blue;">="Save"/&gt;</span><br/>
+}</p>
+</div>
+
+<ul>
+<li><span style="background: yellow;">@</span>Html.ValidationSummary is just like the webforms validation summary.<br/>
+There's an overload which doesn't show property annotations: <span style="background: yellow;">@</span>Html.ValidationSummary(excludePropertyErrors:<span style="color: blue;">true</span>)
+<div class="alert">
+Html.ValidationSummary must be inside the form (and NOT in the _Layout)
+</div>
+</li>
+<li><span style="background: yellow;">@</span>Html.EditorForModel(Model) may be useful for simple models</li>
+<li><span style="background: yellow;">@</span>Html.EditorFor (or <span style="background: yellow;">@</span>Html.TextBoxFor etc) render the inputs with data attributes, which the unobtrusive javascript uses</li>
+<li><span style="background: yellow;">@</span>Html.ValidationMessageFor is just a placeholder for property validations (may duplicate <span style="background: yellow;">@</span>Html.ValidationSummary)</li>
+</ul>
+
+<h3>Controllers</h3>
+<div class="code">
+<p>[<span style="color: #2b91af;">HttpPost</span>]<br />
+<span style="color: blue;">public</span> <span style="color: #2b91af;">ActionResult</span> Edit(<span style="color: #2b91af;">CategoryModel</span> category)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!ModelState.IsValid)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+ <span style="color: blue;">return</span> View(<span style="color: #a31515;">"Edit"</span>, category); <span style="color: green;">//redisplay</span><br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; _repository.Save(category); <span style="color: green;">//save it</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> RedirectToAction(<span style="color: #a31515;">"Index"</span>);<br />
+}</p>
+</div>
+<p>You can add model errors with ModelState.AddModelError(key, string) (fully model-level errors have key: "")</p>
+<div class="code">
+<p>ModelState.AddModelError(key:<span style="color: #a31515;">""</span>, errorMessage:<span style="color: #a31515;">"Invalid"</span>);</p>
+</div>
+
+
+<h3>Custom validators</h3>
+<ul>
+<li><a href="http://bradwilson.typepad.com/blog/2010/10/mvc3-unobtrusive-validation.html">Brad Wilson MVC 3 intro</a></li>
+<li><a href="../dataannotations.html">Data Annotations</a>: write a ValidationAttribute and override IsValid(value, context)</li>
+<li>Also implement IClientValidable GetClientValidationRules(modelMetadata, context).<br/>
+You return (an enumerable of) ModelClientValidationRule, which has an ErrorMessage (use metadata.GetDisplayName()), ValidationParameters (inputs) and ValidationType (js method name)</li>
+<li>Javascript adaptor (one of add, addBool, addSingleValue, addMinMax): <br/>
+<div class="code">
+<p> $.validator.unobtrusive.adapters.<br/>
+ &nbsp;&nbsp;&nbsp; addBool(<span style="color: maroon;">"validcreditcard"</span>);</p>
+</div>
+</li>
+<li><a href="http://docs.jquery.com/Plugins/Validation/Validator/addMethod">Add the javascript validator</a>: <br/>
+<div class="code">
+<p>
+ $.validator.addMethod(<span style="color: maroon;">"validcreditcard"</span>,<br/>
+ &nbsp;&nbsp;&nbsp; <span style="color: blue;">function</span> (value, element) {<br/>
+ &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> !isNaN(parseInt(value, 10));<br/>
+ &nbsp;&nbsp;&nbsp; });</p>
+</div></li>
+</ul>
+
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

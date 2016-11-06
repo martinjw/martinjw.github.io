@@ -1,0 +1,166 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Entity Framework Code First Validation</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../io.html">Data &gt;</a></li>
+<li><a href="ef.html">Entity Framework &gt;</a></li>
+<li><a href="efcodefirst.html">EF Code First</a></li>
+<li><a href="efcodefirstvalidation.html">Validation</a></li>
+<li><a href="efcodefirstdb.html">Databases</a></li>
+<li><a href="efcodefirstmapping.html">Mapping</a></li>
+<li><a href="efcodefirstmigrations.html">Migrations</a></li>
+<li><a href="efcodefirstlogging.html">Logging</a></li>
+<li><a href="efcodefirstconfig.html">Configuration</a></li>
+<li><a href="efcodefirstoptimize.html">Optimization</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Entity Framework Code First Validation</h2>
+
+<p>You can turn off validation completely (for instance, if an entity has already been validated).</p>
+<div class="code">
+<p><span style="color: green;">//default to validate on save</span><br />
+context.Configuration.ValidateOnSaveEnabled = <span style="color: blue;">false</span>;</p>
+</div>
+
+<h3>Validation Rules</h3>
+<p>Use <a href="../asp/dataannotations.html">DataAnnotations</a>:</p>
+<div class="code">
+<p>[<span style="color: #2b91af;">Required</span>, <span style="color: #2b91af;">StringLength</span>(50)]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">string</span> LastName { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }</p>
+</div>
+<p>Or fluent mapping:</p>
+<div class="code">
+<p><span style="color: blue;">protected</span> <span style="color: blue;">override</span> <span style="color: blue;">void</span> OnModelCreating(<span style="color: #2b91af;">DbModelBuilder</span> modelBuilder)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; modelBuilder<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .Entity&lt;<span style="color: #2b91af;">Person</span>&gt;()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .Property(p =&gt; p.LastName).HasMaxLength(50).IsRequired();</p>
+</div>
+<p>Or <a href="http://msdn.microsoft.com/en-us/library/system.componentmodel.dataannotations.ivalidatableobject.aspx">IValidatableObject</a> (or IDataErrorInfo).</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">Customer</span> : <span style="color: #2b91af;">IValidatableObject</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">int</span> Id { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">string</span> FirstName { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: #2b91af;">IEnumerable</span>&lt;<span style="color: #2b91af;">ValidationResult</span>&gt; Validate(<span style="color: #2b91af;">ValidationContext</span> validationContext)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> results = <span style="color: blue;">new</span> <span style="color: #2b91af;">List</span>&lt;<span style="color: #2b91af;">ValidationResult</span>&gt;();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (FirstName.Contains(<span style="color: #a31515;">&quot;\n&quot;</span>))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; results.Add(<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">ValidationResult</span>(<span style="color: #a31515;">&quot;Newline character is illegal&quot;</span>,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span>[] { <span style="color: #a31515;">&quot;FirstName&quot;</span> }));<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> results;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+<h3>Valildate In DbContext</h3>
+<p>The context has two extension points into validation. ValidateEntity allows custom validation to be added:</p>
+<div class="code">
+<p><span style="color: blue;">protected</span> <span style="color: blue;">override</span> <span style="color: #2b91af;">DbEntityValidationResult</span> ValidateEntity(<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">DbEntityEntry</span> entityEntry, <br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">IDictionary</span>&lt;<span style="color: blue;">object</span>, <span style="color: blue;">object</span>&gt; items)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//do the base DataAnnotations/fluent validation mapping</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> result = <span style="color: blue;">base</span>.ValidateEntity(entityEntry, items);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//do additional validation for customer</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> customer = entityEntry.Entity <span style="color: blue;">as</span> <span style="color: #2b91af;">Customer</span>;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//could be added or updated (change ShouldValidateEntity to include deleted)</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (entityEntry.State == <span style="color: #2b91af;">EntityState</span>.Added &amp;&amp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; customer != <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (customer.FirstName.Contains(<span style="color: #a31515;">&quot;\t&quot;</span>))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; result.ValidationErrors.Add(<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">DbValidationError</span>(<span style="color: #a31515;">&quot;LastName&quot;</span>, <span style="color: #a31515;">&quot;Illegal character&quot;</span>));<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> result;<br />
+}</p>
+</div>
+
+<p>ShouldValidateEntity is a simple boolean to add/exclude entities for validation.</p>
+<div class="code">
+<p><span style="color: blue;">protected</span> <span style="color: blue;">override</span> <span style="color: blue;">bool</span> ShouldValidateEntity(<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">DbEntityEntry</span> entityEntry)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (entityEntry.Entity <span style="color: blue;">is</span> <span style="color: #2b91af;">Employee</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">false</span>; <span style="color: green;">//don't validate employees</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (entityEntry.Entity <span style="color: blue;">is</span> <span style="color: #2b91af;">Customer</span> &amp;&amp; entityEntry.State == <span style="color: #2b91af;">EntityState</span>.Deleted)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">true</span>; <span style="color: green;">//validate deleted customers</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//default: validate all added and updated entities</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">base</span>.ShouldValidateEntity(entityEntry);<br />
+}</p>
+</div>
+
+
+
+
+<h3>Validate OnSave vs On Demand</h3>
+<p>You can turn on and off validation on save.</p>
+<div class="code">
+<p><span style="color: green;">//default to validate on save</span><br />
+context.Configuration.ValidateOnSaveEnabled = <span style="color: blue;">false</span>;</p>
+</div>
+<p>For OnSave (default) you'll get a DbEntityValidationException:</p>
+<div class="code">
+<p><span style="color: blue;">using</span> (<span style="color: blue;">var</span> context = <span style="color: blue;">new</span> <span style="color: #2b91af;">DomainContext</span>())<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">try</span><br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> newEmployee = <span style="color: blue;">new</span> <span style="color: #2b91af;">Employee</span> { LastName = <span style="color: #a31515;">&quot;Smith&quot;</span> };<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; context.Employees.Add(newEmployee);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; context.SaveChanges();<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//need a reference to System.Data (System.Data.Entity.Validation)</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">catch</span> (<span style="color: #2b91af;">DbEntityValidationException</span> entityValidationException)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">foreach</span> (<span style="color: blue;">var</span> result <span style="color: blue;">in</span> entityValidationException.EntityValidationErrors)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//the entity</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Console</span>.WriteLine(result.Entry.Entity.ToString());<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">foreach</span> (<span style="color: blue;">var</span> error <span style="color: blue;">in</span> result.ValidationErrors)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Console</span>.WriteLine(error.PropertyName + <span style="color: #a31515;">&quot; &quot;</span> + error.ErrorMessage);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">throw</span>;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+<p>For OnDemand, you can do for all tracked entities (context), a specific entity or a specific property.</p>
+<div class="code">
+<p><span style="color: green;">//validate all context</span><br />
+<span style="color: blue;">var</span> allResults = context.GetValidationErrors();<br />
+<span style="color: green;">//validate entity</span><br />
+<span style="color: blue;">var</span> result = context.Entry(newEmployee).GetValidationResult();<br />
+<span style="color: green;">//validate property</span><br />
+<span style="color: blue;">var</span> errors = context.Entry(newEmployee).Property(x =&gt; x.LastName)<br />
+&nbsp;&nbsp;&nbsp; .GetValidationErrors();</p>
+</div>
+
+
+ 
+ </div>
+<div class="Footer"></div>
+</body>
+</html>

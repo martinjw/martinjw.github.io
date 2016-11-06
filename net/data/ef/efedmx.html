@@ -1,0 +1,297 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Entity Framework Database/Model First</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../io.html">Data &gt;</a></li>
+<li><a href="../old.html">Old ORMs  &gt;</a></li>
+<li><a href="../linq2sql.html">Linq2Sql</a></li>
+<li><a href="efedmx.html">EF data/model first</a></li>
+<li><a href="../wcfds.html">WCF Data Services</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Entity Framework Database/Model First</h2>
+<p>See <a href="efcodefirst.html">EF Code First</a></p>
+<h3>Links</h3>
+<ul>
+<li><a href="http://www.asp.net/entity-framework/tutorials">Asp.Net tutorials</a></li>
+<li><a href="http://msdn.microsoft.com/en-us/library/bb399572.aspx">MSDN</a></li>
+<li><a href="http://code.msdn.microsoft.com/EFProviderWrappers">Provider wrappers for logging/caching</a> (or use Ayende's EF Profiler)</li>
+</ul>
+<h3>General</h3>
+<p>Add New Item - <cite>ADO.NET Entity Data Model</cite></p>
+<p>Uses a EDM (Entity Data Model) comprising conceptional (csdl), store (ssdl) and mapping (msl) xml.</p>
+<ul>
+<li>Database first: like Linq2Sql</li>
+<li>Model First: Designer, then use Generate Database wizard from designer.<ul>
+<li>In code: context.CreateDatabase() and context.CreateDatabaseScript()</li>
+</ul><ul>
+<li>EF 4.0 has poco support (EDMX file/mapping with POCOs)<ul>
+<li>EDMX designer right click - Add Code Generation Item- POCO (or Entity Tracking) T4 templates</li>
+<li>Clear the EDMX file's CustomTool, hand-code the POCOs and an ObjectContext</li>
+</ul></li>
+</ul></li>
+<li>Code First (in <a href="http://weblogs.asp.net/scottgu/archive/2010/07/16/code-first-development-with-entity-framework-4.aspx">EF 4.1</a>): Just write POCOs like NHibernate, and the context object derives from DbContext with DbSet&lt;Entity&gt; collections.</li>
+</ul>
+<h3>ObjectContext</h3>
+<p>ObjectContext is the equivalent of Linq2Sql DataContext/ NHibernate Session. The default generated class ends in "Entities" (e.g. NorthwindEntities). The collections are ObjectSet&lt;Entity&gt; (NB: fk collections on an entity are EntityCollections).</p>
+<p><em>Connection strings</em> use the provider System.Data.EntityClient with res://*/model.csdl values (res://*/ wildcard uses the calling assembly &amp; bin dlls; otherwise specify the assembly fullname including public key etc). The actual ADO connection string is embedded as a value inside the metadata.</p>
+<h3>Mapping</h3>
+<p>You can code functions into the EDMX xml (in edmx:ConceptualModels/Schema - Function /Parameter+DefiningExpression) and a class method with a [EdmFunctionAttribute] (which is not implemented - throw an exception). When the function is called in a Linq query, it's transformed into sql and executed server side.</p>
+<h4>Complex Types</h4>
+<p>Eg an Address object on a Person/Company etc (no inheritance. no navigation). Select the properties and "Refactor Into New Complex Type" or in Model Browser "Create New Complex Type". Complex type properties can't be null (SaveChanges() throws an InvalidOperationException)</p>
+<h4>Inheritance</h4>
+<ul>
+<li>Table per hierarchy (single table) - one table with a discriminator column<ul>
+<li>In designer, just Add Entity and set Base Type- move specific columns (and mapping) to derived classes.</li>
+<li>In mapping details for derived class, add Condition (discrimator column = value)</li>
+<li>Remove the discrimator column from the base class model.</li>
+<li><a href="http://msdn.microsoft.com/en-us/library/cc716683.aspx">MSDN</a></li>
+</ul></li>
+
+<li>Table per type - multiple tables for base class and each derived class (i.e. looks like associations)<ul>
+<li>On derived types, set the BaseType, delete the associations and the shared primary key</li>
+<li><a href="http://msdn.microsoft.com/en-us/library/cc716702.aspx">MSDN</a></li>
+</ul></li>
+
+<li>Table per concrete class (but not for abstract base type) - i.e. duplicated columns<ul>
+<li>There is no designer support, but you can create the abstract base type and fix the EDMX xml manually (ugh)</li>
+</ul></li>
+
+</ul>
+
+<h3>Entities</h3>
+<p>There are many sorts:</p>
+<ul>
+<li>Entities derived from EntityObject (default Database First/ Model First).
+<ul>
+<li>They have tracking (exposed in property .EntityState)</li>
+<li>Note: a new entity has a state of Detached (and thus is not saved) until it's added via ObjectSet.AddObject() or for fk collection Add()).</li>
+<li>NB: to set the generated class namespace, it's EDMX file's Custom Tool Namespace.</li>
+<li>0.1 FKs are EntityReference&lt;T&gt;</li>
+<li>1.* FKs are EntityCollection&lt;T&gt;</li>
+</ul>
+</li>
+<li>Entity Tracking entities (a special T4 template for disconnected scenarios)</li>
+<li>POCOs (via T4 template or hand coded/ Code First).</li>
+</ul>
+
+<h4>Lazy and Eager Loading</h4>
+<p>Lazy loading is enabled on EDMX level.</p>
+<div class="code">
+<p><span style="color: blue;">var</span> orders = context.Orders<br />
+&nbsp;&nbsp;&nbsp; .Include(<span style="color: #a31515;">"Order_Details"</span>)<br />
+&nbsp;&nbsp;&nbsp; .Where(<span style="color: #a31515;">"it.OrderDate &gt; @startDate"</span>, <span style="color: blue;">new</span> <span style="color: #2b91af;">ObjectParameter</span>(<span style="color: #a31515;">"startDate"</span>, startDate));<br />
+&nbsp;</p>
+</div>
+<p>Or load a fk collection: order.Order_Details.Load();</p>
+
+<h3>Object Queries</h3>
+<p><a href="../code/nhibernate/query.html">NHibernate</a> has a confusing range of query methods (HQL, Criteria, QueryOver, Query/Linq). Entity Framework has linq to entities, Query builder and Entity SQL.</p>
+<p>The ObjectContext collection properties are ObjectSet&lt;Entity&gt; (extends ObjectQuery) which allows you to build <a href="http://msdn.microsoft.com/en-us/library/bb896241.aspx">Object Queries</a> (you can use IQueryable as in Linq2Sql). ObjectQueries have standard methods including Where, Select, OrderBy, GroupBy etc - note that standard Linq versions may throw exceptions (eg using a IComparer in OrderBy) unless you turn into client side objects (AsEnumerable) first.</p>
+<div class="code">
+<p><span style="color: green;">//Option 1: IQueryable works but you lose the ObjectSet</span><br />
+<span style="color: blue;">var</span> orders = context.Orders<br />
+&nbsp;&nbsp;&nbsp; .Where(x =&gt; x.OrderDate &gt; startDate);<br />
+&nbsp;<br />
+<span style="color: green;">//Option 2: Chaining the ObjectSet</span><br />
+<span style="color: blue;">var</span> orders2 = context.Orders<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//entitySql clause as string with @prefixed parameter. </span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//orders2.Parameters is merged, so be wary of name collisions when building queries</span><br />
+&nbsp;&nbsp;&nbsp; .Where(<span style="color: #a31515;">"it.OrderDate &gt; @startDate"</span>, <span style="color: blue;">new</span> <span style="color: #2b91af;">ObjectParameter</span>(<span style="color: #a31515;">"startDate"</span>, startDate));<br />
+<span style="color: green;">//default alias: orders2.Name == "it";</span><br />
+<span style="color: green;">//with ObjectSet you get a few other nice things</span><br />
+<span style="color: blue;">var</span> sql = orders2.ToTraceString(); <span style="color: green;">//tracing</span><br />
+<span style="color: blue;">var</span> results = orders2.Execute(<span style="color: #2b91af;">MergeOption</span>.AppendOnly); <span style="color: green;">//execute immediately</span></p>
+</div>
+
+
+<h4>Entity SQL</h4>
+<p>You can use an EntityCommand with EntitySQL(ESQL- EF's version of HQL).</p>
+<div class="code">
+<p><span style="color: green;">//reference a defined connection string with name = x</span><br />
+<span style="color: blue;">using</span> (<span style="color: blue;">var</span> conn = <span style="color: blue;">new</span> <span style="color: #2b91af;">EntityConnection</span>(<span style="color: #a31515;">"name = NorthwindEntities"</span>))<br />
+{<br />
+&nbsp;&nbsp;&nbsp; conn.Open();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">const</span> <span style="color: blue;">string</span> esql = <span style="color: #a31515;">"SELECT c.CategoryId, c.CategoryName FROM NorthwindEntities.Categories AS c"</span>;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: blue;">var</span> cmd = <span style="color: blue;">new</span> <span style="color: #2b91af;">EntityCommand</span>(esql, conn))<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//When getting a stream of rows, include CommandBehavior.SequentialAccess.</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> reader = cmd.ExecuteReader(<span style="color: #2b91af;">CommandBehavior</span>.SequentialAccess);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">while</span> (reader.Read())<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> id = reader.GetInt32(0);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> name = reader.GetString(1);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; list.Add(id, name);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}<br />
+<span style="color: green;">//or</span><br />
+<span style="color: blue;">using</span> (<span style="color: blue;">var</span> context = <span style="color: blue;">new</span> <span style="color: #2b91af;">ObjectContext</span>(<span style="color: #a31515;">"name = NorthwindEntities"</span>))<br />
+{<br />
+&nbsp;&nbsp;&nbsp; context.Connection.Open();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">const</span> <span style="color: blue;">string</span> esql = <span style="color: #a31515;">"NorthwindEntities.Categories"</span>;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> result = <span style="color: blue;">new</span> <span style="color: #2b91af;">ObjectQuery</span>&lt;<span style="color: #2b91af;">Category</span>&gt;(esql, context);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> first = result.First();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> id = first.CategoryID;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> name = first.CategoryName;<br />
+}</p>
+</div>
+
+<p>Or use an ObjectContext with an ObjectQuery</p>
+<div class="code">
+<p><span style="color: blue;">using</span> (<span style="color: blue;">var</span> context = <span style="color: blue;">new</span> <span style="color: #2b91af;">ObjectContext</span>(<span style="color: #a31515;">"name = NorthwindEntities"</span>))<br />
+{<br />
+&nbsp;&nbsp;&nbsp; context.Connection.Open();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">const</span> <span style="color: blue;">string</span> esql = <span style="color: #a31515;">"SELECT c.CategoryId, c.CategoryName FROM NorthwindEntities.Categories AS c"</span>;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> result = <span style="color: blue;">new</span> <span style="color: #2b91af;">ObjectQuery</span>&lt;<span style="color: #2b91af;">DbDataRecord</span>&gt;(esql, context);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> first = result.First();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> id = first.GetInt32(0);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> name = first.GetString(1);<br />
+}</p>
+</div>
+
+<p>For complex properties, the DbDataRecord field is actually a DbDataRecord itself.</p>
+
+<table>
+<tr>
+<th>ESQL</th>
+<th>Explanation</th>
+</tr>
+
+<tr>
+<td>SELECT p.Cost <br />FROM NorthwindEntities.Products AS p</td>
+<td>Always use aliases (or the implicitly use the table name)<br />
+There's no SELECT p.* either.</td>
+</tr>
+
+<tr>
+<td>SELECT ROW(p.Cost AS ProdCost, p.Name AS ProdName) <br />
+FROM NorthwindEntities.Products AS p</td>
+<td>Create collection of anonymous types (ProdCost, ProdName).</td>
+</tr>
+
+<tr>
+<td>SELECT VALUE p <br />FROM NorthwindEntities.Products AS p<br />[WHERE...]</td>
+<td>Selects an entity (or primitive) value into the result collection.<br />
+(SQL Select * from Products returns a DbRow of columns; "SELECT VALUE" returns an ICollection&lt;T&gt;).<br />
+You can only "SELECT VALUE" one thing. (SELECT VALUE AVG(p.Cost) FROM...)</td>
+</tr>
+
+<tr>
+<td>SELECT VALUE CAST(p.Cost AS Edm.Int32) <br />FROM NorthwindEntities.Products AS p</td>
+<td>Casting to different types</td>
+</tr>
+
+<tr>
+<td>SELECT VALUE Edm.Count(0) <br />FROM NorthwindEntities.Products AS p</td>
+<td>There are various <a href="http://msdn.microsoft.com/en-us/library/bb738626.aspx">cross platform canonical functions</a> such as AVG, Count, Sum, CurrentDateTime(), Contains, EndsWith, Length, Replace, Trim, ToUpper...</td>
+</tr>
+
+<tr>
+<td>SELECT VALUE p <br />FROM NorthwindEntities.Products AS p<br />ORDER BY o.Cost SKIP 20 LIMIT 10</td>
+<td>Paging- ORDER BY x SKIP y LIMIT z</td>
+</tr>
+
+<tr>
+<td>SELECT REF(p) <br />FROM NorthwindEntities.Products AS p</td>
+<td>Gets an EnityKey (just the key) instead of the full object. You can DEREF() to go back to the full object.</td>
+</tr>
+
+</table>
+
+<h4>Native SQL</h4>
+<p><a href="http://msdn.microsoft.com/en-us/library/ee358758.aspx">MSDN</a></p>
+<ul>
+<li>context.ExecuteStoreCommand(sql) (returns rows affected)</li>
+<li>context.ExecuteStoreQuery&lt;T&gt;(sql, parameters).
+<ul>
+<li>Can have no type, a simple type (int), or a class whose properties are auto-mapped to the result columns</li>
+<li>Parameters may be {0} esql format, or @x format with primitive types or the native SqlParameters.</li>
+</ul></li>
+
+</ul>
+
+
+<h3>Updates</h3>
+<p>See <a href="http://msdn.microsoft.com/en-us/library/bb738695.aspx">here</a></p>
+<div class="code">
+<p><span style="color: blue;">var</span> context = <span style="color: blue;">new</span> <span style="color: #2b91af;">NorthwindEntities</span>();<br />
+<br />
+<span style="color: blue;">var</span> choc = <span style="color: blue;">new</span> <span style="color: #2b91af;">Category</span> { CategoryName = <span style="color: #a31515;">"Chocolate"</span>, Description = <span style="color: #a31515;">"Choco"</span> };<br />
+<span style="color: green;">//choc.EntityState == EntityState.Detached</span><br />
+context.Categories.AddObject(choc);<br />
+<span style="color: green;">//choc.EntityKey.IsTemporary == true</span><br />
+<span style="color: green;">//choc.EntityState == EntityState.Added</span><br />
+<br />
+context.SaveChanges();<br />
+<span style="color: green;">//choc.EntityKey.IsTemporary == false</span><br />
+<span style="color: green;">//choc.EntityState == EntityState.Unchanged</span><br />
+<br />
+choc.Description = <span style="color: #a31515;">"Chocolate related products"</span>;<br />
+<span style="color: green;">//choc.EntityState == EntityState.Modified</span><br />
+context.SaveChanges();<br />
+<br />
+context.Categories.DeleteObject(choc);<br />
+<span style="color: green;">//choc.EntityState == EntityState.Deleted</span><br />
+context.SaveChanges();<br />
+<span style="color: green;">//choc.EntityState == EntityState.Detached</span></p>
+</div>
+<p>You can find the status of an object via context.ObjectStateManager.GetObjectStateEntry(entity).State. Non-proxied POCOs may not have state so there's a ObjectStateManager.TryGetObjectStateEntry - you can call context.DetectChanges() (context.SaveChanges() does it automatically) for snapshot checking. </p>
+
+<h4>Concurrency</h4>
+<p>Use context.Refresh(RefreshMode.ClientWins, entity) (or StoreWins) to update. You can use this when trapping a SaveChanges() which throws an OptimisticConcurrencyException.</p>
+
+<h4>Cascading Deletes</h4>
+<p>Set the entity EDMX Delete property to Cascade. NOTE: You must .Load or .Include the foreign keys before the DeleteObject(entity) (and sub-dependencies!)</p>
+
+<h4>Disconnected entities</h4>
+<p>You can context.Detach(entity) and <a href="http://msdn.microsoft.com/en-us/library/bb896304.aspx">attach</a> as follows. The attached entity has status Unchanged</p>
+<ul>
+<li>context.Attach(entity) (or AddObject(entity) if new)</li>
+<li>context.ObjectSet.Attach(entity) (or AddObject(entity) if new)</li>
+<li>entity.ForeignKeyCollection.Attach(entity)</li>
+</ul>
+<p>For POCOs, call context.DetectChanges().</p>
+<p>To copy scalar properties context[.ObjectSet].ApplyCurrentValues(detached)</p>
+
+<h4>Self-tracking entities</h4>
+<p>It's a T4 item template, intended for disconnected entities (WCF).</p>
+<p>They start tracking automatically when deserialized from WCF, or connected to another tracking entity, or StartTracking() is called (also MarkAsAdded() etc). Call StopTracking() to stop.</p>
+<p>When receiving the object with changes, add it with the extension method context.Orders.ApplyChanges(order)</p>
+
+
+<h3>Stored procedures</h3>
+<p><a href="http://msdn.microsoft.com/en-us/library/bb399203.aspx">MSDN</a> / <a href="http://msdn.microsoft.com/en-us/library/bb896231.aspx">MSDN</a>.</p>
+<p>In your ObjectContext, a sproc in the conceptual model can be called by context.ExecuteFunction("name", pars). To add it to the generated context, from Model Browser/ "Function Imports" - "Add Function Import" (you can map to existing entities). </p>
+<p>Entity updates can be done by sprocs (but you must have insert, update and delete) - in designer, click entity and Stored Procedure Mapping.</p>
+<ul>
+<li>Store SSDL: add a Schema/Function element</li>
+<li>Mapping MSL: a ModificationFunctionMapping with InsertFunction, UpdateFunction, and DeleteFunction elements </li>
+<li>Conceptual CSDL (returning a complex type): add a FunctionImport</li>
+</ul>
+
+
+</div>
+<div class="Footer"><script type="text/javascript">
+//<![CDATA[
+
+
+prettyPrint();
+//]]>
+</script></div>
+</body>
+</html>

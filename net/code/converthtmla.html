@@ -1,0 +1,185 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Convert HTML to XHTML</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main</a></li>
+<li><a href="../dotnet.html">.Net</a></li>
+<li><a href="index.html">Code</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>Convert HTML to XHTML</h2>
+<p>Designed for upgrading ASP 1.1 aspx to ASP 2.0, but could do any html (.html, .asp). Uses Html Agility Pack (comments include hacks for it)- <a href="converthtml.html">see the version using regex</a> - <a href="converthtmltest.html">see the tests (and features)</a>. <br />
+The regex version preserves the original format of the html, and doesn't touch asp server controls. Html Agility Pack reformats more of the html, and closes tags as well.</p>
+
+<div class="code">
+<span style="color:Blue">using</span><span style="color:Black"> System;<br />
+</span><span style="color:Blue">using</span><span style="color:Black"> System.Collections.Generic;<br />
+</span><span style="color:Blue">using</span><span style="color:Black"> System.Diagnostics;<br />
+</span><span style="color:Blue">using</span><span style="color:Black"> System.IO;<br />
+</span><span style="color:Blue">using</span><span style="color:Black"> System.Text;<br />
+</span><span style="color:Blue">using</span><span style="color:Black"> HtmlAgilityPack;<br />
+<br />
+</span><span style="color:Blue">namespace</span><span style="color:Black"> XHtmlConvertor<br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> Converts an HTML page to XHTML with Agility Pack. The original file is saved with an .orig extension.<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;para&gt;</span><span style="color:Green">Derived from </span><span style="color:Gray">&lt;see cref="ConvertWithRegex"/&gt;</span><span style="color:Green">.</span><span style="color:Gray">&lt;/para&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;/summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;remarks&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;para&gt;</span><span style="color:Green">Singleton tags like br, br and input are automatically closed <br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> Unquoted attribute values are enclosed in quotes.<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> Attributes with no values get values (selected="")<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> Embedded server controls (in &amp;lt;% /%&amp;gt;) and asp server controls (&amp;lt;asp:TextBox/&amp;gt;) <br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> are ignored (and so is html inside them).<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> The script attribute "language" is removed.<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;/para&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;para&gt;</span><span style="color:Green">AgilityPack may skip certain markup, or wrongly change certain things it shouldn't- <br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> hence the original source is saved with the .orig extension.</span><span style="color:Gray">&lt;/para&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;para&gt;</span><span style="color:Green">Watch out: Unclosed Options are closed &amp;lt;option%gt;1&amp;lt;/select%gt; <br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> becomes &amp;lt;option/%gt;1&amp;lt;/select%gt;</span><span style="color:Gray">&lt;/para&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;para&gt;</span><span style="color:Green">Note AgilityPack has a bug that closes the FORM tag. The fix is to change HtmlNode.cs line 89 from <br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;code&gt;</span><span style="color:Green">ElementsFlags.Add("form", HtmlElementFlag.CanOverlap | HtmlElementFlag.Empty);</span><span style="color:Gray">&lt;/code&gt;</span><span style="color:Green"> to<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;code&gt;</span><span style="color:Green">ElementsFlags.Add("form", HtmlElementFlag.CanOverlap);</span><span style="color:Gray">&lt;/code&gt;&lt;/para&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;para&gt;</span><span style="color:Green">AgilityPack also lowercases asp server and user control elements and values. <br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> This is usually harmless, but I hacked it...</span><span style="color:Gray">&lt;/para&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;para&gt;</span><span style="color:Green">In HtmlDocument add </span><span style="color:Gray">&lt;code&gt;</span><span style="color:Green">public bool OptionOutputAsXHtml = false;</span><span style="color:Gray">&lt;/code&gt;&lt;/para&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;para&gt;</span><span style="color:Green">In HtmlAttribute add </span><span style="color:Gray">&lt;code&gt;</span><span style="color:Green">internal string NameOriginalCase {&nbsp;&nbsp;&nbsp;&nbsp;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> get {return _ownerdocument._text.Substring(_namestartindex, _namelength);}<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> }</span><span style="color:Gray">&lt;/code&gt;&lt;/para&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;para&gt;</span><span style="color:Green">In HtmlNode add </span><span style="color:Gray">&lt;code&gt;</span><span style="color:Green">private string NameOriginalCase { get {&nbsp;&nbsp;&nbsp;&nbsp;return _ownerdocument._text.Substring(_namestartindex, _namelength); }}</span><span style="color:Gray">&lt;/code&gt;</span><span style="color:Green">, <br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> amend WriteAttribute(TextWriter outText, HtmlAttribute att) in first else </span><span style="color:Gray">&lt;code&gt;</span><span style="color:Green">if (_ownerdocument.OptionOutputAsXHtml) {<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name = att.Name;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if(Name.IndexOf(":") != -1) name = att.NameOriginalCase;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else //other if...</span><span style="color:Gray">&lt;/code&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> and amend WriteTo(TextWriter outText) case HtmlNodeType.Element </span><span style="color:Gray">&lt;code&gt;</span><span style="color:Green">if (_ownerdocument.OptionOutputAsXHtml) { <br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name = Name;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if(Name.IndexOf(":") != -1) name = NameOriginalCase;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else //other if...</span><span style="color:Gray">&lt;/code&gt;&lt;/para&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;/remarks&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;example&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> &nbsp;&nbsp;&nbsp;&nbsp;//Folder.Text contains the directory<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green">&nbsp;&nbsp;&nbsp;&nbsp; ConvertWithAgility c = new ConvertWithAgility();<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green">&nbsp;&nbsp;&nbsp;&nbsp; c.ConvertDirectory(Folder.Text);<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> &nbsp;&nbsp;&nbsp;&nbsp;//show the last file converted in a TextBox<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green">&nbsp;&nbsp;&nbsp;&nbsp; textBox1.Text = c.LastHtml;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;/example&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">public</span><span style="color:Black"> </span><span style="color:Blue">class</span><span style="color:Black"> </span><span style="color:#2b91af">ConvertWithAgility</span><span style="color:Black"> : </span><span style="color:#2b91af">ConvertWithRegex<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> Default constructor.<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;/summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">public</span><span style="color:Black"> ConvertWithAgility()<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: </span><span style="color:Blue">base</span><span style="color:Black">()<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> overrides the <br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;/summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">protected</span><span style="color:Black"> </span><span style="color:Blue">override</span><span style="color:Black"> </span><span style="color:Blue">void</span><span style="color:Black"> Process()<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">HtmlDocument</span><span style="color:Black"> doc = </span><span style="color:Blue">new</span><span style="color:Black"> </span><span style="color:#2b91af">HtmlDocument</span><span style="color:Black">();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;doc.OptionWriteEmptyNodes = </span><span style="color:Blue">true</span><span style="color:Black">; </span><span style="color:Green">//autoclose hr, br etc<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;doc.OptionOutputAsXHtml = </span><span style="color:Blue">true</span><span style="color:Black">; </span><span style="color:Green">//MJW extension to preserve case of server tags<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">//NB AgilityPack has a bug- see top!<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">HtmlNode</span><span style="color:Black"> root = doc.DocumentNode;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;doc.LoadHtml(_fileContents);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CleanAttributes(root);<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">//capture the stream back into a string<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">StringBuilder</span><span style="color:Black"> sb = </span><span style="color:Blue">new</span><span style="color:Black"> </span><span style="color:#2b91af">StringBuilder</span><span style="color:Black">();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">StringWriter</span><span style="color:Black"> sw = </span><span style="color:Blue">new</span><span style="color:Black"> </span><span style="color:#2b91af">StringWriter</span><span style="color:Black">(sb);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;doc.Save(sw);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sw.Flush();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_fileContents = sw.ToString();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FixHeader();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_LastFileHtml = _fileContents;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">private</span><span style="color:Black"> </span><span style="color:Blue">void</span><span style="color:Black"> CleanAttributes(</span><span style="color:#2b91af">HtmlNode</span><span style="color:Black"> root)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">//xpath with language condition didn't seem to work<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">HtmlNodeCollection</span><span style="color:Black"> col = root.SelectNodes(</span><span style="color:#a31515">@"//script"</span><span style="color:Black">);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">if</span><span style="color:Black"> (col != </span><span style="color:Blue">null</span><span style="color:Black">)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">foreach</span><span style="color:Black"> (</span><span style="color:#2b91af">HtmlNode</span><span style="color:Black"> script </span><span style="color:Blue">in</span><span style="color:Black"> col)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">if</span><span style="color:Black"> (script.Attributes[</span><span style="color:#a31515">"language"</span><span style="color:Black">] != </span><span style="color:Blue">null</span><span style="color:Black">)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;script.Attributes.Remove(</span><span style="color:#a31515">"language"</span><span style="color:Black">);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">//look for &lt;option selected&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;col = root.SelectNodes(</span><span style="color:#a31515">@"//option"</span><span style="color:Black">);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">if</span><span style="color:Black"> (col != </span><span style="color:Blue">null</span><span style="color:Black">)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">foreach</span><span style="color:Black"> (</span><span style="color:#2b91af">HtmlNode</span><span style="color:Black"> script </span><span style="color:Blue">in</span><span style="color:Black"> col)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">if</span><span style="color:Black"> (script.Attributes[</span><span style="color:#a31515">"selected"</span><span style="color:Black">] != </span><span style="color:Blue">null</span><span style="color:Black">)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;script.Attributes[</span><span style="color:#a31515">"selected"</span><span style="color:Black">].Value = </span><span style="color:#a31515">"selected"</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;col = root.SelectNodes(</span><span style="color:#a31515">@"//input"</span><span style="color:Black">);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">if</span><span style="color:Black"> (col != </span><span style="color:Blue">null</span><span style="color:Black">)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">foreach</span><span style="color:Black"> (</span><span style="color:#2b91af">HtmlNode</span><span style="color:Black"> input </span><span style="color:Blue">in</span><span style="color:Black"> col)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">if</span><span style="color:Black"> (input.Attributes[</span><span style="color:#a31515">"checked"</span><span style="color:Black">] != </span><span style="color:Blue">null</span><span style="color:Black">)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;input.Attributes[</span><span style="color:#a31515">"checked"</span><span style="color:Black">].Value = </span><span style="color:#a31515">"checked"</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">if</span><span style="color:Black"> (input.Attributes[</span><span style="color:#a31515">"readonly"</span><span style="color:Black">] != </span><span style="color:Blue">null</span><span style="color:Black">)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;input.Attributes[</span><span style="color:#a31515">"readonly"</span><span style="color:Black">].Value = </span><span style="color:#a31515">"readonly"</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">if</span><span style="color:Black"> (input.Attributes[</span><span style="color:#a31515">"disabled"</span><span style="color:Black">] != </span><span style="color:Blue">null</span><span style="color:Black">)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;input.Attributes[</span><span style="color:#a31515">"disabled"</span><span style="color:Black">].Value = </span><span style="color:#a31515">"disabled"</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;col = root.SelectNodes(</span><span style="color:#a31515">@"//select"</span><span style="color:Black">);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">if</span><span style="color:Black"> (col != </span><span style="color:Blue">null</span><span style="color:Black">)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">foreach</span><span style="color:Black"> (</span><span style="color:#2b91af">HtmlNode</span><span style="color:Black"> sel </span><span style="color:Blue">in</span><span style="color:Black"> col)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">if</span><span style="color:Black"> (sel.Attributes[</span><span style="color:#a31515">"multiple"</span><span style="color:Black">] != </span><span style="color:Blue">null</span><span style="color:Black">)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sel.Attributes[</span><span style="color:#a31515">"multiple"</span><span style="color:Black">].Value = </span><span style="color:#a31515">"multiple"</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">if</span><span style="color:Black"> (sel.Attributes[</span><span style="color:#a31515">"disabled"</span><span style="color:Black">] != </span><span style="color:Blue">null</span><span style="color:Black">)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sel.Attributes[</span><span style="color:#a31515">"disabled"</span><span style="color:Black">].Value = </span><span style="color:#a31515">"disabled"</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;col = root.SelectNodes(</span><span style="color:#a31515">@"//hr"</span><span style="color:Black">);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">if</span><span style="color:Black"> (col != </span><span style="color:Blue">null</span><span style="color:Black">)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">foreach</span><span style="color:Black"> (</span><span style="color:#2b91af">HtmlNode</span><span style="color:Black"> hr </span><span style="color:Blue">in</span><span style="color:Black"> col)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">if</span><span style="color:Black"> (hr.Attributes[</span><span style="color:#a31515">"noshade"</span><span style="color:Black">] != </span><span style="color:Blue">null</span><span style="color:Black">)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;hr.Attributes[</span><span style="color:#a31515">"noshade"</span><span style="color:Black">].Value = </span><span style="color:#a31515">"noshade"</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+}<br />
+</span>
+</div>
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

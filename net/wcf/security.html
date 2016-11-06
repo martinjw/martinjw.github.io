@@ -1,0 +1,100 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>WCF Security</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="wcf.html">WCF &gt;</a></li>
+<li><a href="behavior.html">Behavior</a></li>
+<li><a href="clients.html">Clients</a></li>
+<li><a href="contracts.html">Contracts</a></li>
+<li><a href="endpoints.html">Endpoints</a></li>
+<li><a href="faults.html">Faults</a></li>
+<li><a href="logging.html">Logging</a></li>
+<li><a href="routing.html">Routing</a></li>
+<li><a href="security.html">Security</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>WCF Security</h2>
+<h3>Security Modes</h3>
+<p>See <a href="http://msdn.microsoft.com/en-us/library/ms731884.aspx">MSDN Security modes</a></p>
+<ul>
+<li><strong>Transport</strong>- eg SSL. basicHttpBinding is the only binding with no default security (to enable, configure the binding with security mode="Transport".). You also can't do transport security with wsDualHttpBinding (callback listeners).</li>
+<li><strong>Message</strong>- eg WS-Security <span style="color: blue;">&lt;</span><span style="color: #a31515;">security</span><span style="color: blue;"> </span><span style="color: red;">mode</span><span style="color: blue;">=</span>"<span style="color: blue;">Message</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: #a31515;">message</span><span style="color: blue;"> </span><span style="color: red;">clientCredentialType</span><span style="color: blue;">=</span>"<span style="color: blue;">Windows</span>" or "Certificate" or UserName ...</li>
+<li><strong>Transport with message credential</strong> - both, but it's not end-to-end security like Message</li>
+</ul>
+<p>If using transport security, you can only use Certificate or Windows credential type.
+behavior/serviceCredentials configure where to find authentication (eg certificate)</p>
+
+<h3>Contexts</h3>
+<p>Like Asp.Net's HttpContext, WCF has <a href="http://msdn.microsoft.com/en-us/library/system.servicemodel.operationcontext.aspx">OperationContext</a> and also <a href="http://msdn.microsoft.com/en-us/library/system.servicemodel.servicesecuritycontext.aspx">ServiceSecurityContext</a> which works the same way for just security stuff.</p>
+
+<div class="code">
+<p><span style="color: green;">//For windows authentication access the current user by </span><br />
+<span style="color: blue;">var</span> name1 = <span style="color: #2b91af;">OperationContext</span>.Current.ServiceSecurityContext.PrimaryIdentity.Name;<br />
+<span style="color: green;">//or</span><br />
+<span style="color: blue;">var</span> name2 = <span style="color: #2b91af;">ServiceSecurityContext</span>.Current.PrimaryIdentity.Name;</p>
+</div>
+<p>In a json webHttp endpoint with [<span style="color: #2b91af;">AspNetCompatibilityRequirements</span>(RequirementsMode = <span style="color: #2b91af;">AspNetCompatibilityRequirementsMode</span>.Allowed)]
+ you can use HttpContext.Current.User.Identity.Name as normal.</p>
+
+<h4>Impersonation</h4>
+<p>You can use the securitycontext for impersonation (<a href="http://msdn.microsoft.com/en-us/library/system.security.principal.tokenimpersonationlevel.aspx">MSDN</a>)
+ServiceSecurityContext.Current.Windowsldentity.ImpersonationLevel = TokenlmpersonationLevel.Impersonation (or to access remote systems) .Delegation</p>
+<p>You can impersonate some operations (Allowed or Required) using the ServiceAuthorization behavior ImpersonateCallerForAllOperations=true</p>
+
+<h4>Custom authentication</h4>
+<p>For custom authentication, set the credentialType="UserName", and create a class that inherits from UserNamePasswordValidator (Validate doesn't return boolean- throw a SecurityTokenValidationException)
+For authorization, you can use <a href="http://msdn.microsoft.com/en-us/library/system.servicemodel.servicesecuritycontext.aspx">OperationContext.Current.ServiceSecurityContext</a> - you can get claimSets.</p>
+<p>There's an <a href="http://msdn.microsoft.com/en-us/library/system.identitymodel.policy.iauthorizationpolicy.aspx">IAuthorizationPolicy</a> interface for custom authentication (reference System.IdentityModel). Implement the Evaluate method and assign a readonly list&lt;<span style="color: #2b91af;">IAuthorizationPolicy</span>&gt;
+ to host.Authorization.ExternalAuthorizationPolicies or in config <span style="color: blue;">&lt;</span><span style="color: #a31515;">serviceAuthorization</span><span style="color: blue;">&gt;</span><br />
+ <span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">authorizationPolicies</span><span style="color: blue;">&gt;</span><br />
+ <span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><span style="color: red;">policyType</span><span style="color: blue;">=</span>""<span style="color: blue;">/&gt;</span>
+</p>
+
+<h4>Use ASP Membership with WCF</h4>
+<p><a href="http://msdn.microsoft.com/en-us/library/ms731049.aspx">MSDN</a></p>
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">serviceCredentials</span><span style="color: blue;">&gt;</span> has a <a href="http://msdn.microsoft.com/en-us/library/ms731315.aspx">&lt;userNameAuthentication&gt;</a> element- set userNamePasswordValidationMode="MembershipProvider" for ASP.Net membership instead of windows.</p>
+<p>Or use <span style="color: blue;">&lt;</span><span style="color: #a31515;">serviceAuthorization</span><span style="color: blue;"> </span><br /><span style="color: blue;">&nbsp; </span><span style="color: red;">principalPermissionMode</span><span style="color: blue;">=</span>"<span style="color: blue;">UseAspNetRoles</span>"<br /><span style="color: blue;">&nbsp; </span><span style="color: red;">roleProviderName</span><span style="color: blue;"> =</span>"<span style="color: blue;">SqlProvider</span>"<span style="color: blue;"> /&gt;</span></p>
+
+<h4>Certificates</h4>
+<p>serviceCredentials has a clientCertificate and serviceCertificate.<br /> clientCertificate/serviceCredentials/authentication has a certificateValidationMode can be Custom (a customCertificateValidatorType), ChainTrust (chain to root certificates) or PeerTrust (self-issued in Trusted People store).</p>
+    
+<h4><a name="ProtectionLevel">ProtectionLevel</a></h4>
+<p>In code you can set <a href="http://msdn.microsoft.com/en-us/library/aa347692.aspx">ProtectionLevel</a>  [OperationContract(ProtectionLevel = ProtectionLevel.EncryptAndSign)] (if you're using Transport security, this has no effect; you can't use it with BasicHttpBinding as that has no default security)</p>
+
+<h3>Debugging Security</h3>
+<p>Add the serviceSecurityAudit element to the server, and check the audit log:</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">serviceBehaviors</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">behavior</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">defaultBehavior</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">serviceSecurityAudit</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  </span><span style="color: red;">auditLogLocation</span><span style="color: blue;">=</span>"<span style="color: blue;">Application</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  </span><span style="color: red;">serviceAuthorizationAuditLevel</span><span style="color: blue;">=</span>"<span style="color: blue;">Failure</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  </span><span style="color: red;">messageAuthenticationAuditLevel</span><span style="color: blue;">=</span>"<span style="color: blue;">Failure</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">behavior</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">serviceBehaviors</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+
+</div>
+<div class="Footer"><script type="text/javascript">
+//<![CDATA[
+prettyPrint();
+//]]>
+</script></div>
+</body>
+</html>

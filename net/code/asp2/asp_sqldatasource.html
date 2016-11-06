@@ -1,0 +1,78 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>SqlDataSource and Guids</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main</a></li>
+<li><a href="../../dotnet.html">.Net</a></li>
+<li><a href="../index.html">Code</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>SqlDataSource and Guids</h2>
+<p>You can't use SCOPE_IDENTITY() and you have to add the uniqueidentifier output parameter manually.<br />
+See <a href="asp_detailview.html">version with integer identity</a>.</p>
+<h3>Markup</h3>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">SqlDataSource</span> <span style="color: red;">ID</span><span style="color: blue;">="SqlDataSourceProducts"</span> <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <span style="color: red;">ConnectionString</span><span style="color: blue;">="</span><span style="background: #ffee62;">&lt;%</span>$ ConnectionStrings:ConnectionString <span style="background: #ffee62;">%&gt;</span><span style="color: blue;">"</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: red;">SelectCommand</span><span style="color: blue;">="SELECT [Id], [Name] FROM [Product]"&gt;&lt;/</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">SqlDataSource</span><span style="color: blue;">&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">SqlDataSource</span> <span style="color: red;">ID</span><span style="color: blue;">="SqlDataSourceDetail"</span> <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <span style="color: red;">ConnectionString</span><span style="color: blue;">="</span><span style="background: #ffee62;">&lt;%</span>$ ConnectionStrings:ConnectionString <span style="background: #ffee62;">%&gt;</span><span style="color: blue;">"</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: red;">InsertCommand</span><span style="color: blue;">="</span></p>
+<p><span style="color: blue;">SET @Id = NEWID(); INSERT INTO [Order] ([Id], [ModifyDate], [ModifyUser], [ProductID], [Qty]) VALUES (@Id, @ModifyDate, @ModifyUser, @ProductID, @Qty)"</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: red;">OnInserting</span><span style="color: blue;">="SqlDataSourceDetail_Inserting"</span> <span style="color: red;">OnInserted</span><span style="color: blue;">="SqlDataSourceDetail_Inserted"&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">InsertParameters</span><span style="color: blue;">&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">Parameter</span> <span style="color: red;">Name</span><span style="color: blue;">="ModifyDate"</span> <span style="color: red;">Type</span><span style="color: blue;">="DateTime"</span> <span style="color: blue;">/&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">Parameter</span> <span style="color: red;">Name</span><span style="color: blue;">="ModifyUser"</span> <span style="color: red;">Type</span><span style="color: blue;">="String"</span> <span style="color: blue;">/&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">Parameter</span> <span style="color: red;">Name</span><span style="color: blue;">="ProductID"</span> <span style="color: red;">Type</span><span style="color: blue;">="Int32"</span> <span style="color: blue;">/&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">Parameter</span> <span style="color: red;">Name</span><span style="color: blue;">="Qty"</span> <span style="color: red;">Type</span><span style="color: blue;">="Int32"</span> <span style="color: blue;">/&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="background: #ffee62;">&lt;%</span><span style="color: green;">-- </span></p>
+<p><span style="color: green;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;asp:Parameter Name="Id" Type="Object" Direction="Output" /&gt;</span></p>
+<p><span style="color: green;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; !This doesn't work. Manually add the parameter in the Inserting method!</span></p>
+<p><span style="color: green;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; --</span><span style="background: #ffee62;">%&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;/</span><span style="color: #a31515;">InsertParameters</span><span style="color: blue;">&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;/</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">SqlDataSource</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+<h3>Code behind</h3>
+<div class="code">
+<p><span style="color: blue;">protected</span> <span style="color: blue;">void</span> SqlDataSourceDetail_Inserting(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">SqlDataSourceCommandEventArgs</span> e)</p>
+<p>{</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: green;">//binding manually</span></p>
+<p>&nbsp;&nbsp;&nbsp; e.Command.Parameters[<span style="color: #a31515;">"@ModifyUser"</span>].Value = User.Identity.Name;</p>
+<p>&nbsp;&nbsp;&nbsp; e.Command.Parameters[<span style="color: #a31515;">"@ModifyDate"</span>].Value = <span style="color: #2b91af;">DateTime</span>.Now;</p>
+<p>&nbsp;</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">SqlParameter</span> insertedKey = <span style="color: blue;">new</span> <span style="color: #2b91af;">SqlParameter</span>(<span style="color: #a31515;">"@Id"</span>, <span style="color: #2b91af;">SqlDbType</span>.UniqueIdentifier);</p>
+<p>&nbsp;&nbsp;&nbsp; insertedKey.Direction = <span style="color: #2b91af;">ParameterDirection</span>.Output;</p>
+<p>&nbsp;&nbsp;&nbsp; e.Command.Parameters.Add(insertedKey);</p>
+<p>}</p>
+<p>&nbsp;</p>
+<p><span style="color: blue;">protected</span> <span style="color: blue;">void</span> SqlDataSourceDetail_Inserted(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">SqlDataSourceStatusEventArgs</span> e)</p>
+<p>{</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (e.Exception == <span style="color: blue;">null</span>)</p>
+<p>&nbsp;&nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">DbCommand</span> command = e.Command;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> id = ((<span style="color: #2b91af;">Guid</span>)command.Parameters[<span style="color: #a31515;">"@Id"</span>].Value).ToString();</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; labMessage.Text = id + <span style="color: #a31515;">" added"</span>;</p>
+<p>&nbsp;&nbsp;&nbsp; }</p>
+<p>}</p>
+</div>
+
+
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

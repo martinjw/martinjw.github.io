@@ -1,0 +1,271 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP MVC HtmlHelpers</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="../aspmvc.html">Asp MVC</a></li>
+<li><a href="mvccontrollers.html">MVC Controllers</a></li>
+<li><a href="mvcactions.html">MVC Actions</a></li>
+<li><a href="../asprouting.html">Asp Routing</a></li>
+<li><a href="../aspmvcview.html">Asp MVC Views</a></li>
+<li><a href="htmlhelpers.html">HTML Helpers</a></li>
+<li><a href="bundles.html">Bundling</a></li>
+<li><a href="errors.html">MVC Errors</a></li>
+<li><a href="mvcvalidation.html">MVC Validation</a></li>
+<li><a href="simplepaging.html">Simple Paging</a></li>
+<li><a href="webapi.html">WebApi</a></li>
+<li><a href="webapiformat.html">WebApi Formatting</a></li>
+<li><a href="webapiclient.html">WebApi HttpClient</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>ASP MVC HtmlHelpers</h2>
+
+<h3>Inline HtmlHelpers</h3>
+<div class="code">
+<p><span style="background: yellow;">@helper </span>RazorInlineHelper(<span style="color: #2b91af;">IEnumerable</span>&lt;<span style="color: blue;">string</span>&gt; names)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: maroon;">ul</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="background: yellow;">@</span><span style="color: blue;">foreach</span> (<span style="color: blue;">var</span> name <span style="color: blue;">in</span> names)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: maroon;">li</span><span style="color: blue;">&gt;</span><span style="background: yellow;">@</span>name<span style="color: blue;">&lt;/</span><span style="color: maroon;">li</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;/</span><span style="color: maroon;">ul</span><span style="color: blue;">&gt;</span><br />
+}</p>
+</div>
+
+<h3>External HtmlHelpers</h3>
+<p>See <a href="simplepaging.html">Simple Paging</a></p>
+ <ul>
+ <li>Output an MvcHtmlString.Create(string)</li>
+ <li>Build html with TagBuilder (methods: AddCssClass, MergeAttribute, SetInnerText, propety InnerHTML</li>
+ <li>new up a new UrlHelper(helper.ViewContext.RequestContext) for urls</li>
+ </ul>
+ 
+<div class="alert">To be in scope, add a <cite>using</cite> or in the <strong>Views/web.config</strong><br/>
+(NB: in Views and Area/Views, not the parent website)<br/>
+add <span style="color: blue;">&lt;</span><span style="color: #a31515;">system.web.webPages.razor</span><span style="color: blue;">&gt;</span><br/>
+&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">pages</span> [...]<span style="color: blue;">&gt;</span><br/>
+&nbsp;&nbsp; &nbsp;&nbsp;  <span style="color: blue;">&lt;</span><span style="color: #a31515;">namespaces</span><span style="color: blue;">&gt;</span><br/>
+&nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp;  <span style="color: blue;">&lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><span style="color: red;">namespace</span><span style="color: blue;">=</span>"<span style="color: blue;">MvcApplication1.HtmlHelpers</span>"<span style="color: blue;">/&gt;</span>
+</div>
+<h3>Built-in Helpers</h3>
+<ul>
+<li><span style="background: yellow;">@</span><span style="color: blue;">using</span> (Html.BeginForm()) { ...
+<ul>
+<li>For some reason, BeginForm in layout pages doesn't play nice with client validation.</li>
+</ul>
+</li>
+<li><span style="background: yellow;">@</span>Html.TextBox(<span style="color: #a31515;">"Search"</span>)
+ ... or RadioButton, Hidden, CheckBox, DropDownList
+<ul>
+<li>CheckBox writes a hidden field as well</li>
+<li>ListBox is a multi-select dropdown</li>
+<li><span style="background: yellow;">@</span>Html.TextBox(<span style="color: #a31515;">"Name"</span>) takes value of ViewBag.Name or ViewData["Name"] or Model.Name</li>
+</ul>
+<li><a href="http://msdn.microsoft.com/en-us/library/system.web.helpers.webgrid.aspx">WebGrid</a> for table layout</li>
+</li>
+<li>Html.AntiForgeryToken() is usually a good idea</li>
+</ul>
+<h4>Strong typed helpers</h4>
+<p>The Html.XFor(lamda) functions are strongly typed versions of the Html.X("name") helpers. They use <a href="../dataannotations.html">Data Annotations</a></p>
+<ul>
+<li>Html.TextBoxFor(x =&gt; x.Name)</li>
+<li>Html.LabelFor - can use [Display] and [DisplayName] attributes</li>
+<li>Html.DisplayFor - just the text. Can use [DataType(DataType.Date)] and/or UIHint()</li>
+<li>Html.EditorFor - textbox or checkbox as applicable. Can use templates in View/Shared/EditorTemplates</li>
+<li>Html.EditorForModel() - does the entire model. Hide fields with [HiddenInput(DisplayValue=false)], or to exclude, [ScaffoldColumn(false)]</li>
+<li>Html.ValidateFor() / Html.ValidationMessageFor() - validation. Use with Html.ValidationSummary()</li>
+</ul>
+
+<p>Adding attributes:</p>
+<div class="code">
+<p><span style="background: yellow;">@</span>Html.TextBoxFor(x =&gt; x.Name, <span style="color: blue;">new</span> { @class = <span style="color: #a31515;">&quot;long&quot;</span> })<br />
+&nbsp;</p>
+</div>
+<div class="alert">
+.net naming doesn't match html attribute naming so...
+<ul>
+<li>HTML class attribute = Razor @class="name"</li>
+<li>HTML hyphenated attributes (data-foo) = Razor underscored (data_foo="x")</li>
+</ul>
+</div>
+
+<p>Note it doesn't work with <span style="background: yellow;">@</span>Html.EditorFor - you have to use the specific input type like <span style="background: yellow;">@</span>Html.TextBoxFor.</p>
+
+<div class="alert">
+View HtmlHelpers use the POSTed values by preference (not the Model). Setting a model.Property in a postback does nothing. To make it work, do this:
+<div class="code">
+<p>ModelState.Remove(<span style="color: #a31515;">"HasBeenPosted"</span>); <span style="color: green;">//so the model value isn't overridden</span><br />
+model.HasBeenPosted = <span style="color: blue;">true</span>;</p>
+</div>
+</div>
+
+<h4>Urls</h4>
+
+<ul>
+<li>Url.Content("~/x.css") - for in-page js/css</li>
+<li>@Html.ActionLink("Click me", "Index", "MyController") - for anchors<ul>
+<li>The argument order is text, action, [controller]</li>
+<li>Passing querystrings: Html.ActionLink("Click me", "Edit", new { id = 2 }) </li>
+</ul></li>
+</ul>
+
+<h4>Radio Buttons</h4>
+<p>Because they have the same name/id, Html.LabelFor doesn't work. You could rename the id with attributes (</p>
+<div class="code">
+<p> <span style="background: yellow;">@</span><span style="color: blue;">foreach</span> (<span style="color: blue;">var</span> value <span style="color: blue;">in</span> <span style="color: #2b91af;">Enum</span>.GetValues(<span style="color: blue;">typeof</span>(<span style="color: #2b91af;">ComputerLanguage</span>)))<br/>
+ {<br/>
+ &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: maroon;">label</span><span style="color: blue;">&gt;</span><span style="background: yellow;">@</span>Html.RadioButtonFor(m =&gt; m.ComputerLanguage, value) <span style="background: yellow;">@</span>value<span style="color: blue;">&lt;/</span><span style="color: maroon;">label</span><span style="color: blue;">&gt;</span><br/>
+ }</p>
+</div>
+<p>For the untyped helper, the third parameter indicates if it is checked.</p>
+<div class="code">
+<p>&nbsp;<span style="background: yellow;">@</span>Html.RadioButton(<span style="color: #a31515;">"ComputerLanguage"</span>, <span style="color: #a31515;">"CSharp"</span>, <span style="color: blue;">true</span>)</p>
+</div>
+
+<h3>DropDownList</h3>
+<p>To render HTML Selects, you can use Html.DropDownList(name, SelectList)/Html.DropDownListFor(m =&gt; m.Propety, SelectList)<br />
+A SelectList (and MultiSelectList) can be constructed with an IEnumerable of SelectListItems.<br />
+A simple string list (selected item is set automatically here)</p>
+<div class="code">
+<p><span style="background: yellow;">@</span>Html.DropDownListFor(m =&gt; m.Language,<br />
+ &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">SelectList</span>(<span style="color: blue;">new</span>[] { <span style="color: #a31515;">"EN"</span>, <span style="color: #a31515;">"FR"</span>, <span style="color: #a31515;">"DE"</span>, <span style="color: #a31515;">"ES"</span>, <span style="color: #a31515;">"IT"</span>, <span style="color: #a31515;">"NL"</span> }))</p>
+</div>
+
+<h4>DropDownListFor entity relations</h4>
+<p>Entities don't work as well as simple types. The SelectLists are often put on the viewmodel rather than built in the view. If you get a dropdown of System.Web.Mvc.SelectListItem, it's because the SelectList is doing reflection on the SelectListItems you're putting in (you need to name the text/value properties, or just use an IEnumerable of SelectListItems).</p>
+<div class="code">
+<p><span style="background: yellow;">@</span>Html.DropDownListFor(m =&gt; m.Category,<br/>
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">SelectList</span>(ViewBag.Categories,<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; dataTextField: <span style="color: #a31515;">"CategoryName"</span>,<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; dataValueField: <span style="color: #a31515;">"Id"</span>,<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; selectedValue: Model.Category.Id),<br/>
+&nbsp;&nbsp;&nbsp; <span style="color: #a31515;">"--Please select--"</span>)</p>
+</div>
+
+<p>But this setting the selected item is a little tricky. The easiest way is simply have an Id property (model.CategoryId) and not use the entity relationship.<br />
+Controller (or ViewModel):</p>
+<div class="code">
+<p>ViewBag.CategoryList = categories.Select(x =&gt; <span style="color: blue;">new</span> <span style="color: #2b91af;">SelectListItem</span> {Text = x.CategoryName, Value = x.Id.ToString()});</p>
+</div>
+<p>View:</p>
+<div class="code">
+<p><span style="background: yellow;">@</span>Html.DropDownListFor(m =&gt; m.CategoryId,<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; (<span style="color: #2b91af;">IEnumerable</span>&lt;<span style="color: #2b91af;">SelectListItem</span>&gt;)ViewBag.CategoryList, <br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #a31515;">"--Please select--"</span>)</p>
+</div>
+
+
+<h3>Dropdownlist for Enum</h3>
+<p>Prior to MVC 5.1, it renders a textbox. After 5.1 (Jan 2014) there is a proper <span style="background: yellow;">@</span>Html.EnumDropDownListFor</p>
+<p>You can get a simple dropdown with an Enum.GetValues:</p>
+<div class="code">
+<p><span style="background: yellow;">@</span>Html.DropDownListFor(model =&gt; model.<span style="color: blue;">State</span>, <span style="color: blue;">new</span> <span style="color: #2b91af;">SelectList</span>(<span style="color: #2b91af;">Enum</span>.GetValues(<span style="color: blue;">typeof</span>(Domain.<span style="color: #2b91af;">States</span>))))</p>
+</div>
+<p>For more flexible use, prior to MVC 5.1:</p>
+
+<div class="code">
+<p><span style="color: blue;">using</span> System;<br/>
+<span style="color: blue;">using</span> System.Linq;<br/>
+<span style="color: blue;">using</span> System.Linq.Expressions;<br/>
+<span style="color: blue;">using</span> System.Web.Mvc;<br/>
+<span style="color: blue;">using</span> System.Web.Mvc.Html;<br/>
+&nbsp;<br/>
+<span style="color: blue;">namespace</span> MvcApplication1<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">CustomHtmlHelpers</span><br/>
+&nbsp;&nbsp;&nbsp; {<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> Dropdowns for enums. @Html.EnumDropDownListFor(m =&amp;gt; m.Sex)</span><br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #2b91af;">MvcHtmlString</span> EnumDropDownListFor&lt;TModel, TEnum&gt;(<span style="color: blue;">this</span> <span style="color: #2b91af;">HtmlHelper</span>&lt;TModel&gt; htmlHelper,<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Expression</span>&lt;<span style="color: #2b91af;">Func</span>&lt;TModel, TEnum&gt;&gt; expression)<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> metadata =<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">ModelMetadata</span>.FromLambdaExpression(expression, htmlHelper.ViewData);<br/>
+&nbsp;<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> nonNullableType = metadata.ModelType;<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> underlyingType = <span style="color: #2b91af;">Nullable</span>.GetUnderlyingType(nonNullableType);<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (underlyingType != <span style="color: blue;">null</span>)<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; nonNullableType = underlyingType;<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br/>
+&nbsp;<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> items = (<span style="color: blue;">from</span> value <span style="color: blue;">in</span><br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  <span style="color: #2b91af;">Enum</span>.GetValues(nonNullableType).Cast&lt;TEnum&gt;()<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  <span style="color: blue;">select</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">SelectListItem</span><br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  {<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  Text = value.ToString(), <span style="color: green;">//could look for [Description] attribute</span><br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  Value = value.ToString(), <span style="color: green;">//default binder can use string</span><br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  Selected = value.Equals(metadata.Model)<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  }).ToList();<br/>
+&nbsp;<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (metadata.IsNullableValueType)<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> empty = <span style="color: blue;">new</span> <span style="color: #2b91af;">SelectListItem</span> { Text = <span style="color: blue;">string</span>.Empty, Value = <span style="color: blue;">string</span>.Empty };<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; items.Insert(0, empty);<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br/>
+&nbsp;<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> htmlHelper.DropDownListFor(expression, items);<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br/>
+&nbsp;&nbsp;&nbsp; }<br/>
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #2b91af;">MvcHtmlString</span> EnumRadioListFor&lt;TModel, TEnum&gt;(<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">this</span> <span style="color: #2b91af;">HtmlHelper</span>&lt;TModel&gt; htmlHelper,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Expression</span>&lt;<span style="color: #2b91af;">Func</span>&lt;TModel, TEnum&gt;&gt; expression)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> metadata =<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">ModelMetadata</span>.FromLambdaExpression(expression, htmlHelper.ViewData);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> nonNullableType = metadata.ModelType;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> underlyingType = <span style="color: #2b91af;">Nullable</span>.GetUnderlyingType(nonNullableType);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (underlyingType != <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; nonNullableType = underlyingType;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> names = <span style="color: #2b91af;">Enum</span>.GetNames(nonNullableType);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> sb = <span style="color: blue;">new</span> <span style="color: #2b91af;">StringBuilder</span>();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//respect the hierarchy</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> prefix = htmlHelper.ViewData.TemplateInfo.HtmlFieldPrefix;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (<span style="color: blue;">string</span>.IsNullOrWhiteSpace(prefix)) <br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; prefix = <span style="color: blue;">null</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">else</span> <br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; prefix += <span style="color: #a31515;">&quot;_&quot;</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">foreach</span> (<span style="color: blue;">var</span> name <span style="color: blue;">in</span> names)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//id is format &quot;propertyName_enum&quot;. </span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> id = <span style="color: blue;">string</span>.Format(<span style="color: #a31515;">&quot;</span><span style="color: #3cb371;">{0}{1}</span><span style="color: #a31515;">_</span><span style="color: #3cb371;">{2}</span><span style="color: #a31515;">&quot;</span>,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; prefix,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; metadata.PropertyName,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; name);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//use the standard template and turn it into a string</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> radio = htmlHelper.RadioButtonFor(expression, name, <span style="color: blue;">new</span> { id })<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .ToHtmlString();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; sb.AppendFormat(<span style="color: #a31515;">&quot;&lt;label for=\&quot;</span><span style="color: #3cb371;">{0}</span><span style="color: #a31515;">\&quot;&gt;</span><span style="color: #3cb371;">{1}</span><span style="color: #a31515;">&lt;/label&gt; </span><span style="color: #3cb371;">{2}</span><span style="color: #a31515;">&quot;</span>,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; id,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">HttpUtility</span>.HtmlEncode(name),<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; radio);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: #2b91af;">MvcHtmlString</span>.Create(sb.ToString());<br />
+&nbsp;&nbsp;&nbsp; }</p>
+}</p>
+</div>
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

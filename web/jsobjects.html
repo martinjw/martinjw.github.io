@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Javascript objects</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+<link rel="stylesheet" href="../js/prettify.css" type="text/css" />
+<script type="text/javascript" src="../utilities.js">
+</script>
+<style type="text/css">
+pre { /* show it all */
+max-height: 50em;
+}
+</style>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../index.html">Home &gt;</a></li>
+<li><a href="jsobjects.html">JS Objects</a></li>
+<li><a href="jquery.html">jQuery Tips</a></li>
+<li><a href="../html5/index.html">HTML5</a></li>
+<li><a href="../dev/grunt.html">Grunt</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Javascript objects</h2>
+
+<h3>Javascript objects</h3>
+<p>See <a href="http://www.wait-till-i.com/2007/08/22/again-with-the-module-pattern-reveal-something-to-the-world/">here</a></p>
+<pre class="prettyprint">
+var obj = {}; //same as = new Object();
+var arr = []; //same as = new Array();
+
+//initialize if does not exist (defined in another js file?)
+window.myNamespace = window.myNamespace || {};
+
+//object literal
+var person = {
+    name: "Martin", //use : not = and append the comma
+    toString: function() {
+        return "I am " + this.name;
+    }
+};
+
+//anonymous functions can auto-execute 
+(function() {
+    var name = document.getElementById("text").value;
+    function copy() {
+        document.getElementById("out").value = name;
+    }
+     
+    copy();
+}()); //(immediately invoked function expression -IIFE/"iffy")
+
+//revealing module pattern
+var revealingModulePattern = function(){
+	function privateCopy() { } //not in object notation
+	function willBePublicCopy() { }
+	return { //return an anonyomous object
+		publicVar: willBePublicCopy() //alias what you make public
+	}
+}();
+</pre>
+
+
+<h3>Javascript object detection</h3>
+<p>In javascript, an object that isn't defined is actually <cite>undefined</cite>, not <cite>null</cite>. 
+The following show the different checks which will indicate whether a top level object exists.
+Note top-level global objects are actually properties of the <cite>window</cite> (<cite>self</cite>) object and you usually need to specify it 
+(otherwise it unhelpfully throws an exception because it's undefined).</p>
+<pre class="prettyprint">//only form to not need self.
+if (typeof (MayNotExist) != "undefined") MayNotExist += 1;
+            
+//weak checking against null
+if (self.MayNotExist != null) MayNotExist += 1;
+        
+//strong checking undefined
+if (self.MayNotExist !== undefined) MayNotExist += 1;
+
+//simple
+if (self.MayNotExist) MayNotExist += 1;
+</pre>
+
+<h3>this, prototypes and constructors</h3>
+<p>A constructor is a normal function with optional arguments and typically properties (incl. methods) assigned to <cite>this</cite></p>
+<pre class="prettyprint">
+//a function that is a constructor
+var person = function (name) {
+	//the properties (and methods) are given object scope with this
+	this.name = name;
+};
+//"new" makes an object instance
+var p = new person();
+console.log(p.constructor.toString()); //this is the ctor function
+</pre>
+<p>Use .prototype for shared functions or inheritance.</p>
+<pre class="prettyprint">
+person.prototype = {
+	changeName: function (name) {
+		this.name = name;
+	}
+};
+var ninja = function () {};
+ninja.prototype = new person();
+
+var p = new ninja("John");
+</pre>
+<p>If you don't "new" an object, "this" means the global window object. And in event handlers, depending how they are assigned, "this" may be the window object or the element that invoked them. You can override with method.call(context) (or .apply)</p>
+<pre class="prettyprint">
+var Feline = function (name) {
+	this.name = name;
+};
+var Cat = function (name, stripes) {
+	//call chaining
+	Feline.call(this, name);
+	this.stripes = stripes;
+};
+Cat.prototype = new Feline();
+
+var cat = new Cat("tigger", true);
+</pre>
+<p>NB: nested functions also lose the context.</p>
+<pre class="prettyprint">
+var Adder = function (x, y) {
+	this.x = x;
+	this.y = y;
+	this.sum = function () {
+		var calc = function () {
+			//here's an inner function - "this"=="window"!!
+			return this.x + this.y;
+		};
+		//so we have to pass this down
+		return calc.call(this);
+	};
+};
+</pre>
+
+</div>
+<div class="Footer">
+<script type="text/javascript" src="../js/prettify.js">
+</script>
+<script type="text/javascript">
+//<![CDATA[
+prettyPrint();
+//]]>
+</script>
+</div>
+</body>
+</html>

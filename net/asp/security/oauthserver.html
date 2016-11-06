@@ -1,0 +1,122 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>OAuth2 Server</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspsecurity.html">Asp Security</a></li>
+<li><a href="forms.html">Forms Authentication</a></li>
+<li><a href="wsfederation.html">WS-Federation</a></li>
+<li><a href="wsfederationconfig.html">WS-Federation Config</a></li>
+<li><a href="ssl.html">SSL</a></li>
+<li><a href="owin.html">Owin</a></li>
+<li><a href="oauth.html">OAuth</a><ul>
+<li><a href="oauthserver.html">OAuth Server</a><ul>
+</ul></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>OAuth Server</h2>
+<h3>Creating an Authorization Server</h3>
+<p>The standard examples are facebook/ google etc, or you use an in-house authorization server (eg <a href="https://identityserver.github.io/Documentation/">IdentityServer</a> or ADFS 4). You can have a custom OAuth server within your project/solution using <cite>Microsoft.Owin.Security.OAuth</cite>. <a href="http://www.asp.net/aspnet/overview/owin-and-katana/owin-oauth-20-authorization-server">Based on asp.net overview</a></p>
+
+<h4>Nuget packages</h4>
+<ul>
+<li>Microsoft.Owin.Host.SystemWeb (Katana)</li>
+<li>Microsoft.Owin.Security.OAuth (brings in Owin dependencies)</li>
+<li>Microsoft.AspNet.WebApi.Owin (to run WebApi in Owin)</li>
+</ul>
+
+<h4>Startup</h4>
+
+<div class="code">
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">Startup</span><br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> Configuration(<span style="color: #2b91af;">IAppBuilder</span> app)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//serve tokens</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; app.UseOAuthAuthorizationServer(<span style="color: blue;">new</span> <span style="color: #2b91af;">OAuthAuthorizationServerOptions</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+<span style="color: blue;">#if</span> DEBUG<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; AllowInsecureHttp = <span style="color: blue;">true</span>, <span style="color: green;">//NOT IN PROD</span><br />
+<span style="color: blue;">#endif</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//redirect uri</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; AuthorizeEndpointPath = <span style="color: blue;">new</span> <span style="color: #2b91af;">PathString</span>(<span style="color: #a31515;">"/Authorize"</span>),<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//token uri </span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; TokenEndpointPath = <span style="color: blue;">new</span> <span style="color: #2b91af;">PathString</span>(<span style="color: #a31515;">"/Token"</span>),<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; AccessTokenExpireTimeSpan = <span style="color: #2b91af;">TimeSpan</span>.FromHours(7),<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//work with the events</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Provider = <span style="color: blue;">new</span> <span style="color: #2b91af;">MyOAuthAuthorizationServerProvider</span>()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; });<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//use tokens</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; app.UseOAuthBearerAuthentication(<span style="color: blue;">new</span> <span style="color: #2b91af;">OAuthBearerAuthenticationOptions</span>());<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//webapi</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> config = <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpConfiguration</span>();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">WebApiConfig</span>.Register(config);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; app.UseWebApi(config); <span style="color: green;">//Microsoft.AspNet.WebApi.Owin</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; }</p>
+</div>
+
+<h4>OAuthAuthorizationServerProvider</h4>
+<p>Or just supply delegates to OAuthAuthorizationServerProvider.</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">MyOAuthAuthorizationServerProvider</span><br />
+&nbsp;&nbsp;&nbsp; : <span style="color: #2b91af;">OAuthAuthorizationServerProvider</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">override</span> <span style="color: #2b91af;">Task</span> ValidateClientAuthentication(<span style="color: #2b91af;">OAuthValidateClientAuthenticationContext</span> context)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//validate the client is registered (from Basic Auth or form encoded)</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> clientId;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> clientSecret;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (context.TryGetBasicCredentials(<span style="color: blue;">out</span> clientId, <span style="color: blue;">out</span> clientSecret) ||<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; context.TryGetFormCredentials(<span style="color: blue;">out</span> clientId, <span style="color: blue;">out</span> clientSecret))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Console</span>.WriteLine(clientId);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (clientId == <span style="color: #a31515;">"1"</span> &amp;&amp; clientSecret == <span style="color: #a31515;">"secret"</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; context.Validated();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: #2b91af;">Task</span>.FromResult(0);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">override</span> <span style="color: #2b91af;">Task</span> GrantResourceOwnerCredentials(<span style="color: #2b91af;">OAuthGrantResourceOwnerCredentialsContext</span> context)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (context.UserName != <span style="color: #a31515;">"alice"</span> &amp;&amp; context.Password != <span style="color: #a31515;">"secret"</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; context.Rejected();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: #2b91af;">Task</span>.FromResult(0);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//password grant</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> identity = <span style="color: blue;">new</span> <span style="color: #2b91af;">ClaimsIdentity</span>(<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//username, "Bearer"</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">GenericIdentity</span>(context.UserName, <span style="color: #2b91af;">OAuthDefaults</span>.AuthenticationType),<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; context.Scope.Select(x =&gt; <span style="color: blue;">new</span> <span style="color: #2b91af;">Claim</span>(<span style="color: #a31515;">"urn:oauth:scope"</span>, x)));<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; context.Validated(identity);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: #2b91af;">Task</span>.FromResult(0);</p>
+</div>
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

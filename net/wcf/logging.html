@@ -1,0 +1,106 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>WCF Logging</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="wcf.html">WCF &gt;</a></li>
+<li><a href="behavior.html">Behavior</a></li>
+<li><a href="clients.html">Clients</a></li>
+<li><a href="contracts.html">Contracts</a></li>
+<li><a href="endpoints.html">Endpoints</a></li>
+<li><a href="faults.html">Faults</a></li>
+<li><a href="logging.html">Logging</a></li>
+<li><a href="routing.html">Routing</a></li>
+<li><a href="security.html">Security</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>WCF Logging</h2>
+
+<h3>Tracing/Listeners</h3>
+<p>You can use standard tracing/listeners, although it's two-step</p>
+<ul>
+<li>Add a normal <span style="color: #a31515;">system.diagnostics</span> section</li>
+<li>In <span style="color: #a31515;">system.serviceModel</span>, add a <span style="color: #a31515;">diagnostics</span>/ <span style="color: #a31515;">messageLogging</span> section</li>
+<li>Svclog xml files are readable with svcTraceViewer.exe</li>
+</ul>
+<h3>system.diagnostics</h3>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">system.diagnostics</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">sources</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;!--</span><span style="color: green;"> sources are assembly name </span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">source</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">System.ServiceModel</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: red;">switchValue</span><span style="color: blue;">=</span>"<span style="color: blue;">Information, ActivityTracing</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: red;">propagateActivity</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;!--</span><span style="color: green;"> ActivityTracing is end to end tracing </span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">listeners</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &lt;!--</span><span style="color: green;"> specify type or sharedListener</span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">xml</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">listeners</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">source</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">source</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">System.ServiceModel.MessageLogging</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">listeners</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">xml</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">listeners</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">source</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">sources</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;!--</span><span style="color: green;"> using listeners by name </span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">sharedListeners</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">xml</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp;&nbsp; </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">System.Diagnostics.XmlWriterTraceListener</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp;&nbsp; </span><span style="color: red;">initializeData</span><span style="color: blue;">=</span>"<span style="color: blue;">C:\log\Trace.svclog</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">sharedListeners</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;!--</span><span style="color: green;"> flush after every write (default is false)</span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">trace</span><span style="color: blue;"> </span><span style="color: red;">autoflush</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;">/&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">system.diagnostics</span><span style="color: blue;">&gt;</span></p>
+</div>
+<h3>messageLogging</h3>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">system.serviceModel</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">diagnostics</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">messageLogging</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: red;">logEntireMessage</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: red;">logMalformedMessages</span><span style="color: blue;">=</span>"<span style="color: blue;">false</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: red;">logMessagesAtServiceLevel</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: red;">logMessagesAtTransportLevel</span><span style="color: blue;">=</span>"<span style="color: blue;">false</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: red;">maxMessagesToLog</span><span style="color: blue;">=</span>"<span style="color: blue;">3000</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">filters</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &lt;!--</span><span style="color: green;">add xpath filter if rqd</span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">filters</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">messageLogging</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">diagnostics</span><span style="color: blue;">&gt;</span></p>
+</div>
+<h3>Notes</h3>
+<ul>
+<li>For end to end activity tracing use source name="System.ServiceModel" switchValue="ActivityTracing" propogateActivity="true"<br />
+propogateActivity crosses endpoints (it passes a message header "ActivityId" with a ProcessAction id)</li>
+<li>Add custom tracing as normal: <span style="color: blue;">new</span> <span style="color: #2b91af;">TraceSource</span>(<span style="color: #a31515;">"Custom"</span>).TraceData(<span style="color: #2b91af;">TraceEventType</span>.Information, 0, <span style="color: #a31515;">"Here"</span>);</li>
+<li><a href="http://msdn.microsoft.com/en-us/library/ms735098.aspx">Performance counters</a>: <span style="color: blue;">&lt;</span><span style="color: #a31515;">system.serviceModel</span><span style="color: blue;">&gt;</span> <span style="color: blue;"> &lt;</span><span style="color: #a31515;">diagnostics</span><span style="color: blue;"> </span><span style="color: red;">performanceCounters</span><span style="color: blue;">=</span>"<span style="color: blue;">ServiceOnly</span>"<span style="color: blue;">&gt;</span><br />
+="All" is ServiceModelService, ServiceModelEndpoint and ServiceModelOperation.
+</li>
+<li>To log <a href="http://msdn.microsoft.com/en-us/library/aa355060.aspx">personally identifiable info</a>, in machine.config &lt;system.serviceModel&gt;&lt;machineSettings enableLoggingKnownPii="true" /&gt;
+and then &lt;source name="System.ServiceModel.MessageLogging" logKnownPii="true"&gt;</li>
+</ul>
+ 
+</div>
+<div class="Footer"><script type="text/javascript">
+//<![CDATA[
+
+
+prettyPrint();
+//]]>
+</script></div>
+</body>
+</html>

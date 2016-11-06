@@ -1,0 +1,203 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>SQL</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<link rel="stylesheet" href="../../js/prettify.css" type="text/css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="io.html">IO</a></li>
+<li><a href="xml.html">Xml</a></li>
+<li><a href="xmlpatterns.html">Xml Patterns</a></li>
+<li><a href="adodotnet.html">ADO.Net</a></li>
+<li><a href="adopatterns.html">ADO Patterns</a></li>
+<li><a href="transactions.html">Transactions</a></li>
+<li><a href="sql.html">SQL</a></li>
+<li><a href="ef/ef.html">EF/Linq2Sql &gt;</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>SQL</h2>
+<h3>Links</h3>
+<ul>
+<li><a href="https://msdn.microsoft.com/en-us/library/bb510741.aspx">TSQL Language Ref (MSDN)</a></li>
+<li><a href="http://www.wangz.net/cgi-bin/pp/gsqlparser/sqlpp/sqlformat.tpl">Online SQL Beautifier (wangz.net)</a></li>
+<li><a href="http://www.databaseanswers.org/data%5Fmodels/">Data Models (databaseanswers.org)</a></li>
+<li><a href="sql/upsert.html">UPSERTs (Insert or Update) in SQLServer</a></li>
+<li><a href="sql/queue.html">FIFO queues from tables in SQLServer</a></li>
+</ul>
+<h3>SQL syntax</h3>
+<ul>
+<li>LIKE: _ for single character (as opposed to %)</li>
+<li>Datetimes: <pre class="prettyprint lang-sql">
+SELECT * FROM Orders WHERE OrderDate &lt; '20080101'; --other strings work but beware locale
+SELECT CONVERT(DateTime, '20080101', 112); -- 103 is ddmmyyyy, 101 is mmddyyyy
+SELECT DATEADD(DD, 7, GETDATE()); --7 days from today
+SELECT CURRENT_TIMESTAMP; --(sql server and oracle) current date time
+SELECT SYSUTCDATETIME(); --UTC time (DATETIME2, also SYSDATETIMEOFFSET() )
+</pre></li>
+<li>NULL will trip you up. In C#, null == null, but in SQL NULL &lt;&gt; NULL <ul>
+<li>WHERE X = NULL doesn't work. It's WHERE X IS NULL (inverse: IS NOT NULL)</li>
+<li>IS NULL operator is not the same as ISNULL(x,x) function (which is closer to ANSI standard COALESCE)</li>
+<LI>For sorting, it's best to use ISNULL/ COALESCE / CASE for NULLs</LI>
+<li>SELECT COUNT(X) returns fewer rows than SELECT COUNT(*) because NULL rows are excluded (see also AVG() etc)</li>
+<li>You can't CREATE UNIQUE INDEX IX ON TABLE(X) (but you can add WHERE X IS NOT NULL for a filtered index)</li>
+</ul></li>
+<li>Parameterized WHERE columns:
+<pre class="prettyprint lang-sql">
+@Filter         nvarchar(256),
+@FilterOn       nvarchar(256)
+SELECT * FROM  USERS
+WHERE (
+ CASE 
+   WHEN @FilterOn='UserID' THEN USERS.UserID 
+   WHEN @FilterOn='UserRole' THEN USERS.Role 
+   WHEN @FilterOn='Name' THEN USERS.Name 
+   ELSE USERS.UserID
+ END
+  LIKE @Filter)
+</pre></li>
+<li>SQLServer2005 paging use ROW_NUMBER() OVER(ORDER BY col) as RowNum<br />
+Note you have to repeat the select list in the outer sql too.
+<pre class="prettyprint lang-sql">
+SELECT ...
+FROM
+   (SELECT ... 
+        , ROW_NUMBER() OVER(ORDER BY ColumnName) as RowNum
+    FROM Employees e)
+WHERE RowNum BETWEEN @startRowIndex AND (@startRowIndex + @maximumRows) - 1
+</pre></li>
+<li>Multi-table selects can deadlock against row-level update locks.
+<ul>
+<li>In Sql2000 and Oracle, use dirty reads (or see below for 2005's snapshot)
+<pre class="prettyprint lang-sql">
+SELECT * FROM USERS WITH (NOLOCK)
+</pre>
+<span style="color: blue;">using</span> (<span style="color: #2b91af;">TransactionScope</span> tscope = <br />&nbsp;&nbsp;&nbsp;<span style="color: blue;">new</span> <span style="color: #2b91af;">TransactionScope</span>(<span style="color: #2b91af;">TransactionScopeOption</span>.Required, <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue;">new</span> <span style="color: #2b91af;">TransactionOptions</span> { IsolationLevel = System.Transactions.<span style="color: #2b91af;">IsolationLevel</span>.ReadUncommitted } 
+))</li>
+<li>In Sql2005+, avoid deadlocks with snapshot isolation (which must be enabled first)
+<pre class="prettyprint lang-sql">
+ALTER DATABASE AdventureWorks
+SET ALLOW_SNAPSHOT_ISOLATION ON</pre>
+<span style="color: blue;">using</span> (<span style="color: blue;">var</span> tscope = <br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">TransactionScope</span>(<span style="color: #2b91af;">TransactionScopeOption</span>.Required, <br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">TransactionOptions</span> { IsolationLevel = System.Transactions.<span style="color: #2b91af;">IsolationLevel</span>.Snapshot }))</li>
+</ul>
+
+</li>
+</ul>
+<h3>Management Notes</h3>
+<ul>
+<li>DON'T PREFIX SPROCS WITH "SP_". That looks them up in master database first. A common error.</li>
+<li>Command Line stopping: <code>NET STOP MSSQLSERVER /Y</code> (the Y is to stop SQLServerAgent too).<br />
+I have to do this to free up memory for VPCs.</li>
+<li>Backup/restore across machines- use <strong>sp_change_users_login 'Update-One' 'user1', 'user1'</strong> to fix the database user to the server user</li>
+<li>To get Identity after an insert:
+<pre class="prettyprint lang-sql">
+INSERT INTO [Categories] (CategoryName) VALUES ('Random');
+--use @@IDENTITY 
+SET @iid = @@IDENTITY;
+--SCOPE_IDENTITY() is safer as triggers may be firing
+SET @sid = SCOPE_IDENTITY();
+</pre>
+</li>
+<li><a href="http://msdn.microsoft.com/en-us/library/ms162802.aspx">BCP</a>: to bulk export a table:
+<pre class="prettyprint lang-sql">--export
+bcp database.dbo.MYTABLE out myfile.bcp -N -T
+
+--import
+sqlcmd -ddatabase -Q"delete from dbo.MYTABLE"
+bcp database.dbo.MYTABLE in myfile.bcp -N -T
+
+--with mixed mode authentication, append 
+-Sserver_name\instance_name -Umylogin -Pmypassword
+</pre>
+</li>
+<li>Rebuild all indexes (2005 version, with 2000 version commented out)
+<pre class="prettyprint lang-sql">
+DECLARE @TableName nvarchar(255)
+DECLARE @sql nvarchar(255)
+
+DECLARE TableCursor CURSOR FOR
+SELECT  table_schema + '.' + table_name FROM information_schema.tables
+WHERE table_type = 'base table' Order by table_name 
+
+OPEN TableCursor
+
+FETCH NEXT FROM TableCursor INTO @TableName
+WHILE @@FETCH_STATUS = 0
+BEGIN
+--DBCC DBREINDEX(@TableName,' ',90)
+SET @sql = 'ALTER INDEX ALL ON ' + @TableName + ' REBUILD' 
+EXEC (@sql)
+FETCH NEXT FROM TableCursor INTO @TableName
+END
+
+CLOSE TableCursor
+
+DEALLOCATE TableCursor
+</pre>
+</li>
+<li><a href="http://bloggingabout.net/blogs/mglaser/archive/2007/01/12/sql-server-tip-shrinking-a-sql-server-log.aspx">Shrinking the log file</a></li>
+<li>Renaming constraints (Access can't read SQLServer primary keys with "." in the name)
+<pre class="prettyprint lang-sql">
+DECLARE @sql NVARCHAR(MAX);
+
+SELECT @sql = '';
+SELECT @sql = @sql + 
+	'EXEC sp_rename ''' + QUOTENAME(CONSTRAINT_SCHEMA) + '.' + QUOTENAME(CONSTRAINT_NAME) + 
+	''', N'''  + LEFT(CONSTRAINT_NAME,3) + 'ems' + SUBSTRING(CONSTRAINT_NAME,8,99) + 
+	''', ''OBJECT'';'+ char(13) + char(10)
+FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS 
+WHERE 
+	CONSTRAINT_NAME LIKE '%K_dbo.%' AND 
+	CONSTRAINT_NAME NOT LIKE '%__MigrationHistory'
+
+EXEC sp_executesql @sql;
+</pre>
+</li>
+<li>ApplicationPoolIdentity doesn't have SQL login (and it's a virtual account): <ul>
+<li>for local SQL, add login "IIS APPPOOL\AppPoolName" (change the appPoolname here!)</li>
+<li>for remote SQL, add "domain\serverName$"</li>
+</ul></li>
+</ul>
+
+<h3>Oracle</h3>
+<p>Oracle 11 has increased security (auto-expiring passwords, case sensitivity).</p>
+<ul>
+<li>In SqlPlus, connect as SYSDBA: <code>conn sys/secretpassword as sysdba</code></li>
+<li>Find expired and locked accounts: <code>select username, account_status from dba_users where account_status like 'EXPIRED%';</code></li>
+<li>To reset an expired user, change the password: <code>password HR<br/>
+New password: </code><br/>
+Or <code>alter user HR IDENTIFED BY new_password;</code></li>
+<li>To unlock a user: <code>alter user HR account unlock;</code></li>
+<li>To disable password expiry: <code>ALTER PROFILE DEFAULT LIMIT PASSWORD_LIFE_TIME UNLIMITED;</code><br/>
+To find profile if it's not DEFAULT: <code>select profile from dba_users where username = 'HR';</code></li>
+</ul>
+
+
+</div>
+<div class="Footer"><script type="text/javascript" src="../../js/prettify.js">
+</script><script type="text/javascript" src="../../js/lang-sql.js">
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+
+prettyPrint();
+//]]>
+</script>
+</div></body>
+</html>

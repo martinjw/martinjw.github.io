@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>HTML5 LocalStorage and IndexedDB</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+<link rel="stylesheet" type="text/css" href="../js/prettify.css" />
+<script type="text/javascript" src="../utilities.js">
+</script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../index.html">Home &gt;</a></li>
+<li><a href="index.html">HTML5</a></li>
+<li><a href="forms.html">Forms</a></li>
+<li><a href="offline.html">AppCache</a></li>
+<li><a href="storage.html">LocalStorage and IndexedDB</a></li>
+<li><a href="webworkers.html">WebWorkers</a></li>
+<li><a href="fileapi.html">File API</a></li>
+<li><a href="canvas.html">Canvas</a></li>
+<li><a href="css3effects.html">CSS3 Visual Effects</a></li>
+<li><a href="css3layout.html">CSS3 Layout</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>LocalStorage and IndexedDB</h2>
+
+<div class="alert">
+Written September 2012- specs and browser support will change!
+</div>
+
+<h3>Local Storage</h3>
+<ul>
+<li>IE 8+. All browsers give 5Mb of key-value storage.<br/>
+Even if it is supported it might not be enabled. Features may throw exceptions, so use <a href="http://modernizr.com/">Modernizr</a></li>
+<li><a href="http://diveintohtml5.info/storage.html">DiveIntoHtml5</a></li>
+<li><a href="https://developer.mozilla.org/en-US/docs/DOM/Storage">MDN</a></li>
+<li><a href="http://www.w3schools.com/html/html5_webstorage.asp">w3Schools</a></li>
+</ul>
+
+<pre class="prettyprint">
+localStorage["key"] = 29; //or localStorage.setItem(key, value);
+//always coerce types
+var find = parseInt(localStorage["key"], 10); //or localStorage.getItem(key)
+var size = localStorage.length;
+</pre>
+<ul>
+<li>storage is scoped to the origin (http://website/). NB file:// is not allowed.</li>
+<li>sessionStorage is for as long as the browser is open.</li>
+<li>localStorage is persistent across browser restarts.</li>
+<li>It's dead simple but strings-only, synchronous and IO-limited (so can be slow)</li>
+</ul>
+<div id="demoStore">
+<input type="text" id="storeThis" name="storeThis" />
+<input type="button" id="toStore" value="Store it" />
+<input type="button" id="fromStore" value="Get from Store" />
+<output id="showValue"></output>
+</div>
+<script type="text/javascript">
+    $(function () {
+		function hasStorage() {
+            try {
+                return 'localStorage' in window && window['localStorage'] !== null;
+            } catch (e) {
+                return false;
+            }
+        }
+		if(!hasStorage()) $("demoStore").hide();
+		
+        $("#toStore").click(function () {
+			var value = $("#storeThis").val();
+			$("#storeThis").val("");
+			localStorage.setItem("storeThis", value);
+        });
+		$("#fromStore").click(function () {
+			var value = localStorage.getItem("storeThis");
+			$("#showValue").text(value);
+        });
+    });
+</script>
+
+
+<h3>IndexedDb</h3>
+<ul>
+<li>IE 10+, FF and Chrome. As at end 2012, Chrome is prefixed (IE+FF not), no support in Safari (which still has WebSQL) or any mobile browsers.<br/>
+It doesn't work in PrivateMode</li>
+<li><a href="https://developer.mozilla.org/en-US/docs/IndexedDB">MDN</a></li>
+<li><a href="http://www.misfitgeek.com/2012/10/html5-off-line-storing-and-retrieving-videos-with-indexeddb/">Joe Stagner (FF)</a></li>
+<li>Almost everything returns asynchronous requests. Always hook on .onerror and .onsuccess.</li>
+</ul>
+<h4>Open/create the database</h4>
+<ul>
+<li>Initialize and upgrade database through <cite>.onupgradeneeded</cite> (.createObjectStore, .createIndex, .deleteObjectStore)</li>
+<li>ObjectStores can have autoincrement key generators or you explicitly set them.</li>
+</ul>
+<pre class="prettyprint">
+function createIDatabase(useDb) {
+	//get the prefixed version. No prefixes: IE 10, latest FF
+	window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB;
+	//try to open or create it (optional: add version integer)
+	var request = indexedDB.open("filmDatabase", 1);
+	request.onerror = function () {
+		$("#log").text("Database is not available");
+	};
+	// Create object stores
+	request.onupgradeneeded = function (event) {
+		$("#log").text("Creating database");
+		var db = event.target.result;
+		// Create an objectStore with keyPath
+		var objectStore = db.createObjectStore("films", { keyPath: "filmId" });
+
+		// Create an non-unique index
+		objectStore.createIndex("name", "name", { unique: false });
+	};
+	request.onsuccess = function () {
+		var db = request.result;
+		db.onerror = function (event) {
+			//global error handler eg database wrong version
+			$("#log").text("Database error " + event.target.error.name);
+		};
+		useDb(db);
+	};
+}
+</pre>
+<h4>ObjectStore- saving</h4>
+<ul>
+<li>ObjectStore = table. You get at it via database transaction.</li>
+<li>Transactions name the tables and whether readonly (default) or readwrite.</li>
+<li>You can .add (=insert) or .put (=upsert)</li>
+</ul>
+<pre class="prettyprint">
+function saveToIndexDb() {
+	createIDatabase(function (db) {
+		var storeName = "films";
+		//open an array of stores (or db.objectStoreNames for all)
+		var transaction = db.
+			transaction([storeName],
+		//Optional, default is readonly. Or "readwrite"
+			IDBTransaction.READ_WRITE);
+		//or var IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction || { READ_WRITE: "readwrite" };
+		//nb an error on transaction causes a rollback
+		var objectStore = transaction.objectStore(storeName);
+		var film = {
+			filmId: parseInt($("input[name='id']").val(), 10),
+			name: $("input[name='title']").val()
+		};
+		//add = insert, put = upsert
+		var addRequest = objectStore.add(film);
+		addRequest.onerror = function () {
+			$("#log").text("Error adding " + film.filmId);
+		};
+	});
+}
+</pre>
+<h4>ObjectStore - reading</h4>
+<p>.get(key)</p>
+<pre class="prettyprint">
+function readIndexDb() {
+	var id = parseInt($("input[name='id']").val(), 10);
+	createIDatabase(function (db) {
+		var storeName = "films";
+		db.transaction(storeName)
+			.objectStore(storeName)
+			.get(id)
+			.onsuccess = function (event) {
+				var film = event.target.result;
+				if (!film) {
+					$("#log").text("No film with this id");
+				} else {
+					$("#log").text("Found film " + film.name);
+				}
+			};
+	});
+}
+</pre>
+<p>.openCursor(range) often via .index(name)</p>
+<pre class="prettyprint">
+function readAllIndexDb() {
+	createIDatabase(function (db) {
+		var storeName = "films";
+		// lowerbound-upperbound (or .only(value))
+		var range = IDBKeyRange.bound("G", "I");
+		db.transaction(storeName)
+			.objectStore(storeName)
+			.index("name")//can use an index
+			.openCursor(range)
+			.onsuccess = function (event) {
+				//this is called for each item in cursor, plus at the end (cursor is undefined)
+				var cursor = event.target.result;
+				if (!cursor) {
+					//finished
+				} else {
+					//if using index, cursor.key is the index value
+					//if you openKeyCursor() cursor.value is not the object, it's the key
+					var film = cursor.value;
+					$("#log").append("<br/>" + film.name);
+					cursor.continue();
+				}
+			};
+	});
+}
+</pre>
+
+</div>
+<div class="Footer"><script type="text/javascript" src="../js/prettify.js">
+</script>
+<script type="text/javascript">
+prettyPrint();
+</script>
+</div>
+</body>
+</html>

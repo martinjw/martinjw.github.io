@@ -1,0 +1,80 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>JS Encoding</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<script type="text/javascript" src="../utilities.js">
+</script>
+<link rel="stylesheet" type="text/css" href="../style.css" />
+<style type="text/css">
+/*<![CDATA[*/
+.keyboard input {width: 2em;}
+/*]]>*/
+</style>
+</head>
+<body>
+<h1>static void</h1>
+<form>
+<div class="menu">
+<ul>
+<li><a href="../index.html">Home &gt;&gt;</a></li>
+<li><a href="jsencode.html">Encoding</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>JS Encoding</h2>
+<h3>HtmlEncode</h3>
+<p><a href="HtmlEncode.js">HtmlEncode.js</a> converts non-Ascii characters (&gt;128) to html entities. For xml use numeric entities.</p>
+<div class="keyboard">
+<input type="button" value="&Agrave;" title="&amp;Agrave;" onclick="raw.value+=this.value" />
+<input type="button" value="&Acirc;" title="&amp;Acirc;" onclick="raw.value+=this.value" />
+<input type="button" value="&Ccedil;" title="&amp;Ccedil;" onclick="raw.value+=this.value" />
+<input type="button" value="&Egrave;" title="&amp;Egrave;" onclick="raw.value+=this.value" />
+<input type="button" value="&Eacute;" title="&amp;Eacute;" onclick="raw.value+=this.value" />
+<input type="button" value="&Euml;" title="&amp;Euml;" onclick="raw.value+=this.value" />
+<input type="button" value="&Icirc;" title="&amp;Icirc;" onclick="raw.value+=this.value" />
+<input type="button" value="&Iuml;" title="&amp;Iuml;" onclick="raw.value+=this.value" />
+<input type="button" value="&Ocirc;" title="&amp;Ocirc;" onclick="raw.value+=this.value" />
+<input type="button" value="&Ucirc;" title="&amp;Ucirc;" onclick="raw.value+=this.value" />
+<input type="button" value="&Ugrave;" title="&amp;Ugrave;" onclick="raw.value+=this.value" />
+<input type="button" value="&Ugrave;" title="&amp;Ugrave;" onclick="raw.value+=this.value" />
+<input type="button" value="&Uuml;" title="&amp;Uuml;" onclick="raw.value+=this.value" />
+</div>
+<div class="keyboard">
+<input type="button" value="&agrave;" title="&amp;agrave;" onclick="raw.value+=this.value" />
+<input type="button" value="&acirc;" title="&amp;acirc;" onclick="raw.value+=this.value" />
+<input type="button" value="&ccedil;" title="&amp;ccedil;" onclick="raw.value+=this.value" />
+<input type="button" value="&egrave;" title="&amp;egrave;" onclick="raw.value+=this.value" />
+<input type="button" value="&eacute;" title="&amp;eacute;" onclick="raw.value+=this.value" />
+<input type="button" value="&euml;" title="&amp;euml;" onclick="raw.value+=this.value" />
+<input type="button" value="&icirc;" title="&amp;icirc;" onclick="raw.value+=this.value" />
+<input type="button" value="&iuml;" title="&amp;iuml;" onclick="raw.value+=this.value" />
+<input type="button" value="&ocirc;" title="&amp;ocirc;" onclick="raw.value+=this.value" />
+<input type="button" value="&ucirc;" title="&amp;ucirc;" onclick="raw.value+=this.value" />
+<input type="button" value="&ugrave;" title="&amp;ugrave;" onclick="raw.value+=this.value" />
+<input type="button" value="&ugrave;" title="&amp;ugrave;" onclick="raw.value+=this.value" />
+<input type="button" value="&uuml;" title="&amp;uuml;" onclick="raw.value+=this.value" />
+</div>
+<script type="text/javascript" src="HtmlEncode.js"></script>
+<textarea rows="10" cols="50" id="raw">Texte en Français</textarea><br />
+<input type="button" value="convert" onclick="entityEncode.encodeField('raw','output')" />
+<input type="button" value="convert (numeric)" onclick="entityEncode.encodeFieldNumeric('raw','output')" /><br />
+<textarea rows="10" cols="50" id="output">Texte en fran&ccedil;ais</textarea>
+
+<h3>C Encode</h3>
+<p><a href="cEncode.js">cEncode.js</a> doubles up quotes in a string (useful for all programming languages). The encode method does not put the enclosing quotes around.  The encodeLiteral method (specifically for C @literal strings) does put an enclosing double quote around.</p>
+<script type="text/javascript" src="CEncode.js"></script>
+<textarea rows="10" cols="50" id="craw"></textarea><br />
+<input type="button" value="convert" onclick="cEncode.encodeField('craw','coutput')" /> <input type="button" value="convert (@literal)" onclick="cEncode.encodeFieldLiteral('craw','coutput')" /><br />
+<textarea rows="10" cols="50" id="coutput"></textarea>
+
+</div>
+
+<div class="Footer">
+
+</div>
+</form>
+</body>
+</html>

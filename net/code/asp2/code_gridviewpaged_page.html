@@ -1,0 +1,210 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Paged GridView: Code Behind</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main</a></li>
+<li><a href="../../dotnet.html">.Net</a></li>
+<li><a href="../index.html">Code</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>Paged GridView: Code Behind</h2>
+<p>The code behind to demonstrate the <a href="code_gridviewpaged.html">paged GridView</a>. The gridview events all call PageAndBind, which calls the DAL for the current, next or resorted page.</p>
+<div class="code">
+<p><span style="color: blue;">using</span> System;<br />
+<span style="color: blue;">using</span> System.Collections.Generic;<br />
+<span style="color: blue;">using</span> System.Web.UI;<br />
+<span style="color: blue;">using</span> System.Web.UI.WebControls;<br />
+&nbsp;<br />
+<span style="color: blue;">public</span> <span style="color: blue;">partial</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">TestPagedGridNoODS</span> : <span style="color: #2b91af;">Page</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: #2b91af;">FakeDAL</span> dal;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">protected</span> <span style="color: blue;">void</span> Page_Load(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">EventArgs</span> e)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; dal = <span style="color: blue;">new</span> <span style="color: #2b91af;">FakeDAL</span>(StoredData); <span style="color: green;">//fake data is persisted in viewstate</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!IsPostBack)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; PageAndBind(GridView1);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; #region</span> GridView events<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//all events have to PageAndBind(GridView1)</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">protected</span> <span style="color: blue;">void</span> GridView1_PageIndexChanging(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">GridViewPageEventArgs</span> e)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">GridView</span> gv = (<span style="color: #2b91af;">GridView</span>)sender;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; gv.PageIndex = e.NewPageIndex; <span style="color: green;">//simply set the page</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; PageAndBind(gv);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">protected</span> <span style="color: blue;">void</span> GridView1_Sorting(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">GridViewSortEventArgs</span> e)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">GridView</span> gv = (<span style="color: #2b91af;">GridView</span>)sender;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; gv.PageIndex = 0; <span style="color: green;">//always sort to page 1</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; GetSortDirection(e.SortExpression); <span style="color: green;">//sort direction is always ascending, so we do this manually</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; GridViewSortBy = e.SortExpression; <span style="color: green;">//sortBy is stored so we can change direction next time</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; PageAndBind(gv);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">protected</span> <span style="color: blue;">void</span> GridView1_RowEditing(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">GridViewEditEventArgs</span> e)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">GridView</span> gv = (<span style="color: #2b91af;">GridView</span>)sender;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//to get index and row</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//int rowIndex = e.NewEditIndex; //here we have the row directly</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//GridViewRow row = gv.Rows[rowIndex];</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; gv.EditIndex = e.NewEditIndex;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//you must rebind</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; PageAndBind(gv);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//important - turn off paging and sorting </span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//(do this after binding, unlike in updating and canceledit)</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; gv.AllowPaging = <span style="color: blue;">false</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; gv.AllowSorting = <span style="color: blue;">false</span>;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">protected</span> <span style="color: blue;">void</span> GridView1_RowCancelingEdit(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">GridViewCancelEditEventArgs</span> e)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">GridView</span> gv = (<span style="color: #2b91af;">GridView</span>)sender;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; gv.EditIndex = -1;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; gv.AllowPaging = <span style="color: blue;">true</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; gv.AllowSorting = <span style="color: blue;">true</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//you must rebind last of all</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; PageAndBind(gv);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">protected</span> <span style="color: blue;">void</span> GridView1_RowUpdating(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">GridViewUpdateEventArgs</span> e)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">GridView</span> gv = (<span style="color: #2b91af;">GridView</span>)sender;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//to get index and row</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">int</span> rowIndex = e.RowIndex; <span style="color: green;">//here we have the row directly</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">GridViewRow</span> row = gv.Rows[rowIndex]; <span style="color: green;">//the row</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; GetDataFromTemplatedRow(gv, rowIndex, row); <span style="color: green;">//use FindControl</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; gv.EditIndex = -1;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; gv.AllowPaging = <span style="color: blue;">true</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; gv.AllowSorting = <span style="color: blue;">true</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//you must rebind last of all</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; PageAndBind(gv);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">protected</span> <span style="color: blue;">void</span> GridView1_RowDeleting(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">GridViewDeleteEventArgs</span> e)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">GridView</span> gv = (<span style="color: #2b91af;">GridView</span>)sender;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//to get index and row</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">int</span> rowIndex = e.RowIndex; <span style="color: green;">//here we have the row directly</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//GridViewRow row = gv.Rows[rowIndex]; //the row</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">int</span> key = (<span style="color: blue;">int</span>)gv.DataKeys[rowIndex][0];<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Delete(key);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (rowIndex == 0 &amp;&amp; gv.Rows.Count == 1)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; gv.PageIndex = gv.PageIndex - 1; <span style="color: green;">//only 1 item on page- page back</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; PageAndBind(gv); <span style="color: green;">//load the new information</span><br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: blue;">string</span> GetTextBoxText(<span style="color: #2b91af;">Control</span> row, <span style="color: blue;">string</span> Id)<br />
+&nbsp;&nbsp;&nbsp; { <span style="color: green;">//helper to get the text from a textbox in a gridrow</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">TextBox</span> txtName = row.FindControl(Id) <span style="color: blue;">as</span> <span style="color: #2b91af;">TextBox</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (txtName != <span style="color: blue;">null</span>) <span style="color: blue;">return</span> txtName.Text;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">else</span> <span style="color: blue;">return</span> <span style="color: #2b91af;">String</span>.Empty;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; #endregion</span><br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; #region</span> Properties storing GridView data and settings<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">bool</span> GridViewSortAscending<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">get</span> { <span style="color: blue;">return</span> (ViewState[<span style="color: #a31515;">"SortDirection"</span>] == <span style="color: blue;">null</span>) ? <span style="color: blue;">true</span> : (<span style="color: blue;">bool</span>)ViewState[<span style="color: #a31515;">"SortDirection"</span>]; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">set</span> { ViewState[<span style="color: #a31515;">"SortDirection"</span>] = <span style="color: blue;">value</span>; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">string</span> GridViewSortBy<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">get</span> { <span style="color: blue;">return</span> ViewState[<span style="color: #a31515;">"SortBy"</span>] <span style="color: blue;">as</span> <span style="color: blue;">string</span> ?? <span style="color: #a31515;">""</span>; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">set</span> { ViewState[<span style="color: #a31515;">"SortBy"</span>] = <span style="color: blue;">value</span>; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">void</span> GetSortDirection(<span style="color: blue;">string</span> sortBy)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//swap the sort direction if sorting same column</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (GridViewSortBy != sortBy)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; GridViewSortAscending = <span style="color: blue;">true</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">else</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; GridViewSortAscending = !GridViewSortAscending;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; #endregion</span><br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; #region</span> Alter to fit data type<br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> Gets the data in pages, then binds it to the gridview</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;param name="gv"&gt;</span><span style="color: green;">The grid view</span><span style="color: gray;">&lt;/param&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">void</span> PageAndBind(<span style="color: #2b91af;">GridView</span> gv)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">IList</span>&lt;<span style="color: #2b91af;">Object</span>&gt; list = <span style="color: blue;">new</span> <span style="color: #2b91af;">List</span>&lt;<span style="color: #2b91af;">Object</span>&gt;();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">int</span> pageSize = 20;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">int</span> startRow = (gv.PageIndex * pageSize);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">IList</span>&lt;<span style="color: #2b91af;">DatedItem</span>&gt; data = <br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; dal.LoadDatedItemsByPage(startRow, pageSize, GridViewSortBy, GridViewSortAscending);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//copy data into generic list</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">foreach</span> (<span style="color: #2b91af;">DatedItem</span> item <span style="color: blue;">in</span> data)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; list.Add(item);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">int</span> count = dal.LoadDatedItemsCount(); <span style="color: green;">//you could cache this</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//here's the bit where we use create an ODS in code to fill the gridview with paged data</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">GridViewFiller</span>.Fill(gv, list, count, pageSize);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">void</span> GetDataFromTemplatedRow(<span style="color: #2b91af;">GridView</span> gv, <span style="color: blue;">int</span> rowIndex, <span style="color: #2b91af;">Control</span> row)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//you MUST use templated columns (you should anyway to validate), so use FindControl</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> name = GetTextBoxText(row, <span style="color: #a31515;">"txtName"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> date = GetTextBoxText(row, <span style="color: #a31515;">"txtDate"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">int</span> key = (<span style="color: blue;">int</span>)gv.DataKeys[rowIndex][0];<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; UpdateData(key, name, date);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">void</span> UpdateData(<span style="color: blue;">int</span> key, <span style="color: blue;">string</span> name, <span style="color: blue;">string</span> date)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">DatedItem</span> di = dal.Find(key);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (di == <span style="color: blue;">null</span>) <span style="color: blue;">return</span>;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; di.Name = name;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; di.Date = <span style="color: #2b91af;">Convert</span>.ToDateTime(date);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; StoredData = dal.LoadAll(); <span style="color: green;">//save the data- here we just persist to viewstate!</span><br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">void</span> Delete(<span style="color: blue;">int</span> key)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; dal.Delete(key);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; StoredData = dal.LoadAll(); <span style="color: green;">//save the data- here we just persist to viewstate!</span><br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: #2b91af;">List</span>&lt;<span style="color: #2b91af;">DatedItem</span>&gt; StoredData<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">get</span> { <span style="color: blue;">return</span> ViewState[<span style="color: #a31515;">"StoredData"</span>] <span style="color: blue;">as</span> <span style="color: #2b91af;">List</span>&lt;<span style="color: #2b91af;">DatedItem</span>&gt; ?? <span style="color: blue;">null</span>; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">set</span> { ViewState[<span style="color: #a31515;">"StoredData"</span>] = <span style="color: blue;">value</span>; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; #endregion</span><br />
+}</p>
+</div>
+
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

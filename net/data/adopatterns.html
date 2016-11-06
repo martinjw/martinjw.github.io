@@ -1,0 +1,127 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ADO patterns</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="io.html">IO</a></li>
+<li><a href="xml.html">Xml</a></li>
+<li><a href="xmlpatterns.html">Xml Patterns</a></li>
+<li><a href="adodotnet.html">ADO.Net</a></li>
+<li><a href="adopatterns.html">ADO Patterns</a></li>
+<li><a href="transactions.html">Transactions</a></li>
+<li><a href="sql.html">SQL</a></li>
+<li><a href="ef/ef.html">EF/Linq2Sql &gt;</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>ADO patterns</h2>
+<p>ORMs like NHibernate and Linq2Sql nicely hide all these details.</p>
+<h3>DataReader Pattern</h3>
+<div class="code">
+<p><span style="color: blue;">private</span> <span style="color: #2b91af;">List</span>&lt;<span style="color: #2b91af;">Order</span>&gt; ReadOrders()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">List</span>&lt;<span style="color: #2b91af;">Order</span>&gt; orders = <span style="color: blue;">new</span> <span style="color: #2b91af;">List</span>&lt;<span style="color: #2b91af;">Order</span>&gt;();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: #2b91af;">SqlConnection</span> cn =<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">SqlConnection</span>(<span style="color: #a31515;">"Server=localhost;Initial Catalog=Northwind;Integrated Security=True"</span>))<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; cn.Open();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> sql = <span style="color: #a31515;">@"SELECT OrderID, CustomerID, Freight, ShippedDate FROM Orders WHERE ShipCountry = @Country"</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: #2b91af;">SqlCommand</span> cmd = <span style="color: blue;">new</span> <span style="color: #2b91af;">SqlCommand</span>(sql, cn))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; cmd.Parameters.AddWithValue(<span style="color: #a31515;">"@Country"</span>, <span style="color: #a31515;">"USA"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: #2b91af;">SqlDataReader</span> rdr = cmd.ExecuteReader(<span style="color: #2b91af;">CommandBehavior</span>.CloseConnection))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//you could set DataSource = rdr directly</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!rdr.HasRows) <span style="color: blue;">return</span> orders;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">while</span> (rdr.Read())<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">int</span> id = rdr.GetInt32(0);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> customerID = rdr[<span style="color: #a31515;">"CustomerID"</span>].ToString();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">decimal</span> freight = rdr.GetDecimal(2);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">DateTime</span>? shipDate = <span style="color: blue;">null</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!rdr.IsDBNull(3)) shipDate = rdr.GetDateTime(3);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; orders.Add(<span style="color: blue;">new</span> <span style="color: #2b91af;">Order</span>(id, customerID, freight, shipDate));<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//rdr.NextResult(); //for multi-results</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> orders;<br />
+}</p>
+</div>
+
+<h3>DataAdaptor Pattern</h3>
+<div class="code">
+<p><span style="color: blue;">private</span> <span style="color: #2b91af;">DataTable</span> LoadViaDataTable()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: #2b91af;">SqlConnection</span> cn =<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">SqlConnection</span>(<span style="color: #a31515;">"Server=localhost;Initial Catalog=Northwind;Integrated Security=True"</span>))<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//no need to explicitly open/close connection unless doing several fills</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> sql = <span style="color: #a31515;">@"SELECT OrderID, CustomerID, Freight, ShippedDate FROM Orders WHERE ShipCountry = @Country"</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: #2b91af;">SqlCommand</span> cmd = <span style="color: blue;">new</span> <span style="color: #2b91af;">SqlCommand</span>(sql, cn))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; cmd.Parameters.AddWithValue(<span style="color: #a31515;">"@Country"</span>, <span style="color: #a31515;">"USA"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">DataTable</span> dt = <span style="color: blue;">new</span> <span style="color: #2b91af;">DataTable</span>();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: #2b91af;">SqlDataAdapter</span> da = <span style="color: blue;">new</span> <span style="color: #2b91af;">SqlDataAdapter</span>(cmd))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; da.Fill(dt);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> dt;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+
+<h3>Update Pattern</h3>
+<div class="code">
+<p> <span style="color: blue;">private</span> <span style="color: blue;">int</span> InsertCategory(<span style="color: blue;">string</span> categoryName)<br />
+ {<br />
+ &nbsp;&nbsp;&nbsp; <span style="color: blue;">int</span> id;<br />
+ &nbsp;&nbsp;&nbsp; <span style="color: green;">//using System.Transactions;</span><br />
+ &nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: #2b91af;">TransactionScope</span> tscope = <span style="color: blue;">new</span> <span style="color: #2b91af;">TransactionScope</span>())<br />
+ &nbsp;&nbsp;&nbsp; {<br />
+ &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: #2b91af;">SqlConnection</span> cn =<br />
+ &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">SqlConnection</span>(<span style="color: #a31515;">"Server=localhost;Initial Catalog=Northwind;Integrated Security=True"</span>))<br />
+ &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+ &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: #2b91af;">SqlCommand</span> cmd = cn.CreateCommand())<br />
+ &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+ &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; cmd.CommandText =<br />
+ &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #a31515;">@"INSERT INTO Categories (CategoryName) VALUES (@Name);</span><br />
+<span style="color: #a31515;">SET @IdentityID = SCOPE_IDENTITY()"</span>;<br />
+&nbsp;<br />
+ &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; cmd.Parameters.AddWithValue(<span style="color: #a31515;">"@Name"</span>, categoryName);<br />
+&nbsp;<br />
+ &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">SqlParameter</span> idParam = <span style="color: blue;">new</span> <span style="color: #2b91af;">SqlParameter</span>(<span style="color: #a31515;">"@IdentityID"</span>, <span style="color: #2b91af;">SqlDbType</span>.Int);<br />
+ &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; idParam.Direction = <span style="color: #2b91af;">ParameterDirection</span>.Output;<br />
+ &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; cmd.Parameters.Add(idParam);<br />
+&nbsp;<br />
+ &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; cmd.Connection.Open();<br />
+ &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; cmd.ExecuteNonQuery();<br />
+&nbsp;<br />
+ &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; id = (<span style="color: blue;">int</span>)idParam.Value;<br />
+ &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+ &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+ &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//tscope.Complete(); //testing, so let it rollback</span><br />
+ &nbsp;&nbsp;&nbsp; }<br />
+ &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> id;<br />
+ }</p>
+</div>
+
+</div>
+<div class="Footer">
+
+</div></body>
+</html>

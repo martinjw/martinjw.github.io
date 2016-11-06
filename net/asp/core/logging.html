@@ -1,0 +1,69 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP.Net Core Logging</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="core.html">DotNet Core</a></li>
+<li><a href="mvc.html">MVC</a></li>
+<li><a href="project.html">Core Project</a></li>
+<li><a href="startup.html">Startup</a></li>
+<li><a href="config.html">Config Settings</a></li>
+<li><a href="iis.html">IIS</a></li>
+<li><a href="controllers.html">Controllers</a></li>
+<li><a href="views.html">Views</a></li>
+<li><a href="di.html">Dependency Injection</a></li>
+<li><a href="security.html">Security</a></li>
+<li><a href="logging.html">Logging</a></li>
+<li><a href="localization.html">Localization</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>ASP.Net Core Logging</h2>
+
+<p>See <a href="https://docs.asp.net/en/latest/fundamentals/logging.html">docs.asp.net</a></p>
+
+<h3>Nuget packages</h3>
+<ul>
+<li>"Microsoft.Extensions.Logging"</li>
+<li>One or more loggers:<ul>
+<li>"Microsoft.Extensions.Logging.Console" - console logging.</li>
+<li>"Microsoft.Extensions.Logging.EventLog" - windows events.</li>
+<li>Another CoreFx-compatible logger (Serilog is one: Serilog.Framework.Logging) </li>
+</ul>  </li>
+</ul>
+<h3>Startup</h3>
+<ul>
+<li>Startup.<strong>Configure</strong>: loggerFactory.AddConsole(); or loggerFactory.AddSerilog()<br />
+Or configure log filtering eg loggerFactory.AddConsole(LogLevel.Debug) (default is Verbose)<br />
+For file logging, take <cite>IHostingEnvironment</cite> and use the hostEnv.ContentRootPath</li>
+<li>You can log in Configure - take argument <cite>ILoggerFactory</cite>. Use it after AddConsole. </li>
+</ul>
+<h3>Use</h3>
+<ul>
+<li>Either- take argument <cite>ILoggerFactory</cite> and created a named logger
+<div class="code">
+<p><span style="color:blue;">var</span>&nbsp;logger&nbsp;=&nbsp;loggerFactory.<span style="color:darkcyan;">CreateLogger</span>(<span style="color:#a31515;">&quot;Catchall&nbsp;Endpoint&quot;</span>);<br/>
+<span style="color:green;">//Debug-Verbose&nbsp;(default)-Information-Warning-Error-Critical</span><br/>
+logger.<span style="color:darkcyan;">LogWarning</span>(<span style="color:#a31515;">&quot;Something&nbsp;happened&nbsp;{path}&quot;</span>,&nbsp;context.<span style="color:purple;">Request</span>.<span style="color:purple;">Path</span>);</p>
+</div>
+</li>
+<li>Or = take argument <cite>ILogger&lt;T&gt;</cite> where T is probably your classname.</li>
+</ul>
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

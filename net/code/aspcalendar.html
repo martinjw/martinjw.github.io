@@ -1,0 +1,326 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP Calendar</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main</a></li>
+<li><a href="../dotnet.html">.Net</a></li>
+<li><a href="index.html">Code</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>ASP Calendar</h2>
+<p>This is my version of an asp calendar (as a UserControl here for simplicity). It doesn't postback - it's intended for static display only (if you need a datepicker, there are plenty of better javascript versions). The html is much simpler than the real calendar control and lends itself to css styling (each date cell has a css classes like "y2007 m01 d01" which make it easy to highlight e.g. 1st of every month, or a particular month among several calendars just with css rules). The DayRender event is exactly the same as the asp Calendar.</p>
+
+<h3>Code behind</h3>
+
+<div class="code">
+<p><span style="color: blue;">using</span> System;<br />
+<span style="color: blue;">using</span> System.ComponentModel;<br />
+<span style="color: blue;">using</span> System.Globalization;<br />
+<span style="color: blue;">using</span> System.IO;<br />
+<span style="color: blue;">using</span> System.Text;<br />
+<span style="color: blue;">using</span> System.Web.UI;<br />
+<span style="color: blue;">using</span> System.Web.UI.WebControls;<br />
+&nbsp;<br />
+<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> Displays a localised Gregorian calendar. Similar to the </span><span style="color: gray;">&lt;see cref="System.Web.UI.WebControls.Calendar"/&gt;</span><span style="color: green;"> but with simpler markup and no selection/ postbacks. Use the </span><span style="color: gray;">&lt;see cref="DayRender"/&gt;</span><span style="color: green;"> event to add calendar "events".</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;remarks&gt;</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> This is localized (month and day names, long date format) using the .Net framework.</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;code&gt;</span><br />
+<span style="color: gray;">///</span><span style="color: green;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; CultureInfo culture = new CultureInfo("ja-JP");</span><br />
+<span style="color: gray;">///</span><span style="color: green;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; System.Threading.Thread.CurrentThread.CurrentCulture = culture;</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/code&gt;</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> It won't do a Hebrew/he-IL or Japanese/ja-JP calendar, as DateTime always uses a Gregorian calendar (you would have to account for having 13 months).</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/remarks&gt;</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;example&gt;</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> Example css:</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;code&gt;</span><br />
+<span style="color: gray;">///</span><span style="color: green;">&nbsp; table { border-collapse: collapse; }</span><br />
+<span style="color: gray;">///</span><span style="color: green;">&nbsp; td { margin: 0; padding: 5px; border: 1px solid gray; text-align: right; vertical-align: top; }</span><br />
+<span style="color: gray;">///</span><span style="color: green;">&nbsp; .weekend { background-color: #bbb; }</span><br />
+<span style="color: gray;">///</span><span style="color: green;">&nbsp; .today { background-color: #ddd; }</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/code&gt;</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> Example use:</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;code&gt;</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> &amp;lt;uc1:Calendar ID="Calendar1" runat="server" Date="2007/01/12" WeekendCssClass="weekend" TodayCssClass="today" OnDayRender="Calendar_DayRender" FirstDayOfWeek="Sunday" /&amp;gt;</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/code&gt;</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/example&gt;</span><br />
+[<span style="color: #2b91af;">DefaultEvent</span>(<span style="color: #a31515;">"DayRender"</span>), <span style="color: #2b91af;">DefaultProperty</span>(<span style="color: #a31515;">"Date"</span>)]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">partial</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">Calendar</span> : System.Web.UI.<span style="color: #2b91af;">UserControl</span><br />
+{<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; #region</span> Properties<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">string</span> CssClass<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">get</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">object</span> o = ViewState[<span style="color: #a31515;">"CssClass"</span>];<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> (o != <span style="color: blue;">null</span>) ? (<span style="color: blue;">string</span>)o : <span style="color: blue;">null</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">set</span> { ViewState[<span style="color: #a31515;">"CssClass"</span>] = <span style="color: blue;">value</span>; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: #2b91af;">DateTime</span> Date<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">get</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">object</span> o = ViewState[<span style="color: #a31515;">"Date"</span>];<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> (o != <span style="color: blue;">null</span>) ? (<span style="color: #2b91af;">DateTime</span>)o : <span style="color: #2b91af;">DateTime</span>.Today;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">set</span> { ViewState[<span style="color: #a31515;">"Date"</span>] = <span style="color: blue;">value</span>; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: #2b91af;">DayOfWeek</span> FirstDayOfWeek<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">get</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">object</span> o = ViewState[<span style="color: #a31515;">"FirstDayOfWeek"</span>];<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> (o != <span style="color: blue;">null</span>) ? (<span style="color: #2b91af;">DayOfWeek</span>)o : <span style="color: #2b91af;">CultureInfo</span>.CurrentCulture.DateTimeFormat.FirstDayOfWeek;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">set</span> { ViewState[<span style="color: #a31515;">"FirstDayOfWeek"</span>] = <span style="color: blue;">value</span>; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">string</span> HeaderRowCssClass<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">get</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">object</span> o = ViewState[<span style="color: #a31515;">"HeaderRowCssClass"</span>];<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> (o != <span style="color: blue;">null</span>) ? (<span style="color: blue;">string</span>)o : <span style="color: blue;">null</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">set</span> { ViewState[<span style="color: #a31515;">"HeaderRowCssClass"</span>] = <span style="color: blue;">value</span>; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">bool</span> ShowCaption<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">get</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">object</span> o = ViewState[<span style="color: #a31515;">"ShowCaption"</span>];<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> (o != <span style="color: blue;">null</span>) ? (<span style="color: blue;">bool</span>)o : <span style="color: blue;">true</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">set</span> { ViewState[<span style="color: #a31515;">"ShowCaption"</span>] = <span style="color: blue;">value</span>; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">string</span> TodayCssClass<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">get</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">object</span> o = ViewState[<span style="color: #a31515;">"TodayCssClass"</span>];<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> (o != <span style="color: blue;">null</span>) ? (<span style="color: blue;">string</span>)o : <span style="color: blue;">null</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">set</span> { ViewState[<span style="color: #a31515;">"TodayCssClass"</span>] = <span style="color: blue;">value</span>; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">string</span> WeekendCssClass<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">get</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">object</span> o = ViewState[<span style="color: #a31515;">"WeekendCssClass"</span>];<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> (o != <span style="color: blue;">null</span>) ? (<span style="color: blue;">string</span>)o : <span style="color: blue;">null</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">set</span> { ViewState[<span style="color: #a31515;">"WeekendCssClass"</span>] = <span style="color: blue;">value</span>; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; #endregion</span><br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; #region</span> Events<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> Occurs when a day is rendered. Exactly the same as asp:Calender.</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;example&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;code&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;">protected void Calendar_DayRender(object sender, DayRenderEventArgs e)</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;">{</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;">&nbsp;&nbsp;&nbsp; if (e.Day.IsToday)</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;">&nbsp;&nbsp;&nbsp; {</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; HtmlGenericControl para = new HtmlGenericControl("p");</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; para.InnerText = "Today";</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; e.Cell.Controls.Add(para);</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;">&nbsp;&nbsp;&nbsp; }</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;">}</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/code&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/example&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">event</span> <span style="color: #2b91af;">DayRenderEventHandler</span> DayRender;<br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; #endregion</span><br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; #region</span> Methods<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">protected</span> <span style="color: blue;">void</span> Page_Load(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">EventArgs</span> e)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; DrawCalendar(); <span style="color: green;">//redraw for postbacks too</span><br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">protected</span> <span style="color: blue;">void</span> DrawCalendar()<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">CultureInfo</span> culture = <span style="color: #2b91af;">CultureInfo</span>.CurrentCulture;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">int</span> firstDay = (<span style="color: blue;">int</span>)FirstDayOfWeek;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!<span style="color: blue;">string</span>.IsNullOrEmpty(CssClass))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; CalendarTable.CssClass = CssClass;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (ShowCaption)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; CalendarTable.Caption = Date.ToString(culture.DateTimeFormat.YearMonthPattern, culture);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; CalendarTable.Rows.Clear(); <span style="color: green;">//clear any presentation rows</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; DrawWeekDayHeaders(culture);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">int</span> daysInMonth = culture.Calendar.GetDaysInMonth(Date.Year, Date.Month);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">DateTime</span> firstDayOfMonth = <span style="color: blue;">new</span> <span style="color: #2b91af;">DateTime</span>(Date.Year, Date.Month, 1);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">int</span> startWeekDay = (<span style="color: blue;">int</span>)firstDayOfMonth.DayOfWeek;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">TableRow</span> currentRow = <span style="color: blue;">new</span> <span style="color: #2b91af;">TableRow</span>();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; CalendarTable.Rows.Add(currentRow);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (firstDay != startWeekDay)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">int</span> dayIndex = firstDay;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">int</span> leadingDays = startWeekDay - firstDay;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (leadingDays &lt; 0) leadingDays = 6 - firstDay + startWeekDay + 1;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">for</span> (<span style="color: blue;">int</span> i = 0; i &lt; leadingDays; i++)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; currentRow.Cells.Add(<span style="color: blue;">new</span> <span style="color: #2b91af;">TableCell</span>());<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">DateTime</span> date = firstDayOfMonth;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">for</span> (<span style="color: blue;">int</span> i = 1; i &lt;= daysInMonth; i++)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; DrawDay(currentRow, date);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; date = date.AddDays(1);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (date.Day == daysInMonth)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">break</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (date.DayOfWeek == FirstDayOfWeek)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; currentRow = <span style="color: blue;">new</span> <span style="color: #2b91af;">TableRow</span>();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; CalendarTable.Rows.Add(currentRow);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//fill rest of week</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">for</span> (<span style="color: blue;">int</span> i = 0; i &lt; 6; i++)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> ((<span style="color: blue;">int</span>)date.DayOfWeek == firstDay)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">break</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">TableCell</span> cell = <span style="color: blue;">new</span> <span style="color: #2b91af;">TableCell</span>();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; cell.ToolTip = date.ToLongDateString();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; currentRow.Cells.Add(cell);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; date = date.AddDays(1);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">protected</span> <span style="color: blue;">void</span> DrawDay(<span style="color: #2b91af;">TableRow</span> currentRow, <span style="color: #2b91af;">DateTime</span> date)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> dateString = date.ToString(<span style="color: #a31515;">"dd"</span>, <span style="color: #2b91af;">CultureInfo</span>.CurrentCulture);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">bool</span> isWeekend = (date.DayOfWeek == <span style="color: #2b91af;">DayOfWeek</span>.Saturday) || (date.DayOfWeek == <span style="color: #2b91af;">DayOfWeek</span>.Sunday);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">bool</span> isToday = date.Equals(<span style="color: #2b91af;">DateTime</span>.Today);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">TableCell</span> cell = <span style="color: blue;">new</span> <span style="color: #2b91af;">TableCell</span>();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> cssClass = <span style="color: #a31515;">"y"</span> + date.Year + <span style="color: #a31515;">" m"</span> + date.ToString(<span style="color: #a31515;">"MM"</span>, <span style="color: #2b91af;">CultureInfo</span>.CurrentCulture) + <span style="color: #a31515;">" d"</span> + dateString;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; cell.CssClass = cssClass +<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; (isWeekend ? <span style="color: #a31515;">" "</span> + WeekendCssClass : <span style="color: blue;">string</span>.Empty)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; + (isToday ? <span style="color: #a31515;">" "</span> + TodayCssClass : <span style="color: blue;">string</span>.Empty);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Label</span> lab = <span style="color: blue;">new</span> <span style="color: #2b91af;">Label</span>();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; lab.Text = dateString;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; lab.ToolTip = date.ToLongDateString();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; cell.Controls.Add(lab);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">DayRenderEventHandler</span> dayRender = DayRender;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (dayRender != <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> day = <span style="color: blue;">new</span> <span style="color: #2b91af;">CalendarDay</span>(date,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; isWeekend,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; isToday,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">false</span>, <span style="color: green;">//this is never selectable</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">false</span>, <span style="color: green;">//this is never another month</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; dateString);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> eventArgs = <span style="color: blue;">new</span> <span style="color: #2b91af;">DayRenderEventArgs</span>(cell, day);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; dayRender(<span style="color: blue;">this</span>, eventArgs);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; currentRow.Cells.Add(cell);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">protected</span> <span style="color: blue;">void</span> DrawWeekDayHeaders(<span style="color: #2b91af;">CultureInfo</span> culture)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">TableHeaderRow</span> row = <span style="color: blue;">new</span> <span style="color: #2b91af;">TableHeaderRow</span>();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; CalendarTable.Rows.Add(row);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!<span style="color: blue;">string</span>.IsNullOrEmpty(HeaderRowCssClass)) row.CssClass = HeaderRowCssClass;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">int</span> firstDay = (<span style="color: blue;">int</span>)culture.DateTimeFormat.FirstDayOfWeek;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span>[] abbreviatedDayNames = culture.DateTimeFormat.AbbreviatedDayNames;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">int</span> dayIndex = firstDay;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">for</span> (<span style="color: blue;">int</span> i = 0; i &lt; 7; i++)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">TableHeaderCell</span> cell = <span style="color: blue;">new</span> <span style="color: #2b91af;">TableHeaderCell</span>();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; row.Controls.Add(cell);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; cell.Text = abbreviatedDayNames[dayIndex];<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; dayIndex++;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (dayIndex &gt; 6) dayIndex = 0;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> Renders to HTML. Use this method for Ajax postbacks.</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;returns&gt;</span><span style="color: green;">A string of html suitable for ajax.</span><span style="color: gray;">&lt;/returns&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">string</span> RenderToHtml()<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">StringBuilder</span> sb = <span style="color: blue;">new</span> <span style="color: #2b91af;">StringBuilder</span>();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: #2b91af;">StringWriter</span> sw = <span style="color: blue;">new</span> <span style="color: #2b91af;">StringWriter</span>(sb))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: #2b91af;">HtmlTextWriter</span> textWriter = <span style="color: blue;">new</span> <span style="color: #2b91af;">HtmlTextWriter</span>(sw))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">this</span>.RenderControl(textWriter);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> sb.ToString();<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; #endregion</span><br />
+}</p>
+</div>
+
+
+<h3>Page</h3>
+<div class="code">
+<p><span style="background: #ffee62;">&lt;%</span><span style="color: blue;">@</span> <span style="color: #a31515;">Control</span> <span style="color: red;">Language</span><span style="color: blue;">="C#"</span> <span style="color: red;">AutoEventWireup</span><span style="color: blue;">="true"</span> <span style="color: red;">CodeFile</span><span style="color: blue;">="Calendar.ascx.cs"</span> <span style="color: red;">Inherits</span><span style="color: blue;">="Calendar"</span> <span style="background: #ffee62;">%&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">Table</span> <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <span style="color: red;">ID</span><span style="color: blue;">="CalendarTable"&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">TableHeaderRow</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">TableHeaderCell</span> <span style="color: red;">Text</span><span style="color: blue;">="M"</span> <span style="color: blue;">/&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">TableHeaderCell</span> <span style="color: red;">Text</span><span style="color: blue;">="T"</span> <span style="color: blue;">/&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">TableHeaderCell</span> <span style="color: red;">Text</span><span style="color: blue;">="W"</span> <span style="color: blue;">/&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">TableHeaderCell</span> <span style="color: red;">Text</span><span style="color: blue;">="T"</span> <span style="color: blue;">/&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">TableHeaderCell</span> <span style="color: red;">Text</span><span style="color: blue;">="F"</span> <span style="color: blue;">/&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">TableHeaderCell</span> <span style="color: red;">Text</span><span style="color: blue;">="S"</span> <span style="color: blue;">/&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">TableHeaderCell</span> <span style="color: red;">Text</span><span style="color: blue;">="S"</span> <span style="color: blue;">/&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;/</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">TableHeaderRow</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">TableRow</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">TableCell</span> <span style="color: red;">Text</span><span style="color: blue;">=" "</span> <span style="color: blue;">/&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">TableCell</span> <span style="color: red;">Text</span><span style="color: blue;">=" "</span> <span style="color: blue;">/&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">TableCell</span> <span style="color: red;">Text</span><span style="color: blue;">="1"</span> <span style="color: blue;">/&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">TableCell</span> <span style="color: red;">Text</span><span style="color: blue;">="2"</span> <span style="color: blue;">/&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">TableCell</span> <span style="color: red;">Text</span><span style="color: blue;">="3"</span> <span style="color: blue;">/&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">TableCell</span> <span style="color: red;">Text</span><span style="color: blue;">="4"</span> <span style="color: blue;">/&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">TableCell</span> <span style="color: red;">Text</span><span style="color: blue;">="5"</span> <span style="color: blue;">/&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;/</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">TableRow</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">Table</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

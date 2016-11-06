@@ -1,0 +1,96 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Events and Delegates</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="dotnetcollections.html">Collections</a></li>
+<li><a href="events.html">Events</a></li>
+<li><a href="globaldotnet.html">Globalization</a></li>
+<li><a href="reflection.html">Reflection</a></li>
+<li><a href="dotnetsecurity.html">Security</a></li>
+<li><a href="claims.html">Claims Security</a></li>
+<li><a href="dotnetsecurity_crypto.html">Crypto+ signing</a></li>
+<li><a href="serialization.html">Serialization</a></li>
+<li><a href="dotnetthreads.html">Threading</a></li>
+<li><a href="async.html">Async</a></li>
+</ul>
+</div>
+<div class="content">
+<h3>Events and Delegates</h3>
+<p>A delegate is an object representing a function pointer. It is defined with a method signature (the return type and argument).</p>
+<p class="code"><span style="color: blue;">public</span> <span><span style="color: blue;">delegate</span> <span style="color: blue;" title="the method must return a string">string</span> <span style="color: teal;">MyDelegate</span>(<span style="color: blue;" title="the method has one boolean argument">bool</span> isOK);</span></p>
+<ul style="font-size:small">
+<li>Note multicast delegates (such as events) must return void.</li>
+<li>The arguments by convention are Object sender and a derived class of EventArgs.</li>
+</ul>
+<p>An event tells subscribers that they must use a method that looks like the delegate.</p>
+<p class="code"><span style="color: blue;">public</span> <span><span style="color: blue;">event</span> <span style="color: blue;" title="the method must use the delegate signature">MyDelegate</span> <span style="color: teal;">MyEvent</span>;</span><br />
+In .Net 2 you can avoid creating a delegate with the generic EventHandler (<a href="http://msdn2.microsoft.com/en-us/library/db0etb8x.aspx">msdn</a>)</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">event</span> <span style="color: #2b91af;">EventHandler</span>&lt;<span style="color: #2b91af;">MyEventArgs</span>&gt; MyEvent;</p>
+</div>
+<h3>Declare Event</h3>
+<p>A generic EventArgs&lt;T&gt; : EventArgs is handy for passing strong typed data (strings, int, object)</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">Worker</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">event</span> <span style="color: #2b91af;">EventHandler</span>&lt;<span style="color: #2b91af;">GenericEventArgs</span>&lt;<span style="color: blue;">string</span>&gt;&gt; WorkDone;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> Execute(<span style="color: #2b91af;">string</span> m)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">EventHandler</span>&lt;<span style="color: #2b91af;">GenericEventArgs</span>&lt;<span style="color: blue;">string</span>&gt;&gt; handler = WorkDone;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (handler != <span style="color: blue;">null</span>) handler(<span style="color: blue;">this</span>, <span style="color: blue;">new</span> <span style="color: #2b91af;">GenericEventArgs</span>&lt;<span style="color: blue;">string</span>&gt;(m));<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}<br />
+&nbsp;<br />
+<span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">GenericEventArgs</span>&lt;T&gt; : <span style="color: #2b91af;">EventArgs</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> T _data;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> GenericEventArgs(T data)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; _data = data;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> T Data<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">get</span> { <span style="color: blue;">return</span> _data; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">set</span> { _data = <span style="color: blue;">value</span>; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+<h3>Raise Event</h3>
+<p>To raise the event (publish it):</p>
+<p class="code"><span style="color: green">//cast the delegate as the event. If there is no subscriber, the event is null</span><br />
+<span style="color: navy;">MyDelegate</span> handler = <span style="color: navy;">MyEvent</span>;<br />
+<span style="color: blue;">if</span> (handler != <span style="color: teal;">null</span>) handler(this, args);<br />
+You must use the raise event pattern (see <a href="http://blogs.msdn.com/csharpfaq/archive/2004/03/19/93082.aspx">C# faq</a>). <em>NB: if you don't assign the copy, it's not thread safe (there's a race condition between the check and the useage).</em><br />
+<strike><span style="color: blue;">if</span> (MyEvent != <span style="color: blue;">null</span>) MyEvent(<span style="color: blue;">this</span>, <span style="color: #2b91af;">EventArgs</span>.Empty); <span style="color: green">//compiles but not thread safe!!</span></strike><br />
+<span style="color: #2b91af;">EventHandler</span> handler = MyEvent; <span style="color: green">//do this</span><br />
+<span style="color: blue;">if</span> (handler != <span style="color: blue;">null</span>) handler(<span style="color: blue;">this</span>, <span style="color: #2b91af;">EventArgs</span>.Empty);</p>
+<h3>Consume Event</h3>
+<p>To consume it from a subscriber:</p>
+<p class="code">WorkClass wc = new <span style="color: navy;">WorkClass</span>(); <span style="color: green">//scope needs to be class level</span><br />
+wc.MyEvent += new <span style="color: navy;">WorkClass.MyDelegate</span>(MySubscriberMethod); <span style="color: green">//the new EventHandler syntax is optional...</span><br />
+wc.MyEvent += MySubscriberMethod; <span style="color: green">//works too!</span><br />
+You can inline it and use local variables:</p>
+<div class="code">
+<p><span style="color: blue;">decimal</span> totalWeight; <span style="color:green">// Local</span><br />
+wc.FoundWeight +=<br />
+&nbsp;&nbsp;&nbsp; (<span style="color: blue;">delegate</span>(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">GenericEventArgs</span>&lt;<span style="color: blue;">decimal</span>&gt; e) { totalWeight += e.Data; });<br />
+<span style="color:green">//or v3 lamdba style</span><br />
+shipper.RecordCTotalWeight += ((sender, e) =&gt; totalWeight += e.Data);</p>
+</div>
+</div>
+<div class="Footer"></div>
+</body>
+</html>

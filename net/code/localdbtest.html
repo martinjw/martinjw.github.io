@@ -1,0 +1,156 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Testing with LocalDb</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main</a></li>
+<li><a href="../dotnet.html">.Net</a></li>
+<li><a href="index.html">Code</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>Dynamically creating a LocalDb database in tests</h2>
+<p>You can create a new SqlServer LocalDb database for each test run. The connection string can be reset globally (the same trick as <a href="appsettingtest.html">changing AppSettings dynamically in unit tests</a>)</p>
+<h3>MSTest with EF Code First</h3>
+<p>Using EF Code First migrations to initialize the database. Note that the Migrations.Configuration class is normally internal, not public, so either change it, use InternalsVisibleTo or create a suitable public  method that runs the migration. The connection string name must match what the dbContext uses (usually the same name e.g. "ApplicationContext"). The localDb file is created in the integration test bin folder and is cleared out each run.</p>
+<p>NB: AssemblyInitialize must be in a class marked [<span style="color: #2b91af;">TestClass</span>]</p>
+<div class="code">
+<p>[<span style="color: #2b91af;">AssemblyInitialize</span>]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> AssemblyInit(<span style="color: #2b91af;">TestContext</span> context)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//use this database file name (in current bin folder)</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> testDatabase = <span style="color: blue;">new</span> <span style="color: #2b91af;">TestDatabase</span>(<span style="color: #a31515;">"TestDatabase"</span>);<br />
+&nbsp;&nbsp;&nbsp; testDatabase.CreateDatabase();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//globally inject a connection string with this name</span><br />
+&nbsp;&nbsp;&nbsp; testDatabase.InitConnectionString(<span style="color: #a31515;">"ApplicationContext"</span>);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//if we're using Entity Framework Code First, run all the migrations.</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> migrate =<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> System.Data.Entity.<span style="color: #2b91af;">MigrateDatabaseToLatestVersion</span>&lt;<span style="color: #2b91af;">ApplicationContext</span>,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Application.Data.Migrations.<span style="color: #2b91af;">Configuration</span>&gt;();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> dbContext = <span style="color: blue;">new</span> <span style="color: #2b91af;">ApplicationContext</span>();<br />
+&nbsp;&nbsp;&nbsp; migrate.InitializeDatabase(dbContext);<br />
+}</p>
+</div>
+
+
+<h3>TestDatabase</h3>
+<p>CleanupDatabase ensures the database is emptied each run (if it can detach- don't leave a connection open in Visual Studio). </p>
+<div class="code">
+<p><span style="color: blue;">using</span> System;<br />
+<span style="color: blue;">using</span> System.Configuration;<br />
+<span style="color: blue;">using</span> System.Data.SqlClient;<br />
+<span style="color: blue;">using</span> System.IO;<br />
+<span style="color: blue;">using</span> System.Reflection;<br />
+&nbsp;<br />
+<span style="color: blue;">namespace</span> IntegrationTests<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">class</span> <span style="color: #2b91af;">TestDatabase</span><br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">const</span> <span style="color: blue;">string</span> LocalDbMaster =<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #a31515;">@"Data Source=(LocalDB)\v11.0;Initial Catalog=master;Integrated Security=True"</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">const</span> <span style="color: blue;">string</span> TestConnectionString =<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #a31515;">@"Data Source=(LocalDB)\v11.0;Initial Catalog={0};Integrated Security=True;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; MultipleActiveResultSets=True;AttachDBFilename={1}.mdf"</span>;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">readonly</span> <span style="color: blue;">string</span> _databaseName;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> TestDatabase(<span style="color: blue;">string</span> databaseName)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; _databaseName = databaseName;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> CreateDatabase()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> isDetached = DetachDatabase();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!isDetached) <span style="color: blue;">return</span>; <span style="color: green;">//reuse database</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> fileName = CleanupDatabase();<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: blue;">var</span> connection = <span style="color: blue;">new</span> <span style="color: #2b91af;">SqlConnection</span>(LocalDbMaster))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; connection.Open();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> cmd = connection.CreateCommand();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; cmd.CommandText = <span style="color: blue;">string</span>.Format(<span style="color: #a31515;">"CREATE DATABASE </span><span style="color: #3cb371;">{0}</span><span style="color: #a31515;"> ON (NAME = N'</span><span style="color: #3cb371;">{0}</span><span style="color: #a31515;">', FILENAME = '</span><span style="color: #3cb371;">{1}</span><span style="color: #a31515;">.mdf')"</span>,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; _databaseName,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; fileName);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; cmd.ExecuteNonQuery();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> InitConnectionString(<span style="color: blue;">string</span> connectionStringName)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> connectionString = <span style="color: blue;">string</span>.Format(TestConnectionString, _databaseName, DatabaseFilePath());<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> config = <span style="color: #2b91af;">ConfigurationManager</span>.OpenExeConfiguration(<span style="color: #2b91af;">Assembly</span>.GetCallingAssembly().Location);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> settings = config.ConnectionStrings.ConnectionStrings[connectionStringName];<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (settings == <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; settings = <span style="color: blue;">new</span> <span style="color: #2b91af;">ConnectionStringSettings</span>(connectionStringName, connectionString, <span style="color: #a31515;">"System.Data.SqlClient"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; config.ConnectionStrings.ConnectionStrings.Add(settings);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; settings.ConnectionString = connectionString;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; config.Save();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">ConfigurationManager</span>.RefreshSection(<span style="color: #a31515;">"connectionStrings"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">string</span> CleanupDatabase()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> fileName = DatabaseFilePath();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">try</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (<span style="color: #2b91af;">File</span>.Exists(fileName + <span style="color: #a31515;">".mdf"</span>)) <span style="color: #2b91af;">File</span>.Delete(fileName + <span style="color: #a31515;">".mdf"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (<span style="color: #2b91af;">File</span>.Exists(fileName + <span style="color: #a31515;">"_log.ldf"</span>)) <span style="color: #2b91af;">File</span>.Delete(fileName + <span style="color: #a31515;">"_log.ldf"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">catch</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Console</span>.WriteLine(<span style="color: #a31515;">"Could not delete the files (open in Visual Studio?)"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> fileName;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">bool</span> DetachDatabase()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: blue;">var</span> connection = <span style="color: blue;">new</span> <span style="color: #2b91af;">SqlConnection</span>(LocalDbMaster))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; connection.Open();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> cmd = connection.CreateCommand();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; cmd.CommandText = <span style="color: #2b91af;">String</span>.Format(<span style="color: #a31515;">"exec sp_detach_db '</span><span style="color: #3cb371;">{0}</span><span style="color: #a31515;">'"</span>, _databaseName);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">try</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; cmd.ExecuteNonQuery();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">true</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">catch</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Console</span>.WriteLine(<span style="color: #a31515;">"Could not detach"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">false</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">string</span> DatabaseFilePath()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: #2b91af;">Path</span>.Combine(<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Path</span>.GetDirectoryName(<span style="color: #2b91af;">Assembly</span>.GetExecutingAssembly().Location),<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; _databaseName);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+
+</div>
+
+<div class="Footer">
+
+</div>
+</body>
+</html>

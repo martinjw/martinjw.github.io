@@ -1,0 +1,185 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>More NHibernate queries</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../index.html">Code &gt;</a></li>
+<li><a href="index.html">NHibernate</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>More NHibernate Queries</h2>
+
+<p><a href="query.html">See the simple queries</a>.</p>
+
+
+<h3>MultiQuery/ MultiCriteria</h3>
+<p>You can batch multiple queries in a single call. The Hql equivalent would use Multiquery; Criteria uses MultiCriteria.</p>
+<div class="code">
+<p><span style="color: green;">//you can also use separate ICriterias with .Future / .FutureValue</span><br />
+<span style="color: #2b91af;">IMultiCriteria</span> multiCriteria = s.CreateMultiCriteria()<br />
+&nbsp;&nbsp;&nbsp; .Add&lt;<span style="color: #2b91af;">Product</span>&gt;(<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; s.CreateCriteria&lt;<span style="color: #2b91af;">Product</span>&gt;()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//"Restrictions" used to be "Expression"</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .Add(<span style="color: #2b91af;">Restrictions</span>.Eq(<span style="color: #a31515;">"Category.Id"</span>, 2))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//ordering</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .AddOrder(NHibernate.Criterion.<span style="color: #2b91af;">Order</span>.Asc(<span style="color: #a31515;">"Id"</span>))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//paging, 2nd page of 10</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .SetFirstResult(10) <span style="color: green;">//zero based</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .SetMaxResults(10)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; )<br />
+&nbsp;&nbsp;&nbsp; .Add(<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; s.CreateCriteria&lt;<span style="color: #2b91af;">Product</span>&gt;()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//add rowcount projection - NB: RowCountInt64 for long</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .SetProjection(<span style="color: #2b91af;">Projections</span>.RowCount())<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .Add(<span style="color: #2b91af;">Restrictions</span>.Eq(<span style="color: #a31515;">"Category.Id"</span>, 2))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; )<br />
+&nbsp;&nbsp;&nbsp; ;<br />
+<span style="color: blue;">var</span> criteriaResults = multiCriteria.List();<br />
+<span style="color: #2b91af;">IList</span>&lt;<span style="color: #2b91af;">Product</span>&gt; products = (<span style="color: #2b91af;">IList</span>&lt;<span style="color: #2b91af;">Product</span>&gt;)criteriaResults[0];<br />
+<span style="color: blue;">int</span> criteriaCount = (<span style="color: blue;">int</span>)((<span style="color: #2b91af;">IList</span>)criteriaResults[1])[0];</p>
+</div>
+
+<p>MultiCriteria also works with NH 3.0's QueryOver.</p>
+<div class="code">
+<p><span style="color: green;">//QueryOver.Of is equivalent to DetachedCriteria</span><br />
+<span style="color: blue;">var</span> multiQueryOver = s.CreateMultiCriteria();<br />
+<span style="color: blue;">var</span> pagedQuery = <span style="color: #2b91af;">QueryOver</span>.Of&lt;<span style="color: #2b91af;">Product</span>&gt;()<br />
+&nbsp;&nbsp;&nbsp; .Where(x =&gt; x.Category.Id == 2)<br />
+&nbsp;&nbsp;&nbsp; .OrderBy(x =&gt; x.Id).Asc<br />
+&nbsp;&nbsp;&nbsp; .Skip(10)<br />
+&nbsp;&nbsp;&nbsp; .Take(10);<br />
+&nbsp;<br />
+<span style="color: blue;">var</span> countQuery = <span style="color: #2b91af;">QueryOver</span>.Of&lt;<span style="color: #2b91af;">Product</span>&gt;()<br />
+&nbsp;&nbsp;&nbsp; .Where(x =&gt; x.Category.Id == 2).ToRowCountQuery();<br />
+&nbsp;<br />
+<span style="color: green;">//named queries are a little easier to read than ordinals</span><br />
+multiQueryOver<br />
+&nbsp;&nbsp;&nbsp; .Add(<span style="color: #a31515;">"Page"</span>, pagedQuery)<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//projections have to be cast to specific type</span><br />
+&nbsp;&nbsp;&nbsp; .Add&lt;<span style="color: blue;">int</span>&gt;(<span style="color: #a31515;">"Count"</span>, countQuery);<br />
+<span style="color: green;">//multiQueryOver.List() is implicit</span><br />
+<span style="color: blue;">var</span> pagedResult = (<span style="color: #2b91af;">IList</span>&lt;<span style="color: #2b91af;">Product</span>&gt;)multiQueryOver.GetResult(<span style="color: #a31515;">"Page"</span>);<br />
+<span style="color: green;">//always get List&lt;T&gt;</span><br />
+<span style="color: blue;">var</span> total = ((<span style="color: #2b91af;">IEnumerable</span>&lt;<span style="color: blue;">int</span>&gt;)multiQueryOver.GetResult(<span style="color: #a31515;">"Count"</span>)).Single();</p>
+</div>
+
+
+
+<h3>Projecting to a DTO: Criteria</h3>
+<p>Projections to single value aggregations (such as counts) are simple with IQuery/ICriteria.UniqueResult&lt;T&gt;.<br />
+Projecting to multiple values (for a DTO/ViewModel etc) can be awkward, especially for Criteria. The generated SQL only selects the required columns- not everything. The Transformers.AliasToBean is an ugly relic of the port from Java.</p>
+<div class="code">
+<p><span style="color: blue;">var</span> proj = <span style="color: #2b91af;">Projections</span>.ProjectionList()<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//projected mapped class property to alias of dto property</span><br />
+&nbsp;&nbsp;&nbsp; .Add(<span style="color: #2b91af;">Projections</span>.Property(<span style="color: #a31515;">"ProductName"</span>), <span style="color: #a31515;">"ProductName"</span>)<br />
+&nbsp;&nbsp;&nbsp; .Add(<span style="color: #2b91af;">Projections</span>.Property(<span style="color: #a31515;">"c.CategoryName"</span>), <span style="color: #a31515;">"CategoryName"</span>)<br />
+&nbsp;&nbsp;&nbsp; .Add(<span style="color: #2b91af;">Projections</span>.Property(<span style="color: #a31515;">"UnitsInStock"</span>), <span style="color: #a31515;">"Units"</span>);<br />
+&nbsp;<br />
+<span style="color: blue;">var</span> result = session.CreateCriteria&lt;<span style="color: #2b91af;">Product</span>&gt;(<span style="color: #a31515;">"p"</span>)<br />
+&nbsp;&nbsp;&nbsp; .Add(<span style="color: #2b91af;">Restrictions</span>.Gt(<span style="color: #a31515;">"UnitPrice"</span>, 10m))<br />
+&nbsp;&nbsp;&nbsp; .CreateAlias(<span style="color: #a31515;">"Category"</span>, <span style="color: #a31515;">"c"</span>)<br />
+&nbsp;&nbsp;&nbsp; .Add(<span style="color: #2b91af;">Restrictions</span>.Eq(<span style="color: #a31515;">"Category.Id"</span>, 2))<br />
+&nbsp;&nbsp;&nbsp; .SetProjection(proj)<br />
+&nbsp;&nbsp;&nbsp; .SetResultTransformer(<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; NHibernate.Transform.<span style="color: #2b91af;">Transformers</span>.AliasToBean(<span style="color: blue;">typeof</span>(Northwind.Dto.<span style="color: #2b91af;">ProductLite</span>)))<br />
+&nbsp;&nbsp;&nbsp; .List&lt;Northwind.Dto.<span style="color: #2b91af;">ProductLite</span>&gt;();</p>
+</div>
+
+<h3>Projecting to a DTO: HQL</h3>
+<p>In Hql, you can either have fun with object arrays, or you have to use a mappings import on the DTO.</p>
+<div class="code">
+<p><span style="color: #2b91af;">IList</span> results = session.CreateQuery(<br />
+&nbsp;&nbsp;&nbsp;&nbsp; <span style="color: #a31515;">@"select p.ProductName, c.CategoryName, p.UnitsInStock</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp; from Product p join p.Category c</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp; where p.UnitPrice &gt; 10 and c.Id = 2"</span>).List();<br />
+&nbsp;<br />
+<span style="color: blue;">foreach</span> (<span style="color: blue;">object</span>[] row <span style="color: blue;">in</span> results)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> name = (<span style="color: blue;">string</span>)row[0];<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> category = (<span style="color: blue;">string</span>)row[1];<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> units = (<span style="color: blue;">short</span>)row[2];<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> dto = <span style="color: blue;">new</span> Northwind.Dto.<span style="color: #2b91af;">ProductLite</span>(name, category, units);<br />
+}<br />
+&nbsp;<br />
+<span style="color: green;">//need to import it</span><br />
+<span style="color: green;">//&lt;hibernate-mapping xmlns="urn:nhibernate-mapping-2.2"&gt;</span><br />
+<span style="color: green;">//&nbsp; &lt;import class="Northwind.Dto.ProductLite, Northwind" /&gt;</span><br />
+<span style="color: green;">//&lt;/hibernate-mapping&gt;</span><br />
+<span style="color: blue;">var</span> results2 = session.CreateQuery(<br />
+&nbsp;&nbsp;&nbsp;&nbsp; <span style="color: #a31515;">@"select new ProductLite(p.ProductName, c.CategoryName, p.UnitsInStock)</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp; from Product p join p.Category c</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp; where p.UnitPrice &gt; 10 and c.Id = 2"</span>)<br />
+&nbsp;&nbsp;&nbsp;&nbsp; .List&lt;Northwind.Dto.<span style="color: #2b91af;">ProductLite</span>&gt;();</p>
+</div>
+
+<h3>Projecting to a DTO: QueryOver</h3>
+<p>QueryOver can project to an IList&lt;object&gt; like Hql, which is cast to our type in Linq2Objects:</p>
+<div class="code">
+<p><span style="color: green;">//queryover and linq to get anonymous type</span><br />
+<span style="color: blue;">var</span> result = session.QueryOver&lt;<span style="color: #2b91af;">Product</span>&gt;()<br />
+&nbsp;&nbsp;&nbsp; .Where(p =&gt; p.Category.Id == 2 &amp;&amp; p.UnitPrice &gt; 10)<br />
+&nbsp;&nbsp;&nbsp; .Select(p =&gt; p.ProductName,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; p =&gt; p.UnitsInStock)<br />
+&nbsp;&nbsp;&nbsp; .List&lt;<span style="color: blue;">object</span>[]&gt;()<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//now normal Linq to turn into anonymous or existing type</span><br />
+&nbsp;&nbsp;&nbsp; .Select(o =&gt; <span style="color: blue;">new</span> Northwind.Dto.<span style="color: #2b91af;">ProductLite</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <span style="color: green;">//but we cast manually (careful about nulls)</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; ProductName = (<span style="color: blue;">string</span>)o[0],<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; Units = <span style="color: #2b91af;">Convert</span>.ToInt32(o[1])<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; });</p>
+</div>
+
+<p>This is QueryOver with a group projection (SelectList/ Select...)</p>
+<div class="code">
+<p><span style="color: green;">//grouped result</span><br />
+<span style="color: blue;">var</span> groupedResult = session.QueryOver&lt;<span style="color: #2b91af;">Product</span>&gt;()<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//use SelectList/Select...</span><br />
+&nbsp;&nbsp;&nbsp; .SelectList(list =&gt; <br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; list.SelectGroup(p =&gt; p.Category.Id)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .SelectAvg(p=&gt; p.UnitPrice)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; )<br />
+&nbsp;&nbsp;&nbsp; .List&lt;<span style="color: blue;">object</span>[]&gt;()<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//normal Linq to turn into anonymous or existing type</span><br />
+&nbsp;&nbsp;&nbsp; .Select(o =&gt; <span style="color: blue;">new</span> <br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; CategoryId = <span style="color: #2b91af;">Convert</span>.ToInt32(o[0]),<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; AveragePrice = <span style="color: #2b91af;">Convert</span>.ToInt32(o[1])<br />
+&nbsp;&nbsp;&nbsp; });</p>
+</div>
+
+<h3>Projecting to a DTO: Linq</h3>
+<p>Linq makes all that ugliness go away. Nirvana. </p>
+
+<div class="code">
+<p><span style="color: blue;">var</span> linq = <span style="color: blue;">from</span> product <span style="color: blue;">in</span> session.Query&lt;<span style="color: #2b91af;">Product</span>&gt;()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <span style="color: blue;">join</span> category <span style="color: blue;">in</span> session.Query&lt;<span style="color: #2b91af;">Category</span>&gt;()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <span style="color: blue;">on</span> product.Category.Id <span style="color: blue;">equals</span> category.Id<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <span style="color: blue;">where</span> product.UnitPrice &gt; 10 &amp;&amp; category.Id == 2<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <span style="color: blue;">select</span> <span style="color: blue;">new</span> Northwind.Dto.<span style="color: #2b91af;">ProductLite</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; ProductName = product.ProductName,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; CategoryName = category.CategoryName,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; Units = <span style="color: #2b91af;">Convert</span>.ToInt32(product.UnitsInStock)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; };</p>
+</div>
+
+</div>
+<div class="Footer">
+
+</div></body>
+</html>

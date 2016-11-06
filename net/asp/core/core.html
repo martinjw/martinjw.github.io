@@ -1,0 +1,167 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP.Net Core</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="core.html">DotNet Core</a></li>
+<li><a href="mvc.html">MVC</a></li>
+<li><a href="project.html">Core Project</a></li>
+<li><a href="startup.html">Startup</a></li>
+<li><a href="config.html">Config Settings</a></li>
+<li><a href="iis.html">IIS</a></li>
+<li><a href="controllers.html">Controllers</a></li>
+<li><a href="views.html">Views</a></li>
+<li><a href="di.html">Dependency Injection</a></li>
+<li><a href="security.html">Security</a></li>
+<li><a href="logging.html">Logging</a></li>
+<li><a href="localization.html">Localization</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>ASP.Net Core</h2>
+<p>ASP.Net Core 1 (previously Asp.Net 5/MVC6) released June 2016.   </p>
+
+<ul>
+<li><a href="https://www.microsoft.com/net/download">Downloads</a></li>
+<li><a href="https://docs.asp.net/en/latest/">Documentation (docs.asp.net)</a> and <a href="https://docs.microsoft.com/en-us/dotnet/articles/core/index">Tutorial (docs.microsoft.com)</a><ul>
+<li><a href="https://docs.asp.net/en/latest/mvc/index.html">MVC</a></li>
+<li><a href="https://packagesearch.azurewebsites.net/">Package search - find which nuget package contains which api</a></li>
+</ul></li>
+</ul>
+
+<h3>Source code</h3>
+<ul>
+<li><a href="https://github.com/dotnet/core">DotNet Core Repo</a> includes
+<ul>
+<li><a href="https://github.com/dotnet/coreclr">CoreCLR</a> - The .net Core platform: cross-platform .net runtime (incl. mscorlib, JIT, GC...)</li>
+<li><a href="https://github.com/dotnet/corefx">CoreFx</a> - Core framework libraries (FCL)</li>
+<li><a href="https://github.com/aspnet/home">Asp.Net 5</a> - the web framework, including <a href="https://github.com/aspnet/Mvc">MVC</a>.</li>
+<li><a href="https://github.com/dotnet/cli">CLI</a> - command line tools ("dotnet" command).<ul>
+<li><a href="https://docs.microsoft.com/en-us/dotnet/articles/core/tools/index">dotnet commands docs</a></li>
+</ul></li>
+</ul>
+</li>
+</ul>
+<p>NB: Core is intended for servers (incl. Asp and consoles), not for clients (so no Winforms/WPF) or old webforms.</p>
+
+<h3>Project.json</h3>
+<p>Project.json includes parts that were originally in the csproj, packages.config, and project.nuspec. </p>
+<ul>
+<li><strong>buildOptions</strong> with "emitEntryPoint" means it is runnable (by calling static void Main), not a library</li>
+<li>The dependency and framework change from an abstract API (netstandard.Library/netstandard) to an implementation (Microsoft.NETCore.App /netcoreapp). See about versions below.</li>
+<li>Dependencies and frameworks:<ul>
+<li><strong>dependencies</strong>: other nuget packages<br />
+In old .net this was &lt;Reference /&gt; in csproj and the list in packages.config</li>
+<li><strong>frameworks</strong>: what runs the code<br />
+In old .csproj this was &lt;TargetFrameworkVersion&gt;v4.5&lt;/TargetFrameworkVersion&gt;</li>
+</ul></li>
+</ul>
+
+
+<h3>Versions</h3>
+<p>Frameworks run .net code, and there can be several in the same project (multi-targeting):</p>
+<ul>
+<li><strong>net4.6</strong> The full ("classic") framework.</li>
+<li><strong>netcoreapp1.0</strong> .Net Core. <ul>
+<li><strong>imports</strong> state that the framework also allows packages that aren't specifically Core- PCLs and (older, pre-release) core packages- which is why you see "dnxcore50" and "dotnet5.6" (we should use "netstandard1.6" now, but older packages won't be updated)</li>
+</ul></li>
+</ul>
+<p>The framework moniker (.net 4.6 is "net46") is the same label used in Nuget packages. It's also available (uppercased to NET46) as a conditional compilation symbol when you build.</p>
+<p>If you multi-target (net4.6 and Core 1.0, for instance), you'll need to push the core dependency (Microsoft.NETCore.App) under the core framework (netcoreapp1.0). If you have older code (not netstandard1.6), you quickly run into conflicts and have to start #if /#endif through your code.</p>
+
+<table>
+<tr>
+<th>Framework</th>
+<th>Latest version,<br />
+June 2016</th>
+<th>Framework (<span title="Target Framework Moniker">TFM</span>)</th>
+<th>Dependency (MetaPackage)</th>
+</tr>
+<tr>
+<td>Full framework</td>
+<td>4.6.1</td>
+<td>net461 (or net46)</td>
+<td>N/A (installation)</td>
+</tr>
+<tr>
+<td>NetStandard (API)</td>
+<td>1.6</td>
+<td>netstandard1.6</td>
+<td>NETStandard.Library 1.6.0</td>
+</tr>
+<tr>
+<td>.Net Core</td>
+<td>1.0</td>
+<td>netcoreapp1.0</td>
+<td>Microsoft.NETCore.App 1.0.0</td>
+</tr>
+</table>
+
+
+<h4>Class Libraries: netstandard1.6</h4>
+<p>Libraries are based on a standard .net API (does not apply to Consoles and ASP/MVC, which are also consoles)</p>
+<p>The standard .net API at release is 1.6.0</p>
+<div class="code">{<br/>
+&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">version</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;1.0.0-*&quot;</span>,<br/>
+ &nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">dependencies</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">NETStandard.Library</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;1.6.0&quot;</span><br/>
+&nbsp;&nbsp;},<br/>
+ &nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">frameworks</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">netstandard1.6</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">imports</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;dnxcore50&quot;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;}<br/>
+}</div>
+
+<h4>Consoles (incl ASP): netcoreapp1.0</h4>
+<p>Executables (consoles and ASP websites) need a concrete framework to run them, not an API. A simple console looks like this (ASP has more specific dependencies)</p>
+<p>This is the standard console project.json at RTM. In consoles, the framework import "dnxcore50" allows old RC1 packages to be used; the ASP template imports "dotnet5.6" for RC2 packages.</p>
+<div class="code">{<br/>
+&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">version</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;1.0.0-*&quot;</span>,<br/>
+&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">buildOptions</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">emitEntryPoint</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:blue;">true</span><br/>
+&nbsp;&nbsp;},<br/>
+ 
+&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">dependencies</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">Microsoft.NETCore.App</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">type</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;platform&quot;</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">version</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;1.0.0&quot;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;},<br/>
+ 
+&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">frameworks</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">netcoreapp1.0</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">imports</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;dnxcore50&quot;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;}<br/>
+}</div>
+
+<h4>Tooling: 1.0.0-preview2-003121</h4>
+<p>DotNet Tooling (the Visual Studio MSI from <a href="http://dot.net">http://dot.net</a>) is still "Preview 2" and requires VS2015 Update 3.</p>
+<p>The tooling version is reported by "dotnet -version" and is specified in the solution file global.json</p>
+<div class="code">{<br/>
+&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">projects</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;[&nbsp;<span style="color:#a31515;">&quot;src&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;test&quot;</span>&nbsp;],<br/>
+&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">sdk</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">version</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;1.0.0-preview2-003121&quot;</span><br/>
+&nbsp;&nbsp;}<br/>
+}</div>
+
+
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

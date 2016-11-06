@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>HTML5 WebWorkers</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+<link rel="stylesheet" type="text/css" href="../js/prettify.css" />
+<script type="text/javascript" src="../utilities.js">
+</script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../index.html">Home &gt;</a></li>
+<li><a href="index.html">HTML5</a></li>
+<li><a href="forms.html">Forms</a></li>
+<li><a href="offline.html">AppCache</a></li>
+<li><a href="storage.html">LocalStorage and IndexedDB</a></li>
+<li><a href="webworkers.html">WebWorkers</a></li>
+<li><a href="fileapi.html">File API</a></li>
+<li><a href="canvas.html">Canvas</a></li>
+<li><a href="css3effects.html">CSS3 Visual Effects</a></li>
+<li><a href="css3layout.html">CSS3 Layout</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>HTML5 WebWorkers</h2>
+<ul>
+<li>IE 10+.</li>
+<li><a href="https://developer.mozilla.org/en-US/docs/DOM/Using_web_workers">MDN</a></li>
+</ul>
+<h3>Spawning webworkers</h3>
+<ul>
+<li>Webworker and page must pass messages (<cite>.postMessage()</cite>, message event.) Messages can be JSON. No functions or cyclical references.</li>
+</ul>
+<pre class="prettyprint">
+if (!!window.Worker) {
+	var worker = new Worker('testworker.js');
+	//listen for messages from worker
+	worker.onmessage = function(event) {
+		console.log(event.data);
+	};
+	//listen for worker errors
+	worker.onerror = function(event) {
+		console.log(event.message + " in " + event.filename + " at " + event.lineno);
+	};
+	//pass json
+	worker.postMessage({ stop: true });
+	//if you need, stop the worker
+	//worker.terminate();
+};
+</pre>
+<h3>Workers</h3>
+<ul>
+<li>Worker cannot use UI/DOM. There's no window object, but can use setTimeout, setInterval, XMLHttpRequest (ajax).</li>
+<li>Workers can spawn subworkers in IE, FF but not Chrome</li>
+</ul>
+<pre class="prettyprint">
+//import scripts (synchronous!)
+//NB: JQuery will error as window is undefined
+importScripts('testlib.js');
+
+self.postMessage("Starting.");
+self.onerror = function (event) {
+    console.log(event.message);
+    self.postMessage('Error ' + event.message);
+};
+
+self.onclose = function () {
+    self.postMessage("Closing");
+};
+self.onmessage = function (event) {
+    self.postMessage('Got message ' + event.data);  
+    if (event.data.stop) {
+        self.postMessage("Message to close.");
+        self.close();
+    }
+};
+</pre>
+
+
+</div>
+<div class="Footer"><script type="text/javascript" src="../js/prettify.js">
+</script>
+<script type="text/javascript">
+prettyPrint();
+</script>
+</div>
+</body>
+</html>

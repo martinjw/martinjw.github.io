@@ -1,0 +1,328 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>.Net WS-Federation</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspsecurity.html">Asp Security</a></li>
+<li><a href="forms.html">Forms Authentication</a></li>
+<li><a href="wsfederation.html">WS-Federation</a></li>
+<li><a href="wsfederationconfig.html">WS-Federation Config</a></li>
+<li><a href="ssl.html">SSL</a></li>
+<li><a href="owin.html">Owin</a></li>
+<li><a href="oauth.html">OAuth</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>WS-Federation</h2>
+<p>Support for WS-Federation is based on .net 4.5 <a href="../../fcl/claims.html">Claims Security</a>. Claims-based identity means an application (<strong>Relying Party</strong>, RP) uses a separate service (<strong>Security Token Service</strong>, STS / <strong>Identity Provider</strong>, IdP) for security.</p>
+<p>See <a href="../../fcl/claims.html">Claims Security</a> for basics on ClaimsPrincipal and <a href="wsfederationconfig.html">WS-Federation Config</a> for application configuration.</p>
+
+<h3>Definitions</h3>
+<ul>
+<li><strong>Claim</strong> - Statement about a user, with type, value and issuer. Eg "Name"="Martin".
+<ul>
+<li>Claim may use standard typenames from OASIS/SAML (URIs like http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name ). See WIF ClaimTypes enum.
+<div class="alert">SAML1.1 names must be in the form "http://..." or "namespace/name" (exception ID4216)</div>
+</li>
+</ul>
+</li>
+<li><strong>Security Token</strong> - A signed list of claims.<ul>
+<li>Typically is <strong>SAML</strong> (xml format with signature, defined by OASIS)</li>
+<li>You can use <strong>JWT (Json Web Token, pronounced "jot")</strong> (like OAuth). There's no public key, so you can't check the issuer thumbprint. See <a href="http://leastprivilege.com/2013/07/04/identityserver-using-ws-federation-with-jwt-tokens/">leastPrivilege</a></li>
+<li>Compare to a simple Kerberos ticket in AD.</li>
+<li>Note you may have multiple "name" claims, from one issuer and/or multiple issuers.</li>
+</ul></li>
+<li><strong>Identity Provider</strong> (IdP) knows about the user. The user logs on to the IdP and gets a token.<ul>
+<li>Active Directory Federation Service (ADFS) is one IdP.  Others are Azure AD, Oracle Identity Manager, PingFederate ...</li>
+<li>In Windows Server 2012, you can add additional claims to the name/groupSids of a normal Windows Identity (active directory administrative center- Dynamic Acces Control - Claims Types)</li>
+</ul></li>
+<li><strong>Security Token Service</strong> (STS) - the part of the IdP that generates security tokens.</li>
+<li><strong>Relying Party</strong> (RP) - the application that uses claims (also: <strong>Service Provider</strong>)<ul>
+<li>The Rp has a URI called a <strong>realm</strong> which the IdP must know.</li>
+<li>In .net the application uses <strong>WIF</strong> to define the claims it trusts, and process the claims.</li>
+<li>In OAuth this would be <strong>client</strong>.</li>
+</ul></li>
+<li><strong>Passive</strong> means depending on browser-based (the browser itself just sees redirects, it has no knowledge of the underlying protocol). <strong>Active</strong> means directly using WS-* (i.e. WCF).</li>
+</ul>
+<div class="alert">
+Although ws-Federation is based on SAML tokens, it is not the same as the SAML2.0 passive protocol (SAML2P), also built on SAML tokens. SAML protocols are an older, incompatible standard (and frankly more common outside the Microsoft world). There is an old CTP, but not official support for SAML2P in .Net, although ADFS can federate to SAML2P identity providers. There is a <a href="http://digitaliser.dk/group/42063/resources">Danish open source project</a>.
+</div>
+
+<h3>Tooling</h3>
+<ul>
+<li>WIF (Windows Identity Framework) was a separate module in .net 4.0. It became part of the framework in .net 4.5</li>
+<li>WIF uses <a href="#WIF">HttpModules</a>. Since OWIN, there is <a href="#Owin">Owin Middleware</a></li>
+<li>VS2012 had <a href="http://visualstudiogallery.msdn.microsoft.com/e21bf653-dfe1-4d81-b3d3-795cb104066e">the Identity Access Tool</a> which included a local STS. </li>
+<li>VS2013/VS2015 project create wizard has "Configure Authentication". wsFederation is "Organizational Accounts".</li>
+<li>There is no local STS but there is a <a href="http://www.nuget.org/packages/Thinktecture.IdentityModel.EmbeddedSts/">Nuget EmbeddedSts</a> (<a href="https://github.com/thinktecture/Thinktecture.IdentityModel/wiki/EmbeddedSts">github docs</a>)</li>
+<li>See also <a href="https://identityserver.github.io/">Identity Server</a> (v2 or v3, not v4 as that is only OpenId) or ADFS or Azure AD</li>
+</ul>
+
+<h3><a name="Owin">OWIN middleware</a></h3>
+<ul>
+<li>Ensure the project is .net 4.5+</li>
+<li>Ensure the project uses Integrated appPool (not IIS6-compatible Classic). OWIN requires integrated mode.
+</li>
+<li>You must use SSL.</li>
+<li>Install-package <strong>Microsoft.Owin.Security.Cookies</strong> - cookie authentication + OWIN</li>
+<li>Install-package <strong>Microsoft.Owin.Security.WsFederation</strong> - Ws Federation</li>
+<li>Install-package <strong>Microsoft.Owin.Host.SystemWeb</strong> - allows IIS to call OWIN</li>
+<li>In web.config, add the following
+<div class="code">
+<span style="color:blue;">&lt;</span><span style="color:#a31515;">configuration</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">appSettings</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">add</span><span style="color:blue;">&nbsp;</span><span style="color:red;">key</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">ida:ADFSMetadata</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">value</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">https://adfs/federationmetadata/2007-06/federationmetadata.xml</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">add</span><span style="color:blue;">&nbsp;</span><span style="color:red;">key</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">ida:Wtrealm</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">value</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">http://testingAdfs</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&lt;/</span><span style="color:#a31515;">appSettings</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">system.web</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">authorization</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">deny</span><span style="color:blue;">&nbsp;</span><span style="color:red;">users</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">?</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;/</span><span style="color:#a31515;">authorization</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&lt;/</span><span style="color:#a31515;">system.web</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">system.webServer</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">modules</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">remove</span><span style="color:blue;">&nbsp;</span><span style="color:red;">name</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">FormsAuthentication</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;/</span><span style="color:#a31515;">modules</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&lt;/</span><span style="color:#a31515;">system.webServer</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&lt;/</span><span style="color:#a31515;">configuration</span><span style="color:blue;">&gt;</span></div>
+
+</li>
+<li>Add New Item - "OWIN startup class" named "Startup.cs"</li>
+<li>Use the following code 
+<div class="code">
+<span style="color:blue;">using</span>&nbsp;<span style="color:darkblue;">System</span>.<span style="color:darkblue;">Configuration</span>;<br />
+<span style="color:blue;">using</span>&nbsp;<span style="color:darkblue;">Microsoft</span>.<span style="color:darkblue;">Owin</span>;<br />
+<span style="color:blue;">using</span>&nbsp;<span style="color:darkblue;">Microsoft</span>.<span style="color:darkblue;">Owin</span>.<span style="color:darkblue;">Extensions</span>;<br />
+<span style="color:blue;">using</span>&nbsp;<span style="color:darkblue;">Microsoft</span>.<span style="color:darkblue;">Owin</span>.<span style="color:darkblue;">Security</span>;<br />
+<span style="color:blue;">using</span>&nbsp;<span style="color:darkblue;">Microsoft</span>.<span style="color:darkblue;">Owin</span>.<span style="color:darkblue;">Security</span>.<span style="color:darkblue;">Cookies</span>;<br />
+<span style="color:blue;">using</span>&nbsp;<span style="color:darkblue;">Microsoft</span>.<span style="color:darkblue;">Owin</span>.<span style="color:darkblue;">Security</span>.<span style="color:darkblue;">WsFederation</span>;<br />
+<span style="color:blue;">using</span>&nbsp;<span style="color:darkblue;">Owin</span>;<br />
+ <br />
+[<span style="color:blue;">assembly</span>:&nbsp;<span style="color:darkblue;">OwinStartup</span>(<span style="color:blue;">typeof</span>(<span style="color:darkblue;">MyWebsite</span>.<span style="color:darkblue;">Startup</span>))]<br />
+ <br />
+<span style="color:blue;">namespace</span>&nbsp;<span style="color:darkblue;">MyWebsite</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:darkblue;">Startup</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:blue;">readonly</span>&nbsp;<span style="color:blue;">string</span>&nbsp;<span style="color:purple;">Realm</span>&nbsp;=&nbsp;<span style="color:darkblue;">ConfigurationManager</span>.<span style="color:purple;">AppSettings</span>[<span style="color:#a31515;">&quot;ida:Wtrealm&quot;</span>];<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:blue;">readonly</span>&nbsp;<span style="color:blue;">string</span>&nbsp;<span style="color:purple;">AdfsMetadata</span>&nbsp;=&nbsp;<span style="color:darkblue;">ConfigurationManager</span>.<span style="color:purple;">AppSettings</span>[<span style="color:#a31515;">&quot;ida:ADFSMetadata&quot;</span>];<br />
+ <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:darkcyan;">Configuration</span>(<span style="color:darkblue;">IAppBuilder</span>&nbsp;app)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;app.<span style="color:darkcyan;">SetDefaultSignInAsAuthenticationType</span>(<span style="color:darkblue;">CookieAuthenticationDefaults</span>.<span style="font-weight:bold;color:purple;">AuthenticationType</span>);<br />
+ <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;app.<span style="color:darkcyan;">UseCookieAuthentication</span>(<span style="color:blue;">new</span>&nbsp;<span style="color:darkblue;">CookieAuthenticationOptions</span>());<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;app.<span style="color:darkcyan;">UseWsFederationAuthentication</span>(<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:darkcyan;">WsFederationAuthenticationOptions</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:darkcyan;">Wtrealm</span>&nbsp;=&nbsp;<span style="color:purple;">Realm</span>,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:darkcyan;">MetadataAddress</span>&nbsp;=&nbsp;<span style="color:purple;">AdfsMetadata</span>,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});<br />
+ <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;This&nbsp;makes&nbsp;any&nbsp;middleware&nbsp;defined&nbsp;above&nbsp;this&nbsp;line&nbsp;run&nbsp;before&nbsp;the&nbsp;Authorization&nbsp;rule&nbsp;is&nbsp;applied&nbsp;in&nbsp;web.config</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;app.<span style="color:darkcyan;">UseStageMarker</span>(<span style="color:darkblue;">PipelineStage</span>.<span style="font-weight:bold;color:purple;">Authenticate</span>);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+}
+</div></li>
+</ul>
+
+<p>Testing this locally on your machine won't work, because of the redirect to ADFS. The simplest possible fix is a switch for local development (#if DEBUG or <span style="color:blue;">if</span>&nbsp;(<span style="color:darkblue;">ConfigurationManager</span>.<span style="color:purple;">AppSettings</span>[<span style="color:#a31515;">&quot;isLocalTesting&quot;</span>]&nbsp;==&nbsp;<span style="color:#a31515;">&quot;1&quot;</span>)) with this app.UseFakeLogon() extension.</p>
+<div class="code"><span style="color:blue;">public</span>&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:darkblue;">FakeExtensions</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:blue;">readonly</span>&nbsp;<span style="color:blue;">string</span>&nbsp;<span style="color:purple;">AuthenticationType</span>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;ApplicationCookie&quot;</span>;<br />
+ <br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:darkcyan;">UseFakeLogon</span>(<span style="color:blue;">this</span>&nbsp;<span style="color:darkblue;">IAppBuilder</span>&nbsp;app)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">const</span>&nbsp;<span style="color:blue;">string</span>&nbsp;<span style="font-weight:bold;color:purple;">fakeLoginPath</span>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;/fakeLogin&quot;</span>;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;app.<span style="color:darkcyan;">UseCookieAuthentication</span>(<span style="color:blue;">new</span>&nbsp;<span style="color:darkblue;">CookieAuthenticationOptions</span>()<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:purple;">AuthenticationType</span>&nbsp;=&nbsp;<span style="color:purple;">AuthenticationType</span>,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:purple;">LoginPath</span>&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:darkblue;">PathString</span>(<span style="font-weight:bold;color:purple;">fakeLoginPath</span>)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;app.<span style="color:darkcyan;">Use</span>(<span style="color:blue;">async</span>&nbsp;(context,&nbsp;next)&nbsp;=&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(context.<span style="color:purple;">Request</span>.<span style="color:purple;">Path</span>.<span style="color:purple;">Value</span>&nbsp;==&nbsp;<span style="font-weight:bold;color:purple;">fakeLoginPath</span>)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;context.<span style="color:purple;">Authentication</span>.<span style="color:darkcyan;">SignIn</span>(<span style="color:darkcyan;">CreateIdentity</span>());<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;context.<span style="color:purple;">Response</span>.<span style="color:darkcyan;">Redirect</span>(<span style="color:#a31515;">&quot;/&quot;</span>);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">else</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">await</span>&nbsp;next();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});<br />
+&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+ <br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:darkblue;">ClaimsIdentity</span>&nbsp;<span style="color:darkcyan;">CreateIdentity</span>()<br />
+&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;identity&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:darkblue;">ClaimsIdentity</span>(<span style="color:blue;">new</span>&nbsp;<span style="color:darkblue;">List</span>&lt;<span style="color:darkblue;">Claim</span>&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:darkblue;">Claim</span>(<span style="color:darkblue;">ClaimTypes</span>.<span style="font-weight:bold;color:purple;">Name</span>,&nbsp;<span style="color:#a31515;">&quot;tester&quot;</span>),<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:darkblue;">Claim</span>(<span style="color:darkblue;">ClaimTypes</span>.<span style="font-weight:bold;color:purple;">Role</span>,&nbsp;<span style="color:#a31515;">&quot;Admin&quot;</span>),<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;},&nbsp;<span style="color:purple;">AuthenticationType</span>);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">return</span>&nbsp;identity;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+}</div>
+
+<h3><a name="WIF">WIF HttpModules Pipeline</a></h3>
+<p>There are two ASP HttpModules required for WIF. See <a href="#Owin">Owin Middleware</a> which replaces this.</p>
+<p>The <strong>WSFederationAuthenticationModule (FAM)</strong> reacts to unauthorized requests and forwards to the IdP STS. When the STS redirects back with a token, it creates the principal and claims.</p>
+<p>The <strong>SessionAuthenticationModule (SAM)</strong> persists the principal and claims to a cookie, and rehydrates it on each application AuthorizeRequest.</p>
+<div class="alert">By default SessionAuthentication only works over SSL.<br/>
+Relax that with system.identityModel.services/ federationConfiguration/ cookieHandler @requireSsl="false"</div>
+
+<ul>
+<li>Sessions have fixed expirations by default. Do a sliding expiration using the SessionSecurityTokenReceived event (the eventArgs has a ReissueCookie=true)</li>
+<li>Cookies are NOT WebFarm safe by default (use DPAPI).<br/>
+To use machinekey, there is a built-in one:<br/>
+system.identityModel/identityConfiguration/securityTokenHandlers/remove SessionSecurityTokenHandler and add MachineKeySessionSecurityTokenHandler</li>
+<li>You can cache in server rather than in cookie: sessionToken.IsReferenceMode = true<br/>
+By default caches in memory. To change it (AppFabric or Redis) derive from SessionSecurityTokenCache and add in identityConfiguration/caches/sessionSecurityTokenCache @type</li>
+</ul>
+<div class="alert">
+The AntiForgeryTokens may fail when using wsfed, so put this in Application_Start<br/>
+AntiForgeryConfig.UniqueClaimTypeIdentifier = ClaimTypes.NameIdentifier;
+</div>
+<div class="alert">
+WIF events are broken. You can't use Application_Start, you have to use Init<br />
+IIS creates several application instances to serve requests, each with an Init. <a href="http://brockallen.com/2013/02/10/beware-setting-properties-or-registering-events-on-the-sam-and-fam/">See here</a>.</div>
+<p>You can use global.asax reflection-based "events" like this one to dynamically change wreply so they go back to the page they requested:</p>
+<div class="code">
+<p><span style="color: blue;">void</span> WSFederationAuthenticationModule_RedirectingToIdentityProvider(<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">object</span> sender, <span style="color: #2b91af;">RedirectingToIdentityProviderEventArgs</span> e)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> ctx = <span style="color: #2b91af;">HttpContext</span>.Current;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> raw = ctx.Request.RawUrl;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (raw != <span style="color: #a31515;">"/"</span>)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//return to current address</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; e.SignInRequestMessage.Reply = ctx.Request.Url.ToString();<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+
+<h3>Claims Transformation</h3>
+<p>The IdP claims may be useful for authentication, but may not be directly relevant to the application's authorization. You can transform the claims by deriving from ClaimsAuthenticationManager and overriding Authenticate.</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">ClaimsTransformer</span> : <span style="color: #2b91af;">ClaimsAuthenticationManager</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">override</span> <span style="color: #2b91af;">ClaimsPrincipal</span> Authenticate(<span style="color: blue;">string</span> resourceName, <span style="color: #2b91af;">ClaimsPrincipal</span> incomingPrincipal)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//not authenticated- skip it</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!incomingPrincipal.Identity.IsAuthenticated)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> incomingPrincipal;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//validation</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!incomingPrincipal.HasClaim(<span style="color: #2b91af;">ClaimTypes</span>.Country, <span style="color: #a31515;">"USA"</span>))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">throw</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">SecurityException</span>(<span style="color: #a31515;">"Only Americans allowed"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (incomingPrincipal.HasClaim(<span style="color: #a31515;">"Transformed"</span>, <span style="color: #a31515;">"1"</span>))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> incomingPrincipal;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//transformation of claims</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> claimsList = <span style="color: blue;">new</span> <span style="color: #2b91af;">List</span>&lt;<span style="color: #2b91af;">Claim</span>&gt;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">Claim</span>(<span style="color: #2b91af;">ClaimTypes</span>.Name, incomingPrincipal.Identity.Name),<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//database look up?</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">Claim</span>(<span style="color: #2b91af;">ClaimTypes</span>.Role, <span style="color: #a31515;">"American"</span>),<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">Claim</span>(<span style="color: #2b91af;">ClaimTypes</span>.Country, <span style="color: #a31515;">"USA"</span>),<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//transformed marker</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">Claim</span>(<span style="color: #a31515;">"Transformed"</span>, <span style="color: #a31515;">"1"</span>),<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; };<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> cId = <span style="color: blue;">new</span> <span style="color: #2b91af;">ClaimsIdentity</span>(claimsList, <span style="color: #a31515;">"Application"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> claimsPrincipal = <span style="color: blue;">new</span> <span style="color: #2b91af;">ClaimsPrincipal</span>(cId);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//save it in a token (chunked into cookies)</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> sessionToken = <span style="color: blue;">new</span> <span style="color: #2b91af;">SessionSecurityToken</span>(claimsPrincipal);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//to store in claims in server-side memory and just issue a cookie key...</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//sessionToken.IsReferenceMode = true; //liable to apdomain recycles, not webfarm friendly!!</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">FederatedAuthentication</span>.SessionAuthenticationModule.WriteSessionTokenToCookie(sessionToken);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> claimsPrincipal;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+<p>You can hook this up is Application_PostAuthenticateRequest or just in login action </p>
+<div class="code">
+<p><span style="color: blue;">protected</span> <span style="color: blue;">void</span> Application_PostAuthenticateRequest(<span style="color: #2b91af;">Object</span> sender, <span style="color: #2b91af;">EventArgs</span> e)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> principal = <span style="color: #2b91af;">ClaimsPrincipal</span>.Current;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//if it's registered in web.config, you can grab it here</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> claimsAuthenticationManager = <span style="color: #2b91af;">FederatedAuthentication</span>.FederationConfiguration.<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; IdentityConfiguration.ClaimsAuthenticationManager;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//otherwise just new it up</span><br />
+&nbsp;&nbsp;&nbsp; claimsAuthenticationManager = <span style="color: blue;">new</span> <span style="color: #2b91af;">ClaimsTransformer</span>();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//transform it</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> transformed = claimsAuthenticationManager.Authenticate(<span style="color: blue;">string</span>.Empty, principal);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//save it</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Thread</span>.CurrentPrincipal = <span style="color: #2b91af;">HttpContext</span>.Current.User = transformed;<br />
+}</p>
+</div>
+
+<h3>Sign-Out</h3>
+<p>For application-only sign-out, it's just like <span style="color: #2b91af;">FormsAuthentication</span>.SignOut():<br/>
+<span style="color: #2b91af;">FederatedAuthentication</span>.WSFederationAuthenticationModule.SignOut();<br/>
+To sign out of the STS and all RPs (i.e. "single sign-out") you need to redirect to the STS. The STS shows a signed out page (which calls the RPs with an html image with src= ?wa=wsignoutcleanup1.0 )</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: #2b91af;">ActionResult</span> SignOut()<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> fam = <span style="color: #2b91af;">FederatedAuthentication</span>.WSFederationAuthenticationModule;<br/>
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (fam != <span style="color: blue;">null</span>)<br/>
+&nbsp;&nbsp;&nbsp; {<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//application sign out</span><br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; fam.SignOut();<br/>
+&nbsp;<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//sign out from the Identity Provider (and all the other Relying Parties)</span><br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> signout = <span style="color: blue;">new</span> <span style="color: #2b91af;">SignOutRequestMessage</span>(<span style="color: blue;">new</span> <span style="color: #2b91af;">Uri</span>(fam.Issuer), fam.Realm);<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">RedirectResult</span>(signout.WriteQueryString());<br/>
+&nbsp;&nbsp;&nbsp; }<br/>
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">FormsAuthentication</span>.SignOut();<br/>
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> Redirect(<span style="color: #a31515;">"~/"</span>);<br/>
+}</p>
+</div>
+
+<h3>Federated Sign-In (Resource STS)</h3>
+<p>An external user (who uses another IdP) may need to access your application. An application trusts a single STS. But the STS can trust other IdPs. So...</p>
+<ol>
+<li>User tries to contact application...</li>
+<li>...which forwards to it's STS...</li>
+<li>...which is a "resource STS" which shows a list of IdPs it trusts... (a.k.a "home realm discovery", the "log in with google, facebook" type page)</li>
+<li>...user logs in to their home IdP which gives them a token...</li>
+<li>...which passes to the resource STS, which knows the IdP is trusted so...</li>
+<li>...it issues it's own token (transforming the external token)...</li>
+<li>...which the user passes on to the application, and they are logged in.</li>
+</ol>
+<p>The external to local token transformation is automatic, but the picking the "home realm" is a little awkward.</p>
+<p>The application/RP can tell the STS which external IdP the user is by passing the whr="extIdp" querystring (you may know by giving a start page eg /entry/external). You can change it dynamically in the RedirectingToIdentityProvider event:</p>
+<div class="code">
+<p><span style="color: #2b91af;">FederatedAuthentication</span>.WSFederationAuthenticationModule<br/>
+&nbsp;&nbsp;&nbsp; .RedirectingToIdentityProvider += (sender, e) =&gt;<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp; e.SignInRequestMessage.HomeRealm = <span style="color: #a31515;">"external"</span>;<br/>
+};</p>
+</div>
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

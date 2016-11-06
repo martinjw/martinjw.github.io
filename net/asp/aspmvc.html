@@ -1,0 +1,93 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP MVC</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="aspmvc.html">Asp MVC</a></li>
+<li><a href="mvc/mvccontrollers.html">MVC Controllers</a></li>
+<li><a href="mvc/mvcactions.html">MVC Actions</a></li>
+<li><a href="asprouting.html">Asp Routing</a></li>
+<li><a href="aspmvcview.html">Asp MVC Views</a></li>
+<li><a href="mvc/htmlhelpers.html">HTML Helpers</a></li>
+<li><a href="mvc/bundles.html">Bundling</a></li>
+<li><a href="mvc/errors.html">MVC Errors</a></li>
+<li><a href="mvc/mvcvalidation.html">MVC Validation</a></li>
+<li><a href="mvc/simplepaging.html">Simple Paging</a></li>
+<li><a href="mvc/webapi.html">WebApi</a></li>
+<li><a href="mvc/webapiformat.html">WebApi Formatting</a></li>
+<li><a href="mvc/webapiclient.html">WebApi HttpClient</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>ASP MVC (v3-v5, 2010-2016)</h2>
+
+<p>From 2016, see <a href="core/core.html">AspNetCore</a> </p>
+
+<h3>Links</h3>
+<ul>
+<li><a href="aspmvcview.html">ASP MVC Views (here)</a></li>
+<li><a href="asprouting.html">ASP Routing (here)</a></li>
+<li><a href="dataannotations.html">Data Annotations (here)</a></li>
+<li><a href="http://haacked.com/tags/aspnetmvc/default.aspx">Haacked on MVC</a>.<ul>
+<li><a href="http://haacked.com/archive/2011/05/25/bin-deploying-asp-net-mvc-3.aspx">Bin deploying MVC3</a></li>
+</ul></li>
+<li><a href="http://www.hanselman.com/blog/CategoryView.aspx?category=ASP.NET+MVC">Hanselman on MVC</a>
+<ul>
+<li><a href="http://www.hanselman.com/blog/GlobalizationInternationalizationAndLocalizationInASPNETMVC3JavaScriptAndJQueryPart1.aspx">Internationalization in MVC3</a></li></ul>
+</li>
+</ul>
+
+<h3>Tracing</h3>
+<p>This is the same as normal ASP, but you can't do page output (just Trace.axd).</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">system.web</span><span style="color: blue;">&gt;</span><br />
+<p>&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">trace</span><span style="color: blue;"> </span><span style="color: red;">enabled</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;"> </span><span style="color: red;">writeToDiagnosticsTrace</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;"> </span><span style="color: red;">localOnly</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;"> </span><span style="color: red;">requestLimit</span><span style="color: blue;">=</span>"<span style="color: blue;">100</span>"<span style="color: blue;"> /&gt;</span></p>
+</div>
+
+<p>Default requestLimit is 10. To redirect System.Diagnostics.Trace to asp.net tracing (Version=2.0.3600.0 in .net 2/3.5, 4.0.0.0 in .net 4/4.5):</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">system.diagnostics</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">trace</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">listeners</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">WebPageTraceListener</span>"<span style="color: blue;"> </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">System.Web.WebPageTraceListener, System.Web, </span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  Version=4.0.0.0, Culture=neutral, </span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  PublicKeyToken=b03f5f7f11d50a3a</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">listeners</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">trace</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">system.diagnostics</span><span style="color: blue;">&gt;</span></p>
+</div>
+<p>In Azure Web Sites, you can log to file system ("Application Logging (File System)", set to Error or Verbose. Streaming logs are available in Visual Studio (into the Output Window), via FTP (in the "LogFiles" directory), or in the portal ("Log").</p>
+<p>If you use custom logging (log4net, EntLib logging), log to d:\home\logfiles and the streaming still works (probably not through a corporate firewall, though!)</p>
+<p>There is also "Application Logging (Storage)" which uses an <cite>WAWSAppLogTable</cite> Azure table store.</p>
+<p>If you deploy to Azure Web Roles, the transform will be:</p>
+<div class="code">
+<p><span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">system.diagnostics</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">trace</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">listeners</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">WebPageTraceListener</span>"<span style="color: blue;"> </span><span style="color: red;">xdt:Transform</span><span style="color: blue;">=</span>"<span style="color: blue;">Remove</span>"<span style="color: blue;"> </span><span style="color: red;">xdt:Locator</span><span style="color: blue;">=</span>"<span style="color: blue;">Match(name)</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">Microsoft.WindowsAzure.Diagnostics.DiagnosticMonitorTraceListener, Microsoft.WindowsAzure.Diagnostics, Version=1.8.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35</span>"<br />
+<span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">AzureDiagnostics</span>"<span style="color: blue;"> </span><span style="color: red;">xdt:Transform</span><span style="color: blue;">=</span>"<span style="color: blue;">Insert</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">add</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">listeners</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">trace</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">system.diagnostics</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

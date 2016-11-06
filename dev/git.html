@@ -1,0 +1,176 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>Git</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link rel="stylesheet" type="text/css" href="../style.css">
+<script type="text/javascript" src="../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../index.html">Home &gt;</a></li>
+<li><a href="../jsobjects.html">JS Objects</a></li>
+<li><a href="../jquery.html">jQuery Tips</a></li>
+<li><a href="../html5/index.html">HTML5</a></li>
+<li><a href="grunt.html">Grunt</a></li>
+<li><a href="git.html">Git</a></li>
+<li><a href="../jslib.html">Old</a></li>
+</ul>
+</div>
+<div class="content">
+<ul>
+<li><a href="http://git-scm.com/book">Pro-Git book online</a></li>
+<li>For Windows, you probably want <a href="http://windows.github.com/">Github for Windows</a> which has a UI and command line versions.<br/>
+Another (free) UI is <a href="http://www.sourcetreeapp.com/download/">Atlassian's SourceTree</a></li>
+<li>On a new machine, you need to save your identity into %USERPROFILE% .gitconfig:<br/>
+git config --global user.name "John Doe"<br/>
+git config --global user.email johndoe@example.com</li>
+<li>The default editor is vim (which you quit with {Esc}:x or {Esc}ZZ). To replace with notepad++:<br/>
+<code>git config --global core.editor "'C:/Program Files (x86)/Notepad++/notepad++.exe' -multiInst -nosession"</code></li>
+<li>In a corporate environment, set the internet proxy: git config --global http.proxy http://proxy.northwind.com:80<br/>
+With username/password: http://user:pwd@proxy.northwind.com:80/<br/>
+If the username is in the format "user@corporate.com", encode the "@": http://user%40corporate.com:pwd@proxy.northwind.com:80/</li>
+<li><a href="http://windows.github.com/">Github for Windows</a> includes a credential helper, so you don't have to keep typing in username/password on the command line for https: just write once <code>git config --global credential.helper wincred</code></li>
+</ul>
+<h3>Files and (local) commits</h3>
+<p>Files are <cite>staged</cite> (tracked by git) before they are committed.</p>
+<ul>
+<li><code>git init</code> to create a new repository,<br/>
+or <code>git clone https://github.com/xxxx</code> to create a local copy of an on-line one.</li>
+<li><code>git status</code> status of a directory, <code>git diff --staged</code> for diffs</li>
+<li><code>git add readme.md</code> start tracking a file (or a folder recursively)<br/>
+If you've cloned, everything is automatically tracked<br/>
+You can use wildcards: <code>git add *.cs</code><br/>
+You can undo the tracking: <code>git reset HEAD *.cs</code></li>
+<li>ignore files with a .gitignore.</li>
+<li><code>git commit -m "my commit"</code> commits <em>staged</em> changes to local repository<br/>
+You can skip staging with <strong>-a</strong> : <code>git commit -am "my commit"</code><br />
+If you omit the -m, you go into vim (see above to change the editor)<br/>
+<code>git log</code> shows the commit history.<br />
+<code>git commit --amend</code> amends the last commit (so have less commits in history- esp for fixing merges)</li>
+<li><code>git rm readme.md</code> to remove, <code>git rm --cached readme.md</code> to remove and ignore</li>
+<li><code>git checkout -- readme.md</code> reverts a file (including contents) - aka undo pending changes</li>
+</ul>
+<p>Create labels/<cite>tags</cite> with <code>git tag -a tagName -m 'This is labelled tagName'</code><br/>
+Add the commit checksum (or the first unique part of it) to tag a specific commit</p>
+
+
+<h3>Remotes (central servers)</h3>
+<p>A remote is the central source control server (equivalent to Subversion or TFS). </p>
+<ul>
+<li>The default remote is called <cite>origin</cite>.<br/>
+When you forked a repo, you use another remote <cite>upstream</cite> by convention</li>
+<li>The default branch is called <cite>master</cite>.</li>
+<li>For <code>git merge</code>/<code>git pull</code> there is a "/" between them- git merge origin/master<br/>
+For <code>git push</code> there is " " space separator: git push origin master</li>
+<li>You can add another remote: <code>git remote add zz https://github.com/ccc</code><br/>
+(use a shortname like "zz", like "origin", so you can <code>git fetch zz</code>.</li>
+<li>You can rename remotes: <code>git remote rename origin upstream</code></li>
+</ul>
+<p><code>git clone https://github.com/xxx</code> creates a local repository from the <cite>origin remote</cite> </p>
+<p><code>git remote -v</code> shows the remote(s) with url.</p>
+<p>Cloned files are automatically tracked (no need to git add file).</p>
+<p></p>
+
+<h4>Forked repos</h4>
+<p>When you fork, you want a link to the origin of the fork- the "upstream".</p>
+<p><code>git remote add upstream https://original-repo/</code></p>
+
+<p>To update with latest changes:</p>
+<ul>
+<li><code>git fetch upstream</code> Gets the changes (but no local files changed)</li>
+<li>Optional <code>git checkout mybranch</code> Change into branch (or master)</li>
+<li><code>git merge upstream/master</code> Merge the local files (in the current branch - you probably want to git checkout master first)<br />
+OR: <code>git rebase upstream master</code> - rebase version of above (see below)<br />
+OR: <code>git pull --rebase upstream master</code> - do a fetch and merge with rebase</li>
+<li><code>git push</code> to update your "origin" remote with the changed and merged files</li>
+</ul>
+
+<h4>Get Latest</h4>
+<p><code>git pull</code> does a <code>git fetch origin</code> and <code>git merge</code> to get the latest from the origin.</p>
+<p>NB: fetch just gets the data into the .git repository (not files), merge changes the file contents.</p>
+
+<h4>Check in</h4>
+<p><code>git push {remotename} {branchname}</code>- pushes commits from branch to remote e.g. <code>git push origin master</code>.</p>
+<p>A push is like a branch merge, but you can only do fast-forward merges. The more common workflow is to do a <cite>pull request</cite> (not actually a command, but github has a great UI to do it)</p>
+
+<h3>Branches</h3>
+<ul>
+<li>The default remote server and branch are called <cite>origin</cite>/<cite>master</cite>.</li>
+<li>A cloned repository has 2 pointers: the local branch "master" and the remote branch "origin/master"</li>
+<li>The pointer to the current branch is called <cite>HEAD</cite></li>
+<li>One strategy is to have a long running develop branch, and periodically "release" by merging into master.<br/>
+Short-lived topic branches can exist for specific issues.</li>
+</ul>
+<p>Unlike Subversion/TFS, you don't branch to a new folder with a different set of files. It's the same folder as the trunk ("master"). </p>
+<ul>
+<li><code>git branch branchname</code> creates a branch (but does not switch to it).</li>
+<li><code>git checkout branchname</code> switches to a branch (points HEAD to branch).<br/>
+<code>git checkout -b branchname</code> <strong>creates</strong> and switches to a branch.</li>
+<li><code>git merge branchname</code> to merge branch into current branch.<br />
+A "fast forward" is a simple additive merge. Otherwise you have a new "merge commit" which is a special commit containing the sum from both branches (a "3-way merge" as there are 2 branch parents and a new commit).</li>
+<li>Merge conflicts can be edited, then run <code>git add filename</code> to mark then merged.</li>
+<li>A <strong>rebase</strong> is a type of aggressive merge, in which one branch is "replayed" over the other. This means the merge is a "fast forward" and the history is cleaner. Don't rebase commits that have already been pushed to a remote.</li>
+<li>Delete a branch with <code>git branch -d branchname</code></li>
+<li>Push local branches to server with <code>git push origin branchname</code></li>
+</ul>
+
+<h3>Workflow</h3>
+<p>There are several common workflows:</p>
+<ul>
+<li>Centralized (everyone checks into same remote)</li>
+<li>Feature branches (create branches, pull requests to pull into central remote)</li>
+<li>Gitflow (master branch is static, production; everyone branches off "develop" branch and merges into "release" branch(es) which in turn merge into master). Yes, this is complex.</li>
+<li>Github flow (master is always deployable; branch + pull requests; after merge, deploy). For continuous deployment, and much simpler than gitflow. Variations include making release branches when deploying.</li>
+</ul>
+<h4>Centralized</h4>
+<p>This is the closest to centralized subversion/TFS source control, is simple and works </p>
+<ul>
+<li>Create central repo.</li>
+<li>Clone it locally. git clone https://....</li>
+<li>Work locally. git add readme.md, git commit -m "my commit"</li>
+<li>Push to central repo. git push origin master</li>
+<li>Fixes:<ul>
+<li>if there is a merge problem, update from the central repo: git pull --rebase origin master<br/>
+Resolve issues, then git push origin master</li>
+<li>If you forgot to include files, git add etc, then <code>git commit --amend</code> to amend the commit</li>
+<li>To squash several commits into one (simplify history), do an interactive rebase <code>git rebase -i</code><br />
+pick the first, then s[squash] the other commits (or fixup to discard commit messages).</li>
+<li>To sync the latest changes from origin (or upstream),<ul>
+<li><code>git fetch upstream</code> Gets the changes</li>
+<li><code>git rebase upstream/master</code> Reapply all the changes onto the master</li>
+<li><code>git rebase --continue</code> over all conflicts</li>
+</ul></li>
+</ul></li>
+</ul>
+<h4>Feature branches</h4>
+<ul>
+<li>For each piece of work, create a branch. git checkout -b mybugfix master</li>
+<li>You can push to master in a branch. git push -u origin mybugfix<br/>
+After the branch is created, it is tracked, so just git push</li>
+<li>Make a pull request</li>
+<li>Any further work in the branch is automatically added to the pull request</li>
+<li>Finally, git checkout master, git pull origin mybugfix, then git push</li>
+</ul>
+
+<h3>Tricks</h3>
+<ul>
+<li>You can create a windows batch file with git commands, but each command should be "call git", not just "git..."</li>
+<li>You .gitignore a folder, but the contents are already committed.<br/>
+<code>git rm -r --cached directoryname</code><br/>
+You can also:<br/>
+<code>git rm -r --cached .</code> (removes everything)<br/>
+<code>git add .</code> (add it all back, ignoring what's in .gitignore)<br/>
+commit/push</li>
+</ul>
+
+</div>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

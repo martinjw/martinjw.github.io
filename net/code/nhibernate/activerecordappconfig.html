@@ -1,0 +1,53 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ActiveRecord app.config</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../index.html">Code &gt;</a></li>
+<li><a href="index.html">NHibernate</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>ActiveRecord App.Config</h2>
+<p>Use ActiveRecordStarter.Initialize(typeof(Category).Assembly,                ActiveRecordSectionHandler.Instance) to start up.</p>
+<div class="code">
+<p style="margin: 0px;"><span style="color: blue;">&lt;?</span><span style="color: #a31515;">xml</span><span style="color: blue;"> </span><span style="color: red;">version</span><span style="color: blue;">=</span>"<span style="color: blue;">1.0</span>"<span style="color: blue;"> </span><span style="color: red;">encoding</span><span style="color: blue;">=</span>"<span style="color: blue;">utf-8</span>"<span style="color: blue;"> ?&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: #a31515;">configuration</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">configSections</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">section</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">activerecord</span>"<span style="color: blue;"> </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">Castle.ActiveRecord.Framework.Config.ActiveRecordSectionHandler, Castle.ActiveRecord</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">configSections</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">connectionStrings</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Northwind</span>"<span style="color: blue;"> </span><span style="color: red;">connectionString</span><span style="color: blue;">=</span>"<span style="color: blue;">Data Source=.\SQLEXPRESS;Integrated Security=true;Initial Catalog=Northwind</span>"<span style="color: blue;">/&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">connectionStrings</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">activerecord</span><span style="color: blue;"> </span><span style="color: red;">isWeb</span><span style="color: blue;">=</span>"<span style="color: blue;">false</span>"<span style="color: blue;"> </span><span style="color: red;">isDebug</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">config</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><span style="color: red;">key</span><span style="color: blue;">=</span>"<span style="color: blue;">connection.driver_class</span>"<span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">NHibernate.Driver.SqlClientDriver</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><span style="color: red;">key</span><span style="color: blue;">=</span>"<span style="color: blue;">dialect</span>"<span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">NHibernate.Dialect.MsSql2005Dialect</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><span style="color: red;">key</span><span style="color: blue;">=</span>"<span style="color: blue;">connection.provider</span>"<span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">NHibernate.Connection.DriverConnectionProvider</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><span style="color: red;">key</span><span style="color: blue;">=</span>"<span style="color: blue;">connection.connection_string_name</span>"<span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">Northwind</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">config</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">activerecord</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">configuration</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+
+
+
+</div>
+<div class="Footer">
+
+</div></body>
+</html>

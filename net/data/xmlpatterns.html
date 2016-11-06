@@ -1,0 +1,217 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Xml Patterns</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="io.html">IO</a></li>
+<li><a href="xml.html">Xml</a></li>
+<li><a href="xmlpatterns.html">Xml Patterns</a></li>
+<li><a href="adodotnet.html">ADO.Net</a></li>
+<li><a href="adopatterns.html">ADO Patterns</a></li>
+<li><a href="transactions.html">Transactions</a></li>
+<li><a href="sql.html">SQL</a></li>
+<li><a href="ef/ef.html">EF/Linq2Sql &gt;</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>Xml Patterns</h2>
+<h3><a name="XLinq">XLinq</a></h3>
+<div class="code">
+<p><span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: #2b91af;">Dictionary</span>&lt;<span style="color: blue;">string</span>, <span style="color: blue;">string</span>&gt; ReadWithXLinq(<span style="color: blue;">string</span> path)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">XNamespace</span> ns = <span style="color: #a31515;">"randomURI"</span>; <span style="color: green;">//define the namespace</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> doc = <span style="color: #2b91af;">XElement</span>.Load(path); <span style="color: green;">//don't need an XDocument</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//Xname = "randomURI"+"data" or "(randomURI)data"</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> dict = <span style="color: blue;">from</span> data <span style="color: blue;">in</span> doc.Elements(ns + <span style="color: #a31515;">"data"</span>)<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">select</span> <span style="color: blue;">new</span> {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Name = data.Attribute(<span style="color: #a31515;">"name"</span>).Value ,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//casting does not throw NullReference</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Value = (<span style="color: blue;">string</span>)data.Element(ns+<span style="color: #a31515;">"value"</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; };<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> dict.ToDictionary(d =&gt; d.Name, d =&gt; d.Value );<br />
+}<br />
+&nbsp;<br />
+<span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> SaveWithXLinq(<span style="color: #2b91af;">Dictionary</span>&lt;<span style="color: blue;">string</span>, <span style="color: blue;">string</span>&gt; dict, <span style="color: blue;">string</span> path)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">XNamespace</span> ns = <span style="color: #a31515;">"randomURI"</span>; <span style="color: green;">//define the namespace</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> doc = <span style="color: blue;">new</span> <span style="color: #2b91af;">XElement</span>(ns + <span style="color: #a31515;">"root"</span>, <br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">from</span> d <span style="color: blue;">in</span> dict<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  <span style="color: blue;">select</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">XElement</span>(ns + <span style="color: #a31515;">"data"</span>,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  <span style="color: blue;">new</span> <span style="color: #2b91af;">XAttribute</span>(<span style="color: #a31515;">"name"</span>, d.Key),<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  <span style="color: blue;">new</span> <span style="color: #2b91af;">XElement</span>(ns + <span style="color: #a31515;">"value"</span>, d.Value)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  ));<br />
+&nbsp;&nbsp;&nbsp; doc.Save(path);<br />
+}</p>
+</div>
+
+
+<h3><a name="XmlDocument">XmlDocument</a></h3>
+<div class="code">
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: #2b91af;">Dictionary</span>&lt;<span style="color: blue;">string</span>, <span style="color: blue;">string</span>&gt; ReadWithDocument(<span style="color: blue;">string</span> path)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Dictionary</span>&lt;<span style="color: blue;">string</span>, <span style="color: blue;">string</span>&gt; dict = <span style="color: blue;">new</span> <span style="color: #2b91af;">Dictionary</span>&lt;<span style="color: blue;">string</span>, <span style="color: blue;">string</span>&gt;();<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">XmlDocument</span> doc = <span style="color: blue;">new</span> <span style="color: #2b91af;">XmlDocument</span>();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; doc.Load(path);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//document has a default namespace &lt;root xmlns="randomURI"&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">XmlNamespaceManager</span> nsm = <span style="color: blue;">new</span> <span style="color: #2b91af;">XmlNamespaceManager</span>(doc.NameTable);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; nsm.AddNamespace(<span style="color: #a31515;">"b"</span>, <span style="color: #a31515;">"randomURI"</span>); <span style="color: green;">//prefix all elements</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">XmlNodeList</span> dataList = doc.SelectNodes(<span style="color: #a31515;">"/b:root/b:data"</span>, nsm);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">foreach</span> (<span style="color: #2b91af;">XmlElement</span> data <span style="color: blue;">in</span> dataList)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> name = data.GetAttribute(<span style="color: #a31515;">"name"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">XmlElement</span> value = data.SelectSingleNode(<span style="color: #a31515;">"b:value"</span>, nsm) <span style="color: blue;">as</span> <span style="color: #2b91af;">XmlElement</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (value != <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> val = value.InnerText;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; dict.Add(name, val);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> dict;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> SaveWithDocument(<span style="color: #2b91af;">Dictionary</span>&lt;<span style="color: blue;">string</span>, <span style="color: blue;">string</span>&gt; dict, <span style="color: blue;">string</span> path)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">XmlDocument</span> doc = <span style="color: blue;">new</span> <span style="color: #2b91af;">XmlDocument</span>();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; doc.LoadXml(<span style="color: #a31515;">"&lt;root xmlns=\"randomURI\"/&gt;"</span>); <span style="color: green;">//we have to load the namespace in</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//doc.DocumentElement.Prefix = "b"; //if rqd</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//document has a default namespace &lt;root xmlns="randomURI"&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> nsURI = <span style="color: #a31515;">"randomURI"</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">foreach</span> (<span style="color: #2b91af;">KeyValuePair</span>&lt;<span style="color: blue;">string</span>, <span style="color: blue;">string</span>&gt; kvp <span style="color: blue;">in</span> dict)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">XmlElement</span> data = doc.CreateElement(<span style="color: #a31515;">"data"</span>, nsURI); <span style="color: green;">//factory</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; doc.DocumentElement.AppendChild(data);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; data.SetAttribute(<span style="color: #a31515;">"name"</span>, kvp.Key);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">XmlElement</span> value = doc.CreateElement(<span style="color: #a31515;">"value"</span>, nsURI);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; data.AppendChild(value);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; value.InnerText = kvp.Value;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; doc.Save(path);<br />
+&nbsp;&nbsp;&nbsp; }</p>
+</div>
+
+<h3><a name="XmlReader">XmlReader/Writer</a></h3>
+<div class="code">
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: #2b91af;">Dictionary</span>&lt;<span style="color: blue;">string</span>, <span style="color: blue;">string</span>&gt; ReadWithReader(<span style="color: blue;">string</span> path)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Dictionary</span>&lt;<span style="color: blue;">string</span>, <span style="color: blue;">string</span>&gt; dict = <span style="color: blue;">new</span> <span style="color: #2b91af;">Dictionary</span>&lt;<span style="color: blue;">string</span>, <span style="color: blue;">string</span>&gt;();<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">XmlReaderSettings</span> settings = <span style="color: blue;">new</span> <span style="color: #2b91af;">XmlReaderSettings</span>();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">NameTable</span> nt = <span style="color: blue;">new</span> <span style="color: #2b91af;">NameTable</span>();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">object</span> dataNT = nt.Add(<span style="color: #a31515;">"data"</span>); <span style="color: green;">//optimize comparisons with NT objects instead of string</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; settings.NameTable = nt;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: #2b91af;">XmlReader</span> rdr = <span style="color: #2b91af;">XmlReader</span>.Create(path, settings))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">while</span> (rdr.Read())<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (rdr.NodeType == <span style="color: #2b91af;">XmlNodeType</span>.Element &amp;&amp; rdr.LocalName.Equals(dataNT)) <span style="color: green;">//NamteTable object</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; { <span style="color: green;">//you could jump to the next sibling (skipping childnodes) with ReadToNextSibling</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> name = rdr.GetAttribute(<span style="color: #a31515;">"name"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (rdr.ReadToDescendant(<span style="color: #a31515;">"value"</span>))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> val = rdr.ReadElementContentAsString();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; dict.Add(name, val);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> dict;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> SaveWithWriter(<span style="color: #2b91af;">Dictionary</span>&lt;<span style="color: blue;">string</span>, <span style="color: blue;">string</span>&gt; dict, <span style="color: blue;">string</span> path)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> nsURI = <span style="color: #a31515;">"randomURI"</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">XmlWriterSettings</span> settings = <span style="color: blue;">new</span> <span style="color: #2b91af;">XmlWriterSettings</span>();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; settings.Indent = <span style="color: blue;">true</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: #2b91af;">XmlWriter</span> writer = <span style="color: #2b91af;">XmlWriter</span>.Create(path, settings))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; writer.WriteStartDocument(); <span style="color: green;">//xml declaration</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; writer.WriteStartElement(<span style="color: #a31515;">"root"</span>, nsURI); <span style="color: green;">//automatically add xmlns without prefix</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//writer.WriteAttributeString("xmlns", "x", null, "randomURI2"); how to add a prefix namespace</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">foreach</span> (<span style="color: #2b91af;">KeyValuePair</span>&lt;<span style="color: blue;">string</span>, <span style="color: blue;">string</span>&gt; kvp <span style="color: blue;">in</span> dict)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; writer.WriteStartElement(<span style="color: #a31515;">"data"</span>, nsURI);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; writer.WriteAttributeString(<span style="color: #a31515;">"name"</span>, <span style="color: #a31515;">""</span>, kvp.Key);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//writer.WriteAttributeString("x", "nspaced", "randomURI2", "value"); //adding the prefx</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; writer.WriteStartElement(<span style="color: #a31515;">"value"</span>, nsURI);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; writer.WriteValue(kvp.Value);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; writer.WriteEndElement();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; writer.WriteEndElement();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; writer.WriteEndElement();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; }</p>
+</div>
+
+<h3><a name="XPathDocument">XPathDocument</a></h3>
+<div class="code">
+<p>&nbsp;<span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: #2b91af;">Dictionary</span>&lt;<span style="color: blue;">string</span>, <span style="color: blue;">string</span>&gt; ReadWithXPath(<span style="color: blue;">string</span> path)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Dictionary</span>&lt;<span style="color: blue;">string</span>, <span style="color: blue;">string</span>&gt; dict = <span style="color: blue;">new</span> <span style="color: #2b91af;">Dictionary</span>&lt;<span style="color: blue;">string</span>, <span style="color: blue;">string</span>&gt;();<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">XPathDocument</span> doc = <span style="color: blue;">new</span> <span style="color: #2b91af;">XPathDocument</span>(path); <span style="color: green;">//Load</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">XPathNavigator</span> nav = doc.CreateNavigator();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//for the namespace we reference the navigator</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">XmlNamespaceManager</span> nsm = <span style="color: blue;">new</span> <span style="color: #2b91af;">XmlNamespaceManager</span>(nav.NameTable);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; nsm.AddNamespace(<span style="color: #a31515;">"b"</span>, <span style="color: #a31515;">"randomURI"</span>); <span style="color: green;">//prefix all elements</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">XPathNodeIterator</span> iter = nav.Select(<span style="color: #a31515;">"b:root/b:data"</span>, nsm); <span style="color: green;">//SelectNodes</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">XPathExpression</span> findValue = nav.Compile(<span style="color: #a31515;">"b:value"</span>); <span style="color: green;">//optimize</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; findValue.SetContext(nsm);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">while</span> (iter.MoveNext())<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">XPathNavigator</span> dataNav = iter.Current;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> name = dataNav.GetAttribute(<span style="color: #a31515;">"name"</span>, <span style="color: #a31515;">""</span>); <span style="color: green;">//namespace is rqd</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">XPathNavigator</span> value = dataNav.SelectSingleNode(findValue);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//you can also XmlReader rdr = dataNav.ReadSubtree();</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (value != <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; dict.Add(name, value.Value);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> dict;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> SaveWithXPath(<span style="color: #2b91af;">Dictionary</span>&lt;<span style="color: blue;">string</span>, <span style="color: blue;">string</span>&gt; dict, <span style="color: blue;">string</span> path)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> nsURI = <span style="color: #a31515;">"randomURI"</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">XmlDocument</span> doc = <span style="color: blue;">new</span> <span style="color: #2b91af;">XmlDocument</span>(); <span style="color: green;">//need a document as XPathDocument is readonly</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; doc.LoadXml(<span style="color: #a31515;">"&lt;root xmlns=\"randomURI\"/&gt;"</span>); <span style="color: green;">//we have to load the namespace in</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">XPathNavigator</span> nav = doc.CreateNavigator(); <span style="color: green;">//the navigator has CanEdit= true</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; nav.MoveToRoot();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; nav.MoveToFirstChild(); <span style="color: green;">//=/document element</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">foreach</span> (<span style="color: #2b91af;">KeyValuePair</span>&lt;<span style="color: blue;">string</span>, <span style="color: blue;">string</span>&gt; kvp <span style="color: blue;">in</span> dict)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">XmlWriter</span> writer = nav.AppendChild(); <span style="color: green;">//use a writer</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; writer.WriteStartElement(<span style="color: #a31515;">"data"</span>, nsURI);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; writer.WriteAttributeString(<span style="color: #a31515;">"name"</span>, kvp.Key);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; writer.WriteStartElement(<span style="color: #a31515;">"value"</span>, nsURI);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; writer.WriteValue(kvp.Value);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; writer.WriteEndElement();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; writer.Close();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; System.Diagnostics.<span style="color: #2b91af;">Debug</span>.WriteLine(nav.OuterXml);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; doc.Save(path);<br />
+&nbsp;&nbsp;&nbsp; }</p>
+</div>
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

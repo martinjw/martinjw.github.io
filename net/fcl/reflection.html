@@ -1,0 +1,140 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>.Net Reflection</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="dotnetcollections.html">Collections</a></li>
+<li><a href="events.html">Events</a></li>
+<li><a href="globaldotnet.html">Globalization</a></li>
+<li><a href="reflection.html">Reflection</a></li>
+<li><a href="dotnetsecurity.html">Security</a></li>
+<li><a href="claims.html">Claims Security</a></li>
+<li><a href="dotnetsecurity_crypto.html">Crypto+ signing</a></li>
+<li><a href="serialization.html">Serialization</a></li>
+<li><a href="dotnetthreads.html">Threading</a></li>
+<li><a href="async.html">Async</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>Reflection</h2>
+<ul>
+<li><a href="../code/convertdatatable.html">Convert List&lt;T&gt; - DataTable</a> using reflection</li>
+<li><a href="../code/reflection/genericcomparer.html">GenericComparer&lt;T&gt;</a> using reflection</li>
+<li><a href="../code/reflection/propreflection.html">Copy or compare properties with reflection.</a></li>
+<li><a href="../code/reflection/enumdescription.html">Enum description</a></li>
+<li><a href="../code/reflection/entityfiller.html">EntityFiller: ADO DataReader to entities with reflection</a></li>
+<li><a href="../code/reflection/staticreflection.html">Static reflection: using .Net 3.5 expressions</a></li>
+</ul>
+<h3>Assemblies</h3>
+<p>The Assembly.GetExecutingAssembly() static method is the most useful.</p>
+<p>Assembly.GetCustomAttributes(typeof(AssemblyDescriptionAttribute), false) (returns array)</p>
+<p>Getting types</p>
+<div class="code">
+<p><span style="color: #2b91af;">Type</span>[] ts = <span style="color: #2b91af;">Assembly</span>.GetExecutingAssembly().GetTypes(); <span style="color: green;">//all types</span><br />
+<span style="color: #2b91af;">Type</span> t = <span style="color: blue;">this</span>.GetType(); <span style="color: green;">//from an instance</span><br />
+t = <span style="color: blue;">typeof</span>(<span style="color: #2b91af;">Class1</span>); <span style="color: green;">//from a class name</span></p>
+</div>
+
+<p>Type has .IsClass/IsEnum etc, and methods for GetConstructors / Properties / Methods etc (all members inherit MemberInfo).<br />
+Use <strong>BindingFlags</strong> if not just public - eg BindingFlags.Public | BindingFlags.NonPublic (others: IgnoreCase, Static/ Instance)<br />
+Find variables (type only, not name) in a method: MethodInfo.GetMethodBody().LocalVariables</p>
+<div class="code">
+<p><span style="color: blue;">object</span> o = Request;<br />
+<span style="color: blue;">string</span> propName = <span style="color: #a31515;">"Path"</span>;<br />
+System.Reflection.<span style="color: #2b91af;">PropertyInfo</span> prop = o.GetType().GetProperty(propName);<br />
+Button1.Text = prop.GetValue(o, <span style="color: blue;">null</span>).ToString();<br />
+<span style="color: green;">//Button1.Text = Request.Path;</span></p>
+</div>
+
+<h3>Set Private Fields</h3>
+<p>Setting private fields (useful in testing if you're not using the MsTest Accessors)</p>
+<div class="code">
+<p><span style="color: blue;">var</span> field = <span style="color: blue;">typeof</span>(<span style="color: #2b91af;">Category</span>).GetField(<span style="color: #a31515;">"_key"</span>, System.Reflection.<span style="color: #2b91af;">BindingFlags</span>.Instance | System.Reflection.<span style="color: #2b91af;">BindingFlags</span>.NonPublic);<br />
+field.SetValue(_category, <span style="color: #a31515;">"Different"</span>);</p>
+</div>
+
+<h3>Dynamic loading</h3>
+<p>Assembly.LoadFrom(path) or Assembly.Load(qualified name)</p>
+<div class="code">
+<p><span style="color: #2b91af;">Assembly</span> a = <span style="color: #2b91af;">Assembly</span>.LoadFrom(<span style="color: #a31515;">@"C:\ClassLibrary.dll"</span>); <span style="color: green;">//load</span><br />
+<span style="color: #2b91af;">Type</span> t = a.GetType(<span style="color: #a31515;">"ClassLibrary.Class1"</span>); <span style="color: green;">//get type</span><br />
+<span style="color: green;">//find out about it</span><br />
+<span style="color: #2b91af;">MethodInfo</span> mi = t.GetMethod(<span style="color: #a31515;">"Execute"</span>); <span style="color: green;">//find method</span><br />
+<span style="color: #2b91af;">PropertyInfo</span> pi = t.GetProperty(<span style="color: #a31515;">"MyProperty"</span>); <span style="color: green;">//find prop</span><br />
+<span style="color: green;">//run it</span><br />
+<span style="color: #2b91af;">Object</span> myClass = <span style="color: #2b91af;">Activator</span>.CreateInstance(t);<br />
+mi.Invoke(myClass, <span style="color: blue;">new</span> <span style="color: blue;">object</span>[] { 10 }); <span style="color: green;">//call method</span><br />
+<span style="color: blue;">int</span> result = (<span style="color: blue;">int</span>)pi.GetValue(myClass, <span style="color: blue;">null</span>); <span style="color: green;">//call property (GetValue ==Invoke)</span></p>
+</div>
+<p>NB: Default ctors can be created by Assembly.CreateInstance(string typename), or by System.Activator.CreateInstance(type), or by GetConstructor(Type.EmptyArray).Invoke.</p>
+<div class="code">
+<p><span style="color: green;">//non default ctor</span><br />
+<span style="color: #2b91af;">Type</span>[] arg = <span style="color: blue;">new</span> <span style="color: #2b91af;">Type</span>[] { <span style="color: blue;">typeof</span>(<span style="color: blue;">string</span>), <span style="color: blue;">typeof</span>(<span style="color: blue;">int</span>) };<br />
+<span style="color: #2b91af;">ConstructorInfo</span> ci = t.GetConstructor(arg); <span style="color: green;">//find default ctor</span><br />
+<span style="color: #2b91af;">Object</span> myClass2 = ci.Invoke(<span style="color: blue;">new</span> <span style="color: blue;">object</span>[] { <span style="color: #a31515;">"Hello"</span>, 20 });<span style="color: green;">//pass in empty obj array</span></p>
+</div>
+
+
+<p>Alternative to MemberInfo.Invoke: Type.InvokeMember()</p>
+<div class="code">
+<p><span style="color: #2b91af;">Type</span> t = <span style="color: #2b91af;">Type</span>.GetType(<span style="color: #a31515;">"Library.Class1, Library"</span>); <span style="color: green;">//get type</span><br />
+<span style="color: #2b91af;">Object</span> myClass = <span style="color: #2b91af;">Activator</span>.CreateInstance(t);<br />
+<span style="color: blue;">object</span> result = t.InvokeMember(<span style="color: #a31515;">"Execute"</span>, <span style="color: #2b91af;">BindingFlags</span>.Default | <span style="color: #2b91af;">BindingFlags</span>.InvokeMethod,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  <span style="color: blue;">null</span>, myClass, <span style="color: blue;">new</span> <span style="color: blue;">object</span>[] {});<br />
+<span style="color: #2b91af;">Assert</span>.IsTrue((<span style="color: blue;">bool</span>)result);</p>
+</div>
+
+<h3>Late Binding</h3>
+<p>Late bind from a config file (assuming all types have a common interface- useful pattern for injecting mocks just by changing the config xml). </p>
+<div class="code">
+<p><span style="color: blue;">string</span> className = <span style="color: #a31515;">"Library.Class1, Library"</span>;<br />
+<span style="color: #2b91af;">Type</span> t = <span style="color: #2b91af;">Type</span>.GetType(className);<br />
+<span style="color: #2b91af;">ICommand</span> obj = (<span style="color: #2b91af;">ICommand</span>)<span style="color: #2b91af;">Activator</span>.CreateInstance(t);<br />
+obj.Execute();</p>
+</div>
+
+<h3>Down-casting / Cloning</h3>
+<p>Casting from a base class down to a derived class isn't permitted. So here EntityDerived has a constructor which takes the base class and copies the properties. (Capture the debug.writes for a non-reflected version.) You could also use this for cloning (equivalent to the shallow copy of Object.MemberwiseClone()). See also <a href="../code/propreflection.html">Copy properties between different objects</a>.</p>
+<div class="code">
+<p><span style="color: blue;">public</span> EntityDerived(<span style="color: #2b91af;">EntityBase</span> eb)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//copy all properties from base class up to this derived class</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">PropertyInfo</span>[] allProps = eb.GetType().GetProperties();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">foreach</span> (<span style="color: #2b91af;">PropertyInfo</span> prop <span style="color: blue;">in</span> allProps)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!prop.CanWrite) <span style="color: blue;">continue</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">PropertyInfo</span> property = GetType().GetProperty(prop.Name);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Debug</span>.WriteLine(prop.Name + <span style="color: #a31515;">" = eb."</span> + prop.Name + <span style="color: #a31515;">";"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; property.SetValue(<span style="color: blue;">this</span>, prop.GetValue(eb, <span style="color: blue;">null</span>), <span style="color: blue;">null</span>);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+
+<h3>Reflection.Emit</h3>
+<div class="code">
+<p><span style="color: #2b91af;">AssemblyName</span> an = <span style="color: blue;">new</span> <span style="color: #2b91af;">AssemblyName</span>();<br />
+an.Name = <span style="color: #a31515;">"MyNewAssembly"</span>;<br />
+System.Reflection.Emit.<span style="color: #2b91af;">AssemblyBuilder</span> ab = <span style="color: #2b91af;">AppDomain</span>.CurrentDomain.DefineDynamicAssembly<br />
+&nbsp;(an, System.Reflection.Emit.<span style="color: #2b91af;">AssemblyBuilderAccess</span>.RunAndSave);<br />
+ab.Save(<span style="color: #a31515;">"newAssembly.dll"</span>); <span style="color: green;">//can't specify path</span></p>
+</div>
+<p>Then create a ModuleBuilder and DefineType(name, TypeAttributes.Class | TypeAttributes.Public) and so on for MethodBuilder etc... until you get down to the ILGenerator. </p>
+</div>
+<div class="Footer">
+
+</div></body>
+</html>

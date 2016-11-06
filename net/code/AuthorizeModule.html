@@ -1,0 +1,150 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Authorize HttpModule (with Session)</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main</a></li>
+<li><a href="../dotnet.html">.Net</a></li>
+<li><a href="index.html">Code</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>Authorize HttpModule (with Session)</h2>
+<p><a href="PreInitModule.html">See also PreInitModule</a>.<br />
+<a href="http://blogs.msdn.com/nikhiln/archive/2008/05/22/httphandler-to-authorize-file-downloads-c-code-sample.aspx">Alternative using IHttpHandler</a><br />
+<strong>Scenario:</strong> Control access to a resource using business rules (eg a session flag, SessionManager.IsSubscribed())</p>
+<ul>
+<li>Secure Asp page/resource: use context.AuthorizeRequest (if no Session) or PreRequestHandlerExecute (if Session). <a href="PreInitModule.html#Authorize">details</a></li>
+<li>Secure pdfs, zips, images: Ad a wildcard mapping to IIS so the resource is mapped to the asp ISAPI</li>
+</ul>
+<p>Warning: Unfortunately you can't add an HttpModule just for a subfolder, so this module runs for the entire website and checks IfRestrictedFolder (comparing an appSetting with the request.Path).</p>
+<ol>
+<li>At <strong>PostMapRequestHandler</strong> the HttpModule swaps from the actual handler to a custom handler which implements IRequiresSessionState or IReadOnlySessionState so it can use seesion.
+</li>
+<li>At <strong>PreRequestHandlerExecute</strong> you can access session and redirect if needed.</li>
+<li>At <strong>PostAcquireRequestState</strong> you swap back to the orginal handler.</li>
+</ol>
+<p>In practice, writing session is unreliable (asp writes the session cookie, but the handler may response.Clear). Also session writing takes out a lock, and Phil found that a deadlock could occur with this module using IRequiresSessionState. In conclusion- just use IReadOnlySessionState!</p>
+
+<p>Credit to Tomasz Jastrzebski http://forums.asp.net/p/1098574/1664675.aspx</p>
+<div class="code">
+<p><span style="color: blue;">using</span> System;<br />
+<span style="color: blue;">using</span> System.Web;<br />
+<span style="color: blue;">using</span> System.Web.Configuration;<br />
+<span style="color: blue;">using</span> System.Web.SessionState;<br />
+&nbsp;<br />
+<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> HttpModule to verify that only subscribers can view resources.</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> Because of an asp buglet, HttpModules and subfolders (web.config location) doesn't work</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> so the authorization stuff uses an appsetting to check Request.Path for the subfolder.</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+<span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">SubscriptionModule</span> : <span style="color: #2b91af;">IHttpModule</span><br />
+{<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; #region</span> IHttpModule Members<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;">Initializes a module and prepares it to handle requests.</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///&lt;param name="context"&gt;</span><span style="color: green;">An </span><span style="color: gray;">&lt;see cref="T:System.Web.HttpApplication"&gt;&lt;/see&gt;</span><span style="color: green;"> that provides access to the methods, properties, and events common to all application objects within an ASP.NET application </span><span style="color: gray;">&lt;/param&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> Init(<span style="color: #2b91af;">HttpApplication</span> context)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//if the handler doesn't have session, swap in a temp handler that does have session</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; context.PostMapRequestHandler += PostMapRequestHandler;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//swap out the temp handler if we used it</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; context.PostAcquireRequestState += PostAcquireRequestState;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//the authorization code, using session</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; context.PreRequestHandlerExecute += context_PreRequestHandlerExecute;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> PostMapRequestHandler(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">EventArgs</span> e)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">HttpContext</span> context = ((<span style="color: #2b91af;">HttpApplication</span>)sender).Context;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//don't care about images</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!IsRestrictedFolder(context.Request)) <span style="color: blue;">return</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">// no need to replace the current handler</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (context.Handler <span style="color: blue;">is</span> <span style="color: #2b91af;">IReadOnlySessionState</span> || context.Handler <span style="color: blue;">is</span> <span style="color: #2b91af;">IRequiresSessionState</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">// swap the current handler</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; context.Handler = <span style="color: blue;">new</span> <span style="color: #2b91af;">MyHttpHandler</span>(context.Handler);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> PostAcquireRequestState(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">EventArgs</span> e)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">HttpContext</span> context = ((<span style="color: #2b91af;">HttpApplication</span>)sender).Context;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">MyHttpHandler</span> resourceHttpHandler = context.Handler <span style="color: blue;">as</span> <span style="color: #2b91af;">MyHttpHandler</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (resourceHttpHandler != <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">// set the original handler back</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; context.Handler = resourceHttpHandler.OriginalHandler;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">static</span> <span style="color: blue;">void</span> context_PreRequestHandlerExecute(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">EventArgs</span> e)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">HttpContext</span> context = ((<span style="color: #2b91af;">HttpApplication</span>)sender).Context;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!IsRestrictedFolder(context.Request)) <span style="color: blue;">return</span>;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//if they are not subscribed, redirect to login</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!<span style="color: #2b91af;">SessionManager</span>.IsSubscribed())<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; context.Response.Redirect(<span style="color: #a31515;">"~/login.aspx"</span>);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: blue;">bool</span> IsRestrictedFolder(<span style="color: #2b91af;">HttpRequest</span> request)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//if Request Path subfolder (after application path) is our restricted folder</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> dir = <span style="color: blue;">string</span>.Format(<span style="color: #a31515;">"{0}/{1}"</span>, request.ApplicationPath, <span style="color: #2b91af;">WebConfigurationManager</span>.AppSettings[<span style="color: #a31515;">"subFolders"</span>]);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> request.Path.StartsWith(dir, <span style="color: #2b91af;">StringComparison</span>.OrdinalIgnoreCase);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;">Disposes of the resources (other than memory) used by the module that implements </span><span style="color: gray;">&lt;see cref="T:System.Web.IHttpModule"&gt;&lt;/see&gt;</span><span style="color: green;">.</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> Dispose()<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; #endregion</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> Temp handler used to force the SessionStateModule to load session state.</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> From Tomasz Jastrzebski http://forums.asp.net/p/1098574/1664675.aspx</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">MyHttpHandler</span> : <span style="color: #2b91af;">IHttpHandler</span>, <span style="color: #2b91af;">IReadOnlySessionState</span><br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">internal</span> <span style="color: blue;">readonly</span> <span style="color: #2b91af;">IHttpHandler</span> OriginalHandler;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> MyHttpHandler(<span style="color: #2b91af;">IHttpHandler</span> originalHandler)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; OriginalHandler = originalHandler;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> ProcessRequest(<span style="color: #2b91af;">HttpContext</span> context)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">// do not worry, ProcessRequest() will not be called, but let's be safe</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">throw</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">InvalidOperationException</span>(<span style="color: #a31515;">"MyHttpHandler cannot process requests."</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">bool</span> IsReusable <span style="color: green;">// IsReusable must be set to false since class has a member!</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">get</span> { <span style="color: blue;">return</span> <span style="color: blue;">false</span>; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

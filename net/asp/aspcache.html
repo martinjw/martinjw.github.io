@@ -1,0 +1,137 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Asp Caching</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="aspcache.html">Asp Cache</a></li>
+<li><a href="asp2config.html">Asp 2 config</a></li>
+<li><a href="aspdotneterr.html">Asp Errors</a></li>
+<li><a href="dataannotations.html">Data Annotations</a></li>
+<li><a href="aspjobs.html">Background jobs</a></li>
+<li><a href="aspsecurity.html">Asp Security &gt;</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>ASP Caching</h2>
+
+<ul>
+<li>Session (<a href="http://msdn.microsoft.com/en-us/library/system.web.sessionstate.httpsessionstate.aspx">HttpSessionState</a>) - per user cache</li>
+<li>Application (<a href="http://msdn.microsoft.com/en-us/library/system.web.httpapplicationstate.aspx">HttpApplicationState</a> - global cache (all users). DOES NOT EXPIRE.</li>
+<li>Cache (on HttpRuntime and HttpContext.Current) - <a href="http://msdn.microsoft.com/en-us/library/system.web.caching.cache.aspx">Web.Caching.Cache</a>) - global cache (all users). CAN SET EXPIRY.</li>
+<li>ObjectCache (.Net 4, <a href="http://msdn.microsoft.com/en-us/library/system.runtime.caching.memorycache.aspx">MemoryCache</a>, reference System.Runtime.Caching.dll) - <br />global cache for asp/non-asp (no out-of-the-box Sql/State providers). CAN SET EXPIRY as absolute datetime or CachePolicy.</li>
+<li>Page Output caching - stores rendered HTML and/or uses HTTP caching </li>
+</ul>
+
+<p><a href="../code/aspsession.html">Generic session methods</a></p>
+<div class="alert">
+HttpContext.Current is not available in WCF services - you can enable the asp pipeline with &lt;serviceHostingEnvironment aspNetCompatibilityEnabled="true" /&gt; (there's nothing equivalent in OperationContext, but you can use MemoryCache).
+</div>
+
+<h3>State Servers</h3>
+<p>Use Session State service on development machines, because it reminds you to only store ISerializable objects.</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">sessionState</span><span style="color: blue;"> </span><span style="color: red;">mode</span><span style="color: blue;">=</span>"<span style="color: blue;">StateServer</span>"<span style="color: blue;"> </span><span style="color: red;">stateConnectionString</span><span style="color: blue;">=</span>"<span style="color: blue;">tcpip=localhost:42424</span>"<span style="color: blue;"> </span><span style="color: red;">cookieless</span><span style="color: blue;">=</span>"<span style="color: blue;">false</span>"<span style="color: blue;"> </span><span style="color: red;">timeout</span><span style="color: blue;">=</span>"<span style="color: blue;">20</span>"<span style="color: blue;">/&gt;</span></p>
+</div>
+<p>The command to setup the SQLServer session provider for a webfarm is:</p>
+<pre class="vbs">
+C:\WINDOWS\Microsoft.NET\Framework\v2.0.50727\Aspnet_regsql.exe -S ServerName -U username -P password -ssadd
+</pre>
+<p>Append -sstype p to use database "ASPState" instead of tempdb. <a href="http://msdn.microsoft.com/en-us/library/ms178586.aspx">MSDN</a></p>
+<h3>Output caching</h3>
+<p>See <a href="http://quickstarts.asp.net/QuickStartv20/aspnet/doc/caching/output.aspx">Quickstarts</a>, <a href="http://msdn2.microsoft.com/en-us/library/06bh14hk.aspx">MSDN concept</a> - <a href="http://msdn2.microsoft.com/en-us/library/hdxfb6cy.aspx">MSDN OutputCache</a>.</p>
+<div class="code">
+&lt;%@ OutputCache Duration="60" VaryByParam="none"%&gt;
+</div>
+<ul>
+<li>You MUST have <strong>Duration</strong> and either <strong>VaryByParam</strong> (QueryString) or <strong>VaryByControl</strong> </li>
+<li>For <a href="http://msdn2.microsoft.com/en-us/library/5ecf4420.aspx">VaryByCustom</a> you must override <strong>GetVaryByCustomString</strong></li>
+<li>Configure on page, user control or <a href="http://msdn2.microsoft.com/en-us/library/ms228244.aspx">web.config cache profiles</a>. If you reference cached user controls in code-behind, check for null.</li>
+<li>In 2.0 you also have the "anti-caching" Substitution control.</li>
+</ul>
+<p>No caching: </p>
+<div class="code">
+<p>Response.Cache.SetCacheability(<span style="color: #2b91af;">HttpCacheability</span>.NoCache);</p>
+<p>Response.Cache.SetNoStore();</p>
+<p>Response.Cache.SetExpires(<span style="color: #2b91af;">DateTime</span>.Now.AddMinutes(-1));</p>
+</div>
+
+<h3>Cache API</h3>
+<p>HttpRuntime.Cache==HttpContext.Current.Cache but works (slowly) when HttpContext.Current is null so you can use it in console apps/unit tests.</p>
+<div class="code">
+<p><span style="color: #2b91af;">Cache</span> Cache = <span style="color: #2b91af;">HttpRuntime</span>.Cache;</p>
+<p><span style="color: blue;">string</span> filepath = <span style="color: #2b91af;">HttpContext</span>.Current.Server.MapPath(<span style="color: #a31515;">@"\\serverX\data.xml"</span>);</p>
+<p>&nbsp;</p>
+<p>Cache[<span style="color: #a31515;">"Key"</span>] = o; <span style="color: green;">//simple "non-expiring"</span></p>
+<p><span style="color: green;">//file dependency (see also AggregateCacheDependency)</span></p>
+<p>Cache.Insert(<span style="color: #a31515;">"Key"</span>, o, <span style="color: blue;">new</span> <span style="color: #2b91af;">CacheDependency</span>(filepath));</p>
+<p><span style="color: green;">//expire at midnight</span></p>
+<p>Cache.Insert(<span style="color: #a31515;">"Key"</span>, o, <span style="color: blue;">null</span>, <span style="color: #2b91af;">DateTime</span>.Now.AddDays(1).Date, <span style="color: #2b91af;">TimeSpan</span>.Zero);</p>
+<p><span style="color: green;">//sliding expiration for minimum 30 minutes</span></p>
+<p>Cache.Insert(<span style="color: #a31515;">"Key"</span>, o, <span style="color: blue;">null</span>, System.Web.Caching.<span style="color: #2b91af;">Cache</span>.NoAbsoluteExpiration, <span style="color: #2b91af;">TimeSpan</span>.FromMinutes(30));</p>
+<p><span style="color: green;">//Cache.Add == Cache.Insert, but Add will not update if it already exists (silently, no exception).</span></p>
+<p><span style="color: green;">//Cache.Insert has overloads, Cache.Add does not</span></p>
+</div>
+
+<h3>Cache clearing</h3>
+<p>There's no Clear method.</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> ClearCache()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> cacheKeys = <span style="color: blue;">new</span> <span style="color: #2b91af;">List</span>&lt;<span style="color: blue;">string</span>&gt;();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> enumerator = <span style="color: #2b91af;">HttpRuntime</span>.Cache.GetEnumerator();<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">while</span> (enumerator.MoveNext())<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; cacheKeys.Add(enumerator.Key.ToString());<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">foreach</span> (<span style="color: blue;">var</span> key <span style="color: blue;">in</span> cacheKeys)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">HttpRuntime</span>.Cache.Remove(key);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+
+<h3>.Net 4 MemoryCache</h3>
+<p>Very useful for unit testing. Can be extended for database-backed cache, but it can't use ASP.Net's Session/Application providers (state server, SqlServer).</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">object</span> GetCache&lt;T&gt;(<span style="color: blue;">string</span> key, <span style="color: #2b91af;">Func</span>&lt;T&gt; load)<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">where</span> T : <span style="color: blue;">class</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//get the static "default" cache.</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">ObjectCache</span> cache = <span style="color: #2b91af;">MemoryCache</span>.Default;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//you can't store null in the cache</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> value = cache[key] <span style="color: blue;">as</span> T;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (value == <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; value = load();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; cache[key] = value;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">// ...or...</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//var policy = new CacheItemPolicy { AbsoluteExpiration = DateTime.Now.AddMinutes(5) };</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//cache.Add(key, value, policy);</span><br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> value;<br />
+}</p>
+</div>
+
+
+</div>
+<div class="Footer">
+
+</div></body>
+</html>

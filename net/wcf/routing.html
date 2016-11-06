@@ -1,0 +1,171 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>WCF Routing</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="wcf.html">WCF &gt;</a></li>
+<li><a href="behavior.html">Behavior</a></li>
+<li><a href="clients.html">Clients</a></li>
+<li><a href="contracts.html">Contracts</a></li>
+<li><a href="endpoints.html">Endpoints</a></li>
+<li><a href="faults.html">Faults</a></li>
+<li><a href="logging.html">Logging</a></li>
+<li><a href="routing.html">Routing</a></li>
+<li><a href="security.html">Security</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>WCF Routing and discovery</h2>
+
+<h3>Routing</h3>
+<p><a href="http://msdn.microsoft.com/en-us/library/ee816891.aspx">MSDN scenarios</a><br />
+Routers have one or more client endpoints, and expose a service endpoint...</p>
+<ul>
+<li>it has a binding of IRequestReplyRouter (or applicable protocol- OneWay is ISimplexDatagramRouter, or IDuplexSessionRouter). You shouldn't mix them (expose different endpoints, although DuplexSessionRouter is a workaround)</li>
+<li>it has a behaviorConfiguration with routing filterTableName="routingTable1"</li>
+<li>it has a routing section containing<ul>
+<li>filters: named <a href="http://msdn.microsoft.com/en-us/library/ee517424.aspx">message filters</a>
+<ul>
+<li>MatchAllFilter matches everything</li>
+<li>ActionMessageFilter for specific actions (the SOAP Action name is {method}Request and {method}Response e.g. DoWorkRequest)</li>
+<li>Also filters for EndpointName, XPath (with filterData - use namespaces), Custom...</li>
+<li>Filters have priorities - set higher priorities to be taken first</li>
+</ul>
+</li>
+<li>filterTables: mapped filters to clients, filterTable/filters/add filterName endpointName.</li>
+</ul></li>
+</ul>
+
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">system.serviceModel</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">routing</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">filters</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;!--</span><span style="color: green;"> filter logic </span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">filter</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">MatchAllFilter</span>"<span style="color: blue;"> </span><span style="color: red;">filterType</span><span style="color: blue;">=</span>"<span style="color: blue;">MatchAll</span>"<span style="color: blue;">/&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">filters</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">filterTables</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">filterTable</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &lt;!--</span><span style="color: green;">map filter to endpoint</span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><span style="color: red;">filterName</span><span style="color: blue;">=</span>"<span style="color: blue;">MatchAllFilter</span>"<span style="color: blue;"> </span><span style="color: red;">endpointName</span><span style="color: blue;">=</span>"<span style="color: blue;">fwdEndpoint</span>"<span style="color: blue;">/&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">filterTable</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">filterTables</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">routing</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+
+<p>You can multicast (but not for request-reply as you'd get several replies!).</p>
+<p>Each client endpoint can have a backupList (points to backupLists/backupList which is a list- it just works it's way down the list when it gets Timeouts or communication exception).</p>
+
+<h4>Code</h4>
+<p>You should host in IIS with configuration.</p>
+<div class="code">
+<p><span style="background: yellow;">&lt;%</span><span style="color: blue;">@</span> <span style="color: maroon;">ServiceHost</span> <span style="color: red;">Language</span><span style="color: blue;">="C#"</span> <br />
+<span style="color: red;">Service</span><span style="color: blue;">="System.ServiceModel.Routing.RoutingService, </span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp;  System.ServiceModel.Routing, version=4.0.0.0, Culture=neutral, </span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp;  PublicKeyToken=31bf3856ad364e35"</span> <span style="background: yellow;">%&gt;</span></p>
+</div>
+
+<p>Here's a self-hosted version.</p>
+<div class="code">
+<p><span style="color: green;">//create the service</span><br />
+<span style="color: blue;">var</span> serviceHost = <span style="color: blue;">new</span> <span style="color: #2b91af;">ServiceHost</span>(<span style="color: blue;">typeof</span>(<span style="color: #2b91af;">RoutingService</span>));<br />
+&nbsp;<br />
+<span style="color: green;">//add the router endpoint</span><br />
+serviceHost.AddServiceEndpoint(<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//request-reply type</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">typeof</span>(<span style="color: #2b91af;">IRequestReplyRouter</span>),<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">WSHttpBinding</span>(),<br />
+&nbsp;&nbsp;&nbsp;  <span style="color: #a31515;">"http://localhost/routingservice/router"</span>);<br />
+&nbsp;<br />
+<span style="color: green;">//add the client endpoint(s)- forwards the messages here</span><br />
+<span style="color: blue;">var</span> client = <span style="color: blue;">new</span> <span style="color: #2b91af;">ServiceEndpoint</span>(<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//use the router contract</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">ContractDescription</span>.GetContract(<span style="color: blue;">typeof</span>(<span style="color: #2b91af;">IRequestReplyRouter</span>)),<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">WSHttpBinding</span>(),<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">EndpointAddress</span>(<span style="color: #a31515;">"http://localhost/calculatorservice"</span>));<br />
+&nbsp;<br />
+<span style="color: green;">//routing configuration</span><br />
+<span style="color: blue;">var</span> rc = <span style="color: blue;">new</span> <span style="color: #2b91af;">RoutingConfiguration</span>();<br />
+<span style="color: green;">//a list of the clients</span><br />
+<span style="color: blue;">var</span> endpointList = <span style="color: blue;">new</span> <span style="color: #2b91af;">List</span>&lt;<span style="color: #2b91af;">ServiceEndpoint</span>&gt; { client };<br />
+<span style="color: green;">//filter all messages to these clients</span><br />
+rc.FilterTable.Add(<span style="color: blue;">new</span> <span style="color: #2b91af;">MatchAllMessageFilter</span>(), endpointList);<br />
+<span style="color: green;">//attach the behavior to the service host</span><br />
+serviceHost.Description.Behaviors.Add(<span style="color: blue;">new</span> <span style="color: #2b91af;">RoutingBehavior</span>(rc));</p>
+</div>
+
+
+<h3>Discovery</h3> 
+<p><a href="http://msdn.microsoft.com/en-us/library/dd456791.aspx">MSDN</a>. Reference System.ServiceModel.Discovery.dll</p>
+<h4>Announce a service</h4>
+<p>By default, there are no announcements. Add an announcementEndpoint to the discovery behavior.</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">behaviors</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">serviceBehaviors</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">behavior</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">MyServiceBehavior</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">serviceDiscovery</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">announcementEndpoints</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">endpoint</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">udpEndpoint</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: red;">kind</span><span style="color: blue;">=</span>"<span style="color: blue;">udpAnnouncementEndpoint</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">announcementEndpoints</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">serviceDiscovery</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">behavior</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">serviceBehaviors</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+<ul>
+<li>An endpoint can have scopes (a uri- behavior/endpointDiscovery/scopes/add). Useful for versioning (v1/v2), production/test etc.</li>
+</ul>
+
+<p>You can create an <a href="http://msdn.microsoft.com/en-us/library/system.servicemodel.discovery.announcementservice.aspx">AnnouncementService</a>, subscribe to its events (Online/OfflineAnnouncementReceived), and put it in a ServiceHost to selfhost with an UdpAnnouncementEndpoint.</p>
+
+<h4>Client discovery</h4>
+<p>The client sends a multicast <strong>Probe</strong> with <a href="http://msdn.microsoft.com/en-us/library/ee816866.aspx">Find with FindCriteria</a>. You can set ContractTypeNames (each endpoint must match all these contracts). It returns zero or more records for services that support the criteria.</p>
+
+<div class="code">
+<p><span style="color: blue;">private</span> <span style="color: #2b91af;">EndpointAddress</span> DiscoverServices()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">FindResponse</span> findResponse;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: blue;">var</span> discoveryClient = <span style="color: blue;">new</span> <span style="color: #2b91af;">DiscoveryClient</span>(<span style="color: blue;">new</span> <span style="color: #2b91af;">UdpDiscoveryEndpoint</span>()))<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; findResponse = discoveryClient.Find(<span style="color: blue;">new</span> <span style="color: #2b91af;">FindCriteria</span>(<span style="color: blue;">typeof</span> (<span style="color: #2b91af;">ICalculatorService</span>)));<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> !findResponse.Endpoints.Any() ? <span style="color: blue;">null</span> :<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; findResponse.Endpoints.First().Address;<br />
+}</p>
+</div>
+
+<ul>
+<li>Add FindCriteria.MaxResults = 1 to speed it up unless you want to multicast.</li>
+<li>FindCriteria.Scopes.Add(new Uri("http://v1")) to look for scopes (see above)<br />
+</li>
+</ul>
+
+<p>A client can use <a href="http://msdn.microsoft.com/en-us/library/system.servicemodel.discovery.dynamicendpoint.aspx">DynamicEndpoint </a> instead of a normal endpoint. Each time it is used, it discovers which endpoint it can use. Specify the contract description:</p>
+<div class="code">
+<p><span style="color: blue;">var</span> contractDescription = <span style="color: #2b91af;">ContractDescription</span>.GetContract(<span style="color: blue;">typeof</span>(<span style="color: #2b91af;">ICalculator</span>));</p>
+</div>
+
+
+</div>
+<div class="Footer"><script type="text/javascript">
+//<![CDATA[
+
+
+prettyPrint();
+//]]>
+</script></div>
+</body>
+</html>

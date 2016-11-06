@@ -1,0 +1,85 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>BusinessValidationError</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main</a></li>
+<li><a href="../dotnet.html">.Net</a></li>
+<li><a href="index.html">Code</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>BusinessValidationError</h2>
+<p>if(TestFails) Page.Validators.Add( new BusinessValidationError("Wrong input") );<br />
+Error message appears in the validation summary</p>
+<div class="code">
+<span style="color:Blue">using</span><span style="color:Black"> System.Web.UI;<br />
+<br />
+</span><span style="color:Gray">///&lt;summary&gt;<br />
+///</span><span style="color:Green"> An implementation of IValidator to enable server code messages to be added to a ValidationSummary<br />
+</span><span style="color:Gray">///&lt;/summary&gt;<br />
+</span><span style="color:Blue">public</span><span style="color:Black"> </span><span style="color:Blue">class</span><span style="color:Black"> </span><span style="color:Teal">BusinessValidationError</span><span style="color:Black"> : </span><span style="color:Teal">IValidator<br />
+</span><span style="color:Black">{</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:Gray">///&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:Gray">///</span><span style="color:Green">Initializes a new instance of the </span><span style="color:Gray">&lt;see cref="T:BusinessValidationError"/&gt;</span><span style="color:Green"> class.<br />
+</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:Gray">///&lt;/summary&gt;<br />
+</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:Gray">///&lt;param name="errorMessage"&gt;</span><span style="color:Green">The error message.</span><span style="color:Gray">&lt;/param&gt;<br />
+</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:Blue">public</span><span style="color:Black"> BusinessValidationError(</span><span style="color:Blue">string</span><span style="color:Black"> errorMessage)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_ErrorMessage = errorMessage;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_IsValid = </span><span style="color:Blue">false</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+<br />
+</span><span style="color:Blue">&nbsp;&nbsp;&nbsp;&nbsp;#region</span><span style="color:Black"> IValidator<br />
+&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">private</span><span style="color:Black"> </span><span style="color:Blue">string</span><span style="color:Black"> _ErrorMessage;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">private</span><span style="color:Black"> </span><span style="color:Blue">bool</span><span style="color:Black"> _IsValid;<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///&lt;summary&gt;<br />
+</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:Gray">///</span><span style="color:Green"> Gets or sets the error message.<br />
+</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:Gray">///&lt;/summary&gt;<br />
+</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:Gray">///&lt;value&gt;</span><span style="color:Green">The error message.</span><span style="color:Gray">&lt;/value&gt;<br />
+</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:Blue">string</span><span style="color:Black"> </span><span style="color:Teal">IValidator</span><span style="color:Black">.ErrorMessage<br />
+&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">get</span><span style="color:Black"> { </span><span style="color:Blue">return</span><span style="color:Black"> _ErrorMessage; }<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">set</span><span style="color:Black"> { _ErrorMessage = </span><span style="color:Blue">value</span><span style="color:Black">; }<br />
+&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///&lt;summary&gt;<br />
+</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:Gray">///</span><span style="color:Green"> When implemented by a class, gets or sets a value indicating whether the user-entered content in the specified control passes validation.<br />
+</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:Gray">///&lt;/summary&gt;<br />
+</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:Gray">///&lt;value&gt;&lt;/value&gt;<br />
+</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:Gray">///&lt;returns&gt;</span><span style="color:Green">true if the content is valid; otherwise, false.</span><span style="color:Gray">&lt;/returns&gt;<br />
+</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:Blue">bool</span><span style="color:Black"> </span><span style="color:Teal">IValidator</span><span style="color:Black">.IsValid<br />
+&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">get</span><span style="color:Black"> { </span><span style="color:Blue">return</span><span style="color:Black"> _IsValid; }<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">set</span><span style="color:Black"> { _IsValid = </span><span style="color:Blue">value</span><span style="color:Black">; }<br />
+&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///&lt;summary&gt;<br />
+</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:Gray">///</span><span style="color:Green"> When implemented by a class, evaluates the condition it checks and updates the </span><span style="color:Gray">&lt;see cref="P:System.Web.UI.IValidator.IsValid"&gt;&lt;/see&gt;</span><span style="color:Green"> property.<br />
+</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:Gray">///&lt;/summary&gt;<br />
+</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:Blue">void</span><span style="color:Black"> </span><span style="color:Teal">IValidator</span><span style="color:Black">.Validate()<br />
+&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;}</span><span style="color:Green">//Validate<br />
+</span><span style="color:Blue">&nbsp;&nbsp;&nbsp;&nbsp;#endregion<br />
+</span><span style="color:Black">}<br />
+</span>
+</div>
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

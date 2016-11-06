@@ -1,0 +1,325 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Owin</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspsecurity.html">Asp Security</a></li>
+<li><a href="forms.html">Forms Authentication</a></li>
+<li><a href="wsfederation.html">WS-Federation</a></li>
+<li><a href="wsfederationconfig.html">WS-Federation Config</a></li>
+<li><a href="ssl.html">SSL</a></li>
+<li><a href="owin.html">Owin</a></li>
+<li><a href="oauth.html">OAuth</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>Owin</h2>
+<p>Owin is an abstraction layer for web hosting, with Katana being Microsoft's Owin wrapper for IIS/System.Web. You can also self-host with Owin (for webApi - MVC 5 still depends on system.web, but can use Owin middleware). </p>
+
+<p>Owin was introduced with Visual Studio 2013/MVC 5/webApi 2/.net 4.5.1 (Oct 2013). WebApi 2 can entirely use Owin, but MVC5 just uses Owin middleware for authentication. Asp.Net 5 (2015) depends entirely on Owin (System.Web is no longer used), and looks a little different.</p>
+<p>Unlike System.Web, Owin is modular by design (and constructed from nuget packages). There are no interfaces or base classes- Startup.Configuration and Middleware.Invoke are by convention and are discovered by reflection.</p>
+
+
+<div class="alert">
+ASP.Net 4.5/MVC5: Install-package Microsoft.Owin.Host.SystemWeb<br/>
+ASP.Net 5/MVC6: All Microsoft.AspNet.* packages depend on Owin.
+</div>
+
+<h3>Startup</h3>
+<p>Startup replaces global.asax ... <br/>
+but you can have both (necessary for WebApi/MVC as MVC5 can't use OWIN)- Application_Start() runs first, then Startup.Configur[e|ation]().</p>
+<ul>
+<li>Owin looks for a class called "Startup" in the assembly namespace or</li>
+<li>(NOT ASP.Net 5) [assembly: OwinStartup(typeof(MyNameSpace.MyStartup))] or</li>
+<li>appSettings/add key="owin:appStartup" value="NamedConfiguration" allows you to have named OwinStartupAttributes.   </li>
+</ul>
+<p>In ASP.Net 4.5 it uses method Configuration(<span style="color: #2b91af;">IAppBuilder</span> app)<br/>
+In ASP.Net 5.0 it uses method Configure(<span style="color: #2b91af;">IApplicationBuilder</span> app)</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">Startup</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//using Owin</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> Configuration(<span style="color: #2b91af;">IAppBuilder</span> app)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//use the "appFunc" - Func&lt;IDictionary&lt;string, object&gt;, Task&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//the dictionary is the loosely typed HttpContext</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; app.Use(<span style="color: blue;">async</span> (dictionary, nextTask) =&gt;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Console</span>.WriteLine(<span style="color: #a31515;">"Requesting "</span> + dictionary.Request.Path);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//next in pipeline</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">await</span> nextTask();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; });<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//include webapi- must configure routes</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> config = <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpConfiguration</span>();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; config.Routes.MapHttpRoute(<span style="color: #a31515;">"DefaultApi"</span>, <span style="color: #a31515;">"api/{controller}/{id}"</span>,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> { Id = <span style="color: #2b91af;">RouteParameter</span>.Optional });<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; app.UseWebApi(config);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//Microsoft turns the "own.ResponseBody" stream into a typed Response.</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; app.Run(ctx =&gt; ctx.Response.WriteAsync(<span style="color: #a31515;">"&lt;p&gt;Hello world&lt;/p&gt;"</span>));<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+<div class="alert">
+For app.UseWebApi(config) you need Install-Package Microsoft.AspNet.WebApi.Owin
+</div>
+<h4>Forms Authentication</h4>
+<p>See <a href="http://blogs.msdn.com/b/webdev/archive/2013/07/03/understanding-owin-forms-authentication-in-mvc-5.aspx">OWIN authentication</a> - <a href="http://brockallen.com/2013/10/24/a-primer-on-owin-cookie-authentication-middleware-for-the-asp-net-developer/">more</a></p>
+<p>ASP.Net 4.5/MVC 5: Install-package:</p>
+<ul>
+<li>Microsoft.Owin.Security.Cookies</li>
+<li>Optional- DefaultAuthenticationTypes enum comes from Microsoft.AspNet.Identity.Core</li>
+</ul>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">Startup</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> Configuration(<span style="color: #2b91af;">IAppBuilder</span> app)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; app.UseCookieAuthentication(<span style="color: blue;">new</span> <span style="color: #2b91af;">CookieAuthenticationOptions</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; AuthenticationType = <span style="color: #2b91af;">DefaultAuthenticationTypes</span>.ApplicationCookie,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; LoginPath = <span style="color: blue;">new</span> <span style="color: #2b91af;">PathString</span>(<span style="color: #a31515;">"/Account/Login"</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; });<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+<p>AccountController</p>
+<div class="code">
+<p>[<span style="color: #2b91af;">HttpPost</span>]<br />
+[<span style="color: #2b91af;">AllowAnonymous</span>]<br />
+[<span style="color: #2b91af;">ValidateAntiForgeryToken</span>]<br />
+<span style="color: blue;">public</span> <span style="color: #2b91af;">ActionResult</span> Login(<span style="color: #2b91af;">LoginModel</span> loginModel)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (ModelState.IsValid &amp;&amp; Validate(loginModel))<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> claims = <span style="color: blue;">new</span> <span style="color: #2b91af;">List</span>&lt;<span style="color: #2b91af;">Claim</span>&gt;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">Claim</span>(<span style="color: #2b91af;">ClaimTypes</span>.Name, loginModel.Username),<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//NameIdentifier + IdentityProvider needed for anti-forgery</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//or set AntiForgeryConfig.UniqueClaimTypeIdentifier = ClaimTypes.NameIdentifier;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">Claim</span>(<span style="color: #2b91af;">ClaimTypes</span>.NameIdentifier, loginModel.Username),<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">Claim</span>(<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #a31515;">"http://schemas.microsoft.com/accesscontrolservice/2010/07/claims/identityprovider"</span>,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #a31515;">"Custom"</span>),<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; };<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> identity = <span style="color: blue;">new</span> <span style="color: #2b91af;">ClaimsIdentity</span>(claims,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">DefaultAuthenticationTypes</span>.ApplicationCookie);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> authMgr = HttpContext.GetOwinContext().Authentication;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; authMgr.SignIn(identity);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> RedirectToAction(<span style="color: #a31515;">"Index"</span>, <span style="color: #a31515;">"Home"</span>);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> View(loginModel);<br />
+}<br />
+&nbsp;<br />
+&nbsp;<br />
+<span style="color: blue;">public</span> <span style="color: #2b91af;">ActionResult</span> LogOff()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> authMgr = HttpContext.GetOwinContext().Authentication;<br />
+&nbsp;&nbsp;&nbsp; authMgr.SignOut(<span style="color: #2b91af;">DefaultAuthenticationTypes</span>.ApplicationCookie);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> RedirectToAction(<span style="color: #a31515;">"Login"</span>);<br />
+}</p>
+</div>
+
+
+
+<h4>Self hosting (ASP.Net 4.5)</h4>
+<ul>
+<li>Install-package Microsoft.Own.Hosting - depends on Microsoft.Owin, Owin.</li>
+<li>For base http.sys wrapper: Install-package Microsoft.Own.Host.HttpListener</li>
+<li>For webapi: Install-package Microsoft.AspNet.WebApi.OwinSelfHost</li>
+</ul>
+<div class="code">
+<p><span style="color: blue;">class</span> <span style="color: #2b91af;">Program</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">static</span> <span style="color: blue;">void</span> Main(<span style="color: blue;">string</span>[] args)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (Microsoft.Owin.Hosting.<span style="color: #2b91af;">WebApp</span>.Start&lt;<span style="color: #2b91af;">Startup</span>&gt;(<span style="color: #a31515;">"http://localhost:8080"</span>))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Console</span>.WriteLine(<span style="color: #a31515;">"Self hosting"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Console</span>.ReadLine();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+<p>To make the console hosted in IIS:</p> 
+<ul>
+<li>Install-package Microsoft.Owin.Host.SystemWeb</li>
+<li>Of course, cannot be an .exe, make it a class library with build into /bin, not /bin/Debug</li>
+</ul>
+<h3>Middleware</h3>
+<p>Middleware are pipeline components (like ASP's HttpModule), and chain themselves like decorators. You add them in Startup.Configuration with app.Use(lambda) or app.Use&lt;<span style="color: #2b91af;">MyMiddleware</span>&gt;(), or the equivalent extension method.</p>
+<p>Example middleware: authentication, webapi, Microsoft.Owin.Diagnostics</p>
+<p>All the state (equal to HttpContext) is in the <span style="color: #2b91af;">IDictionary</span>&lt;<span style="color: blue;">string</span>, <span style="color: blue;">object</span>&gt;</p>
+<p>Standard keynames include:</p>
+<ul>
+<li>"owin.RequestBody" /"owin.ResponseBody" stream</li>
+<li>"owin.RequestPath" string</li>
+<li>"owin.RequestQueryString" string</li>
+<li>"owin.ResponseHeaders"/"owin.ResponseHeaders" IDictionary&lt;string, string[]&gt;</li>
+<li>"owin.ResponseStatusCode" int</li>
+<li>Katana extends with e.g. "server.User" IPrincipal</li>
+</ul>
+<p>Katana 3 gives a typed IOwinContext with Request/ Response properties.<br/>
+ASP.Net 5.0/MVC 6 has HttpContext (which isn't System.Web.HttpContext, but is based on IFeatureCollection)</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">MyMiddleware</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">readonly</span> <span style="color: #2b91af;">Func</span>&lt;<span style="color: #2b91af;">IDictionary</span>&lt;<span style="color: blue;">string</span>, <span style="color: blue;">object</span>&gt;, <span style="color: #2b91af;">Task</span>&gt; _next;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> MyMiddleware(<span style="color: #2b91af;">Func</span>&lt;<span style="color: #2b91af;">IDictionary</span>&lt;<span style="color: blue;">string</span>, <span style="color: blue;">object</span>&gt;, <span style="color: #2b91af;">Task</span>&gt; next)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; _next = next;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">async</span> <span style="color: #2b91af;">Task</span> Invoke(<span style="color: #2b91af;">IDictionary</span>&lt;<span style="color: blue;">string</span>, <span style="color: blue;">object</span>&gt; environment)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//access the raw owin dictionary</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Console</span>.WriteLine(<span style="color: #a31515;">"Requesting "</span> + environment[<span style="color: #a31515;">"owin.RequestPath"</span>]);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//a katana content is easier</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> context = <span style="color: blue;">new</span> <span style="color: #2b91af;">OwinContext</span>(environment);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">// authenticate</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; context.Request.User =<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">GenericPrincipal</span>(<span style="color: blue;">new</span> <span style="color: #2b91af;">GenericIdentity</span>(<span style="color: #a31515;">"Me"</span>), <span style="color: blue;">null</span>);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">await</span> _next(environment);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+<h4>Authentication Middleware</h4>
+<p>There are built-in AuthenticationMiddleware classes.</p>
+<ul>
+<li>AuthenticationOptions - options including a name (AuthenticationType) and mode (active checks every message, or passive)</li>
+<li>AuthenticationHandler&lt;options&gt; - created each request, which extracts the security token from cookies/header/etc</li>
+<li>AuthenticationMiddleware&lt;options&gt; - has a CreateHandler method. This is hooked up with app.Use&lt;middleware&gt; or write an IAppBuilder extension.</li>
+</ul>
+
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">CustomAuthenticationOptions</span> : <span style="color: #2b91af;">AuthenticationOptions</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//ctor takes AuthenticationType</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> CustomAuthenticationOptions()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; : <span style="color: blue;">base</span>(<span style="color: #a31515;">"Custom"</span>)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//public string ExtraProperty { get; set; }</span><br />
+}<br />
+&nbsp;<br />
+<span style="color: green;">//per-request handler, using Microsoft.Owin.Security.Infrastructure.</span><br />
+<span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">CustomAuthentication</span> :<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">AuthenticationHandler</span>&lt;<span style="color: #2b91af;">CustomAuthenticationOptions</span>&gt;<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">protected</span> <span style="color: blue;">override</span> <span style="color: #2b91af;">Task</span>&lt;<span style="color: #2b91af;">AuthenticationTicket</span>&gt; AuthenticateCoreAsync()<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> authHeader = Request.Headers.Get(<span style="color: #a31515;">"Authorization"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (<span style="color: blue;">string</span>.IsNullOrEmpty(authHeader) || !authHeader.StartsWith(<span style="color: #a31515;">"Custom "</span>, <span style="color: #2b91af;">StringComparison</span>.OrdinalIgnoreCase))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">null</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> keyToken = authHeader.Substring(<span style="color: #a31515;">"Custom "</span>.Length).Trim();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//if this was Basic, you would Convert.FromBase64String, split username:password and validate</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!<span style="color: blue;">string</span>.Equals(keyToken, <span style="color: #a31515;">"Secret"</span>, <span style="color: #2b91af;">StringComparison</span>.OrdinalIgnoreCase))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">null</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> claims = <span style="color: blue;">new</span> <span style="color: #2b91af;">List</span>&lt;<span style="color: #2b91af;">Claim</span>&gt;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">Claim</span>(<span style="color: #2b91af;">ClaimTypes</span>.Name, keyToken),<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">Claim</span>(<span style="color: #2b91af;">ClaimTypes</span>.NameIdentifier, keyToken),<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">Claim</span>(<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #a31515;">"http://schemas.microsoft.com/accesscontrolservice/2010/07/claims/identityprovider"</span>,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #a31515;">"Custom"</span>),<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; };<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> identity = <span style="color: blue;">new</span> <span style="color: #2b91af;">ClaimsIdentity</span>(claims, <span style="color: #a31515;">"Custom"</span>);<br />
+&nbsp;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> ticket = <span style="color: blue;">new</span> <span style="color: #2b91af;">AuthenticationTicket</span>(identity, <span style="color: blue;">new</span> <span style="color: #2b91af;">AuthenticationProperties</span>());<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: #2b91af;">Task</span>.FromResult(ticket);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}<br />
+&nbsp;<br />
+<span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">CustomAuthenticationMiddleware</span> :<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">AuthenticationMiddleware</span>&lt;<span style="color: #2b91af;">CustomAuthenticationOptions</span>&gt;<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> CustomAuthenticationMiddleware(<span style="color: #2b91af;">OwinMiddleware</span> next, <span style="color: #2b91af;">CustomAuthenticationOptions</span> options)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; : <span style="color: blue;">base</span>(next, options)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">protected</span> <span style="color: blue;">override</span> <span style="color: #2b91af;">AuthenticationHandler</span>&lt;<span style="color: #2b91af;">CustomAuthenticationOptions</span>&gt; CreateHandler()<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">CustomAuthentication</span>();<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+
+<h3>WebAPI</h3>
+<p>Changes from v1 to v2/owin</p>
+<ul>
+<li>You can still use web.config/HttpModule for security, but you should migrate to Owin middleware</li>
+<li>You can still use <a href="http://www.asp.net/web-api/overview/working-with-http/http-message-handlers">HttpMessageHandler : DelegatingHandler</a> for security, but you should migrate to Owin middleware</li>
+<li>There is a new IAuthenticationFilter which fires before the Authorize filter.
+<div class="alert">The MVC and WebApi versions of these are different, but ultimately do the same thing. We'll get sanity back in vNext.</div>
+</li>
+<li>V2 is claims based, and you can have aggregated identity from multiple authentications. You can define [HostAuthentication(name)] attributes to select the OWIN middleware (and [OverrideAuthentication] to do something specific on one method).</li>
+<li>User is different.
+<ul>
+<li>In v1, ApiController.User == Thread.CurrentPrincipal. It may not match HttpContext.Current.User (used in MVC), so always set both of them.</li>
+<li>In v2, ApiController.User == RequestContext.Principal. In middleware, it hangs off the context.Request. 
+<div class="alert">User may be null in v2, as well as not authenticated.</div>
+</li>
+</ul>
+</li>
+</ul>
+
+<h4>Basic authentication</h4>
+<ul>
+<li>Webapi v1: AuthenticationFilter: <a href="http://weblog.west-wind.com/posts/2013/Apr/18/A-WebAPI-Basic-Authentication-Authorization-Filter">west-wind</a></li>
+<li>v2 authenticationFilter: <a href="https://aspnet.codeplex.com/SourceControl/latest#Samples/MVC/BasicAuthentication/BasicAuthentication/Filters/BasicAuthenticationAttribute.cs">asp.net source code samples (MVC and Webapi)</a></li>
+<li>There's also a <a href="https://github.com/thinktecture/Thinktecture.IdentityModel/tree/master/source/Thinktecture.IdentityModel.Owin.BasicAuthentication">Thinktecture.IdentityModel</a> middleware</li>
+</ul>
+
+<h4>Windows authentication</h4>
+<p>For self-hosting look at the underlying HttpListener to enable Windows authentication (<a href="http://www.asp.net/aspnet/overview/owin-and-katana/enabling-windows-authentication-in-katana">asp.net</a>).</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #2b91af;">IAppBuilder</span> UseWindowsAuthentication(<span style="color: blue;">this</span> <span style="color: #2b91af;">IAppBuilder</span> app)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">object</span> value;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (app.Properties.TryGetValue(<span style="color: #a31515;">"System.Net.HttpListener"</span>, <span style="color: blue;">out</span> value))<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> l = value <span style="color: blue;">as</span> <span style="color: #2b91af;">HttpListener</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (l != <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; l.AuthenticationSchemes = <span style="color: #2b91af;">AuthenticationSchemes</span>.IntegratedWindowsAuthentication;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> app;<br />
+}</p>
+</div>
+
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

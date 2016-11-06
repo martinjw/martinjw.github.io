@@ -1,0 +1,127 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Azure</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="index.html">Azure &gt;</a></li>
+<li><a href="blob.html">Blob storage</a></li>
+<li><a href="table.html">Table storage</a></li>
+<li><a href="queue.html">Queue storage</a></li>
+<li><a href="cache.html">Cache</a></li>
+<li><a href="servicebus.html">Service Bus</a></li>
+<li><a href="diagnostics.html">Diagnostics</a></li>
+</ul>
+</div>
+<div class="content">
+
+<h3>Azure Service Bus</h3>
+<ul>
+<li>Nuget <cite>Windows Azure Service Bus</cite> </li>
+<li>To deploy to Azure, <cite>Copy Local = true</cite> (Azure doesn't have the SDK!)</li>
+<li>In Azure, it requires FULL TRUST. &lt;WebRole name="WebRole" enableNativeCodeExecution="true"&gt;</li>
+<ul>
+<li>Relay: on-premise service and a client (on premise or in azure) do normal WCF via the relay service.</li>
+<li>Brokered: asynchronous messaging via <ul>
+<li>Queues</li>
+<li>Pub/Sub: send to a "Topic" (like a queue) and read via "Subscriptions" which may be filtered)</li>
+</ul></li>
+</ul>
+</ul>
+
+<h3>Simple Relay service</h3>
+<div class="code">
+<p><span style="color: blue;">static</span> <span style="color: blue;">void</span> Main(<span style="color: blue;">string</span>[] args)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: blue;">var</span> serviceHost =<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">ServiceHost</span>(<span style="color: blue;">typeof</span>(<span style="color: #2b91af;">CallMeMaybeService</span>)))<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> sharedSecretTokenProvider =<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">TokenProvider</span>.CreateSharedSecretTokenProvider(<span style="color: #a31515;">"issuerName"</span>, <span style="color: #a31515;">"secretkey"</span>);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; serviceHost.AddServiceEndpoint(<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//contract</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">typeof</span>(<span style="color: #2b91af;">ICallMeMaybeService</span>),<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//binding - use the xRelayBinding versions of WCF bindings</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">WS2007HttpRelayBinding</span>(),<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//address</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">ServiceBusEnvironment</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .CreateServiceUri(<span style="color: #a31515;">"sb"</span>, <span style="color: #a31515;">"serviceNamespace"</span>, <span style="color: #a31515;">"servicePath"</span>))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//behavior for the credentials</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; .Behaviors.Add(<span style="color: blue;">new</span> <span style="color: #2b91af;">TransportClientEndpointBehavior</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; TokenProvider = sharedSecretTokenProvider<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; });<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; serviceHost.Open();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Console</span>.WriteLine(<span style="color: #a31515;">"Press [Enter] to exit"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Console</span>.ReadLine();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; serviceHost.Close();<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+<h3>Queuing</h3>
+<div class="code">
+<p><span style="color: blue;">var</span> credentials =<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">TokenProvider</span>.CreateSharedSecretTokenProvider(<span style="color: #a31515;">"issuerName"</span>, <span style="color: #a31515;">"secretkey"</span>);<br />
+<span style="color: blue;">var</span> serviceUri =<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">ServiceBusEnvironment</span>.CreateServiceUri(<span style="color: #a31515;">"sb"</span>, <span style="color: #a31515;">"serviceNamespace"</span>, <span style="color: blue;">string</span>.Empty);<br />
+<span style="color: green;">//create a queue via the NamespaceManager</span><br />
+<span style="color: blue;">var</span> mgr = <span style="color: blue;">new</span> <span style="color: #2b91af;">NamespaceManager</span>(<br />
+&nbsp;&nbsp;&nbsp; serviceUri, credentials);<br />
+<span style="color: blue;">if</span> (!mgr.QueueExists(<span style="color: #a31515;">"TestQueue"</span>))<br />
+&nbsp;&nbsp;&nbsp; mgr.CreateQueue(<span style="color: #a31515;">"TestQueue"</span>);<br />
+&nbsp;<br />
+<span style="color: green;">//create a queue client via a messaging factory</span><br />
+<span style="color: blue;">var</span> factory =<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">MessagingFactory</span>.Create(serviceUri, credentials);<br />
+<span style="color: green;">//simple -or ReceiveMode.PeekLock</span><br />
+<span style="color: blue;">var</span> qClient = factory.CreateQueueClient(<span style="color: #a31515;">"TestQueue"</span>, <span style="color: #2b91af;">ReceiveMode</span>.ReceiveAndDelete);<br />
+qClient.Send(<span style="color: blue;">new</span> <span style="color: #2b91af;">BrokeredMessage</span>(<span style="color: #a31515;">"Hello"</span>));<br />
+<span style="color: blue;">var</span> msg = qClient.Receive();<br />
+<span style="color: blue;">var</span> payload = msg.GetBody&lt;<span style="color: blue;">string</span>&gt;();<br />
+<span style="color: green;">//in peekLock mode</span><br />
+msg.Complete(); <span style="color: green;">//or .Abandon()</span></p>
+</div>
+
+<h3>Topics/Subscriptions</h3>
+<div class="code">
+<p><span style="color: green;">//create a topic via the NamespaceManager</span><br />
+<span style="color: blue;">var</span> myTopic = mgr.CreateTopic(<span style="color: #a31515;">"TestTopic"</span>);<br />
+<span style="color: green;">//create subscriptions (apply filters if required)</span><br />
+mgr.CreateSubscription(myTopic.Path, <span style="color: #a31515;">"Sub1"</span>);<br />
+mgr.CreateSubscription(myTopic.Path, <span style="color: #a31515;">"Sub2"</span>);<br />
+<span style="color: green;">//create a topic client from messaging factory</span><br />
+<span style="color: blue;">var</span> topicClient = factory.CreateTopicClient(myTopic.Path);<br />
+topicClient.Send(<span style="color: blue;">new</span> <span style="color: #2b91af;">BrokeredMessage</span>(<span style="color: #a31515;">"Hello"</span>));<br />
+&nbsp;<br />
+<span style="color: green;">//you need a subscription client to pick it up</span><br />
+<span style="color: blue;">var</span> subClient = factory.CreateSubscriptionClient(myTopic.Path, <span style="color: #a31515;">"Sub1"</span>, <br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">ReceiveMode</span>.ReceiveAndDelete);<br />
+<span style="color: blue;">var</span> subMsg = subClient.Receive();</p>
+</div>
+
+
+
+</div>
+<div class="Footer"><script type="text/javascript">
+//<![CDATA[
+
+
+prettyPrint();
+//]]>
+</script></div>
+</body>
+</html>

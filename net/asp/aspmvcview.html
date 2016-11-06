@@ -1,0 +1,139 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP MVC Views</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="aspmvc.html">Asp MVC</a></li>
+<li><a href="mvc/mvccontrollers.html">MVC Controllers</a></li>
+<li><a href="mvc/mvcactions.html">MVC Actions</a></li>
+<li><a href="asprouting.html">Asp Routing</a></li>
+<li><a href="aspmvcview.html">Asp MVC Views</a></li>
+<li><a href="mvc/htmlhelpers.html">HTML Helpers</a></li>
+<li><a href="mvc/bundles.html">Bundling</a></li>
+<li><a href="mvc/errors.html">MVC Errors</a></li>
+<li><a href="mvc/mvcvalidation.html">MVC Validation</a></li>
+<li><a href="mvc/simplepaging.html">Simple Paging</a></li>
+<li><a href="mvc/webapi.html">WebApi</a></li>
+<li><a href="mvc/webapiformat.html">WebApi Formatting</a></li>
+<li><a href="mvc/webapiclient.html">WebApi HttpClient</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>ASP MVC Views</h2>
+<h3>Links</h3>
+<ul>
+<li><a href="aspmvc.html">ASP MVC (here)</a></li>
+<li><a href="mvc/htmlhelpers.html">HTML Helpers</a></li>
+<li><a href="http://weblogs.asp.net/scottgu/archive/2011/05/12/asp-net-mvc-3-and-the-helper-syntax-within-razor.aspx">ScottGu MVC 3 Razor series</a></li>
+</ul>
+<p>To build the views during build, edit the project file: &lt;MvcBuildViews&gt;false&lt;/MvcBuildViews&gt;</p>
+<h3>Master Pages (Razor: Layout Pages)</h3>
+<p>These should live in <cite>\Views\Shared\</cite></p>
+<ul>
+<li>For ASP Engine, use MasterPages:<br />
+<span style="background: yellow;">&lt;%</span><span style="color: blue;">@</span> <span style="color: maroon;">Page</span> <span style="color: red;">Title</span><span style="color: blue;">=""</span> <span style="color: red;">Language</span><span style="color: blue;">="C#"</span><br />
+<span style="color: red;">MasterPageFile</span><span style="color: blue;">="~/Views/Shared/Site.Master"</span><br />
+<span style="color: red;">Inherits</span><span style="color: blue;">="System.Web.Mvc.ViewPage&lt;MvcApplication1.Models.CategoryModel&gt;"</span> <span style="background: yellow;">%&gt;</span></li>
+<li>For Razor Engine, they are called "Layout Pages" 
+<ul>
+<li>You have a default <span style="background: yellow;">@</span>RenderBody()</li>
+<li>Optional sections:<br />
+<span style="background: yellow;">@</span><span style="color: blue;">if</span> (IsSectionDefined(<span style="color: #a31515;">"Footer"</span>))<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="background: yellow;">@</span>RenderSection(<span style="color: #a31515;">"Footer"</span>, required: <span style="color: blue;">false</span>)<br />
+}<br />
+<span style="color: blue;">else</span> ...</li>
+<li>Define the layout in the view or Views/_ViewStart.cshtml<br />
+ <span style="background: yellow;">@{</span> Layout = <span style="color: #a31515;">"~/Views/Shared/_Layout.cshtml"</span>; <span style="background: yellow;">}</span></li>
+</ul>
+</li>
+</ul>
+<div class="alert">
+You can define a site-wide layout in Views/_ViewStart.cshtml (so you don't have to define it per page)<br/>
+One _ViewStart per area.
+</div>
+
+<h3>ViewData/ViewBag and Models</h3>
+<h4>ViewData (MVC1-2)</h4>
+<p><cite>ViewData</cite> is a name/value dictionary available in the View</p>
+<ul>
+<li>Controller Action: ViewData[<span style="color: #a31515;">"HelloWorld"</span>] = <span style="color: #a31515;">"Hello World"</span>;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> View();</li>
+<li>View: <span style="color: blue;">&lt;</span><span style="color: maroon;">p</span><span style="color: blue;">&gt;</span><span style="background: yellow;">&lt;%</span><span style="color: blue;">:</span> ViewData[<span style="color: #a31515;">"HelloWorld"</span>] <span style="background: yellow;">%&gt;</span><span style="color: blue;">&lt;/</span><span style="color: maroon;">p</span><span style="color: blue;">&gt;</span></li>
+</ul>
+<p>Strongly typed views:</p>
+<ul>
+<li>Controller Action: <span style="color: blue;">return</span> View(category);</li>
+<li>View: <span style="background: yellow;">&lt;%</span><span style="color: blue;">@</span> <span style="color: maroon;">Page</span> <span style="color: red;">Inherits</span><span style="color: blue;">="System.Web.Mvc.ViewPage&lt;MvcApplication1.Models.CategoryModel&gt;"</span></li>
+<li>View: <span style="color: blue;">&lt;</span><span style="color: maroon;">p</span><span style="color: blue;">&gt;</span><span style="background: yellow;">&lt;%</span><span style="color: blue;">:</span> Model.Name <span style="background: yellow;">%&gt;</span><span style="color: blue;">&lt;/</span><span style="color: maroon;">p</span><span style="color: blue;">&gt;</span></li>
+</ul>
+<h4>ViewBag (MVC3)</h4>
+<p><cite>ViewBag</cite> is a strong-typed wrapper for ViewData (in MVC3+)</p>
+<h4>@model (MVC3)</h4>
+<p>In MVC 3 you can have a strong-typed model. Simple models may use the business/data entities directly (or an IEnumerable of them), but you'll probably want a ViewModel specific to the screen (it's also more secure).</p>
+<div class="code">
+<p><span style="background: yellow;">@model</span> MvcApplication1.Models.<span style="color: #2b91af;">CategoryModel</span></p>
+</div>
+<h4>TempData (MVC2)</h4>
+<p>The TempDataDictionary (TempData["x"] = "y") is just Session, so can be used with RedirectToAction.</p>
+
+<div class="alert">
+A strong typed model helper like <span style="background: yellow;">@</span>Html.HiddenFor(x =&gt; x.Id)
+may not use what you expect.<br/>
+If your controller action has parameters e.g. <span style="color: blue;">public</span> <span style="color: #2b91af;">ActionResult</span> Edit(<span style="color: blue;">int</span> id) then that id is used, not the model.Id!<br/>
+To fix, do a <code>ModelState.Clear();</code> in your action. 
+</div>
+
+
+<h3>Partial Views (User controls)</h3>
+<p>Common partial views should live in <cite>\Views\Shared\</cite></p>
+<ul>
+<li>For ASP Engine, add a new View user control (*.ascx), accessed either with Html.Partial, or via the controller as Html.Action</li>
+<li>For Razor Engine, create a partial view (_*.cshtml - the underscore prefix makes it hidden)<br />
+ <span style="background: yellow;">@</span>Html.Partial(<span style="color: #a31515;">"_HelloWorld"</span>)</li>
+</ul>
+<p>You can also use <span style="background: yellow;">@</span>Html.Action(<span style="color: #a31515;">"_HelloWorld"</span> which calls a controller action.</p>
+
+<div class="alert">
+Sections (e.g. for scripts) do not work in partials
+</div>
+
+<h3>Delete-Cancel buttons</h3>
+<p>A typical CRUD form may have a row of buttons for Save-Cancel-Delete.   </p>
+<ul>
+<li>You can have three submit buttons with an if/else in the Action, but that's not very neat.</li>
+<li>You can't wrap the cancel and delete buttons in nested forms (not allowed in HTML).</li>
+<li>Links, especially for delete, are problematic.</li>
+<li>The input/submit formaction="" attribute is perfect but IE 10+ only (and not Android at time of writing) </li>
+<li>The easiest solution is javascript (using input type=button) and you can hook up your HttpPost Delete action.</li>
+</ul>
+<div class="code">
+<p>$(<span style="color: maroon;">&quot;#Cancel&quot;</span>).click(<span style="color: blue;">function</span>() {<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; window.location = <span style="color: maroon;">&quot;</span><span style="color: maroon; background: yellow;">@</span>Url.Action(<span style="color: #a31515;">&quot;Index&quot;</span>)<span style="color: maroon;">&quot;</span>;<br/>
+});<br/>
+$(<span style="color: maroon;">'#Delete'</span>).click(<span style="color: blue;">function</span>() {<br/>
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span>(confirm(<span style="color: maroon;">&quot;</span><span style="color: maroon; background: yellow;">@</span>WebApp.Resources.<span style="color: #2b91af;">Crud</span>.AreYouSure<span style="color: maroon;">&quot;</span>)) {<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> form = document.forms[0];<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; form.action = <span style="color: maroon;">&quot;</span><span style="color: maroon; background: yellow;">@</span>Url.Action(<span style="color: #a31515;">&quot;Delete&quot;</span>)<span style="color: maroon;">&quot;</span>;<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; form.submit();<br/>
+&nbsp;&nbsp;&nbsp; }<br/>
+});</p>
+</div>
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

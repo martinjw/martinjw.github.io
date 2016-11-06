@@ -1,0 +1,103 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>NUnit/MSTest Dual Testing</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main</a></li>
+<li><a href="../dotnet.html">.Net</a></li>
+<li><a href="index.html">Code</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>NUnit/MSTest Dual Testing</h2>
+<p>Run your tests in MSTest and in NUnit. This is a cool idea from <a href="http://msdn2.microsoft.com/en-gb/magazine/cc163643.aspx#S4">MSDN magazine</a>.</p>
+<div class="code">
+<p><span style="color: blue;">#if</span> !NUNIT<br />
+<span style="color: blue;">using</span> Microsoft.VisualStudio.TestTools.UnitTesting;<br />
+<span style="color: blue;">using</span> <span style="color: #2b91af;">Category</span> = Microsoft.VisualStudio.TestTools.UnitTesting.<span style="color: #2b91af;">DescriptionAttribute</span>;<br />
+<span style="color: blue;">#else</span><br />
+<span style="color: blue;">using</span> NUnit.Framework;<br />
+<span style="color: blue;">using</span> <span style="color: #2b91af;">TestClass</span> = NUnit.Framework.<span style="color: #2b91af;">TestFixtureAttribute</span>;<br />
+<span style="color: blue;">using</span> <span style="color: #2b91af;">TestMethod</span> = NUnit.Framework.<span style="color: #2b91af;">TestAttribute</span>;<br />
+<span style="color: blue;">using</span> <span style="color: #2b91af;">TestInitialize</span> = NUnit.Framework.<span style="color: #2b91af;">SetUpAttribute</span>;<br />
+<span style="color: blue;">using</span> <span style="color: #2b91af;">TestCleanup</span> = NUnit.Framework.<span style="color: #2b91af;">TearDownAttribute</span>;<br />
+<span style="color: blue;">using</span> <span style="color: #2b91af;">TestContext</span> = System.<span style="color: #2b91af;">Object</span>;<br />
+<span style="color: blue;">#endif</span><br />
+&nbsp;<br />
+<span style="color: blue;">namespace</span> MTest<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> A dual MSTest- NUnit Test supported test class.</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;remarks&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> MSTest: there are no categories, so we map Category to Description</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> There is no RowTest (see DataDriven tests instead)</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> NUnit: you can't use TestContext (mapped to object)</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/remarks&gt;</span><br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">TestClass</span>]<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">TestUnitTests</span><br />
+&nbsp;&nbsp;&nbsp; {<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; #region</span> SetUp<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: #2b91af;">TestContext</span> testContextInstance;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;">Gets or sets the test context which provides</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;">information about and functionality for the current test run.</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: #2b91af;">TestContext</span> TestContext<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">get</span> { <span style="color: blue;">return</span> testContextInstance; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">set</span> { testContextInstance = <span style="color: blue;">value</span>; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">/* Unlike NUnit, in MSTest the class is recreated for each test</span><br />
+<span style="color: green;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  * You can use [ClassInitialize] public void TestFixtureSetUp(TestContext context)</span><br />
+<span style="color: green;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  * but the stored object[s] (eg Repository) must be static too.</span><br />
+<span style="color: green;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  * TestContext is not static so not useful for storing objects.</span><br />
+<span style="color: green;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  */</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">TestInitialize</span>]<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> TestFixtureSetUp()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; store = 1; <span style="color: green;">//in MSTest this is called per test, in NUnit, once per class</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">int</span> store;<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; #endregion</span><br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; #region</span> Tests<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">TestMethod</span>]<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> TestMethod1()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; store++;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Assert</span>.AreEqual(2, store);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">TestMethod</span>]<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">Category</span>(<span style="color: #a31515;">"Maths Tests"</span>)] <span style="color: green;">/*MSTest doesn't have categories, so we map this to description */</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">ExpectedException</span>(<span style="color: blue;">typeof</span>(System.<span style="color: #2b91af;">DivideByZeroException</span>))]<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> DivideMethodTest()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">int</span> d = 0;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">int</span> result = (2 / d);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; #endregion</span><br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

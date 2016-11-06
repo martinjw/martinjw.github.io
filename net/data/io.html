@@ -1,0 +1,344 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>.Net IO - Compression, Security, Copy Directory</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="io.html">IO</a></li>
+<li><a href="xml.html">Xml</a></li>
+<li><a href="xmlpatterns.html">Xml Patterns</a></li>
+<li><a href="adodotnet.html">ADO.Net</a></li>
+<li><a href="adopatterns.html">ADO Patterns</a></li>
+<li><a href="transactions.html">Transactions</a></li>
+<li><a href="sql.html">SQL</a></li>
+<li><a href="ef/ef.html">EF/Linq2Sql &gt;</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>.Net IO</h2>
+<ul>
+<li><a href="http://www.codeplex.com/FileDirectoryPath">Codeplex file/directory absolute/relative library</a></li>
+</ul>
+<h3>Make ReadOnly/ReadWrite</h3>
+<div class="pre">
+<span style="color:Blue">public</span> <span style="color:Blue">static</span> <span style="color:Blue">void</span><span style="color:Black"> ToggleFileReadOnly(</span><span style="color:Blue">string</span><span style="color:Black"> path)<br />
+&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">if</span><span style="color:Black"> (</span><span style="color:Teal">File</span><span style="color:Black">.Exists(path))<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Teal">FileInfo</span><span style="color:Black"> fileInfo = </span><span style="color:Blue">new</span> <span style="color:Teal">FileInfo</span><span style="color:Black">(path);<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">// is file readonly<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">if</span><span style="color:Black"> ((fileInfo.Attributes &amp; </span><span style="color:Teal">FileAttributes</span><span style="color:Black">.ReadOnly) == </span><span style="color:Teal">FileAttributes</span><span style="color:Black">.ReadOnly)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">//bitwise XOR - remove the readonly<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fileInfo.Attributes ^= </span><span style="color:Teal">FileAttributes</span><span style="color:Black">.ReadOnly;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">else<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">//bitwise OR - add the readonly attribute<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fileInfo.Attributes |= </span><span style="color:Teal">FileAttributes</span><span style="color:Black">.ReadOnly;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+&nbsp;&nbsp;&nbsp;}</span>
+</div>
+
+<h3>Processing CSVs</h3>
+<p>The Regex way. With a dirty hack for localized Excel csvs (which use semi-colon). </p>
+<div class="pre">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:Blue">private</span> <span style="color:Blue">static</span> <span style="color:Blue">void</span><span style="color:Black"> ProcessFields(</span><span style="color:Blue">string</span><span style="color:Black">[] fields)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">//do work with fields here<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">throw</span> <span style="color:Blue">new</span> <span style="color:Teal">Exception</span><span style="color:Black">(</span><span style="color:Maroon">"The method or operation is not implemented."</span><span style="color:Black">);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">private</span> <span style="color:Blue">static</span> <span style="color:Blue">void</span><span style="color:Black"> OpenCSVFile(</span><span style="color:Blue">string</span><span style="color:Black"> filename)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">//,(?=(?:[^"]*"[^"]*")*(?![^"]*"))<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;System.Text.RegularExpressions.</span><span style="color:Teal">Regex</span><span style="color:Black"> regex = </span><span style="color:Blue">new</span><span style="color:Black"> System.Text.RegularExpressions.</span><span style="color:Teal">Regex</span><span style="color:Black">(</span><span style="color:Maroon">",(?=(?:[^\"]*\"[^\"]*\")*(?![^\"]*\"))"</span><span style="color:Black">);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">char</span><span style="color:Black">[] trim = { </span><span style="color:Maroon">' '</span><span style="color:Black">, </span><span style="color:Maroon">'"'</span><span style="color:Black"> }; </span><span style="color:Green">//we'll trim spaces and quotes<br />
+<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">//in vb you could use Microsoft.VisualBasic.FileIO.TextFieldParser<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">//for more full-featured reader, see http://www.codeproject.com/cs/database/CsvReader.asp<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">using</span><span style="color:Black"> (System.IO.</span><span style="color:Teal">StreamReader</span><span style="color:Black"> sr = </span><span style="color:Blue">new</span><span style="color:Black"> System.IO.</span><span style="color:Teal">StreamReader</span><span style="color:Black">(filename))<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">bool</span><span style="color:Black"> readHeader = </span><span style="color:Blue">false</span><span style="color:Black">; </span><span style="color:Green">//set this to true if no header<br />
+<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">while</span><span style="color:Black"> (sr.Peek() != -1)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">//bug: in true csv, line breaks within fields are allowed. <br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> fileLine = sr.ReadLine();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">if</span><span style="color:Black"> (fileLine.Length &gt; 0) </span><span style="color:Green">//ignore blank lines<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">if</span><span style="color:Black"> (!readHeader)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ </span><span style="color:Green">//header line<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">if</span><span style="color:Black"> (fileLine.Contains(</span><span style="color:Maroon">"\";\""</span><span style="color:Black">)) </span><span style="color:Green">//tweak this if rqd <br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">//local versions of Excel make csv with semicolons not commas<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;regex = </span><span style="color:Blue">new</span><span style="color:Black"> System.Text.RegularExpressions.</span><span style="color:Teal">Regex</span><span style="color:Black">(</span><span style="color:Maroon">";(?=(?:[^\"]*\"[^\"]*\")*(?![^\"]*\"))"</span><span style="color:Black">);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;readHeader = </span><span style="color:Blue">true</span><span style="color:Black">; </span><span style="color:Green">//discard header<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">else<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">//split the line into fields and trim each field<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black">[] fields = regex.Split(fileLine);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">for</span><span style="color:Black"> (</span><span style="color:Blue">int</span> i = 0; i &lt; fields.Length; i++)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fields[i] = fields[i].Trim(trim);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ProcessFields(fields);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+<br />
+</div>
+<p>A button_Click to invoke the above.</p>
+<div class="pre">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:Blue">private</span> <span style="color:Blue">void</span><span style="color:Black"> button1_Click(</span><span style="color:Blue">object</span><span style="color:Black"> sender, </span><span style="color:Teal">EventArgs</span><span style="color:Black"> e)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;openFileDialog1.Title = </span><span style="color:Maroon">"Select CSV file"</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;openFileDialog1.Filter = </span><span style="color:Maroon">"Comma Separated Values (*.csv)|*.csv"</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;openFileDialog1.DefaultExt = </span><span style="color:Maroon">"csv"</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;openFileDialog1.FileName = </span><span style="color:Maroon">""</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;openFileDialog1.InitialDirectory = </span><span style="color:Teal">Environment</span><span style="color:Black">.GetFolderPath(</span><span style="color:Teal">Environment</span><span style="color:Black">.</span><span style="color:Teal">SpecialFolder</span><span style="color:Black">.Personal);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">if</span><span style="color:Black"> (openFileDialog1.ShowDialog() == </span><span style="color:Teal">DialogResult</span><span style="color:Black">.OK)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OpenCSVFile(openFileDialog1.FileName);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+</div>
+<h3>Streams</h3>
+<p>Writing streams wrap the <em>destination</em> in the ctor and the stream.Write("text") always take the origin. Easy to get it the wrong way round!</p>
+<h3>Compressing</h3>
+<p>Create the GZipStream (or DeflateStream, the same without the zip CRC) from the source stream and read-out the bytes into your destination stream. It doesn't cope with .zip files (actually it's unix-like .gz compatible)</p>
+<div class="code pre">
+<p><span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> CompressFile(<span style="color: blue;">string</span> srcPath, <span style="color: blue;">string</span> zipPath)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: #2b91af;">FileStream</span> zip = <span style="color: #2b91af;">File</span>.Open(zipPath, <span style="color: #2b91af;">FileMode</span>.Create)) <span style="color: green;">//destination fs</span><br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: #2b91af;">FileStream</span> src = <span style="color: #2b91af;">File</span>.OpenRead(srcPath))<span style="color: green;">//origin fs</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//wrap compression stream around destination stream</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: #2b91af;">GZipStream</span> zipStream = <span style="color: blue;">new</span> <span style="color: #2b91af;">GZipStream</span>(zip, <span style="color: #2b91af;">CompressionMode</span>.Compress))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//read byte-by-byte from source stream into compression stream</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">int</span> eachByte = src.ReadByte();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">while</span> (eachByte != -1)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; zipStream.WriteByte((<span style="color: blue;">byte</span>)eachByte);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; eachByte = src.ReadByte();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; } <span style="color: green;">//all streams closed</span><br />
+}<br />
+<span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> DecompressFile(<span style="color: blue;">string</span> zipPath, <span style="color: blue;">string</span> unzippedPath)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: #2b91af;">FileStream</span> unzipped = <span style="color: #2b91af;">File</span>.Open(unzippedPath, <span style="color: #2b91af;">FileMode</span>.Create)) <span style="color: green;">//dest fs</span><br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: #2b91af;">FileStream</span> zip = <span style="color: #2b91af;">File</span>.OpenRead(zipPath))<span style="color: green;">//origin fs</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//wrap compression stream around zipped stream</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: #2b91af;">GZipStream</span> zipStream = <span style="color: blue;">new</span> <span style="color: #2b91af;">GZipStream</span>(zip, <span style="color: #2b91af;">CompressionMode</span>.Decompress))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//read byte-by-byte from compression</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">int</span> eachByte = zipStream.ReadByte();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">while</span> (eachByte != -1)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; unzipped.WriteByte((<span style="color: blue;">byte</span>)eachByte);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; eachByte = zipStream.ReadByte();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; } <span style="color: green;">//all streams closed</span><br />
+}</p>
+</div>
+
+<h3>Isolated Storage</h3>
+<p><a href="dotnetwinform.html#Settings">WinForms 2.0  Application Settings user.config </a> is not secure...</p><ul>
+<li>IsolatedStorageScope<ul>
+<li>User - Always have user scope!</li>
+<li>Assembly (url or strong name - NB: this assembly could be called by another and then use it's data)</li>
+<li>Application - calling assembly</li>
+<li>Domain - appdomain</li>
+<li>Machine - everything on machine can read it</li>
+</ul></li>
+<li>In .Net 2, create using IsolatedStorageFile.GetMachineStoreForAssembly or GetUserStoreForAssembly (== GetStore with Assembly + machine or user flags)</li>
+<li>There's no FileInfo.Exists so use Store.GetFileNames("MyFile.txt").Length &gt; 0</li>
+<li><a href="code/forms/usersettings.html">Demo</a></li>
+</ul>
+
+
+<p>This gets the My Documents folder (cf ApplicationData)</p>
+<div>
+ <span style="color:Blue">string</span><span style="color:Black"> PersonalFolder = </span><span style="color:#2b91af">Environment</span><span style="color:Black">.GetFolderPath(</span><span style="color:#2b91af">Environment</span><span style="color:Black">.</span><span style="color:#2b91af">SpecialFolder</span><span style="color:Black">.Personal);</span>
+</div>
+
+<h3>Directory.Copy</h3>
+<p>There isn't one (just Move), so here's the recursive directory copy</p>
+<div>
+<span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;summary&gt;<br />
+</span><span style="color:Black"></span><span style="color:Gray">///</span><span style="color:Green"> Copies the files in fromPath to the toDirectory. Recursive<br />
+</span><span style="color:Black"></span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;/summary&gt;<br />
+</span><span style="color:Black"></span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;param name="fromPath"&gt;</span><span style="color:Green">From path.</span><span style="color:Gray">&lt;/param&gt;<br />
+</span><span style="color:Black"></span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;param name="toPath"&gt;</span><span style="color:Green">To path.</span><span style="color:Gray">&lt;/param&gt;<br />
+</span><span style="color:Black"></span><span style="color:Blue">public</span><span style="color:Black"> </span><span style="color:Blue">static</span><span style="color:Black"> </span><span style="color:Blue">void</span><span style="color:Black"> CopyFiles(</span><span style="color:Blue">string</span><span style="color:Black"> fromPath, </span><span style="color:Blue">string</span><span style="color:Black"> toPath)<br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">//directoryInfo.FullName unfortunately doesn't have ending /, so path combines don't work.<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">if</span><span style="color:Black"> (!toPath.EndsWith(</span><span style="color:#2b91af">Path</span><span style="color:Black">.DirectorySeparatorChar.ToString()))<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;toPath += </span><span style="color:#2b91af">Path</span><span style="color:Black">.DirectorySeparatorChar;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">DirectoryInfo</span><span style="color:Black"> srcDir = </span><span style="color:Blue">new</span><span style="color:Black"> </span><span style="color:#2b91af">DirectoryInfo</span><span style="color:Black">(fromPath);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">foreach</span><span style="color:Black"> (</span><span style="color:#2b91af">FileInfo</span><span style="color:Black"> file </span><span style="color:Blue">in</span><span style="color:Black"> srcDir.GetFiles())<br />
+&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> newname = </span><span style="color:#2b91af">Path</span><span style="color:Black">.Combine(toPath, file.Name); </span><span style="color:Green">//put the file name onto the root<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;file.CopyTo(newname, </span><span style="color:Blue">true</span><span style="color:Black">);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">foreach</span><span style="color:Black"> (</span><span style="color:#2b91af">DirectoryInfo</span><span style="color:Black"> subDir </span><span style="color:Blue">in</span><span style="color:Black"> srcDir.GetDirectories())<br />
+&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> subDirName = </span><span style="color:#2b91af">Path</span><span style="color:Black">.Combine(toPath, subDir.Name); </span><span style="color:Green">//put the directory name onto the root<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">DirectoryInfo</span><span style="color:Black"> newSubDir = </span><span style="color:#2b91af">Directory</span><span style="color:Black">.CreateDirectory(subDirName); </span><span style="color:Green">//create it<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CopyFiles(subDir.FullName, newSubDir.FullName); </span><span style="color:Green">//recurse<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+}</span>
+</div>
+
+<h3>Relative Paths</h3>
+<p>This creates a windows relative path (../../file.txt). Change two lines (see comments) for a web relative path (..\..\page.html).</p>
+<div class="code pre">
+<p><span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;<span style="color: gray;">///</span><span style="color: green;"> Gets the relative path from one directory to another.</span><br />
+&nbsp;<span style="color: gray;">///</span><span style="color: green;"> Can take web "/" but always returns windows path.</span><br />
+&nbsp;<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;param name="fromPath"&gt;</span><span style="color: green;">From path.</span><br />
+&nbsp;<span style="color: gray;">///</span><span style="color: green;"> Should be a directory (a file on the end will be treated as an extra depth of directory)</span><span style="color: gray;">&lt;/param&gt;</span><br />
+&nbsp;<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;param name="toPath"&gt;</span><span style="color: green;">To path. Can be a directory or file path</span><span style="color: gray;">&lt;/param&gt;</span><br />
+&nbsp;<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;returns&gt;</span><span style="color: green;">Relative path with windows directory separator (\)</span><span style="color: gray;">&lt;/returns&gt;</span><br />
+&nbsp;<span style="color: blue;">public</span> <span style="color: blue;">string</span> GetRelativePath(<span style="color: blue;">string</span> fromPath, <span style="color: blue;">string</span> toPath)<br />
+&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;  <span style="color: green;">//validate- both must be absolute</span><br />
+&nbsp;&nbsp;&nbsp;  <span style="color: blue;">if</span> (fromPath.StartsWith(<span style="color: #a31515;">"."</span>)) <span style="color: blue;">return</span> toPath;<br />
+&nbsp;&nbsp;&nbsp;  <span style="color: blue;">if</span> (toPath.StartsWith(<span style="color: #a31515;">"."</span>)) <span style="color: blue;">return</span> toPath;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp;  <span style="color: green;">//sanitize- web forwardslash changed to windows backslash</span><br />
+&nbsp;&nbsp;&nbsp;  <span style="color: blue;">char</span> winSlash = <span style="color: #2b91af;">Path</span>.DirectorySeparatorChar;<br />
+&nbsp;&nbsp;&nbsp;  <span style="color: blue;">char</span> webSlash = <span style="color: #2b91af;">Path</span>.AltDirectorySeparatorChar; <span style="color: green;">//swap these around if web paths</span><br />
+&nbsp;&nbsp;&nbsp;  <span style="color: blue;">if</span> (fromPath.Contains(webSlash.ToString())) fromPath = fromPath.Replace(webSlash, winSlash);<br />
+&nbsp;&nbsp;&nbsp;  <span style="color: blue;">if</span> (toPath.Contains(webSlash.ToString())) toPath = toPath.Replace(webSlash, winSlash);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp;  <span style="color: green;">//find what's common</span><br />
+&nbsp;&nbsp;&nbsp;  <span style="color: blue;">string</span>[] fromPathFolders = fromPath.Split(winSlash);<br />
+&nbsp;&nbsp;&nbsp;  <span style="color: blue;">string</span>[] toPathFolders = toPath.Split(winSlash);<br />
+&nbsp;&nbsp;&nbsp;  <span style="color: blue;">int</span> length = <span style="color: #2b91af;">Math</span>.Min(fromPathFolders.Length, toPathFolders.Length);<br />
+&nbsp;&nbsp;&nbsp;  <span style="color: blue;">int</span> sameUntil = -1;<br />
+&nbsp;&nbsp;&nbsp;  <span style="color: blue;">for</span> (<span style="color: blue;">int</span> i = 0; i &lt; length; i++)<br />
+&nbsp;&nbsp;&nbsp;  {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  <span style="color: blue;">if</span> (!<span style="color: blue;">string</span>.Equals(fromPathFolders[i], toPathFolders[i],<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  <span style="color: #2b91af;">StringComparison</span>.InvariantCultureIgnoreCase))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  <span style="color: blue;">break</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  sameUntil = i;<br />
+&nbsp;&nbsp;&nbsp;  }<br />
+&nbsp;&nbsp;&nbsp;  <span style="color: blue;">if</span> (sameUntil == -1) <span style="color: blue;">return</span> toPath; <span style="color: green;">//they are completely different</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp;  <span style="color: green;">//walk back up fromPath</span><br />
+&nbsp;&nbsp;&nbsp;  <span style="color: #2b91af;">StringBuilder</span> sb = <span style="color: blue;">new</span> <span style="color: #2b91af;">StringBuilder</span>();<br />
+&nbsp;&nbsp;&nbsp;  <span style="color: blue;">for</span> (<span style="color: blue;">int</span> i = sameUntil + 1; i &lt; fromPathFolders.Length; i++)<br />
+&nbsp;&nbsp;&nbsp;  {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  sb.Append(<span style="color: #a31515;">".."</span> + winSlash);<br />
+&nbsp;&nbsp;&nbsp;  }<br />
+&nbsp;&nbsp;&nbsp;  <span style="color: green;">//walk down the toPath</span><br />
+&nbsp;&nbsp;&nbsp;  <span style="color: blue;">for</span> (<span style="color: blue;">int</span> i = sameUntil + 1; i &lt; toPathFolders.Length; i++)<br />
+&nbsp;&nbsp;&nbsp;  {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  sb.Append(toPathFolders[i]);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  <span style="color: blue;">if</span> (i &lt; (toPathFolders.Length - 1)) <span style="color: green;">//not on last one</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  sb.Append(winSlash);<br />
+&nbsp;&nbsp;&nbsp;  }<br />
+&nbsp;&nbsp;&nbsp;  <span style="color: blue;">return</span> sb.ToString();<br />
+&nbsp;}</p>
+</div>
+<div class="code pre">
+<p>[<span style="color: #2b91af;">Test</span>]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">void</span> TestRelativePath()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//web forward slashes converted to windows backslashes</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> fromPath = <span style="color: #a31515;">"root/north"</span>;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> toPath = <span style="color: #a31515;">"root/south/file2.txt"</span>; <span style="color: green;">//to a file</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> expected = <span style="color: #a31515;">@"..\south\file2.txt"</span>;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> actual = GetRelativePath(fromPath, toPath);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Assert</span>.AreEqual(expected, actual);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; fromPath = <span style="color: #a31515;">"root/north"</span>;<br />
+&nbsp;&nbsp;&nbsp; toPath = <span style="color: #a31515;">@"root\south"</span>; <span style="color: green;">//to a folder</span><br />
+&nbsp;&nbsp;&nbsp; expected = <span style="color: #a31515;">@"..\south"</span>;<br />
+&nbsp;&nbsp;&nbsp; actual = GetRelativePath(fromPath, toPath);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Assert</span>.AreEqual(expected, actual);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; fromPath = <span style="color: #a31515;">"root/north"</span>;<br />
+&nbsp;&nbsp;&nbsp; toPath = <span style="color: #a31515;">@"root\south\"</span>; <span style="color: green;">//slash on end</span><br />
+&nbsp;&nbsp;&nbsp; expected = <span style="color: #a31515;">@"..\south\"</span>; <span style="color: green;">//is preserved</span><br />
+&nbsp;&nbsp;&nbsp; actual = GetRelativePath(fromPath, toPath);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Assert</span>.AreEqual(expected, actual);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; fromPath = <span style="color: #a31515;">"mars/north"</span>;<br />
+&nbsp;&nbsp;&nbsp; toPath = <span style="color: #a31515;">@"venus\south\"</span>; <span style="color: green;">//not the same root</span><br />
+&nbsp;&nbsp;&nbsp; expected = toPath; <span style="color: green;">//relative path not applicable</span><br />
+&nbsp;&nbsp;&nbsp; actual = GetRelativePath(fromPath, toPath);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Assert</span>.AreEqual(expected, actual);<br />
+}</p>
+</div>
+
+
+<h3>Security</h3>
+<p>Access rules= DACLs, audit rules= SACL, easy to make an intellisense typo.</p>
+<div class="code pre">
+<p><span style="color: blue;">private</span> <span style="color: blue;">void</span> GetFileOwner(<span style="color: #2b91af;">FileInfo</span> f1)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">FileSecurity</span> ac = f1.GetAccessControl();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> name = ac.GetOwner(<span style="color: blue;">typeof</span>(<span style="color: #2b91af;">NTAccount</span>)).Value; <span style="color: green;">//shows name of owner</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Debug</span>.WriteLine(name);<br />
+}<br />
+&nbsp;<br />
+<span style="color: blue;">private</span> <span style="color: blue;">void</span> CopyAccessRulesPreventInheritance(<span style="color: #2b91af;">FileInfo</span> f1, <span style="color: #2b91af;">FileInfo</span> f2)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">const</span> <span style="color: blue;">bool</span> protectFromInheriting = <span style="color: blue;">true</span>;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">const</span> <span style="color: blue;">bool</span> preserveExistingInheritance = <span style="color: blue;">true</span>;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//to copy access rules but prevent inheritance</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">FileSecurity</span> acl = f1.GetAccessControl();<br />
+&nbsp;&nbsp;&nbsp; acl.SetAccessRuleProtection(protectFromInheriting, preserveExistingInheritance); <span style="color: green;">//eg true, true so same as old</span><br />
+&nbsp;&nbsp;&nbsp; f2.SetAccessControl(acl);<br />
+}<br />
+&nbsp;<br />
+<span style="color: blue;">public</span> <span style="color: blue;">void</span> TestFileAccessControl()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> initDir = <span style="color: #2b91af;">Environment</span>.GetFolderPath(<span style="color: #2b91af;">Environment</span>.<span style="color: #2b91af;">SpecialFolder</span>.Personal);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> filePath = <span style="color: #2b91af;">Path</span>.Combine(initDir, <span style="color: #2b91af;">Guid</span>.NewGuid() + <span style="color: #a31515;">".tmp"</span>);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">File</span>.WriteAllText(filePath, <span style="color: #a31515;">"Temp"</span>);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">FileInfo</span> f1 = <span style="color: blue;">new</span> <span style="color: #2b91af;">FileInfo</span>(filePath);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; GetFileOwner(f1);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> filePath2 = <span style="color: #a31515;">@"c:\"</span> + f1.Name;<br />
+&nbsp;&nbsp;&nbsp; f1.CopyTo(filePath2);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">FileInfo</span> f2 = <span style="color: blue;">new</span> <span style="color: #2b91af;">FileInfo</span>(filePath2);<br />
+&nbsp;&nbsp;&nbsp; CopyAccessRulesPreventInheritance(f1, f2);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; f1.Delete();<br />
+&nbsp;&nbsp;&nbsp; f2.Delete();<br />
+}</p>
+</div>
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

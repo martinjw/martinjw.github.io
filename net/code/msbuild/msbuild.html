@@ -1,0 +1,254 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>MsBuild</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../index.html">Code &gt;</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>MsBuild</h2>
+<p><a href="https://msdn.microsoft.com/en-us/library/dd393574.aspx">MSDN</a></p>
+<h3>Command Line/.bat/cmd file</h3>
+<pre>
+%systemroot%\Microsoft.Net\Framework\v4.0.30319\MSBuild.exe build.xml /t:Publish /fl & pause
+</pre>
+<ul>
+<li>.net 4 version of msBuild. <a href="https://msdn.microsoft.com/en-us/library/ms164311.aspx">MSDN command line reference</a></li>
+<li>/t is target, which here is "Publish"</li>
+<li>/fl is file logger, by default writes to "msbuild.log". Change that by adding /flp:LogFile=myproj.log</li>
+<li>Add /p for properties such as configuration:  /p:Configuration=Acc</li>
+</ul>
+<h3>Build script</h3>
+<p>This is a command line build script, which could be used locally or on a build server. It does a "publish" (as in Visual Studio "Publish..." with a file target, for XCopy deployment).</p>
+<ul>
+<li>Configuration is "Release" but can be overridden (typically I have a ACC acceptance and PRD production, based on Release)</li>
+<li>See later for how version works</li>
+<li>This build script is for a console and a website.</li>
+<li>The website is rebuilt, then copied (including scripts, views etc) using the _CopyWebApplication target<br />
+_CopyWebApplication (legacy and deprecated) can be replaced with _WPPCopyWebApplication but you may need to add the property CleanWebProjectOutputDir=False if dependent dlls get zapped.</li>
+<li>web.config and app.config are transformed (using Microsoft.Web.Publishing.Tasks)
+<ul>
+<li>For app.config, you need a app.{configuration}.config, for instance using <a href="https://visualstudiogallery.msdn.microsoft.com/69023d00-a4f9-4a34-a6cd-7e854ba318b5">Slow Cheetah extension</a></li>
+<li>Transform configs are deleted in another target</li>
+</ul>
+</li>
+</ul>
+<div class="code">
+<p><span style="color: blue;">&lt;?</span><span style="color: #a31515;">xml</span><span style="color: blue;"> </span><span style="color: red;">version</span><span style="color: blue;">=</span>"<span style="color: blue;">1.0</span>"<span style="color: blue;"> </span><span style="color: red;">encoding</span><span style="color: blue;">=</span>"<span style="color: blue;">utf-8</span>"<span style="color: blue;"> ?&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: #a31515;">Project</span><span style="color: blue;"> </span><span style="color: red;">xmlns</span><span style="color: blue;">=</span>"<span style="color: blue;">http://schemas.microsoft.com/developer/msbuild/2003</span>"<span style="color: blue;"> </span><span style="color: red;">DefaultTargets</span><span style="color: blue;">=</span>"<span style="color: blue;">Publish</span>"<span style="color: blue;">&gt;</span><br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">UsingTask</span><span style="color: blue;"> </span><span style="color: red;">TaskName</span><span style="color: blue;">=</span>"<span style="color: blue;">TransformXml</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  </span><span style="color: red;">AssemblyFile</span><span style="color: blue;">=</span>"<span style="color: blue;">$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v10.0\Web\Microsoft.Web.Publishing.Tasks.dll</span>"<span style="color: blue;">/&gt;</span><br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">PropertyGroup</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;!--</span><span style="color: green;"> properties that are used in this build file - referenced as $(PropertyName) </span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">VersionAssembly</span><span style="color: blue;">&gt;</span>1.0.1.0<span style="color: blue;">&lt;/</span><span style="color: #a31515;">VersionAssembly</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Configuration</span><span style="color: blue;"> </span><span style="color: red;">Condition</span><span style="color: blue;">=</span>"<span style="color: blue;"> '$(Configuration)' == '' </span>"<span style="color: blue;">&gt;</span>Release<span style="color: blue;">&lt;/</span><span style="color: #a31515;">Configuration</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;!--</span><span style="color: green;"> Solution folder relative to this script </span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">SolutionRoot</span><span style="color: blue;">&gt;</span>.\<span style="color: blue;">&lt;/</span><span style="color: #a31515;">SolutionRoot</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;!--</span><span style="color: green;"> Everything is put in a "publish" folder </span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">OutputDir</span><span style="color: blue;">&gt;</span>$(MSBuildProjectDirectory)\publish<span style="color: blue;">&lt;/</span><span style="color: #a31515;">OutputDir</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">ConsoleOutputPath</span><span style="color: blue;">&gt;</span>$(OutputDir)\$(Configuration)\console\<span style="color: blue;">&lt;/</span><span style="color: #a31515;">ConsoleOutputPath</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">WebsiteOutputPath</span><span style="color: blue;">&gt;</span>$(OutputDir)\$(Configuration)\website\<span style="color: blue;">&lt;/</span><span style="color: #a31515;">WebsiteOutputPath</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">PropertyGroup</span><span style="color: blue;">&gt;</span><br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp; &lt;!--</span><span style="color: green;"> targets </span><span style="color: blue;">--&gt;</span><br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">Target</span><span style="color: blue;"> </span><span style="color: red;">Name</span><span style="color: blue;">=</span>"<span style="color: blue;">BuildConsole</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Message</span><span style="color: blue;"> </span><span style="color: red;">Text</span><span style="color: blue;">=</span>"<span style="color: blue;">Building console</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">RemoveDir</span><span style="color: blue;"> </span><span style="color: red;">Directories</span><span style="color: blue;">=</span>"<span style="color: blue;">$(ConsoleOutputPath)</span>"<span style="color: blue;">/&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">MSBuild</span><span style="color: blue;"> </span><span style="color: red;">Projects</span><span style="color: blue;">=</span>"<span style="color: blue;">$(SolutionRoot)\MarsConsole\MarsConsole.csproj</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; </span><span style="color: red;">Properties</span><span style="color: blue;">=</span>"<span style="color: blue;">Configuration=Release;OutputPath=$(ConsoleOutputPath);VersionAssembly=$(VersionAssembly)</span>"<span style="color: blue;">/&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">Target</span><span style="color: blue;">&gt;</span><br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">Target</span><span style="color: blue;"> </span><span style="color: red;">Name</span><span style="color: blue;">=</span>"<span style="color: blue;">BuildWebsite</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Message</span><span style="color: blue;"> </span><span style="color: red;">Text</span><span style="color: blue;">=</span>"<span style="color: blue;">Building website</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">RemoveDir</span><span style="color: blue;"> </span><span style="color: red;">Directories</span><span style="color: blue;">=</span>"<span style="color: blue;">$(WebsiteOutputPath)</span>"<span style="color: blue;">/&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;!--</span><span style="color: green;">rebuild</span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">MSBuild</span><span style="color: blue;"> </span><span style="color: red;">Projects</span><span style="color: blue;">=</span>"<span style="color: blue;">$(SolutionRoot)\Mars\Mars.csproj</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: red;">Properties</span><span style="color: blue;">=</span>"<span style="color: blue;">Configuration=Release;VersionAssembly=$(VersionAssembly)</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;!--</span><span style="color: green;"> do a copy </span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">MSBuild</span><span style="color: blue;"> </span><span style="color: red;">Projects</span><span style="color: blue;">=</span>"<span style="color: blue;">$(SolutionRoot)\Mars\Mars.csproj</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp;  </span><span style="color: red;">Targets</span><span style="color: blue;">=</span>"<span style="color: blue;">ResolveReferences;_CopyWebApplication</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp;  </span><span style="color: red;">Properties</span><span style="color: blue;">=</span>"<span style="color: blue;">Configuration=Release;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp;  WebProjectOutputDir=$(WebsiteOutputPath);</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp;  OutDir=$(WebsiteOutputPath)\bin\;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  VersionAssembly=$(VersionAssembly)</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">Target</span><span style="color: blue;">&gt;</span><br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">Target</span><span style="color: blue;"> </span><span style="color: red;">Name</span><span style="color: blue;">=</span>"<span style="color: blue;">Transform</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;!--</span><span style="color: green;"> Transform the website </span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">TransformXml</span><span style="color: blue;"> </span><span style="color: red;">Source</span><span style="color: blue;">=</span>"<span style="color: blue;">$(SolutionRoot)\Mars\Web.config</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: red;">Transform</span><span style="color: blue;">=</span>"<span style="color: blue;">$(SolutionRoot)\Mars\Web.$(Configuration).config</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: red;">Destination</span><span style="color: blue;">=</span>"<span style="color: blue;">$(WebsiteOutputPath)\Web.config</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: red;">StackTrace</span><span style="color: blue;">=</span>"<span style="color: blue;">$(StackTraceEnabled)</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;!--</span><span style="color: green;"> Transform the console (MUST have transform.config eg use SLOW CHEETAH </span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">TransformXml</span><span style="color: blue;"> </span><span style="color: red;">Source</span><span style="color: blue;">=</span>"<span style="color: blue;">$(SolutionRoot)\MarsConsole\app.config</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: red;">Transform</span><span style="color: blue;">=</span>"<span style="color: blue;">$(SolutionRoot)\MarsConsole\app.$(Configuration).config</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: red;">Destination</span><span style="color: blue;">=</span>"<span style="color: blue;">$(ConsoleOutputPath)\MarsConsole.exe.config</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: red;">StackTrace</span><span style="color: blue;">=</span>"<span style="color: blue;">$(StackTraceEnabled)</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">Target</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">Target</span><span style="color: blue;"> </span><span style="color: red;">Name</span><span style="color: blue;">=</span>"<span style="color: blue;">InitDir</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;!--</span><span style="color: green;"> empty all directories </span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">RemoveDir</span><span style="color: blue;"> </span><span style="color: red;">Directories</span><span style="color: blue;">=</span>"<span style="color: blue;">$(WebsiteOutputPath)\</span>"<span style="color: blue;"> </span><span style="color: red;">ContinueOnError</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">RemoveDir</span><span style="color: blue;"> </span><span style="color: red;">Directories</span><span style="color: blue;">=</span>"<span style="color: blue;">$(ConsoleOutputPath)\</span>"<span style="color: blue;"> </span><span style="color: red;">ContinueOnError</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">Target</span><span style="color: blue;">&gt;</span><br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">Target</span><span style="color: blue;"> </span><span style="color: red;">Name</span><span style="color: blue;">=</span>"<span style="color: blue;">CleanConfigs</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Message</span><span style="color: blue;"> </span><span style="color: red;">Text</span><span style="color: blue;">=</span>"<span style="color: blue;">Cleaning out configs</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;!--</span><span style="color: green;"> website artefacts</span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Delete</span><span style="color: blue;"> </span><span style="color: red;">Files</span><span style="color: blue;">=</span>"<span style="color: blue;">$(WebsiteOutputPath)\packages.config</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Delete</span><span style="color: blue;"> </span><span style="color: red;">Files</span><span style="color: blue;">=</span>"<span style="color: blue;">$(WebsiteOutputPath)\web.Debug.config</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Delete</span><span style="color: blue;"> </span><span style="color: red;">Files</span><span style="color: blue;">=</span>"<span style="color: blue;">$(WebsiteOutputPath)\web.Release.config</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Delete</span><span style="color: blue;"> </span><span style="color: red;">Files</span><span style="color: blue;">=</span>"<span style="color: blue;">$(WebsiteOutputPath)\web.ACC.config</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Delete</span><span style="color: blue;"> </span><span style="color: red;">Files</span><span style="color: blue;">=</span>"<span style="color: blue;">$(WebsiteOutputPath)\web.PRD.config</span>"<span style="color: blue;"> /&gt;</span><br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;!--</span><span style="color: green;"> Delete certain directories </span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">RemoveDir</span><span style="color: blue;"> </span><span style="color: red;">Directories</span><span style="color: blue;">=</span>"<span style="color: blue;">$(WebsiteOutputPath)\App_Readme\</span>"<span style="color: blue;"> </span><span style="color: red;">ContinueOnError</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;!--</span><span style="color: green;"> CodeAnalysis etc</span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">ItemGroup</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">FilesToDelete</span><span style="color: blue;"> </span><span style="color: red;">Include</span><span style="color: blue;">=</span>"<span style="color: blue;">$(ConsoleOutputPath)\*.CodeAnalysisLog.xml</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">FilesToDelete</span><span style="color: blue;"> </span><span style="color: red;">Include</span><span style="color: blue;">=</span>"<span style="color: blue;">$(ConsoleOutputPath)\*.lastcodeanalysissucceeded</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">ItemGroup</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Delete</span><span style="color: blue;"> </span><span style="color: red;">Files</span><span style="color: blue;">=</span>"<span style="color: blue;">@(FilesToDelete)</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;!--</span><span style="color: green;">any zips</span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Delete</span><span style="color: blue;"> </span><span style="color: red;">Files</span><span style="color: blue;">=</span>"<span style="color: blue;">$(OutputDir)\publish.zip</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">Target</span><span style="color: blue;">&gt;</span><br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp; &lt;!--</span><span style="color: green;"> Default target - does all the other targets in order </span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">Target</span><span style="color: blue;"> </span><span style="color: red;">Name</span><span style="color: blue;">=</span>"<span style="color: blue;">Publish</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: red;">DependsOnTargets</span><span style="color: blue;">=</span>"<span style="color: blue;">InitDir; </span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; BuildConsole; </span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; BuildWebsite; </span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Transform; </span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; CleanConfigs</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Message</span><span style="color: blue;"> </span><span style="color: red;">Text</span><span style="color: blue;">=</span>"<span style="color: blue;">Built All</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">Target</span><span style="color: blue;">&gt;</span><br />
+&nbsp;<br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">Project</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+<h3>Version Numbers</h3>
+<p>The above script passes a property for version number. The following is based on <a href="http://www.lionhack.com/2014/02/13/msbuild-override-assembly-version/">this lionhack blogpost</a>.</p>
+<p>The .csproj file needs the following at the bottom (under Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"). Make sure the get the correct path to BuildCommon.targets.</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">Import</span><span style="color: blue;"> </span><span style="color: red;">Project</span><span style="color: blue;">=</span>"<span style="color: blue;">..\..\BuildCommon.targets</span>"<span style="color: blue;"> /&gt;</span></p>
+</div>
+<p>BuildCommon.targets looks like this. If you link to a "CommonAssemblyInfo.cs" from all your projects, change the file name below. We are also setting AssemblyInformationalVersion (to a string, not a version number).</p>
+<div class="code">
+<p><span style="color: blue;">&lt;?</span><span style="color: #a31515;">xml</span><span style="color: blue;"> </span><span style="color: red;">version</span><span style="color: blue;">=</span>"<span style="color: blue;">1.0</span>"<span style="color: blue;"> </span><span style="color: red;">encoding</span><span style="color: blue;">=</span>"<span style="color: blue;">utf-8</span>"<span style="color: blue;">?&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: #a31515;">Project</span><span style="color: blue;"> </span><span style="color: red;">xmlns</span><span style="color: blue;">=</span>"<span style="color: blue;">http://schemas.microsoft.com/developer/msbuild/2003</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;!--</span><br />
+<span style="color: green;">&nbsp; &nbsp; http://www.lionhack.com/2014/02/13/msbuild-override-assembly-version/</span><br />
+<span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">PropertyGroup</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">Target</span><span style="color: blue;"> </span><span style="color: red;">Name</span><span style="color: blue;">=</span>"<span style="color: blue;">BeforeCompile</span>"<span style="color: blue;"> </span><span style="color: red;">DependsOnTargets</span><span style="color: blue;">=</span>"<span style="color: blue;">CommonBuildDefineModifiedAssemblyVersion</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">Target</span><span style="color: blue;">&gt;</span><br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp; &lt;!--</span><br />
+<span style="color: green;">&nbsp; &nbsp; Creates modified version of AssemblyInfo.cs, replaces [AssemblyVersion] attribute with the one specifying actual build version (from MSBuild properties), and includes that file instead of the original AssemblyInfo.cs in the compilation.</span><br />
+&nbsp;<br />
+<span style="color: green;">&nbsp; &nbsp; Works with both, .cs and .vb version of the AssemblyInfo file, meaning it supports C# and VB.Net projects simultaneously.</span><br />
+<span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">Target</span><span style="color: blue;"> </span><span style="color: red;">Name</span><span style="color: blue;">=</span>"<span style="color: blue;">CommonBuildDefineModifiedAssemblyVersion</span>"<span style="color: blue;"> </span><span style="color: red;">Condition</span><span style="color: blue;">=</span>"<span style="color: blue;">'$(VersionAssembly)' != ''</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">PropertyGroup</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">CurrentDate</span><span style="color: blue;">&gt;</span>$([System.DateTime]::Now.ToString(yyyyMMdd HH:mm:ss))<span style="color: blue;">&lt;/</span><span style="color: #a31515;">CurrentDate</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">PropertyGroup</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;!--</span><span style="color: green;"> Find AssemblyInfo.cs or AssemblyInfo.vb in the "Compile" Items. Remove it from "Compile" Items because we will use a modified version instead. </span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">ItemGroup</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">OriginalAssemblyInfo</span><span style="color: blue;"> </span><span style="color: red;">Include</span><span style="color: blue;">=</span>"<span style="color: blue;">@(Compile)</span>"<span style="color: blue;"> </span><span style="color: red;">Condition</span><span style="color: blue;">=</span>"<span style="color: blue;">%(Filename) == 'AssemblyInfo' And (%(Extension) == '.vb' Or %(Extension) == '.cs')</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Compile</span><span style="color: blue;"> </span><span style="color: red;">Remove</span><span style="color: blue;">=</span>"<span style="color: blue;">**/AssemblyInfo.vb</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Compile</span><span style="color: blue;"> </span><span style="color: red;">Remove</span><span style="color: blue;">=</span>"<span style="color: blue;">**/AssemblyInfo.cs</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">ItemGroup</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;!--</span><span style="color: green;"> Copy the original AssemblyInfo.cs/.vb to obj\ folder, i.e. $(IntermediateOutputPath). The copied filepath is saved into @(ModifiedAssemblyInfo) Item. </span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Copy</span><span style="color: blue;"> </span><span style="color: red;">SourceFiles</span><span style="color: blue;">=</span>"<span style="color: blue;">@(OriginalAssemblyInfo)</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: red;">DestinationFiles</span><span style="color: blue;">=</span>"<span style="color: blue;">@(OriginalAssemblyInfo-&gt;'$(IntermediateOutputPath)%(Identity)')</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Output</span><span style="color: blue;"> </span><span style="color: red;">TaskParameter</span><span style="color: blue;">=</span>"<span style="color: blue;">DestinationFiles</span>"<span style="color: blue;"> </span><span style="color: red;">ItemName</span><span style="color: blue;">=</span>"<span style="color: blue;">ModifiedAssemblyInfo</span>"<span style="color: blue;">/&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">Copy</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;!--</span><span style="color: green;"> Replace the version bit (in AssemblyVersion and AssemblyFileVersion attributes) using regular expression. Use the defined property: $(VersionAssembly). </span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Message</span><span style="color: blue;"> </span><span style="color: red;">Text</span><span style="color: blue;">=</span>"<span style="color: blue;">Setting AssemblyVersion to $(VersionAssembly)</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">RegexUpdateFile</span><span style="color: blue;"> </span><span style="color: red;">Files</span><span style="color: blue;">=</span>"<span style="color: blue;">@(ModifiedAssemblyInfo)</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: red;">Regex</span><span style="color: blue;">=</span>"<span style="color: blue;">Version\(</span><span style="color: red;">&amp;quot;</span><span style="color: blue;">(\d+)\.(\d+)(\.(\d+)\.(\d+)|\.*)</span><span style="color: red;">&amp;quot;</span><span style="color: blue;">\)</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: red;">ReplacementText</span><span style="color: blue;">=</span>"<span style="color: blue;">Version(</span><span style="color: red;">&amp;quot;</span><span style="color: blue;">$(VersionAssembly)</span><span style="color: red;">&amp;quot;</span><span style="color: blue;">)</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">RegexUpdateFile</span><span style="color: blue;"> </span><span style="color: red;">Files</span><span style="color: blue;">=</span>"<span style="color: blue;">@(ModifiedAssemblyInfo)</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: red;">Regex</span><span style="color: blue;">=</span>"<span style="color: blue;">AssemblyInformationalVersion\(</span><span style="color: red;">&amp;quot;</span><span style="color: blue;">Development build</span><span style="color: red;">&amp;quot;</span><span style="color: blue;">\)</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: red;">ReplacementText</span><span style="color: blue;">=</span>"<span style="color: blue;">AssemblyInformationalVersion(</span><span style="color: red;">&amp;quot;</span><span style="color: blue;">$(Configuration) build on $(COMPUTERNAME) $(CurrentDate)</span><span style="color: red;">&amp;quot;</span><span style="color: blue;">)</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;!--</span><span style="color: green;"> Include the modified AssemblyInfo.cs/.vb file in "Compile" items (instead of the original). </span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">ItemGroup</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Compile</span><span style="color: blue;"> </span><span style="color: red;">Include</span><span style="color: blue;">=</span>"<span style="color: blue;">@(ModifiedAssemblyInfo)</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">ItemGroup</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">Target</span><span style="color: blue;">&gt;</span><br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">UsingTask</span><span style="color: blue;"> </span><span style="color: red;">TaskName</span><span style="color: blue;">=</span>"<span style="color: blue;">RegexUpdateFile</span>"<span style="color: blue;"> </span><span style="color: red;">TaskFactory</span><span style="color: blue;">=</span>"<span style="color: blue;">CodeTaskFactory</span>"<span style="color: blue;"> </span><span style="color: red;">AssemblyFile</span><span style="color: blue;">=</span>"<span style="color: blue;">$(MSBuildToolsPath)\Microsoft.Build.Tasks.v$(MSBuildToolsVersion).dll</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">ParameterGroup</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Files</span><span style="color: blue;"> </span><span style="color: red;">ParameterType</span><span style="color: blue;">=</span>"<span style="color: blue;">Microsoft.Build.Framework.ITaskItem[]</span>"<span style="color: blue;"> </span><span style="color: red;">Required</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Regex</span><span style="color: blue;"> </span><span style="color: red;">ParameterType</span><span style="color: blue;">=</span>"<span style="color: blue;">System.String</span>"<span style="color: blue;"> </span><span style="color: red;">Required</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">ReplacementText</span><span style="color: blue;"> </span><span style="color: red;">ParameterType</span><span style="color: blue;">=</span>"<span style="color: blue;">System.String</span>"<span style="color: blue;"> </span><span style="color: red;">Required</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">ParameterGroup</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Task</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Reference</span><span style="color: blue;"> </span><span style="color: red;">Include</span><span style="color: blue;">=</span>"<span style="color: blue;">System.Core</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Using</span><span style="color: blue;"> </span><span style="color: red;">Namespace</span><span style="color: blue;">=</span>"<span style="color: blue;">System</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Using</span><span style="color: blue;"> </span><span style="color: red;">Namespace</span><span style="color: blue;">=</span>"<span style="color: blue;">System.IO</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Using</span><span style="color: blue;"> </span><span style="color: red;">Namespace</span><span style="color: blue;">=</span>"<span style="color: blue;">System.Text.RegularExpressions</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Using</span><span style="color: blue;"> </span><span style="color: red;">Namespace</span><span style="color: blue;">=</span>"<span style="color: blue;">Microsoft.Build.Framework</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Using</span><span style="color: blue;"> </span><span style="color: red;">Namespace</span><span style="color: blue;">=</span>"<span style="color: blue;">Microsoft.Build.Utilities</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Code</span><span style="color: blue;"> </span><span style="color: red;">Type</span><span style="color: blue;">=</span>"<span style="color: blue;">Fragment</span>"<span style="color: blue;"> </span><span style="color: red;">Language</span><span style="color: blue;">=</span>"<span style="color: blue;">cs</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &lt;![CDATA[</span><br />
+<span style="color: gray;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; try {</span><br />
+<span style="color: gray;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; var rx = new System.Text.RegularExpressions.Regex(this.Regex);</span><br />
+<span style="color: gray;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; for (int i = 0; i &lt; Files.Length; ++i)</span><br />
+<span style="color: gray;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; {</span><br />
+<span style="color: gray;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; var path = Files[i].GetMetadata("FullPath");</span><br />
+<span style="color: gray;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; if (!File.Exists(path)) continue;</span><br />
+&nbsp;<br />
+<span style="color: gray;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; var txt = File.ReadAllText(path);</span><br />
+<span style="color: gray;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; txt = rx.Replace(txt, this.ReplacementText);</span><br />
+<span style="color: gray;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; File.WriteAllText(path, txt);</span><br />
+<span style="color: gray;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; }</span><br />
+<span style="color: gray;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; return true;</span><br />
+<span style="color: gray;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; }</span><br />
+<span style="color: gray;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; catch (Exception ex) {</span><br />
+<span style="color: gray;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Log.LogErrorFromException(ex);</span><br />
+<span style="color: gray;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; return false;</span><br />
+<span style="color: gray;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; }</span><br />
+<span style="color: gray;">&nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: blue;">]]&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">Code</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">Task</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">UsingTask</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">Project</span><span style="color: blue;">&gt;</span></p>
+</div>
+<h3>Copy files</h3>
+<p>Copying files recursively needs some obscure syntax. This is copying everything from the Release build into Acc (not shown is a target to rerun the config transforms for Acc, almost identical to above).</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">Target</span><span style="color: blue;"> </span><span style="color: red;">Name</span><span style="color: blue;">=</span>"<span style="color: blue;">CopyAll</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">Message</span><span style="color: blue;"> </span><span style="color: red;">Text</span><span style="color: blue;">=</span>"<span style="color: blue;">Copying all from $(OutputDir)\Release\ to $(OutputDir)\Acc\</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">ItemGroup</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">CopyItems</span><span style="color: blue;"> </span><span style="color: red;">Include</span><span style="color: blue;">=</span>"<span style="color: blue;">$(OutputDir)\Release\**\*.*</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">ItemGroup</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">Copy</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; </span><span style="color: red;">ContinueOnError</span><span style="color: blue;">=</span>"<span style="color: blue;">false</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; </span><span style="color: red;">SourceFiles</span><span style="color: blue;">=</span>"<span style="color: blue;">@(CopyItems)</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; </span><span style="color: red;">DestinationFiles</span><span style="color: blue;">=</span>"<span style="color: blue;">@(CopyItems-&gt;'$(OutputDir)\Acc\%(RecursiveDir)%(Filename)%(Extension)')</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">Target</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

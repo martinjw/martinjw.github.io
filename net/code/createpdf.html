@@ -1,0 +1,154 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Create PDF with iTextSharp</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main</a></li>
+<li><a href="../dotnet.html">.Net</a></li>
+<li><a href="index.html">Code</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>Create PDF with iTextSharp</h2>
+<p>iTextSharp is an open source PDF creator- <a href="http://sourceforge.net/projects/itextsharp/">download</a>/ <a href="http://itextsharp.sourceforge.net/tutorial/index.html">documentation</a></p>
+<p>This is a simplified generic version to print a Dataset.</p>
+<div class="code">
+<p><span style="color: blue;">using</span> System.Data;</p>
+<p><span style="color: blue;">using</span> System.Web;</p>
+<p><span style="color: blue;">using</span> iTextSharp.text;</p>
+<p><span style="color: blue;">using</span> iTextSharp.text.pdf;</p>
+<p>&nbsp;</p>
+<p><span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span></p>
+<p><span style="color: gray;">///</span><span style="color: green;"> Create Pdf using iTextSharp.</span></p>
+<p><span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span></p>
+<p><span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;remarks&gt;</span></p>
+<p><span style="color: gray;">///</span><span style="color: green;"> Uses a dataset, and creates a table per DataTable. The DataTable name and column names are used as page header and table headers.</span></p>
+<p><span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/remarks&gt;</span></p>
+<p><span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">CreatePdf</span></p>
+<p>{</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> Initializes a new instance of the </span><span style="color: gray;">&lt;see cref="CreatePdf"/&gt;</span><span style="color: green;"> class.</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;param name="ds"&gt;</span><span style="color: green;">The dataset containing one or more datatables.</span><span style="color: gray;">&lt;/param&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;param name="name"&gt;</span><span style="color: green;">The filename and pdf title.</span><span style="color: gray;">&lt;/param&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> CreatePdf(<span style="color: #2b91af;">DataSet</span> ds, <span style="color: blue;">string</span> name)</p>
+<p>&nbsp;&nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">this</span>.ds = ds;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">this</span>.name = name;</p>
+<p>&nbsp;&nbsp;&nbsp; }</p>
+<p>&nbsp;</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">readonly</span> <span style="color: #2b91af;">DataSet</span> ds;</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">readonly</span> <span style="color: blue;">string</span> name;</p>
+<p>&nbsp;</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> Execute()</p>
+<p>&nbsp;&nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">HttpResponse</span> Response = <span style="color: #2b91af;">HttpContext</span>.Current.Response;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Response.Clear();</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Response.ContentType = <span style="color: #a31515;">"application/octet-stream"</span>;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Response.AddHeader(<span style="color: #a31515;">"Content-Disposition"</span>, <span style="color: #a31515;">"attachment; filename="</span> + name + <span style="color: #a31515;">".pdf"</span>);</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">// step 1: creation of a document-object</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Document</span> document = <span style="color: blue;">new</span> <span style="color: #2b91af;">Document</span>(<span style="color: #2b91af;">PageSize</span>.A4, 10, 10, 90, 10);</p>
+<p>&nbsp;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">// step 2: we create a writer that listens to the document</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">PdfWriter</span> writer = <span style="color: #2b91af;">PdfWriter</span>.GetInstance(document, Response.OutputStream);</p>
+<p>&nbsp;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//set some header stuff</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; document.AddTitle(name);</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; document.AddSubject(<span style="color: #a31515;">"Table of "</span> + name);</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; document.AddCreator(<span style="color: #a31515;">"This Application"</span>);</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; document.AddAuthor(<span style="color: #a31515;">"Me"</span>);</p>
+<p>&nbsp;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">// we Add a Header that will show up on PAGE 1</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Phrase</span> phr = <span style="color: blue;">new</span> <span style="color: #2b91af;">Phrase</span>(<span style="color: #a31515;">""</span>); <span style="color: green;">//empty phrase for page numbering</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">HeaderFooter</span> footer = <span style="color: blue;">new</span> <span style="color: #2b91af;">HeaderFooter</span>(phr, <span style="color: blue;">true</span>);</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; document.Footer = footer;</p>
+<p>&nbsp;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">// step 3: we open the document</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; document.Open();</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">// step 4: we add content to the document</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; CreatePages(document);</p>
+<p>&nbsp;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">// step 5: we close the document</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; document.Close();</p>
+<p>&nbsp;&nbsp;&nbsp; }</p>
+<p>&nbsp;</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> CreatePages(<span style="color: #2b91af;">Document</span> document)</p>
+<p>&nbsp;&nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">bool</span> first = <span style="color: blue;">true</span>;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">foreach</span> (<span style="color: #2b91af;">DataTable</span> table <span style="color: blue;">in</span> ds.Tables)</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (first)</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; first = <span style="color: blue;">false</span>;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">else</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; document.NewPage();</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; document.Add(FormatHeaderPhrase(table.TableName));</p>
+<p>&nbsp;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">PdfPTable</span> pdfTable = <span style="color: blue;">new</span> <span style="color: #2b91af;">PdfPTable</span>(table.Columns.Count);</p>
+<p>&nbsp;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; pdfTable.DefaultCell.Padding = 3;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; pdfTable.WidthPercentage = 100; <span style="color: green;">// percentage</span></p>
+<p>&nbsp;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; pdfTable.DefaultCell.BorderWidth = 2;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; pdfTable.DefaultCell.HorizontalAlignment = <span style="color: #2b91af;">Element</span>.ALIGN_CENTER;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">foreach</span> (<span style="color: #2b91af;">DataColumn</span> column <span style="color: blue;">in</span> table.Columns)</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; pdfTable.AddCell(column.ColumnName);</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; pdfTable.HeaderRows = 1;&nbsp; <span style="color: green;">// this is the end of the table header</span></p>
+<p>&nbsp;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; pdfTable.DefaultCell.BorderWidth = 1;</p>
+<p>&nbsp;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Color</span> altRow = <span style="color: blue;">new</span> <span style="color: #2b91af;">Color</span>(242, 242, 242);</p>
+<p>&nbsp;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">int</span> i = 0;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">foreach</span> (<span style="color: #2b91af;">DataRow</span> row <span style="color: blue;">in</span> table.Rows)</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; i++;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (i % 2 == 1)</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; pdfTable.DefaultCell.BackgroundColor = altRow;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">foreach</span> (<span style="color: blue;">object</span> cell <span style="color: blue;">in</span> row.ItemArray)</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//assume toString produces valid output</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; pdfTable.AddCell(FormatPhrase(cell.ToString()));</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (i % 2 == 1)</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; pdfTable.DefaultCell.BackgroundColor = <span style="color: #2b91af;">Color</span>.WHITE;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; document.Add(pdfTable);</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }</p>
+<p>&nbsp;&nbsp;&nbsp; }</p>
+<p>&nbsp;</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> Formats the phrase. Apply your own font and size here.</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;param name="value"&gt;</span><span style="color: green;">The value.</span><span style="color: gray;">&lt;/param&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;returns&gt;&lt;/returns&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: #2b91af;">Phrase</span> FormatPhrase(<span style="color: blue;">string</span> value)</p>
+<p>&nbsp;&nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">Phrase</span>(value, <span style="color: #2b91af;">FontFactory</span>.GetFont(<span style="color: #2b91af;">FontFactory</span>.HELVETICA, 8));</p>
+<p>&nbsp;&nbsp;&nbsp; }</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: #2b91af;">Phrase</span> FormatHeaderPhrase(<span style="color: blue;">string</span> value)</p>
+<p>&nbsp;&nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">Phrase</span>(value, <span style="color: #2b91af;">FontFactory</span>.GetFont(<span style="color: #2b91af;">FontFactory</span>.HELVETICA, 10, <span style="color: #2b91af;">Font</span>.BOLD, <span style="color: blue;">new</span> <span style="color: #2b91af;">Color</span>(255, 0, 0)));</p>
+<p>&nbsp;&nbsp;&nbsp; }</p>
+<p>}</p>
+<p>&nbsp;</p>
+</div>
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

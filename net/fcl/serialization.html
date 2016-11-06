@@ -1,0 +1,91 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>.Net Serialization</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="dotnetcollections.html">Collections</a></li>
+<li><a href="events.html">Events</a></li>
+<li><a href="globaldotnet.html">Globalization</a></li>
+<li><a href="reflection.html">Reflection</a></li>
+<li><a href="dotnetsecurity.html">Security</a></li>
+<li><a href="claims.html">Claims Security</a></li>
+<li><a href="dotnetsecurity_crypto.html">Crypto+ signing</a></li>
+<li><a href="serialization.html">Serialization</a></li>
+<li><a href="dotnetthreads.html">Threading</a></li>
+<li><a href="async.html">Async</a></li>
+</ul>
+</div>
+<div class="content">
+<h3>Serialization</h3>
+<div class="code">
+<p><span style="color: green;">//data must be [Serializable]</span><br />
+<span style="color: #2b91af;">MyObjectType</span> data = new <span style="color: #2b91af;">MyObjectType</span>();<br />
+<span style="color: #2b91af;">MemoryStream</span> stm = <span style="color: blue;">new</span> <span style="color: #2b91af;">MemoryStream</span>();<br />
+<span style="color: green;">// Serialize</span><br />
+<span style="color: #2b91af;">IFormatter</span> f = <span style="color: blue;">new</span> <span style="color: #2b91af;">BinaryFormatter</span>(); <span style="color: green;">//XmlSerializer, SoapFormatter</span><br />
+f.Serialize(stm, data);<br />
+<span style="color: green;">// DeSerialize</span><br />
+stm.Seek(0, <span style="color: #2b91af;">SeekOrigin</span>.Begin);<br />
+<span style="color: #2b91af;">IFormatter</span> ds = <span style="color: blue;">new</span> <span style="color: #2b91af;">BinaryFormatter</span>();<br />
+data = (<span style="color: #2b91af;">MyObjectType</span>)ds.Deserialize(stm);</p>
+</div>
+
+<ul>
+<li>See <a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.aspx">msdn</a></li>
+<li>You must use [Serializable] on the class. It is NOT inherited.<ul>
+<li><cite>[DataContract]/[DataMember]</cite> is more flexible. Use [DataMember] to get rid of ugly k__BackingField serialization.</li>
+</ul></li>
+<li>XmlSerializer does not serialize private fields, but BinarySerializer does.</li>
+<li>Non-serializable event subscribers can be grabbed as well so decorate events with [<span style="color: blue;">field</span>: <span style="color: #2b91af;">NonSerialized</span>]</li>
+<li>Generic collections are serializable but not generic Dictionary. </li>
+<li>To reinitialize <cite>[NonSerializable]</cite> members, implement <cite>IDeserializationCallback</cite> (void IDeserialization.OnDeserialization()).</li>
+<li>2.0- For BinaryFormatter- you can create 4 events with attributes [OnDeserializing / OnDeserialization] (methods must take a StreamingContext).<br />[OnDeserialization] is much the same as IDeserializationCallback.</li>
+<li><cite>[OptionalField] </cite>- when deserialized, no error if not there (versioning) 2.0</li>
+<li><cite>SoapFormatter</cite>- unlike BinaryFormatter, you must reference the *.soap.dll</li>
+<li><cite><a href="http://msdn2.microsoft.com/en-us/library/system.xml.serialization.xmlserializer.aspx">xmlSerializer</a></cite>- only public members and parameterless ctor. [XmlIgnore]=[NonSerialized]. Ctor takes the typeof(obj) NB if you use other overloaded ctors, dynamically generated assemblies are never unloaded... (you can use SGEN.exe to initialize them in 2.0)</li>
+<li>Custom serialization by implementing <cite>ISerializable</cite>.<ul>
+<li><cite>GetObjectData</cite>(SerializationInfo info, StreamingContext sc) serializes manually: info.AddValue("my name2", _var)</li>
+<li>#ctor(SerializationInfo info, StreamingContext sc) : _var= info.GetDecimal("my name");</li>
+<li>In both StreamContext.State is a enum of whether to file/db (Presistence) or cross machine etc</li>
+</ul>
+</li>
+</ul>
+
+<div class="code">
+<p><span style="color:green;">//xmlserializer</span><br/>
+<span style="color:blue;">var</span>&nbsp;serializer&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:darkblue;">XmlSerializer</span>(<span style="color:blue;">typeof</span>(<span style="color:darkblue;">Product</span>));<br/>
+<span style="color:blue;">using</span>&nbsp;(<span style="color:blue;">var</span>&nbsp;sw&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:darkblue;">StringWriter</span>())<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;serializer.<span style="color:darkcyan;">Serialize</span>(sw,&nbsp;product);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;xml&nbsp;=&nbsp;sw.<span style="color:darkcyan;">ToString</span>();<br/>
+}<br/>
+<span style="color:green;">//datacontract&nbsp;serializer</span><br/>
+<span style="color:blue;">var</span>&nbsp;dcs&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:darkblue;">DataContractSerializer</span>(<span style="color:blue;">typeof</span>(<span style="color:darkblue;">Product</span>));<br/>
+<span style="color:blue;">using</span>&nbsp;(<span style="color:blue;">var</span>&nbsp;sw&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:darkblue;">StringWriter</span>())<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">using</span>&nbsp;(<span style="color:blue;">var</span>&nbsp;xw&nbsp;=&nbsp;<span style="color:darkblue;">XmlWriter</span>.<span style="color:darkcyan;">Create</span>(sw))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dcs.<span style="color:darkcyan;">WriteObject</span>(xw,&nbsp;product);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;xml&nbsp;=&nbsp;sw.<span style="color:darkcyan;">ToString</span>();<br/>
+}</p>
+</div>
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

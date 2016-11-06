@@ -1,0 +1,152 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ADO Examples- Select</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="io.html">IO</a></li>
+<li><a href="xml.html">Xml</a></li>
+<li><a href="xmlpatterns.html">Xml Patterns</a></li>
+<li><a href="adodotnet.html">ADO.Net</a></li>
+<li><a href="adopatterns.html">ADO Patterns</a></li>
+<li><a href="sql.html">SQL</a></li>
+<li><a href="linq2sql.html">Linq2Sql</a></li>
+<li><a href="ef/ef.html">Entity Framework</a></li>
+<li><a href="wcfds.html">WCF Data Services</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>ADO Examples- Select</h2>
+<ul>
+<li><a href="adodotnet.html">ADO notes</a></li>
+<li><a href="../asp/aspdotnetbind.html">ASP DataBinding notes</a></li>
+</ul>
+<h3>DataReader</h3>
+<div class="code">
+<p><span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: #2b91af;">List</span>&lt;<span style="color: #2b91af;">Product</span>&gt; LoadViaDataReader(<span style="color: blue;">int</span> catgeory)<br />
+&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;  <span style="color: #2b91af;">List</span>&lt;<span style="color: #2b91af;">Product</span>&gt; list = <span style="color: blue;">new</span> <span style="color: #2b91af;">List</span>&lt;<span style="color: #2b91af;">Product</span>&gt;();<br />
+&nbsp;&nbsp;&nbsp;  <span style="color: blue;">string</span> connectionString = <span style="color: #2b91af;">ConfigurationManager</span>.ConnectionStrings[<span style="color: #a31515;">"ConnectionString"</span>].ConnectionString;<br />
+&nbsp;&nbsp;&nbsp;  <span style="color: blue;">using</span> (<span style="color: #2b91af;">SqlConnection</span> conn = <span style="color: blue;">new</span> <span style="color: #2b91af;">SqlConnection</span>(connectionString))<br />
+&nbsp;&nbsp;&nbsp;  {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  conn.Open();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  <span style="color: blue;">string</span> sql = <span style="color: #a31515;">@"SELECT Id, Name, Price, AvailableFrom FROM Product WHERE Category_Id = @CATEGORY"</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  <span style="color: blue;">using</span> (<span style="color: #2b91af;">SqlCommand</span> cmd = <span style="color: blue;">new</span> <span style="color: #2b91af;">SqlCommand</span>(sql, conn))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  cmd.Parameters.AddWithValue(<span style="color: #a31515;">"@CATEGORY"</span>, catgeory);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  <span style="color: blue;">using</span> (<span style="color: #2b91af;">SqlDataReader</span> rdr = cmd.ExecuteReader())<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  <span style="color: blue;">if</span> (rdr.HasRows)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  <span style="color: blue;">while</span> (rdr.Read())<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  list.Add(CreateProduct(rdr));<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  <span style="color: green;">//you could set DataSource = rdr directly</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  <span style="color: green;">//rdr.NextResult(); //for multi-results</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  }<br />
+&nbsp;&nbsp;&nbsp;  }<br />
+&nbsp;&nbsp;&nbsp;  <span style="color: blue;">return</span> list;<br />
+&nbsp;}<br />
+&nbsp;<br />
+&nbsp;<span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: #2b91af;">Product</span> CreateProduct(<span style="color: #2b91af;">IDataRecord</span> rdr)<br />
+&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;  <span style="color: blue;">int</span> id = rdr.GetInt32(0);<br />
+&nbsp;&nbsp;&nbsp;  <span style="color: blue;">string</span> name = rdr[<span style="color: #a31515;">"Name"</span>].ToString();<br />
+&nbsp;&nbsp;&nbsp;  <span style="color: blue;">decimal</span> price = rdr.GetDecimal(2);<br />
+&nbsp;&nbsp;&nbsp;  <span style="color: #2b91af;">DateTime</span>? date = <span style="color: blue;">null</span>;<br />
+&nbsp;&nbsp;&nbsp;  <span style="color: blue;">if</span> (!rdr.IsDBNull(3)) date = rdr.GetDateTime(3);<br />
+&nbsp;&nbsp;&nbsp;  <span style="color: green;">//or... if (rdr["AvailableFrom"] != DBNull.Value) date = rdr["AvailableFrom"];</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp;  <span style="color: green;">//create the object</span><br />
+&nbsp;&nbsp;&nbsp;  <span style="color: #2b91af;">Product</span> p = <span style="color: blue;">new</span> <span style="color: #2b91af;">Product</span>(id, name);<br />
+&nbsp;&nbsp;&nbsp;  p.AvailableFrom = date;<br />
+&nbsp;&nbsp;&nbsp;  p.Price = price;<br />
+&nbsp;&nbsp;&nbsp;  <span style="color: blue;">return</span> p;<br />
+&nbsp;}</p>
+</div>
+
+<h3>DataAdaptor/DataTable</h3>
+<div class="code">
+<p>&nbsp;<br />
+<span style="color: blue;">private</span> <span style="color: #2b91af;">DataTable</span> LoadViaDataTable(<span style="color: blue;">int</span> catgeory)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> connectionString = <span style="color: #2b91af;">ConfigurationManager</span>.ConnectionStrings[<span style="color: #a31515;">"ConnectionString"</span>].ConnectionString;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: #2b91af;">SqlConnection</span> conn = <span style="color: blue;">new</span> <span style="color: #2b91af;">SqlConnection</span>(connectionString))<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//no need to explicitly open/close connection unless doing several fills</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> sql = <span style="color: #a31515;">@"SELECT Id, Name, Price, AvailableFrom FROM Product WHERE Category_Id = @CATEGORY"</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: #2b91af;">SqlCommand</span> cmd = <span style="color: blue;">new</span> <span style="color: #2b91af;">SqlCommand</span>(sql, conn))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; cmd.Parameters.AddWithValue(<span style="color: #a31515;">"@CATEGORY"</span>, catgeory);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">DataTable</span> dt = InitDataTable();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: #2b91af;">SqlDataAdapter</span> da = <span style="color: blue;">new</span> <span style="color: #2b91af;">SqlDataAdapter</span>(cmd))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//da.SelectCommand = cmd</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; da.Fill(dt);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> dt;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}<br />
+&nbsp;<br />
+<span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: #2b91af;">DataTable</span> InitDataTable()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">DataTable</span> dt = <span style="color: blue;">new</span> <span style="color: #2b91af;">DataTable</span>(<span style="color: #a31515;">"Product"</span>);<br />
+&nbsp;&nbsp;&nbsp; dt.Columns.Add(<span style="color: #a31515;">"Id"</span>, <span style="color: blue;">typeof</span>(<span style="color: blue;">int</span>));<br />
+&nbsp;&nbsp;&nbsp; dt.Columns.Add(<span style="color: #a31515;">"Name"</span>, <span style="color: blue;">typeof</span>(<span style="color: blue;">string</span>));<br />
+&nbsp;&nbsp;&nbsp; dt.Columns.Add(<span style="color: #a31515;">"Price"</span>, <span style="color: blue;">typeof</span>(<span style="color: blue;">decimal</span>));<br />
+&nbsp;&nbsp;&nbsp; dt.Columns.Add(<span style="color: #a31515;">"AvailableFrom"</span>, <span style="color: blue;">typeof</span>(<span style="color: #2b91af;">DateTime</span>));<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> dt;<br />
+}</p>
+</div>
+
+<h3>SqlDataSource (Asp2)</h3>
+<p>Programmatic use- normally you bind directly.</p>
+<div class="code">
+<p><span style="color: blue;">private</span> <span style="color: blue;">void</span> UseSqlDataSourceProgrammatically(<span style="color: blue;">int</span> category)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//you could also handle the OnSelecting event to set parameters (which have to be strings)</span><br />
+&nbsp;&nbsp;&nbsp; SqlDataSource1.SelectParameters[0].DefaultValue = category.ToString(); <br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//SqlDataSource.Select returns DataView if DataSourceMode=DataSet otherwise a IDataReader</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">DataView</span> dv = (<span style="color: #2b91af;">DataView</span>)SqlDataSource1.Select(<span style="color: #2b91af;">DataSourceSelectArguments</span>.Empty);<br />
+&nbsp;&nbsp;&nbsp; GridView1.DataSource = dv;<br />
+&nbsp;&nbsp;&nbsp; GridView1.DataBind();<br />
+}</p>
+</div>
+
+<h3>Binding To An Asp GridView</h3>
+<p>Code behind (use any of the methods above):</p>
+<div class="code">
+<p>GridView1.DataSource = LoadViaDataReader(1);<br />
+GridView1.DataBind();</p>
+</div>
+<p>Markup:</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">GridView</span> <span style="color: red;">ID</span><span style="color: blue;">="GridView1"</span> <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <span style="color: red;">AutoGenerateColumns</span><span style="color: blue;">="False"</span> <span style="color: red;">DataKeyNames</span><span style="color: blue;">="Id"&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">Columns</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">BoundField</span> <span style="color: red;">DataField</span><span style="color: blue;">="Id"</span> <span style="color: red;">HeaderText</span><span style="color: blue;">="Id"</span> <span style="color: red;">InsertVisible</span><span style="color: blue;">="False"</span> <span style="color: red;">ReadOnly</span><span style="color: blue;">="True"</span> <span style="color: red;">SortExpression</span><span style="color: blue;">="Id"</span> <span style="color: blue;">/&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">BoundField</span> <span style="color: red;">DataField</span><span style="color: blue;">="Name"</span> <span style="color: red;">HeaderText</span><span style="color: blue;">="Name"</span> <span style="color: blue;">/&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">BoundField</span> <span style="color: red;">DataField</span><span style="color: blue;">="Price"</span> <span style="color: red;">HeaderText</span><span style="color: blue;">="Price"</span> <span style="color: red;">DataFormatString</span><span style="color: blue;">="{0:C}"</span> <span style="color: red;">HtmlEncode</span><span style="color: blue;">="false"</span> <span style="color: blue;">/&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">BoundField</span> <span style="color: red;">DataField</span><span style="color: blue;">="AvailableFrom"</span> <span style="color: red;">HeaderText</span><span style="color: blue;">="AvailableFrom"</span> <span style="color: red;">DataFormatString</span><span style="color: blue;">="{0:D}"</span> <span style="color: red;">HtmlEncode</span><span style="color: blue;">="false"</span> <span style="color: blue;">/&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;/</span><span style="color: #a31515;">Columns</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">GridView</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+</div>
+<div class="Footer">
+
+</div></body>
+</html>

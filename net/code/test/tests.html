@@ -1,0 +1,133 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Tests</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../index.html">Code &gt;</a></li>
+<li><a href="tests.html">Tests</a></li>
+<li><a href="lifecycle.html">Test lifecycle</a></li>
+<li><a href="parametrized.html">Parametrized Tests</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Tests</h2>
+<h3>Test frameworks</h3>
+<p>.Net has a number of testing frameworks. The major ones:</p>
+<ul>
+<li><a href="http://www.nunit.org/">NUnit</a>, which has been around since .net 1, originally ported from Java.</li>
+<li><a href="https://msdn.microsoft.com/en-us/library/microsoft.visualstudio.testtools.unittesting.aspx">MsTest (Visual Studio test tools)</a> - since Visual Studio 2005/.net 2, the most common.</li>
+<li><a href="http://xunit.github.io/">XUnit</a> - since 2007, including .net 3.5 and widely used inside Microsoft.</li>
+</ul>
+<p>MsTest is the most used. While it may not be the most modern (the core framework is basically unchanged since 2005), it is reliable and easy. Instead of adding richer APIs like NUnit, Microsoft invested into little used things like asp.net unit tests, Coded UI tests, private method accessors and fakes. Both NUnit and XUnit have more "modern" features and are important in open-source, but less so within large companies. </p>
+<p>Since Visual Studio 2012, Visual Studio has test adapters, so can easily run NUnit, XUnit and others (before you used to need special runners like Resharper or TestDriven).</p>
+<p>The popularity of Behavior Driven Development has led to some "specification" frameworks like Ruby's Cucumber with its Gherkin language (Scenario/Given/When/Then). Some, like Specflow, are intended used for acceptance tests while retaining *unit for unit tests. More common is simply to name the tests as "Given_x_When_y_Then_z" (with underscores or just capitalization). </p>
+<ul>
+<li><a href="http://www.specflow.org/">SpecFlow</a></li>
+<li><a href="https://github.com/machine/machine.specifications">Machine.Specifications (MSpec)</a></li>
+<li>There's a .net version of Fitnesse (integration decision tables defined in html/wiki): <a href="http://fitsharp.github.io/">FitSharp</a></li>
+</ul>
+
+<p>For web UI testing, <a href="http://watin.org/">WatIN</a> has been around for ages and is excellent; otherwise use Selenium or standard javascript test tools.</p>
+<h3>Assertions</h3>
+<p>You can also use separate "assertion libraries" like <a href="https://github.com/erichexter/Should">Should</a>, <a href="https://github.com/shouldly/shouldly">Shouldly</a> and <a href="http://www.fluentassertions.com/">FluentAssertions</a>. These fluent styles, like string.Should().Be.Equal("x"), can be quite verbose.</p>
+<p>Or you can simply use Assert.AreEqual/ Assert.IsNull / Assert.IsTrue for 95% of tests.</p>
+<h3>NUnit vs MsTest vs XUnit</h3>
+<p>For simple unit tests, there's not much difference. For comparison</p>
+<ul>
+<li>NUnit uses [<span style="color: #2b91af;">TestFixture</span>] and [<span style="color: #2b91af;">Test</span>] attributes.</li>
+<li>MsTest uses [<span style="color: #2b91af;">TestClass</span>] and [<span style="color: #2b91af;">TestMethod</span>] attributes.</li>
+<li>XUnit uses no class marker, [<span style="color: #2b91af;">Fact</span>] attribute or [<span style="color: #2b91af;">Theory</span>] (in xunit.extensions for v1 only)<br />
+XUnit v2 runs tests in parallel. To run sequentially: [<span style="color: blue;">assembly</span>: <span style="color: #2b91af;">CollectionBehavior</span>(DisableTestParallelization = <span style="color: blue;">true</span>)]</li>
+</ul>
+<div class="code">
+<p><span style="color: blue;">using</span> System;<br />
+<span style="color: blue;">using</span> Microsoft.VisualStudio.TestTools.UnitTesting;<br />
+<span style="color: blue;">using</span> NUnit.Framework;<br />
+<span style="color: blue;">using</span> Xunit;<br />
+&nbsp;<br />
+<span style="color: blue;">namespace</span> UnitTestProject1<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//XUnit no class attribute</span><br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">TestClass</span>] <span style="color: green;">//MsTest</span><br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">TestFixture</span>] <span style="color: green;">//NUnit</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">UnitTest1</span><br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">TestMethod</span>] <span style="color: green;">//MsTest</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">Test</span>] <span style="color: green;">//NUnit</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">Fact</span>] <span style="color: green;">//XUnit</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> TestMethod1()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> result = 1 + 2;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//assert equals</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Microsoft.VisualStudio.TestTools.UnitTesting.<span style="color: #2b91af;">Assert</span>.AreEqual(3, result, <span style="color: #a31515;">"AreEqual optional message"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; NUnit.Framework.<span style="color: #2b91af;">Assert</span>.AreEqual(3, result, <span style="color: #a31515;">"AreEqual optional message"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; NUnit.Framework.<span style="color: #2b91af;">Assert</span>.That(result, <span style="color: #2b91af;">Is</span>.EqualTo(3)); <span style="color: green;">//alternative form</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Xunit.<span style="color: #2b91af;">Assert</span>.Equal(3, result); <span style="color: green;">//Equal, not AreEqual, no message</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//type</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Microsoft.VisualStudio.TestTools.UnitTesting.<span style="color: #2b91af;">Assert</span>.IsInstanceOfType(3, <span style="color: blue;">typeof</span>(<span style="color: blue;">int</span>));<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; NUnit.Framework.<span style="color: #2b91af;">Assert</span>.IsInstanceOf(<span style="color: blue;">typeof</span>(<span style="color: blue;">int</span>), 3); <span style="color: green;">//note different order</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; NUnit.Framework.<span style="color: #2b91af;">Assert</span>.IsInstanceOf&lt;<span style="color: blue;">int</span>&gt;(3); <span style="color: green;">//generic version</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; NUnit.Framework.<span style="color: #2b91af;">Assert</span>.That(3, <span style="color: #2b91af;">Is</span>.TypeOf&lt;<span style="color: blue;">int</span>&gt;()); <span style="color: green;">//constraint version</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Xunit.<span style="color: #2b91af;">Assert</span>.IsType&lt;<span style="color: blue;">int</span>&gt;(3);<br />
+&nbsp;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//inconclusive</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (<span style="color: #2b91af;">DateTime</span>.Now.DayOfWeek == <span style="color: #2b91af;">DayOfWeek</span>.Monday)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Microsoft.VisualStudio.TestTools.UnitTesting.<span style="color: #2b91af;">Assert</span>.Inconclusive(<span style="color: #a31515;">"May not work on Mondays"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (<span style="color: #2b91af;">DateTime</span>.Now.DayOfWeek == <span style="color: #2b91af;">DayOfWeek</span>.Tuesday)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; NUnit.Framework.<span style="color: #2b91af;">Assert</span>.Inconclusive(<span style="color: #a31515;">"May not work on Tuesdays"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//XUnit has no inconclusive</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; NUnit.Framework.<span style="color: #2b91af;">Assert</span>.Ignore(<span style="color: #a31515;">"Causes it to be ignored"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+<p>Integration tests may need to return Inconclusive rather than Passed or Failed (environmental dependencies aren't present). NUnit and MsTest support Inconclusive, but XUnit doesn't.</p>
+<h4>Exceptions</h4>
+<p>MsTest and NUnit have the [<span style="color: #2b91af;">ExpectedException</span>(<span style="color: blue;">typeof</span>(x))] attribute.<br/>
+NUnit and XUnit have <span style="color: #2b91af;">Assert</span>.Throws&lt;<span style="color: #2b91af;">x</span>&gt;<br/>
+Sometimes a simple try/catch with Assert.Fail() is clearer.</p>
+<div class="code"><p>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">TestMethod</span>, Microsoft.VisualStudio.TestTools.UnitTesting.<span style="color: #2b91af;">ExpectedException</span>(<span style="color: blue;">typeof</span>(<span style="color: #2b91af;">ArgumentOutOfRangeException</span>))] <span style="color: green;">//MsTest</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">Test</span>, NUnit.Framework.<span style="color: #2b91af;">ExpectedException</span>(<span style="color: blue;">typeof</span>(<span style="color: #2b91af;">ArgumentOutOfRangeException</span>))] <span style="color: green;">//NUnit</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">Fact</span>] <span style="color: green;">//XUnit has no ExpectedException (see body)</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> ExceptionTest()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//throw new InvalidOperationException();</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; NUnit.Framework.<span style="color: #2b91af;">Assert</span>.Throws&lt;<span style="color: #2b91af;">ArgumentOutOfRangeException</span>&gt;(() =&gt; <span style="color: blue;">new</span> <span style="color: #2b91af;">DateTime</span>(-1));<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Xunit.<span style="color: #2b91af;">Assert</span>.Throws&lt;<span style="color: #2b91af;">ArgumentOutOfRangeException</span>&gt;(() =&gt; <span style="color: blue;">new</span> <span style="color: #2b91af;">DateTime</span>(-1));<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }</p>
+</div>
+<h4>Ignoring tests</h4>
+<p>Removing the Test/TestMethod/Fact attribute is easiest, but sometimes you want to explicitly ignore.</p>
+<div class="code">
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; [Microsoft.VisualStudio.TestTools.UnitTesting.<span style="color: #2b91af;">Ignore</span>] <span style="color: green;">//MsTest</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; [NUnit.Framework.<span style="color: #2b91af;">Ignore</span>] <span style="color: green;">//NUnit</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">Fact</span>(Skip = <span style="color: #a31515;">"Ignore it"</span>)] <span style="color: green;">//XUnit</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> BrokenTest()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//don't run this</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }</p>
+</div>
+
+<p>See more about the <a href="lifecycle.html">test lifecycle events</a> and <a href="parametrized.html">parametrized Tests</a></p>
+
+</div>
+<div class="Footer">
+</div>
+</body>
+</html>

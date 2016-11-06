@@ -1,0 +1,158 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Test lifecycle</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../index.html">Code &gt;</a></li>
+<li><a href="tests.html">Tests</a></li>
+<li><a href="lifecycle.html">Test lifecycle</a></li>
+<li><a href="parametrized.html">Parametrized Tests</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Test lifecycle</h2>
+<p>Integration tests often need to prepare things before the test and clean up after. For instance, database integration tests are possible, and desirable, but database initialization is too slow to do in each test. MsTest is actually easier to work with than NUnit (which is close) and XUnit (which is better in v2 than v1).</p>
+<h3>MsTest lifecycle</h3>
+<p>You can hook into various events before and after tests. Some require specific signatures (static with TestObject argument)</p>
+<div class="code">
+<p><span style="color: green;">//all tests in project (only 1 per project)</span><br />
+[<span style="color: #2b91af;">AssemblyInitialize</span>]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> AssemblyInit(<span style="color: #2b91af;">TestContext</span> context) { }<br />
+&nbsp;<br />
+[<span style="color: #2b91af;">AssemblyCleanup</span>]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> AssemblyCleanup() { }<br />
+&nbsp;<br />
+<span style="color: green;">//when class created. Or just use constructor.</span><br />
+[<span style="color: #2b91af;">ClassInitialize</span>]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> ClassInit(<span style="color: #2b91af;">TestContext</span> context) { }<br />
+&nbsp;<br />
+[<span style="color: #2b91af;">ClassCleanup</span>]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> ClassCleanup() { }<br />
+&nbsp;<br />
+<span style="color: green;">//before each test in class</span><br />
+[<span style="color: #2b91af;">TestInitialize</span>]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">void</span> Initialize() { }<br />
+&nbsp;<br />
+[<span style="color: #2b91af;">TestCleanup</span>]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">void</span> Cleanup() { }<br />
+&nbsp;<br />
+[<span style="color: #2b91af;">TestMethod</span>]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">void</span> MyActualTest() { }</p>
+</div>
+
+<h3>NUnit life cycle</h3>
+<p>NUnit has similar capabilities without the odd signatures. There's no AssemblyInitialize, but you can do a class with SetUpFixture attribute for a specific namespace.</p>
+<div class="code">
+<p>[<span style="color: #2b91af;">SetUpFixture</span>] <span style="color: green;">//called for namespace- not assembly!</span><br />
+<span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">NamespaceInit</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">SetUp</span>]<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> SetupNamespace() { }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">TearDown</span>]<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> TearDownNamespace() { }<br />
+}<br />
+&nbsp;<br />
+&nbsp;<br />
+[<span style="color: #2b91af;">TestFixture</span>]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">NUnitLifeCycleTests</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//called when this class created/ended</span><br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">TestFixtureSetUp</span>]<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> Init() { }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">TestFixtureTearDown</span>]<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> Cleanup() { }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//called before each test</span><br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">SetUp</span>]<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> Setup() { }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">TearDown</span>]<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> TearDown() { }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//the test</span><br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">Test</span>]<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> TestMethod1() { }<br />
+}</p>
+</div>
+<h3>XUnit lifecycle</h3>
+<p>XUnit does not have Setup/Teardown attributes, but you can use constructors and disposables. For some things, derive from the BeforeAfterTestAttribute.</p>
+<div class="alert">XUnit v2 runs tests in parallel. To run sequentially: <br/>
+[<span style="color: blue;">assembly</span>: <span style="color: #2b91af;">CollectionBehavior</span>(DisableTestParallelization = <span style="color: blue;">true</span>)]</div>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">XUnitTests</span> : <span style="color: #2b91af;">IDisposable</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> XUnitTests() { } <span style="color: green;">//use default ctor as ClassInitialize</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> Dispose() { } <span style="color: green;">//use Disposable for ClassCleanUp</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">Fact</span>]<br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">ResetDatabase</span>]<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> TestMethod() { }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">internal</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">ResetDatabaseAttribute</span> : Xunit.Sdk.<span style="color: #2b91af;">BeforeAfterTestAttribute</span><br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//could be used to restore/rollback database</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//NB: not compatible with parallelism</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">override</span> <span style="color: blue;">void</span> Before(<span style="color: #2b91af;">MethodInfo</span> methodUnderTest) { }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">override</span> <span style="color: blue;">void</span> After(<span style="color: #2b91af;">MethodInfo</span> methodUnderTest) { }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+<p>In XUnit <strong>v1</strong> there's an IUseFixture&lt;T&gt; where T can be shared between methods.</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">MoreTests</span> : <span style="color: #2b91af;">IUseFixture</span>&lt;<span style="color: #2b91af;">DataContext</span>&gt;<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: #2b91af;">DataContext</span> _context;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> SetFixture(<span style="color: #2b91af;">DataContext</span> context)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; _context = context;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">Fact</span>]<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> TestMethod()<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Assert</span>.NotNull(_context.Products.First());<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+<p>In XUnit <strong>v2</strong> (2015+) there's an IClassFixture (class based), which now uses constructor injection.</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">MoreTests</span> : <span style="color: #2b91af;">IClassFixture</span>&lt;<span style="color: #2b91af;">DataContext</span>&gt;<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">readonly</span> <span style="color: #2b91af;">DataContext</span> _context;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> MoreTests(<span style="color: #2b91af;">DataContext</span> context)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; _context = context;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">Fact</span>]<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> TestMethod()<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Assert</span>.NotNull(_context.Products.First());<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+<p>In XUnit <strong>v2</strong> (2015+) there a separate ICollectionFixture, which is more suited to database tests. The test classes get a [<span style="color: #2b91af;">Collection</span>("name")] attribute. For config, you create an unused class with [<span style="color: #2b91af;">CollectionDefinition</span>("name")] and derived from :<span style="color: #2b91af;">ICollectionFixture</span>&lt;<span style="color: #2b91af;">DataContext</span>&gt;</p>
+<p>At which point, you may prefer MsTest's AssemblyInitialize...</p>
+</div>
+<div class="Footer">
+</div>
+</body>
+</html>

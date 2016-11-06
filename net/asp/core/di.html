@@ -1,0 +1,70 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP.Net Core Dependency Injection</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="core.html">DotNet Core</a></li>
+<li><a href="mvc.html">MVC</a></li>
+<li><a href="project.html">Core Project</a></li>
+<li><a href="startup.html">Startup</a></li>
+<li><a href="config.html">Config Settings</a></li>
+<li><a href="iis.html">IIS</a></li>
+<li><a href="controllers.html">Controllers</a></li>
+<li><a href="views.html">Views</a></li>
+<li><a href="di.html">Dependency Injection</a></li>
+<li><a href="security.html">Security</a></li>
+<li><a href="logging.html">Logging</a></li>
+<li><a href="localization.html">Localization</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>ASP.Net Core Dependency Injection</h2>
+
+<p>See <a href="https://docs.asp.net/en/latest/fundamentals/dependency-injection.html">docs.asp.net</a></p>
+
+<p>There is a simple DI built into core (using IServiceProvider, which goes back to .net 1.1 but now is in Microsoft.Extensions.DependencyInjection.Abstractions).<br />
+It's functional enough that a full DI container isn't required, but the usual suspects (Structuremap etc) should have hooks.</p>
+
+<h3>Configuration</h3>
+<p>Services are configured in Startup.<strong>ConfigureServices</strong>(IServiceCollection services)</p>
+<p>Most middleware services are added using the standard services.AddX convention.</p>
+<div class="code">
+<p><span style="color:blue;">public</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:darkcyan;">ConfigureServices</span>(<span style="color:darkblue;">IServiceCollection</span>&nbsp;services)<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Add&nbsp;middleware&nbsp;services.</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;services.<span style="color:darkcyan;">AddMvc</span>();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Add&nbsp;application&nbsp;services.</span><br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//newly&nbsp;created&nbsp;each&nbsp;time</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;services.<span style="color:darkcyan;">AddTransient</span>&lt;<span style="color:darkblue;">IService</span>,&nbsp;<span style="color:darkblue;">Service</span>&gt;();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//created&nbsp;for&nbsp;request,&nbsp;reused&nbsp;within&nbsp;request</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;services.<span style="color:darkcyan;">AddScoped</span>&lt;<span style="color:darkblue;">IService</span>,&nbsp;<span style="color:darkblue;">Service</span>&gt;();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//create&nbsp;a&nbsp;singleton,&nbsp;created&nbsp;here</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;services.<span style="color:darkcyan;">AddSingleton</span>&lt;<span style="color:darkblue;">IService</span>&gt;(<span style="color:blue;">new</span>&nbsp;<span style="color:darkblue;">Service</span>());<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//create&nbsp;a&nbsp;singleton,&nbsp;created&nbsp;lazily</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;services.<span style="color:darkcyan;">AddSingleton</span>&lt;<span style="color:darkblue;">IService</span>,&nbsp;<span style="color:darkblue;">Service</span>&gt;();<br/>
+}</p>
+</div>
+
+<h3>Use</h3>
+<p>Consume using constructor injection- chained dependencies are fine.</p>
+<p>If absolutely necessary to break DI, you can also access Service-Locator style, from HttpContext.RequestServices</p>
+
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

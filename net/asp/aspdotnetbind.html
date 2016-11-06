@@ -1,0 +1,263 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP Webforms Binding</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="aspcontrols.html">Asp Webforms Controls</a></li>
+<li><a href="aspdotnetbind.html">Asp Webforms Binding</a></li>
+<li><a href="aspdotnetjs.html">Asp Webforms Js/Css/Img</a></li>
+<li><a href="asp2.html">Asp Webforms 2.0</a></li>
+<li><a href="aspajax.html">Asp Webforms Ajax</a></li>
+<li><a href="aspvalidation.html">Asp Webforms Validomatic</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>ASP Webforms Binding</h2>
+<p><a href="../adodotnet.html">ADO/Dataset notes</a> - <a href="http://asp.net/QuickStart/aspnet/doc/data/objects.aspx">Asp2 quickstart</a><br />
+MSDN: <a href="http://msdn2.microsoft.com/en-us/library/system.web.ui.webcontrols.gridview.aspx">GridView</a>, <a href="http://msdn2.microsoft.com/en-us/library/system.web.ui.webcontrols.detailsview.aspx">DetailsVew</a>, <a href="http://msdn2.microsoft.com/en-us/library/system.web.ui.webcontrols.sqldatasource.aspx">SQLDataSource</a>, <a href="http://msdn2.microsoft.com/en-us/library/system.web.ui.webcontrols.objectdatasource.aspx">ObjectDataSource</a>, <a href="http://asp.net/learn/data-access/tutorial-25-cs.aspx">Asp.net paging with ODS tutorial</a></p>
+<h3>Eval/Bind syntax</h3>
+<p>Note: do not confuse <span style="background: #ffee62;">&lt;%#</span> binding with...</p>
+<ul>
+<li><span style="background: #ffee62;">&lt;%@</span> Page ... control directives</li>
+<li><span style="background: #ffee62;">&lt;%=</span><span style="color: blue;">DateTime.Now</span><span style="background: #ffee62;">%&gt;</span> - inline expressions (Response.Write)</li>
+<li><span style="background: #ffee62;">&lt;%:</span><span style="color: blue;">DateTime.Now</span><span style="background: #ffee62;">%&gt;</span> - inline expressions in .Net 4 with automatic HtmlEncoding </li>
+</ul>
+<table>
+<tr>
+<td><span style="background: #ffee62;">&lt;%#</span> <span style="color: blue;">Container.DataItem</span>("Price") <span style="background: #ffee62;">%&gt;</span></td>
+<td>ASP1. Format: <span style="color: navy">DataBinder.Eval</span>(<span style="color: blue;">Container.DataItem</span>, "Price", "{0:C}") </td>
+</tr>
+<tr>
+<td><span style="background: #ffee62;">&lt;%#</span> <span style="color: navy">Eval</span>("Price", "{0:C}") <span style="background: #ffee62;">%&gt;</span></td>
+<td>ASP2. One way with optional formatting. <br />Eval == DataBinder.Eval (DataBinder==Container in ASP2)</td>
+</tr>
+<tr>
+<td><span style="background: #ffee62;">&lt;%#</span> (((<span style="color: #a31515;">System.Data.DataRowView</span>)<span style="color: blue;">Container.DataItem</span>)["Price"]) <span style="background: #ffee62;">%&gt;</span></td>
+<td>Explcit cast, avoid reflection. To find the actual type (DataRowView here), add a <span style="background: #ffee62;">&lt;%#</span> <span style="color: blue;">Container.DataItem</span> <span style="background: #ffee62;">%&gt;</span></td>
+</tr>
+<tr>
+<td><span style="background: #ffee62;">&lt;%#</span> <span style="color: navy">Bind</span>("Price") <span style="background: #ffee62;">%&gt;</span></td>
+<td>ASP2. Two way</td>
+</tr>
+<tr>
+<td><span style="background: #ffee62;">&lt;%#</span> <span style="color: navy">MyMethod</span>(<span style="color: blue;">Container.DataItem</span>) <span style="background: #ffee62;">%&gt;</span></td>
+<td>Remember this can be useful</td>
+</tr>
+<tr>
+<td><span style="background: #ffee62;">&lt;%#</span> <span style="color: blue;">Container.DataItemIndex</span> <span style="background: #ffee62;">%&gt;</span></td>
+<td>The row index. For instance, for a "manual" radio button in a gridView (Request["rPick"] will be the item index):
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">input</span> <span style="color: red;">type</span><span style="color: blue;">="radio"</span> <span style="color: red;">name</span><span style="color: blue;">="rPick"</span> <span style="color: red;">id</span><span style="color: blue;">='r</span><span style="background: #ffee62;">&lt;%</span># Container.DataItemIndex <span style="background: #ffee62;">%&gt;</span><span style="color: blue;">'</span> <span style="color: red;">value</span><span style="color: blue;">='</span><span style="background: #ffee62;">&lt;%</span># Container.DataItemIndex <span style="background: #ffee62;">%&gt;</span><span style="color: blue;">'</span> <span style="color: blue;">/&gt;</span></p>
+</td>
+</tr>
+</table>
+
+<h3>ASP Data access</h3>
+<ul>
+<li>Most .net websites uses the old .net 1 programatic way: gridview1.DataSource = dataAccess.GetData();</li>
+<li>SqlDataSource had the terrible idea that you want SQL in your page markup.<ul>
+<li>You can cache data. EnableCaching=true caches the Select result (+ CacheDuration="60" DataSourceMode="DataSet")</li>
+</ul>
+</li>
+<li>The MS ORM versions are LinqDataSource (Linq2Sql) and EntityDataSource (EF)</li>
+<li>These have a "Where" property, but for fuller linq use a <a href="http://msdn.microsoft.com/en-us/library/dd537671.aspx">QueryExtender control</a> (.Net 4). There's a PropertyExpression (==), SearchExpression (StartsWith/EndsWith/Compares), RangeExpression, OrderByExpression (and ThenByExpression) etc.</li>
+<li>DataSources and QueryExtenders have asp:Parameter collections- esp. ControlParameter (control / property) and QueryStringParameter</li>
+</ul>
+
+
+<h3>ObjectDataSource</h3>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">ObjectDataSource</span> <span style="color: red;">ID</span><span style="color: blue;">="ObjectDataSource1"</span> <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <span style="color: red;">TypeName</span><span style="color: blue;">="PersonRecord"</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <span style="color: red;">SelectMethod</span><span style="color: blue;">="FindAll"</span> <br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <span style="color: red;">UpdateMethod</span><span style="color: blue;">="Update"</span> <span style="color: red;">DataObjectTypeName</span><span style="color: blue;">="PersonRecord"</span> <span style="color: blue;">/&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">GridView</span> <span style="color: red;">ID</span><span style="color: blue;">="GridView1"</span> <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <span style="color: red;">DataSourceID</span><span style="color: blue;">="ObjectDataSource1"</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <span style="color: red;">AutoGenerateEditButton</span><span style="color: blue;">="true"</span> <span style="color: blue;">/&gt;</span></p>
+</div>
+
+<p>The ASP <a href="http://msdn.microsoft.com/en-us/library/system.web.ui.webcontrols.objectdatasource.aspx">ObjectDataSource</a> is pretty limited for normal business objects/POCOs but it's okay for simple ActiveRecord type classes. In practice I use <a href="../code/asp2/code_gridviewpaged_adaptor.html">my ObjectAdaptor</a> a lot, and sometimes you just have to downgrade to a dataTable (<a href="http://codebetter.com/blogs/brendan.tompkins/archive/2006/05/11/144539.aspx">here's a base EntityDataSource that reflects the object to create a datatable [CodeBetter]</a>.</p>
+<ul>
+<li>Set TypeName to the BLL name</li>
+<li>It's created using default constructor (to keep the instance for caching, override ObjectCreating -supply ObjectInstance- and ObjectDisposing - e.Cancel= true - events - see <a href="../code/asp2/code_gridviewpaged_filler.html">here</a>)</li>
+<li>Populate the properties and call designated Select/Insert/Update/Delete methods (all made by non-cached reflection).</li>
+<li>For paging, EnablePaging="true" and SelectCountMethod plus (for nondefault named) MaximumRowsParameterName and StartRowIndexParameterName (NB the Configure DataSource wizard wrongly puts this in the asp:Parameter list)</li>
+<li>For InsertMethod there is an InsertParameters to map the properties to arguments. Otherwise set DataObjectTypeName.</li>
+<li>Optimistic concurrency using ConflictDetection= ConflictOptions.CompareAllValues</li>
+</ul>
+<p>Obviously, there's no filtering unless you use a Dataset (/table/view) and paging and sorting has to be done manually (but fairly simple for a typed dataset).</p>
+
+<h3>Gridviews: Getting the Data/Row</h3>
+<p>From a asp:ButtonField int rowIndex = Convert.ToInt32(e.CommandArgument);<br />
+If you template it, you can do the same trick with one of the following:  <br />CommandArgument='&lt;%# ((GridViewRow) Container).RowIndex %&gt;' or <br />CommandArgument='&lt;%# DataBinder.Eval(Container, "RowIndex") %&gt;' or <br />(won't work in nested UpdatePanel) CommandArgument='&lt;%# Container.DataItemIndex %&gt;'.</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">GridView</span> <span style="color: red;">ID</span><span style="color: blue;">="GridView1"</span> <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <span style="color: red;">AutoGenerateEditButton</span><span style="color: blue;">="True"</span> <br />
+&nbsp;&nbsp;&nbsp; <span style="color: red;">DataKeyNames</span><span style="color: blue;">="Id"</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: red;">onrowediting</span><span style="color: blue;">="GridView1_RowEditing"</span> <span style="color: red;">onrowcommand</span><span style="color: blue;">="GridView1_RowCommand"</span> <span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">Columns</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">ButtonField</span> <span style="color: red;">CommandName</span><span style="color: blue;">="DeleteButton"</span> <span style="color: red;">HeaderText</span><span style="color: blue;">="Delete"</span> <span style="color: red;">Text</span><span style="color: blue;">="Delete"</span> <span style="color: blue;">/&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">TemplateField</span> <span style="color: red;">HeaderText</span><span style="color: blue;">="Delete (Template)"&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">ItemTemplate</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">LinkButton</span> <span style="color: red;">ID</span><span style="color: blue;">="LinkButton1"</span> <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <span style="color: red;">CausesValidation</span><span style="color: blue;">="false"</span> <br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: red;">CommandName</span><span style="color: blue;">="DeleteTemplate"</span> <span style="color: red;">Text</span><span style="color: blue;">="Delete"</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: red;">CommandArgument</span><span style="color: blue;">='</span><span style="background: #ffee62;">&lt;%</span># ((GridViewRow)Container).RowIndex <span style="background: #ffee62;">%&gt;</span><span style="color: blue;">'</span> <span style="color: blue;">/&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;/</span><span style="color: #a31515;">ItemTemplate</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;/</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">TemplateField</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;/</span><span style="color: #a31515;">Columns</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">GridView</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+<div class="code">
+<p><span style="color: blue;">protected</span> <span style="color: blue;">void</span> GridView1_RowCommand(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">GridViewCommandEventArgs</span> e)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">GridView</span> gv = (<span style="color: #2b91af;">GridView</span>)sender;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//for ButtonField e.CommandArgument is the integer rowIndex</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//for templated columns it's not unless CommandArgument bound to ((GridViewRow)Container).RowIndex </span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">int</span> rowIndex = <span style="color: #2b91af;">Convert</span>.ToInt32(e.CommandArgument);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">GridViewRow</span> row = gv.Rows[rowIndex];<br />
+}<br />
+<span style="color: blue;">protected</span> <span style="color: blue;">void</span> GridView1_RowEditing(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">GridViewEditEventArgs</span> e)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">GridView</span> gv = (<span style="color: #2b91af;">GridView</span>)sender;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">int</span> rowIndex = e.NewEditIndex; <span style="color: green;">//AutoGenerateEditButton / CommandName="Edit"</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">GridViewRow</span> row = gv.Rows[rowIndex];<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">int</span> id = <span style="color: #2b91af;">Convert</span>.ToInt32(gv.DataKeys[rowIndex][0]);<br />
+}</p>
+</div>
+
+<table>
+<tr>
+<th>GridView Events</th>
+<th>RowIndex/Row</th>
+<th>Data</th>
+</tr>
+<tr><td>RowCommand
+</td>
+<td>//if ButtonField or CommandArgument set as above<br />int rowIndex = Convert.ToInt32(commandArgument);<br />GridViewRow row = gv.Rows[rowIndex];</td>
+<td>gv.DataKeys[rowIndex][0]</td>
+</tr>
+<tr><td>RowEditing
+</td>
+<td>int rowIndex = e.NewEditIndex;<br />GridViewRow row = gv.Rows[rowIndex];</td>
+</tr>
+<tr><td>RowUpdating
+</td>
+<td>int rowIndex = e.RowIndex;</td>
+<td>//if bound to DataSource<br />e.Keys[0];e.NewValues["Name"]</td>
+</tr>
+</table>
+<h3>Gridviews and DataViews</h3>
+<p>Bound controls are pretty limited- the fact that DataFormatString will only work if HtmlEncode= false is particularly crap.</p>
+<div class="code">
+<p>
+<span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">BoundField</span> <span style="color: red;">DataField</span><span style="color: blue;">="Date"</span> <span style="color: red;">HeaderText</span><span style="color: blue;">="Date"</span>  <br />
+&nbsp;&nbsp;<span style="color: red;">DataFormatString</span><span style="color: blue;">="{0:dd/MM/yyyy}"</span> <span style="color: red;">HtmlEncode</span><span style="color: blue;">="False"</span> <span style="color: blue;">/&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">BoundField</span> <span style="color: red;">DataField</span><span style="color: blue;">="Cost"</span> <span style="color: red;">HeaderText</span><span style="color: blue;">="Cost"</span>  <br />
+&nbsp;&nbsp;<span style="color: red;">DataFormatString</span><span style="color: blue;">="{0:c}"</span> <span style="color: red;">HtmlEncode</span><span style="color: blue;">="False"</span> <span style="color: blue;">/&gt;</span>
+</p>
+</div>
+<p>Practically you have to template most columns (to add the validators). Oh yes, and the CompareValidator still doesn't understand currency symbols if Type="currency". Grrr.<br />
+ButtonFields with <strong>ButtonType="Image"</strong> always post twice. As a button, or a templated field, it's okay. (<a href="http://connect.microsoft.com/VisualStudio/feedback/ViewFeedback.aspx?FeedbackID=105123">MS bug- marked "fixed" but it's still in 3.5</a>)</p>
+<ul>
+<li><a href="../code/asp2/asp_detailview.html">Example: DetailView/SqlDataSource with integer identity</a></li>
+<li><a href="../code/asp2/asp_sqldatasource.html">Example: SqlDataSource with guid primary key</a></li>
+</ul>
+
+<p>If you're deleting, you'll get paging display bugs in GridView because ObjectDataSource doesn't return AffectedRows (SqlDataSource default paging works, but it loads all the data every time).</p>
+<div class="code">
+<p><span style="color: blue;">protected</span> <span style="color: blue;">void</span> DataSourceDeleted(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">ObjectDataSourceStatusEventArgs</span> e)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; e.AffectedRows = (<span style="color: blue;">int</span>)e.ReturnValue;<br />
+}</p>
+</div>
+
+
+<h4>ImageField</h4>
+<p>Showing images in gridviews. DataImageUrlFormatString has the url, DataImageUrlField has the property. DataAlternateTextField (optionally with DataAlternateTextFormatString) can be used for alt text.</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: maroon;">asp</span><span style="color: blue;">:</span><span style="color: maroon;">ImageField</span> <span style="color: red;">DataImageUrlField</span><span style="color: blue;">="CategoryId"</span> <span style="color: red;">DataAlternateTextField</span><span style="color: blue;">="CategoryName"</span> <span style="color: red;">DataImageUrlFormatString</span><span style="color: blue;">="~/Viewers/ImageViewer.ashx?id={0}"</span>&nbsp; <span style="color: blue;">/&gt;</span></p>
+</div>
+
+<h3>GridView PagerRow</h3>
+<p>Adding text to the pager, without creating a template.</p>
+<div class="code">
+<p>&nbsp;&nbsp;&nbsp; <span style="color: green;">//data is datasource; count is total number</span><br />
+&nbsp;&nbsp;&nbsp; gv.RowCreated += <span style="color: blue;">delegate</span>(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">GridViewRowEventArgs</span> e)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  <span style="color: blue;">if</span> (e.Row.RowType == <span style="color: #2b91af;">DataControlRowType</span>.Pager)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  AddPagerText(e.Row, count);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  };<br />
+&nbsp;&nbsp;&nbsp; gv.DataSource = data;<br />
+&nbsp;&nbsp;&nbsp; gv.DataBind();<br />
+}<br />
+&nbsp;<br />
+<span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> AddPagerText(<span style="color: #2b91af;">TableRow</span> row, <span style="color: blue;">int</span> count)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Label</span> lab = <span style="color: blue;">new</span> <span style="color: #2b91af;">Label</span>();<br />
+&nbsp;&nbsp;&nbsp; lab.CssClass = <span style="color: #a31515;">"PagerLabel"</span>; <span style="color: green;">//easy styling</span><br />
+&nbsp;&nbsp;&nbsp; lab.Text = <span style="color: blue;">string</span>.Format("{0} found. Result page: ", count);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Table</span> table = <span style="color: blue;">new</span> <span style="color: #2b91af;">Table</span>(); <span style="color: green;">//put into table like the page numbers</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">TableRow</span> tabrow = <span style="color: blue;">new</span> <span style="color: #2b91af;">TableRow</span>();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">TableCell</span> cell = <span style="color: blue;">new</span> <span style="color: #2b91af;">TableCell</span>();<br />
+&nbsp;&nbsp;&nbsp; cell.Controls.Add(lab);<br />
+&nbsp;&nbsp;&nbsp; tabrow.Controls.Add(cell);<br />
+&nbsp;&nbsp;&nbsp; table.Controls.Add(tabrow);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//pager template render one cell containing an HTMLTable</span><br />
+&nbsp;&nbsp;&nbsp; row.Cells[0].Controls.AddAt(0, table);<br />
+}</p>
+</div>
+
+
+<h3>Dynamic Data</h3>
+<p><a href="http://msdn.microsoft.com/en-us/library/cc488545.aspx">Dynamic Data</a> includes scaffolding for Linq2Sql/EF data models (useful for simple Admin websites; it's customizable but I don't think anybody has used it for real-world websites). It also reads richer information about types (UIHints, foreign keys etc) for better presentation- this part is useful (see <a href="dataannotations.html">DataAnnotations</a>.</p>
+<p>There are VS2010 templates for EF and L2Sql. You can only have one model.</p>
+<p>Use buddy classes to add metadata - add a partial class for the type with MetadataType attribute, and attribute the buddy class ([ScaffoldColumn(false)], UIHint, DisplayFormat, Editable, EnumDataType). You can also use the partial methods OnChanging/OnChanged - for validation, throw a DataAnnotations.ValidationError.</p>
+<h4>Structure</h4>
+<ul>
+<li>Global.asax has a public static MetaModel called DefaultModel; Application_Start RegisterRoutes using 
+model.RegisterContext(<span style="color: blue;">typeof</span>(<span style="color: #2b91af;">NorthwindDataContext</span>), <span style="color: blue;">new</span> <span style="color: #2b91af;">ContextConfiguration</span>() { ScaffoldAllTables = <span style="color: blue;">true</span> });<br />
+A DynamicDataRoute is added using the DefaultModel. To show ListDetails (master-detail on same page) you have to change the routing (Action = <span style="color: #2b91af;">PageAction</span>.List, ViewName = <span style="color: #a31515;">"ListDetails"</span> Model = model)</li>
+<li>DynamicData/PageTemplates contains aspx pages: List.aspx/Details.aspx/Edit.aspx etc</li>
+<li>DynamicData/EntityTemplates contains ascx user controls: Default_Edit.ascx etc</li>
+<li>DynamicData/FieldTemplates contains ascx user controls for fields (DateTime, Text, Email)</li>
+<li>DynamicData/CustomPages is empty- create eg Customers/List.aspx to override list for customers. Default routing already does this.
+You can customize the List GridView by AutoGenerateColumns=false and adding DynamicField (instead of BoundField).</li>
+</ul>
+<h4>In existing websites</h4>
+<p>To use dynamic data behaviour (better validation etc) in existing standard gridView/DataSource pages. just add GridView1.EnableDynamicData(typeof(MyModel.Product)) in Page_Init.</p>
+<p>You could also add a <a href="http://msdn.microsoft.com/en-us/library/system.web.dynamicdata.dynamicdatamanager.aspx">DynamicDataManager</a>, and in Page_Init do instead DynamicDataManager1.EnableDynamicData( EntityDataSource1).</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: maroon;">asp</span><span style="color: blue;">:</span><span style="color: maroon;">DynamicDataManager</span> <span style="color: red;">ID</span><span style="color: blue;">="DynamicDataManager1"</span> <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <span style="color: red;">AutoLoadForeignKeys</span><span style="color: blue;">="true"</span>&nbsp; <span style="color: blue;">/&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: maroon;">asp</span><span style="color: blue;">:</span><span style="color: maroon;">LinqDataSource</span> <span style="color: red;">ID</span><span style="color: blue;">="LinqDataSource1"</span> <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <span style="color: red;">ContextTypeName</span><span style="color: blue;">="DataAccess.NorthwindDataContext"</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: red;">TableName</span><span style="color: blue;">="Products"</span> <span style="color: red;">EnableUpdate</span><span style="color: blue;">="true"</span> <span style="color: red;">EnableInsert</span><span style="color: blue;">="true"</span> <span style="color: red;">EnableDelete</span><span style="color: blue;">="true"</span> <span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: maroon;">asp</span><span style="color: blue;">:</span><span style="color: maroon;">LinqDataSource</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: maroon;">asp</span><span style="color: blue;">:</span><span style="color: maroon;">GridView</span> <span style="color: red;">ID</span><span style="color: blue;">="GridView1"</span> <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <span style="color: red;">DataSourceID</span><span style="color: blue;">="LinqDataSource1"</span> <br />
+&nbsp;&nbsp;&nbsp; <span style="color: red;">AutoGenerateEditButton</span><span style="color: blue;">="true"</span> <span style="color: red;">AutoGenerateDeleteButton</span><span style="color: blue;">="true"&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: maroon;">asp</span><span style="color: blue;">:</span><span style="color: maroon;">GridView</span><span style="color: blue;">&gt;</span></p>
+</div>
+<div class="code">
+<p><span style="color: blue;">protected</span> <span style="color: blue;">void</span> Page_Init(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">EventArgs</span> e)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//GridView1.EnableDynamicData(typeof(Category));</span><br />
+&nbsp;&nbsp;&nbsp; DynamicDataManager1.RegisterControl(GridView1);<br />
+}</p>
+</div>
+
+
+<div class="Footer">
+
+</div></div></body>
+</html>

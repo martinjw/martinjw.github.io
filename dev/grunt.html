@@ -1,0 +1,274 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>Grunt</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link rel="stylesheet" type="text/css" href="../style.css">
+<script type="text/javascript" src="../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../index.html">Home &gt;</a></li>
+<li><a href="../web/jsobjects.html">Web &gt;</a></li>
+<li><a href="grunt.html">Grunt</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Grunt</h2>
+<p>Grunt is development tooling to run tasks on (client-side) websites for publishing. Tasks include pre-processing (coffee, less/sass), copying files, bundling and minifying css and javacript.</p>
+<p>NB: another popular alternative to Grunt is <a href="http://gulpjs.com/">Gulp</a> (<code>npm install --global gulp</code>)</p>
+<p><a href="http://bower.io/">Bower</a> is a package manager for client side assets (javascript, css, images). You can <code>bower install jquery --save</code> and <code>bower update jquery</code>.</p>
+<p><a href="http://yeoman.io/">Yeoman</a> ("yo") is a website generator. It uses grunt and bower.</p>
+<h3>Installation</h3>
+<ul>
+<li>Install <a href="http://nodejs.org/">Nodejs</a> web server. This is only used for development tooling, not the target web server. (Use the installer or chocolatey)</li>
+<li>Install <a href="http://gruntjs.com/">Grunt</a> command line globally using <span title="Node package manager">npm</span><br />
+<code>npm install -g grunt-cli</code></li>
+</ul>
+<h3>Init project</h3>
+<ul>
+<li>Go to the project root folder</li>
+<li>Create a <strong>package.json</strong> (npm configuration; containing at least name and version, plus probably devDependencies)<br/>
+Either manually or <code>npm init</code> and follow prompts<br/>
+<pre>
+{
+  "name": "staticvoid",
+  "description": "static void website",
+  "version": "1.0.0",
+  "devDependencies": {
+    "grunt": "~0.4.5",
+    "grunt-contrib-uglify": "~0.6.0",
+    "grunt-contrib-cssmin": "^0.10.0"
+  }
+}
+</pre>
+</li>
+<li>Create a <strong>gruntfile.js</strong><br/>
+It's a node module (module.exports = function (grunt) { /*...*/ }<br/>
+There is a grunt-init plugin with various templates for new projects</li>
+<li>You can add grunt plugins (and grunt itself) to packages.json "devDependencies"<br/>
+Manually or <code>npm install grunt --save-dev</code> (note the double -)
+</li>
+<li>Run grunt: <code>grunt</code> (runs the default task)<br/>
+Or <code>grunt build</code> (if you have a build task)</li>
+</ul>
+<div class="alert">Don't commit <cite>node_modules</cite> to source control.<br/>
+The package.json and gruntfile.js is enough to tell npm/grunt what to do.</div>
+
+<h3>Gruntfile.js</h3>
+<p>The main sections</p>
+<ol>
+<li>grunt.initConfig({ /* configurations */ } );<br/>
+Configure each grunt task (if not using defaults)
+<ul>
+<li>Each config has <code>options</code> and arbitrary named targets (which can contain specific <code>options</code>)</li>
+<li>Specify <code>grunt uglify:release</code> to run a specific uglify: { release: {...}}</li>
+<li>Otherwise <em>all targets</em> are executed when you run <code>grunt uglify</code></li>
+<li>Normally there's a <code>files:</code>. You can use globbing (eg *.js, /**/*.js).<ul>
+<li>Destination: origin format. <code>files: { 'new.css': [ 'orig.css']}</code></li>
+<li>Arrays format: <code>files: [ {src: ['orig.css'], dest: ['new.css']}, ]</code> </li>
+<li>Dynamic expansion format: <code>files: [ { expand:true,<br/>
+src: ['**/*.js'],<br/>
+dest: dist,<br/>
+
+<br/>
+} ]</code></li>
+</ul></li>
+</ul>
+</li>
+<li>grunt.loadNpmTasks('task');<br/>
+Load the task. There is a neat task to reduce all those lines to this: require('load-grunt-tasks')(grunt);</li>
+<li>grunt.registerTask('default', ['uglify', 'cssmin']);<br/>
+Create the default task, plus others (commonly, 'build', 'test')</li>
+</ol>
+<p>Most of the code is in grunt.initConfig. The naming convention is that a plugin task name matches between the sections (minus grunt- or grunt-contrib- prefixes). You can add variables at the top and refer to them as '&lt;%= %&gt;</p>
+
+<div class="alert">Remember you have to add a task
+<ol>
+<li>via npm (<code>npm install gruntTask --save-dev</code>)</li>
+<li>in gruntfile.js configure it in initConfig</li>
+<li>loadNpmTasks</li>
+<li>include it in your registerTask</li>
+</ol>
+</div>
+<h3>Minify</h3>
+<p>This is a simple gruntfile.js which just minifies javascript and css<br/>
+(First do <code>npm install grunt-contrib-uglify --save-dev</code> and <code>npm install grunt-contrib-cssmin --save-dev</code></p>
+<pre class="js">
+module.exports = function (grunt) {
+    'use strict';
+
+    //configure
+	grunt.initConfig({
+		pkg: grunt.file.readJSON('package.json'),
+		//a banner stamp, using the package we just loaded
+		banner: '/* &lt;%= pkg.name %&gt; &lt;%= grunt.template.today("dd-mm-yyyy") %&gt; */\n',
+		
+		uglify: {
+		  options: {
+			banner: '&lt;%= banner %&gt;'
+		  },
+		  dist: {
+			files: {
+			  'utilities.min.js': ['utilities.js']
+			}
+		  }
+		},
+		
+		cssmin: {
+		  css: {
+			files: {
+				'style.min.css': ['style.css']
+			}
+		  }
+		}
+	});
+	
+	//load tasks
+	grunt.loadNpmTasks('grunt-contrib-uglify');
+	grunt.loadNpmTasks('grunt-contrib-cssmin');
+	
+	//create default task
+	grunt.registerTask('default', ['uglify', 'cssmin']);
+};
+</pre>
+<p>You can also minify html using <code>npm install grunt-contrib-htmlmin --save-dev</code></p>
+<pre>
+module.exports = function (grunt) {
+    'use strict';
+	grunt.initConfig({
+		htmlmin: {
+			target: {
+				options: {
+					removeComments: true,
+					collapseWhitespace: true
+				  },
+				  files: {
+				   'index-min.html': 'index.html',
+				  },
+			}
+		}
+	});
+	grunt.loadNpmTasks('grunt-contrib-htmlmin');
+	grunt.registerTask('default', ['htmlmin']);
+};
+</pre>
+<p>There's also an imagemin for images, and you can use it with <a href="https://www.npmjs.org/package/imagemin-mozjpeg">MozJpeg</a> to optimize jpegs for the web (like Facebook does).</p>
+<h3>Bundling</h3>
+<p><strong>grunt-contrib-concat</strong> concatenates files together (for bundling). Use with uglify and cssmin like this:</p>
+<pre>
+module.exports = function (grunt) {
+    'use strict';
+
+	grunt.initConfig({
+		concat: {
+			js: {
+				options: {
+					separator: ';',
+					sourceMap: true,
+				},
+				//the !filename excludes a file (it's the destination)
+				src: ['mu*.js', '!mu_all.js'],
+				dest: 'mu_all.js',
+			},
+			css: {
+				src: ['style*.css', '!style_all.css'],
+				dest: 'style_all.css',
+			}
+		},
+		uglify: {
+		  js: {
+			files: {
+			  'mu_all.js': ['mu_all.js']
+			}
+		  }
+		},
+		
+		cssmin: {
+		  css: {
+			files: {
+				'style_all.css': ['style_all.css']
+			}
+		  }
+		},
+
+	});
+	
+	grunt.loadNpmTasks('grunt-contrib-concat');
+	grunt.loadNpmTasks('grunt-contrib-uglify');
+	grunt.loadNpmTasks('grunt-contrib-cssmin');
+	
+	grunt.registerTask('default', ['concat', 'uglify', 'cssmin']);
+};
+</pre>
+<p>The problem is your html still loads the individual files. Either use <strong>grunt-string-replace</strong> or <strong>grunt-usemin</strong> to fix the individual script and link tags (html comments find the replaceable blocks).</p>
+
+
+<h3>Preview in website</h3>
+<p><strong>grunt-contrib-connect</strong> opens a static website.</p>
+<pre>
+module.exports = function (grunt) {
+    'use strict';
+	grunt.initConfig({
+		connect: {
+			server: {
+				options: {
+					port: 9001, //use this port
+					hostname: '127.0.0.1', //localhost
+					//base: 'www-root', //base directory
+					open: true, //open in browser
+					keepalive: true, //keep it alive (until ctrl/c grunt)
+				}
+			},
+		}
+	});
+	grunt.loadNpmTasks('grunt-contrib-connect');
+	grunt.registerTask('default', ['connect']);
+};
+</pre>
+
+<h3>Clean and copy</h3>
+<p><strong>grunt-contrib-clean</strong> deletes files and folders, <strong>grunt-contrib-copy</strong> copies them.</p>
+<p>Typically your root will contain an app (development) folder and dest (destination) folder. These tasks copy everything over.</p>
+<pre>
+module.exports = function (grunt) {
+    'use strict';
+	grunt.initConfig({
+		clean: {
+			target: [ 'dist/**/*' ], //all files and subfolders in dist
+		},
+		copy: {
+			target: {
+				options: {
+					timestamp: true //preserve timestamp
+				  },
+				  files: [
+					{
+						expand:true,
+						src: 'net/**', //** is files and directories
+						dest: 'dist', //to dist/net/...
+					}
+				  ],
+			}
+		}
+	});
+	grunt.loadNpmTasks('grunt-contrib-clean');
+	grunt.loadNpmTasks('grunt-contrib-copy');
+	grunt.registerTask('default', ['clean', 'copy']);
+};
+</pre>
+
+<h3>Others</h3>
+<p><strong>grunt-contrib-watch</strong> is a filesystem watcher which launches a task (e.g. build) whenever specified files change.</p>
+<p><strong>grunt-angular-templates</strong> concats and minifies all the angular templates into $templateCache. Then you can concat into a single app.js.</p>
+
+</div>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

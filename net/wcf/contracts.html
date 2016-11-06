@@ -1,0 +1,182 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>WCF Contracts</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="wcf.html">WCF &gt;</a></li>
+<li><a href="behavior.html">Behavior</a></li>
+<li><a href="clients.html">Clients</a></li>
+<li><a href="contracts.html">Contracts</a></li>
+<li><a href="endpoints.html">Endpoints</a></li>
+<li><a href="faults.html">Faults</a></li>
+<li><a href="logging.html">Logging</a></li>
+<li><a href="routing.html">Routing</a></li>
+<li><a href="security.html">Security</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>WCF Contracts</h2>
+<ul>
+<li>Service Contracts define the service and (OperationContract) methods</li>
+<li>Data Contracts define the message data (request/response) passing to/from the OperationContracts</li>
+<li>Message Contracts are low level data contracts that change the underlying SOAP xml</li>
+</ul>
+
+<h3>Service Contracts</h3>
+<div class="code">
+<p><span style="color: green;">//best practice to add name and namespace</span><br />
+[<span style="color: #2b91af;">ServiceContract</span>(Name = <span style="color: #a31515;">"Calculator"</span>, Namespace = <span style="color: #a31515;">"http://x.com/"</span>)]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">interface</span> <span style="color: #2b91af;">IService</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">OperationContract</span>]<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Response</span> Add(<span style="color: blue;">int</span> number, [<span style="color: #2b91af;">MessageParameter</span>(Name = <span style="color: #a31515;">"Number2"</span>)]<span style="color: blue;">int</span> number2);<br />
+}</p>
+</div>
+
+<h3>Data Contracts</h3>
+<p>The messages that are passing to and from the OperationContract are data contracts.</p>
+<div class="code">
+<p><span style="color: green;">//DataContract must be on classes/enums (and is not inherited).</span><br />
+[<span style="color: #2b91af;">DataContract</span>(Namespace = <span style="color: #a31515;">"http://y.com/"</span>)]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">Response</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//Defaults: IsRequired=false (optional),  EmitDefaultValue=true (passes nil for null/0)</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//IsRequired=true is not compatible with EmitDefaultValue=false</span><br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">DataMember</span>(IsRequired = <span style="color: blue;">false</span>)]<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">int</span> Total { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+}</p>
+</div>
+<p>There's also an [<span style="color: #2b91af;">EnumMember</span>] and a [<span style="color: #2b91af;">CollectionDataContract</span>]</p>
+<p>When you have polymorphic objects/collections, add <a href="http://msdn.microsoft.com/en-us/library/ms730167.aspx">KnownTypes</a>: [<span style="color: #2b91af;">KnownType</span>(<span style="color: blue;">typeof</span>(<span style="color: #2b91af;">Gorilla</span>))]. Generic types must be returned in a Type[] from a method.</p>
+
+
+<h3>Message Contracts</h3>
+<p>For detailed control of serialization (wrapping/ headers) use [<span style="color: #2b91af;">MessageContract</span>] over dataContract. See <a href="http://msdn.microsoft.com/en-us/library/ms730255.aspx">MSDN</a></p>
+<div class="code">
+<p><span style="color: green;">//default wrapping: &lt;s:Body&gt;&lt;SpecificRequest&gt;&lt;Description&gt;...</span><br />
+<span style="color: green;">//no wrapping (IsWrapped=false): &lt;s:Body&gt;&lt;Description&gt;...</span><br />
+<span style="color: green;">//renamed (WrapperName=): &lt;s:Body&gt;&lt;specificRequest&gt;...</span><br />
+[<span style="color: #2b91af;">MessageContract</span>(WrapperName = <span style="color: #a31515;">"specificRequest"</span>)]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">SpecificRequest</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//appears in the header, encrypted and signed</span><br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">MessageHeader</span>(ProtectionLevel = <br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; System.Net.Security.<span style="color: #2b91af;">ProtectionLevel</span>.EncryptAndSign)]<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">string</span> User { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//add a specific namespace instead of the service contract</span><br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">MessageBodyMember</span>(Namespace = <span style="color: #a31515;">"http://mw.com/"</span>)]<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">string</span> Description { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+}</p>
+</div>
+
+<h3>More control</h3>
+<ul>
+<li>For forward-proof versioning, implement <a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.iextensibledataobject.aspx">IExtensibleDataObject</a> with an ExtensionData property.
+</li>
+<li>For RPC, use [<span style="color: #2b91af;">DataContractFormat</span>(Style = <span style="color: #2b91af;">OperationFormatStyle</span>.Rpc)]</li>
+<li>For specific XML schemas, use [<span style="color: #2b91af;">XmlSerializerFormat</span>] on the ServiceContract.
+</li>
+<li>Custom headers: In config, endpoints can have a &lt;headers&gt; element</li>
+</ul>
+
+<h3>POX</h3>
+<p>You handle things on the XML level. By default, a client puts an Action on a request which maps to the OperationContract (the SOAP Action name is {method}Request and {method}Response e.g. DoWorkRequest). You can do it manually:</p> 
+<div class="code">
+<p><span style="color: green;">//specify a specific action</span><br />
+[<span style="color: #2b91af;">OperationContract</span>(Action = <span style="color: #a31515;">"http://calculator/add"</span>)]<br />
+<span style="color: #2b91af;">Message</span> DoWork(<span style="color: #2b91af;">Message</span> message);<br />
+&nbsp;<br />
+<span style="color: green;">//or use a wildcard to handle all request with or without an action</span><br />
+[<span style="color: #2b91af;">OperationContract</span>(Action = <span style="color: #a31515;">"*"</span>)]<br />
+<span style="color: #2b91af;">Message</span> DoEverything(<span style="color: #2b91af;">Message</span> message);</p>
+</div>
+<p>Working with <a href="http://msdn.microsoft.com/en-us/library/system.servicemodel.channels.message.aspx">System.ServiceModel.Channels.Message</a></p>
+ <div class="code">
+<p><span style="color: blue;">public</span> <span style="color: #2b91af;">Message</span> DoWork(<span style="color: #2b91af;">Message</span> message)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (message.IsEmpty) <span style="color: blue;">return</span> NoBodyFound();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//message.State == Created</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">XmlReader</span> body = message.GetReaderAtBodyContents();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//message.State == Read</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//or (if message.State == Created - if Read, InvalidOperationException)</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> request = message.GetBody&lt;<span style="color: #2b91af;">SpecificRequest</span>&gt;();<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//to read without setting Read state</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> messageBuffer = message.CreateBufferedCopy(<span style="color: blue;">int</span>.MaxValue);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> copy = messageBuffer.CreateMessage();<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">foreach</span> (<span style="color: blue;">var</span> headerInfo <span style="color: blue;">in</span> message.Headers)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//read the header info</span><br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//response - use static CreateMesage (with XmlReader, a derived BodyWriter, a MessageFault or ...)</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: #2b91af;">Message</span>.CreateMessage(<span style="color: #2b91af;">MessageVersion</span>.Soap12, <span style="color: #a31515;">"actionName"</span>, <span style="color: blue;">new</span> <span style="color: #2b91af;">SpecificRequest</span>());<br />
+}</p>
+</div>
+
+<p>You can send POX messages with no SOAP envelope: add MessageVersion.None to the TextMessageEncodingBindingElement.</p>
+
+<h3>Behavior/Contract</h3>
+
+<p>Some "behaviors" (optional features) can be expressed in the contract.</p>
+<ul>
+<li><a href="faults.html">FaultContracts</a>: [<span style="color: #2b91af;">FaultContract</span>(<span style="color: blue;">typeof</span>(<span style="color: #2b91af;">DivideByZeroException</span>))]</li>
+<li><a href="behavior.html#Sessions">Sessions</a>: [<span style="color: #2b91af;">ServiceContract</span>(SessionMode = <span style="color: #2b91af;">SessionMode</span>.Required)]<br />
+[<span style="color: #2b91af;">OperationContract</span>(IsInitiating = <span style="color: #2b91af;">false</span>, IsTerminating = <span style="color: #2b91af;">true</span>)]</li>
+<li><a href="security.html#ProtectionLevel">ProtectionLevel</a>:
+[<span style="color: #2b91af;">OperationContract</span>(ProtectionLevel = <span style="color: #2b91af;">ProtectionLevel</span>.EncryptAndSign)]</li>
+<li>Transactions: See below</li>
+</ul>
+
+
+<h3><a name="Transactions">Transactions</a></h3>
+<p>TCP and WS Bindings (not basicHttpBinding) support transactions.</p>
+
+<h4>Contract</h4>
+<div class="code">
+<p>[<span style="color: #2b91af;">OperationContract</span>]<br />
+[<span style="color: #2b91af;">TransactionFlow</span>(<span style="color: #2b91af;">TransactionFlowOption</span>.Allowed)] <span style="color: green;">//or Mandatory (NB: not OneWay!)</span><br />
+<span style="color: blue;">void</span> DoWork();</p>
+</div>
+
+<h4>Service Implementation</h4>
+ <div class="code">
+<p><span style="color: green;">//requires transaction and will commit when finished</span><br />
+[<span style="color: #2b91af;">OperationBehavior</span>(TransactionScopeRequired = <span style="color: blue;">true</span>, <br />
+&nbsp;&nbsp;&nbsp; TransactionAutoComplete = <span style="color: blue;">true</span>)]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">void</span> DoWork()</p>
+</div>
+
+<h4>Client binding</h4>
+<p>Must be manual!</p>
+<div class="code">
+<p><span style="color: blue;">var</span> binding = <span style="color: blue;">new</span> <span style="color: #2b91af;">WSHttpBinding</span>();<br />
+binding.TransactionFlow = <span style="color: blue;">true</span>;</p>
+</div>
+
+
+</div>
+<div class="Footer"><script type="text/javascript">
+//<![CDATA[
+
+
+prettyPrint();
+//]]>
+</script></div>
+</body>
+</html>

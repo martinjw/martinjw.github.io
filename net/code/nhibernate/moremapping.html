@@ -1,0 +1,128 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>NHibernate More mapping</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../index.html">Code &gt;</a></li>
+<li><a href="index.html">NHibernate</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>NHibernate Mapping</h2>
+<p>See <a href="mapping.html">simple examples</a>. <strong>Add the .hbm.xml files as "Embedded Resource"</strong>. The number one error! <br />
+You can add xml intellisense by copying the nhibernate-mapping.xsd file to %ProgramFiles%/Microsoft Visual Studio 10.0\Xml\Schemas.</p>
+<h3>Mapping to tables</h3>
+<ul>
+<li>The easiest is table per concrete class- like Linq2Sql</li>
+<li>For Table per class hierarchy (simple polymorphic entities) use a discriminator column in the sql table<br />
+Add &lt;subclass ... discriminator-value="A"&gt; ... &lt;discriminator column="TYPE" /&gt;<br />
+You could also use sql:  formula="case when TYPE is Null Then 'A' Else 'B' end"</li>
+<li>Table per subclass- the base class is a table, and there are tables for each subclass whose primary key is a foreign key to the base table. NHibernate selects with an outer-join.<br />
+Use &lt;joined-subclass table="SubTable"&gt;&lt;key column="ID"/&gt;&lt;property ... </li>
+</ul>
+
+<h3>Identity</h3>
+<p><strong>generator</strong> can be: </p>
+<dl>
+<dt>native (or identity or sequence)</dt>
+<dd>Integer auto-assigned primary keys - Identity columns in SQLServer, sequences in Oracle.<br />
+<em>Entities are not just saved at Flush/Commit.</em></dd>
+<dt>guid or guid.comb</dt>
+<dd>NHibernate assigns a guid (guid.comb uses datetime to make sequential ids).</dd>
+<dt>hilo</dt>
+<dd>Read unique keys from table (eg hibernate_unique_key).</dd>
+<dt>assigned</dt>
+<dd>Natural keys. New entities must be saved with ISession.Save, not SaveOrUpdate.</dd>
+</dl>
+<p>Composite keys - use &lt;composite-id class="KeyClass"&gt; &lt;key-property ... (or key-many-to-one for FK-objects)<br />
+The KeyClass must omplement Equals, GetHashCode and be serializable.<br />
+The bags should specify &lt;key&gt; &lt;column .../&gt; &lt;column ... in the same order.<br />
+Tables that have foreign keys/ many-to-one should also specify both columns.
+</p>
+<div class="code">
+<p><span style="color: blue;">&lt;?</span><span style="color: #a31515;">xml</span><span style="color: blue;"> </span><span style="color: red;">version</span><span style="color: blue;">=</span>"<span style="color: blue;">1.0</span>"<span style="color: blue;"> </span><span style="color: red;">encoding</span><span style="color: blue;">=</span>"<span style="color: blue;">utf-8</span>"<span style="color: blue;">?&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: #a31515;">hibernate-mapping</span><span style="color: blue;"> </span><span style="color: red;">xmlns</span><span style="color: blue;">=</span>"<span style="color: blue;">urn:nhibernate-mapping-2.2</span>"<span style="color: blue;"> </span><span style="color: red;">namespace</span><span style="color: blue;">=</span>"<span style="color: blue;">Northwind</span>"<span style="color: blue;"> </span><span style="color: red;">assembly</span><span style="color: blue;">=</span>"<span style="color: blue;">Northwind</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">class</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">OrderDetail</span>"<span style="color: blue;"> </span><span style="color: red;">table</span><span style="color: blue;">=</span>"<span style="color: blue;">`Order Details`</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">composite-id</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Key</span>"<span style="color: blue;"> </span><span style="color: red;">class</span><span style="color: blue;">=</span>"<span style="color: blue;">OrderDetailKey</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">key-property</span><span style="color: blue;"> </span><span style="color: red;">column</span><span style="color: blue;">=</span>"<span style="color: blue;">`OrderID`</span>"<span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">OrderId</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">key-property</span><span style="color: blue;"> </span><span style="color: red;">column</span><span style="color: blue;">=</span>"<span style="color: blue;">`ProductID`</span>"<span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">ProductId</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">composite-id</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">property</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">UnitPrice</span>"<span style="color: blue;"> </span><span style="color: red;">column</span><span style="color: blue;">=</span>"<span style="color: blue;">`UnitPrice`</span>"<span style="color: blue;"> </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">System.Decimal</span>"<span style="color: blue;"> </span><span style="color: red;">not-null</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">property</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Quantity</span>"<span style="color: blue;"> </span><span style="color: red;">column</span><span style="color: blue;">=</span>"<span style="color: blue;">`Quantity`</span>"<span style="color: blue;"> </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">System.Int16</span>"<span style="color: blue;"> </span><span style="color: red;">not-null</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">property</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Discount</span>"<span style="color: blue;"> </span><span style="color: red;">column</span><span style="color: blue;">=</span>"<span style="color: blue;">`Discount`</span>"<span style="color: blue;"> </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">System.Single</span>"<span style="color: blue;"> </span><span style="color: red;">not-null</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">class</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">hibernate-mapping</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+
+<p>After the id, add a &lt;version name="Version" column="VERSION"&gt; (Version should be an int; it's not a database TIMESTAMP).<br />
+Alternatively use &lt;class ... optimistic-lock="all" to update ..where col=origValue. Or, with care, optimistic-lock="dirty"/dynamic-update="true" or select-before-update="true".</p>
+
+<h3>Property</h3>
+<ul>
+<li>The default access of "property" is fine usually, but "nosetter.camelcase-underscore" (set via the private field) is useful for primary keys and foreign key collections, and when you have business logic/validation in setters. To not use the getter, use "field.camelcase-underscore" (if you use "field" without a naming strategy, you have to map the _camelCaseNames).</li>
+<li>Escape column and table names with backtick.</li>
+<li>Add insert="false" updates="false" for immutable columns. On class, use dynamic-update="true" to just update changed columns (with  optimistic-lock="dirty" for optimistic locks).</li>
+<li>Properties can be wrapped with &lt;component name="Address" class="Address"&gt; which map those properties to an aggregated class/ value type (it has no identity and cannot be persisted- the common example is an Address class consisting of lines of address).</li>
+<li>There are some special types:<br />
+Enums: specify the enum type or don't specify (reflection grabs the underlying enum type -eg Int32). Saves the underlying type.<br />
+Booleans: type="YesNo" maps "Y" and "N" strings in the database to boolean; TrueFalse is the same for T and F<br />
+For advanced stuff implement <a href="usertype.html">IUserType</a>.</li>
+</ul>
+
+
+<h3>Collections- Foreign Keys</h3>
+<ul>
+<li>Most foreign key relations can be mapped with &lt;many-to-one&gt; on one end and &lt;bag&gt;/&lt;one-to-many&gt; on the other marked with inverse="true". For large collections (100s of records or more- Product.Orders) don't do this.<br />
+<table>
+<tr><th>.Net collection</th><th>Mapping</th></tr>
+<tr><td>IEnumerable/ICollection/IList</td>
+<td>&lt;bag name="Children"&gt;<br />
+&lt;key column="fkId"/&gt;<br />
+&lt;one-to-many class="FKTable"/&gt;<br />
+&lt;/bag&gt;</td></tr>
+<tr><td>IList with order</td>
+<td>&lt;list name="Children"&gt;<br />
+&lt;key column="fkId"/&gt;<br />
+&lt;list-index column="Order"/&gt;<br />
+&lt;one-to-many class="FKTable"/&gt;<br />
+&lt;/list&gt;</td></tr>
+<tr><td>Iesi.Collections.Iset (no duplicates)<br />NB: no .Net 4 ISet, NH 3 is .Net 3.5 only</td>
+<td>&lt;set&gt;</td></tr>
+<tr><td>IDictionary</td>
+<td>&lt;map&gt;</td></tr>
+<tr><td>(Association table)</td>
+<td>&lt;idBag&gt; with it's own id<br />
+&lt;collection-id column="AssocId" type="int"&gt;&lt;generator class="guid-comb"/&gt;...</td></tr>
+</table>
+</li>
+<li>Set the default namespace and asssmbly in the hibernate-mapping root, otherwise you'll have to specify all joined objects as "Namespace.ClassName, Assembly"</li>
+<li>If you use soft-deletes (DELETEFLAG=1), a "where" will filter those out. For ordered collections (orders by order date) consider "order-by"</li>
+<li><span style="color: blue;">&lt;</span><span style="color: #a31515;">many-to-one</span> <span style="color: red;">not-found</span><span style="color: blue;">=</span>"<span style="color: blue;">ignore</span>"  allows invalid keys (inconsistent databases). BUT NH automatically loads the related entity immediately (so you get an extra SQL statement). You get the same issue if you use "property-ref" (referencing a property rather than the primary key).</li>
+</ul>
+<p>Simple association tables can be mapped as many-to-many (no class is needed for the association table).</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">bag</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Categories</span>"<span style="color: blue;"> </span><span style="color: red;">outer-join</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;"> </span><span style="color: red;">table</span><span style="color: blue;">=</span>"<span style="color: blue;">PRODUCTCATEGORY</span>"<span style="color: blue;"> </span><span style="color: red;">access</span><span style="color: blue;">=</span>"<span style="color: blue;">nosetter.camelcase-underscore</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">key</span><span style="color: blue;"> </span><span style="color: red;">column</span><span style="color: blue;">=</span>"<span style="color: blue;">ProductID</span>"<span style="color: blue;">/&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">many-to-many</span><span style="color: blue;"> </span><span style="color: red;">column</span><span style="color: blue;">=</span>"<span style="color: blue;">CategoryID</span>"<span style="color: blue;"> </span><span style="color: red;">class</span><span style="color: blue;">=</span>"<span style="color: blue;">Category</span>"<span style="color: blue;">/&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">bag</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+</div>
+<div class="Footer">
+
+</div></body>
+</html>

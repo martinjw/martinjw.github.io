@@ -1,0 +1,191 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>jQuery Tips</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<script type="text/javascript" src="../utilities.js">
+</script>
+<link rel="stylesheet" type="text/css" href="../style.css" />
+<link rel="stylesheet" href="../js/prettify.css" type="text/css" />
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../index.html">Home &gt;</a></li>
+<li><a href="jsobjects.html">JS Objects</a></li>
+<li><a href="jquery.html">jQuery Tips</a></li>
+<li><a href="../html5/index.html">HTML5</a></li>
+<li><a href="../dev/grunt.html">Grunt</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>jQuery</h2>
+<ul>
+<li><a href="http://api.jquery.com/">jQuery API</a></li>
+<li><a href="https://github.com/filamentgroup/shoestring">Shoestring</a> - a good lightweight substitute (IE8+)</li>
+</ul>
+<h3>OnLoad</h3>
+<pre class="prettyprint">
+$(document).ready(function () {
+	//document is ready
+}
+//...but this is the same and shorter...
+$(function(){
+   //document is ready
+ });
+//(actually it's a callback from the ready event)
+</pre>
+
+<h3>Events</h3>
+<ul>
+<li>Buttons etc: $('#btn').click(function() { ... });</li>
+<li>Form elements: $('#txt').change(function() { ... });</li>
+<li>Text elements: keydown, keypress and keyup (last doesn't recognize tabs and CR)<br/>
+<pre class="prettyprint">$('#txt').keypress(function(event) { 
+if (event.keyCode == '13') event.preventDefault(); 
+});</pre></li>
+<li>focus/blur, focusin/focusout, hover</li>
+<li>Pre 1.7: $('#btn').bind("click", function() { alert("clicked");});</li>
+<li>1.7+: $('#btn').on("click", function() { alert("clicked");});</li>
+<li>1.7+ Delegated handler for all buttons in table: $('#table1').on("click", ":button", function() { alert("clicked");});</li>
+</ul>
+
+
+<h3>Creating Html</h3>
+<p>Alternatives to innerHTML</p>
+<pre class="prettyprint">
+$('div#target').html('&lt;p class="New"&gt;New html!&lt;/p&gt;');
+$('div#target').add('&lt;p class="New"&gt;New html!&lt;/p&gt;'); //the same
+//You can also create a jQuery object from an html string
+$('&lt;p class="New"&gt;New html!&lt;/p&gt;').appendTo($('div#target'));
+</pre>
+<p>$('div#target').wrap("&lt;div class='marker'/&gt;") is also useful.</p>
+
+<h3>Nested searches</h3>
+<pre class="prettyprint">
+$('div#target').children('p').addClass("x"); //immediate descendents
+$('div#target').find('p').addClass("x"); //any descendents
+$('div#target').click(function() { 
+	$('p', this).addClass("x"); //selector context
+	$(this).find('p').addClass("x"); //is the same
+});
+</pre>
+<p>If you're doing lots of chaining, .end() is nice for popping up the chain.</p>
+
+<h3>Selectors</h3>
+<p>Some unusual variations.</p>
+<ul>
+<li>Attribute Starts With
+<ul>
+<li>$('a[href^="http"]')</li>
+<li>$('a[lang|="en"]') //begins en- (hyphen)</li>
+</ul>
+</li>
+<li>Contains
+<ul>
+<li>$('a[href*="com"]')</li>
+<li>$('a[class~="active"]') //contains a word (spaces either side)</li>
+<li>Text: $("p:contains('world')") //NB: case sensitive</li>
+</ul></li>
+<li>Attribute Ends With: $('a[href$="jpg"]')</li>
+<li>Hierarchy
+<ul>
+<li>$('div p') //all descendents</li>
+<li>$('div &gt; p') //immediate child</li>
+<li>$('div:has(p)') //select the parent which has a descendent</li>
+<li>$("ul li:nth-child(1)") //1 indexed</li>
+<li>$(this).closest("ul") //closest parent- <br />
+parent("ul") is just one level, <br />
+parents("ul") may have multiple parents</li>
+</ul>
+</li>
+</ul>
+<p>Check selector found something:</p>
+<pre class="prettyprint">
+if($("#field).length) {}
+</pre>
+<h3>Iteration</h3>
+<pre class="prettyprint">
+$('div').each(function(index) {
+	//iterate over a jQuery object
+});
+//NOT THE SAME AS...
+$.each(myArray, function(index, value) { 
+  //iterate over an array (or map, in which case index==key)
+});
+</pre>
+<p>Array functions</p>
+<ul>
+<li>$.grep(myArray, function( return this==2; }) //no regexs!</li>
+<li>.map(function()...) maps/transforms arrays</li>
+</ul>
+
+<h3>Show/Hide</h3>
+<ul>
+<li>.show()/ .hide() / .toggle()</li>
+<li>animation: .show('slow').hide('fast')</li>
+<li>callbacks: <pre class="prettyprint">$('me').show('slow', function() {
+ $('me2'}.show('slow'); 
+ });</pre></li>
+<li>You can turn off all animation by jQuery.fx.off = true</li>
+<li>Detect with :visible selector.</li>
+</ul>
+
+<h3>Forms and Ajax</h3>
+<ul>
+<li>Read (input/select): $("text").val();</li>
+<li>Write: $("text").val("Hello");</li>
+<li>Radios/checkboxes read (jQuery 1.6+): $("radio").prop("checked") returns boolean true<br />
+$("radio").attr("checked") returns "checked" (&lt;input type="radio" checked="checked" &gt;)</li>
+<li>Radios/checkboxes write (jQuery 1.6+): $("radio").prop("checked", true)</li>
+</ul>
+
+<h4>Serializing forms</h4>
+<p>For ajax / HTTP gets</p>
+<ul>
+<li>HTTP GET<ul>
+<li>//NB: elements need "name="<br/>
+var data = $("form").serialize();<br/>
+//forward slashes,@,& are encoded, so decode (NB don't use decodeURI)<br/>
+var qs = decodeURIComponent(data);</li>
+</ul></li>
+<li>JSON<ul>
+<li>var data = $("form").serializeArray(); //creates an array of all form elements<br/>
+var json = JSON.stringify(d); //if IE7 or older you'll need json2.js; native in modern browsers</li>
+</ul> </li>
+</ul>
+
+
+<h4>Ajax post</h4>
+<pre class="prettyprint">
+var data = $("form").serializeArray(); //creates an array of all form elements
+var json = JSON.stringify(d); //if IE7 or older you'll need json2.js; native in modern browsers
+$.ajax({
+    type: "POST",
+    contentType: "application/json",
+    url: "WebService.asmx/WebMethodName",
+    data: json,
+    success: function (x) { alert(x.Message); }
+});
+</pre>
+<h4>Ajax getting data</h4>
+<p>$.getJSON('WebService.asmx/WebMethodName', function(data) { ..}) doesn't allow any posts (input data) and parses the output with $.parseJSON().</p>
+<p>On the lower level $.ajax() call, you can JSON.parse(s).</p>
+
+<p>You can register a page handler for <a href="http://api.jquery.com/ajaxError/">.ajaxError</a></p>
+
+</div>
+
+<div class="Footer"><script type="text/javascript" src="../js/prettify.js">
+</script>
+<script type="text/javascript">
+//<![CDATA[
+prettyPrint();
+//]]>
+</script>
+</div>
+</body>
+</html>

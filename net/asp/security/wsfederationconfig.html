@@ -1,0 +1,185 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>.Net WS-Federation Configuration</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspsecurity.html">Asp Security</a></li>
+<li><a href="forms.html">Forms Authentication</a></li>
+<li><a href="wsfederation.html">WS-Federation</a></li>
+<li><a href="wsfederationconfig.html">WS-Federation Config</a></li>
+<li><a href="ssl.html">SSL</a></li>
+<li><a href="owin.html">Owin</a></li>
+<li><a href="oauth.html">OAuth</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>WS-Federation Configuration</h2>
+<p>Support for WS-Federation is based on .net 4.5 <a href="claims.html">Claims Security</a>. Claims-based identity means an application (<strong>Relying Party</strong>, RP) uses a separate service (<strong>Security Token Service</strong>, STS / <strong>Identity Provider</strong>, IdP) for security.</p>
+<p>See <a href="claims.html">Claims Security</a> for basics on ClaimsPrincipal and <a href="wsfederation.html">WS-Federation</a> for architecture, tooling.</p>
+<ul>
+<li>The application trusts the STS, and accepts claim tokens from it.<ul>
+<li>It may have no more security than the WIF configuration, and [<span style="color: #2b91af;">Authorize</span>(Roles = <span style="color: #a31515;">"Admin"</span>)]</li>
+<li>It can also transform the claims itself (e.g. looking up additional roles from a database).</li>
+</ul></li>
+<li>The STS knows the application, the users allowed for that application and their roles (and additional information).</li>
+</ul>
+<p>For WCF/SOAP there's a ws2007FederationHttpBinding (message/issuerMetadata @address)</p>
+<p>All you need may be configuration. <a href="http://msdn.microsoft.com/en-us/library/hh568638.aspx">MSDN</a></p>
+
+
+<h3>Config Sections</h3>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">configuration</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">configSections</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">section</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">system.identityModel</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">System.IdentityModel.Configuration.SystemIdentityModelSection, </span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  System.IdentityModel, Version=4.0.0.0, Culture=neutral, PublicKeyToken=B77A5C561934E089</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">section</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">system.identityModel.services</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">System.IdentityModel.Services.Configuration.SystemIdentityModelServicesSection, </span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  System.IdentityModel.Services, Version=4.0.0.0, Culture=neutral, PublicKeyToken=B77A5C561934E089</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">configSections</span><span style="color: blue;">&gt;</span></p>
+</div>
+<h3>system.web - NO authentication</h3>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">system.web</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">compilation</span><span style="color: blue;"> </span><span style="color: red;">debug</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;"> </span><span style="color: red;">targetFramework</span><span style="color: blue;">=</span>"<span style="color: blue;">4.5</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">httpRuntime</span><span style="color: blue;"> </span><span style="color: red;">targetFramework</span><span style="color: blue;">=</span>"<span style="color: blue;">4.5</span>" <span style="color: red;">requestValidationMode</span><span style="color: blue;">=</span>"<span style="color: blue;">4.5</span>"<span style="color: blue;"><span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;!--</span><span style="color: green;"> no authentication, because the FAM/SAM modules below do it </span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">authentication</span><span style="color: blue;"> </span><span style="color: red;">mode</span><span style="color: blue;">=</span>"<span style="color: blue;">None</span>"<span style="color: blue;">/&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;!--</span><span style="color: green;">&lt;authentication mode="Forms"&gt;</span><br />
+<span style="color: green;">&nbsp; &nbsp; &lt;forms loginUrl="~/Account/Login" /&gt;</span><br />
+<span style="color: green;">&nbsp; &lt;/authentication&gt;</span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">system.web</span><span style="color: blue;">&gt;</span></p>
+</div>
+<p>But you still need to protect resources. In MVC just add the [Authorize] filter. In WebForms, add a module and hook it in the web.config:</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">MustBeAuthenticatedModule</span> : <span style="color: #2b91af;">IHttpModule</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> Init(<span style="color: #2b91af;">HttpApplication</span> context)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; context.PostAuthenticateRequest += context_BeginRequest;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">void</span> context_BeginRequest(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">EventArgs</span> e)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> context = <span style="color: #2b91af;">HttpContext</span>.Current;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (context.Request.Path.StartsWith(<span style="color: #a31515;">"/bundles"</span>, <span style="color: #2b91af;">StringComparison</span>.OrdinalIgnoreCase)) <span style="color: blue;">return</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (context.User == <span style="color: blue;">null</span> || context.User.Identity == <span style="color: blue;">null</span> || !context.User.Identity.IsAuthenticated)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; context.Response.StatusCode = 401;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; context.Response.End();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; }</p>
+</div>
+
+<div class="alert">
+You may get an error "A potentially dangerous Request.Form value was detected from the client (wresult=" because the SAML xml is posted from the STS.<br/>
+Set the <code>requestValidationMode</code> attribute to 4.5<br/>
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">httpRuntime</span> <span style="color: red;">targetFramework</span><span style="color: blue;">=</span>"<span style="color: blue;">4.5</span>" <span style="color: red;">requestValidationMode</span><span style="color: blue;">=</span>"<span style="color: blue;">4.5</span>"<span style="color: blue;"> /&gt;</span>
+</div>
+
+<h3>system.webServer - the FAM/SAM modules</h3>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">system.webServer</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">modules</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;!--</span><span style="color: green;"> "SAM" - manages the cookie </span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">SessionAuthenticationModule</span>"<span style="color: blue;"> </span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp;  </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">System.IdentityModel.Services.SessionAuthenticationModule, </span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp;  System.IdentityModel.Services, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</span>"<span style="color: blue;"> </span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp;  </span><span style="color: red;">preCondition</span><span style="color: blue;">=</span>"<span style="color: blue;">managedHandler</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;!--</span><span style="color: green;"> "FAM" - waits for the not authorized 401 and 302 redirects to the STS </span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">WSFederationAuthenticationModule</span>"<span style="color: blue;"> </span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp;  </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">System.IdentityModel.Services.WSFederationAuthenticationModule, </span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp;  System.IdentityModel.Services, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</span>"<span style="color: blue;"> </span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp;  </span><span style="color: red;">preCondition</span><span style="color: blue;">=</span>"<span style="color: blue;">managedHandler</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">modules</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">system.webServer</span><span style="color: blue;">&gt;</span></p>
+</div>
+<h3>system.identityModel - trust the STS, webfarm support</h3>
+<p>For developing (eg on EmbeddedSTS) you don't need these settings. Note that certificates expire over time!</p>
+<p>If you're using a webfarm, the machine key bit is critical.</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">system.identityModel</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">identityConfiguration</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">securityTokenHandlers</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;!--</span><span style="color: green;"> For WebFarms: session tokens are protected by DPAPI which is machine-specific.</span><br />
+<span style="color: green;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; To spread across a webfarm, use the Machine Key </span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">remove</span><span style="color: blue;"> </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">System.IdentityModel.Tokens.SessionSecurityTokenHandler,</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; System.IdentityModel, Version=4.0.0.0, Culture=neutral, PublicKeyToken=B77A5C561934E089</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">System.IdentityModel.Services.Tokens.MachineKeySessionSecurityTokenHandler,</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; System.IdentityModel.Services, Version=4.0.0.0, Culture=neutral, PublicKeyToken=B77A5C561934E089</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">sessionTokenRequirement</span><span style="color: blue;"> </span><span style="color: red;">lifetime</span><span style="color: blue;">=</span>"<span style="color: blue;">00:30:00</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">add</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">securityTokenHandlerConfiguration</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &lt;!--</span><span style="color: green;"> issuerNameRegistry and audienceUris used to be directly under identityConfiguration</span><span style="color: blue;">--&gt;</span><br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &lt;!--</span><span style="color: green;"> Check this application trusts the STS.</span><br />
+<span style="color: green;">&nbsp; &nbsp; &nbsp; &nbsp;  There's only one built in issuer name registry.</span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">issuerNameRegistry</span><span style="color: blue;"> </span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">System.IdentityModel.Tokens.ConfigurationBasedIssuerNameRegistry, </span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; System.IdentityModel, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">trustedIssuers</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &lt;!--</span><span style="color: green;"> Checks the token is signed with an X509 certificate with this thumbprint </span><br />
+<span style="color: green;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Gives the claim issuer the name "LocalSTS" </span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><span style="color: red;">thumbprint</span><span style="color: blue;">=</span>"<span style="color: blue;">12E...</span>"<span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">LocalSTS</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">trustedIssuers</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">issuerNameRegistry</span><span style="color: blue;">&gt;</span><br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &lt;!--</span><span style="color: green;"> OPTIONAL, probably not needed. Check the signing certificate trust chain and whether it's been revoked </span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &lt;!--</span><span style="color: green;">&lt;certificateValidation </span><br />
+<span style="color: green;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; certificateValidationMode="PeerOrChainTrust" </span><br />
+<span style="color: green;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; revocationMode="NoCheck" /&gt;</span><span style="color: blue;">--&gt;</span><br />
+&nbsp;<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &lt;!--</span><span style="color: green;"> The realm name (URI of Relying Party) is embedded into the token. </span><br />
+<span style="color: green;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; To ensure the token is for this RP, use audienceUris</span><br />
+<span style="color: green;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Otherwise client can send token from shared STS for application A to application B (re-purposing attack). </span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">audienceUris</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">clear</span><span style="color: blue;">/&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &lt;!--</span><span style="color: green;"> same as realm, below </span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">http://ThisApplication/</span>"<span style="color: blue;">/&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">audienceUris</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">securityTokenHandlerConfiguration</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">securityTokenHandlers</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">identityConfiguration</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">system.identityModel</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+<h3>system.identityModel.services - link the STS</h3>
+<p>Like forms authentication, this points to the STS which could be a login page (401 becomes a 302 to the STS). ADFS can be configured with rules for transformations for each relying party (eg send group membership as claim).</p>
+<p>Using embeddedSTS here. </p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">system.identityModel.services</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">federationConfiguration</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;!--</span><span style="color: green;"> equivalent to &lt;authentication mode="Forms"&gt;&lt;forms loginUrl="~/Account/Login" /&gt;</span><br />
+<span style="color: green;">&nbsp; &nbsp; NB: requireHttps="false" for development. In prod, you should use SSL.</span><br />
+<span style="color: green;">&nbsp; &nbsp; issuer = the STS to redirect to e.g. https://xx/issue/wsfed</span><br />
+<span style="color: green;">&nbsp; &nbsp; realm = a URI for this application (known to the STS). </span><br />
+<span style="color: green;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Can also be where the STS redirects back to (otherwise set reply=""). </span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">wsFederation</span><span style="color: blue;"> </span><span style="color: red;">passiveRedirectEnabled</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: red;">issuer</span><span style="color: blue;">=</span>"<span style="color: blue;">http://EmbeddedSts</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: red;">realm</span><span style="color: blue;">=</span>"<span style="color: blue;">http://ThisApplication/</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: red;">requireHttps</span><span style="color: blue;">=</span>"<span style="color: blue;">false</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">cookieHandler</span><span style="color: blue;"> </span><span style="color: red;">requireSsl</span><span style="color: blue;">=</span>"<span style="color: blue;">false</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">federationConfiguration</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">system.identityModel.services</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

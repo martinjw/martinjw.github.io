@@ -1,0 +1,122 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>SqlServer Upsert</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../sql.html">Sql</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>SqlServer Upsert</h2>
+<p>Updating a record or inserting it (if it didn't exist) is a common optimization.</p>
+<h3>Simple (not concurrent-safe)</h3>
+<p>UPDATE then check @@ROWCOUNT and INSERT if necessary.</p>
+<pre class="prettyprint lang-sql">
+DECLARE @CategoryName NVARCHAR(15) = 'Dairy';
+DECLARE @Description NVARCHAR(MAX) = 'Milk, cheese and yoghurts';
+DECLARE @Id int = null;
+
+UPDATE [Categories]
+	SET [Description] = @Description,
+		@Id = [CategoryID]
+	WHERE [CategoryName] = @CategoryName;
+
+IF @@ROWCOUNT = 0
+	INSERT INTO [Categories]
+			   ([CategoryName]
+			   ,[Description])
+		 VALUES
+			   (@CategoryName
+			   ,@Description);
+--if id is not set in UPDATE, then grab scope identity
+SET @Id = ISNULL(@Id, CAST(SCOPE_IDENTITY() AS int));
+--select it out
+SELECT @Id AS Id;
+</pre>
+<p>This example grabs the affected Id too (whether identity insert or update).</p>
+<h3>Concurrent-safe</h3>
+<p>A more conventional IF NOT EXISTS... INSERT - ELSE - UPDATE. The <a href="http://technet.microsoft.com/en-us/library/ms187373(v=sql.105).aspx">lock hints</a> protect for concurrency. The UPDLOCK and SERIALIZABLE hints are as suggested <a href="http://samsaffron.com/blog/archive/2007/04/04/14.aspx">in this Sam Saffron blog post from 2007</a></p>
+<ul>
+<li>UPDLOCK - prevent dirty reads</li>
+<li>HOLDLOCK or SERIALIZABLE - Hold a shared lock until completion of the transaction</li>
+<li>ROWLOCK - row level locking</li>
+<li>READPAST - don't block waiting for a rowlock, go to the first unlocked row - select only</li>
+</ul>
+
+<pre class="prettyprint lang-sql">
+IF NOT EXISTS(
+		SELECT * FROM [Categories] WITH ( UPDLOCK, SERIALIZABLE ) 
+		WHERE [CategoryName] = @CategoryName )
+	BEGIN
+		INSERT INTO [Categories]
+				   ([CategoryName]
+				   ,[Description])
+			 VALUES
+				   (@CategoryName
+				   ,@Description);	
+		SET @Id = CAST(SCOPE_IDENTITY() AS int);
+	END
+ELSE
+	BEGIN
+		UPDATE [Categories] 
+			SET [Description] = @Description,
+				@Id = [CategoryID]
+		WHERE [CategoryName] = @CategoryName;
+	END
+
+SELECT @Id AS Id;
+</pre>
+
+<h3>MERGE</h3>
+<p>Much the same as before, using the MERGE command. MERGE by itself is not concurrent-safe; you must still use lock hints.</p>
+<pre class="prettyprint lang-sql">
+MERGE INTO [Categories] WITH  ( UPDLOCK, SERIALIZABLE ) AS target
+	--if/where part
+	USING 
+		(SELECT @CategoryName, @Description ) AS source 
+			([CategoryName], [Description])
+		ON (target.CategoryName = source.CategoryName)
+	--found, so update
+	WHEN MATCHED THEN
+		UPDATE SET [Description] = @Description,
+				@Id = [CategoryID]
+	--not found, so insert
+	WHEN NOT MATCHED THEN
+		INSERT ([CategoryName]
+				   ,[Description])
+			 VALUES
+				   (@CategoryName
+				   ,@Description);
+
+SET @Id = ISNULL(@Id, CAST(SCOPE_IDENTITY() AS int));
+
+SELECT @Id AS Id;
+</pre>
+
+</div>
+<div class="Footer">
+<script type="text/javascript" src="../../../js/prettify.js">
+</script>
+<script type="text/javascript" src="../../../js/lang-sql.js">
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+
+prettyPrint();
+//]]>
+</script></div>
+</body>
+</html>

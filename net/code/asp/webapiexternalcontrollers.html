@@ -1,0 +1,70 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>WebAPI 2 External Controllers</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main</a></li>
+<li><a href="../../dotnet.html">.Net</a></li>
+<li><a href="../index.html">Code</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>WebAPI 2 External Controllers</h2>
+<p>When you want WebAPI controllers in a different project. Based on <a href="http://www.strathweb.com/2012/06/using-controllers-from-an-external-assembly-in-asp-net-web-api/">strathweb (2012)</a></p>
+<h3>Class Library</h3>
+<ul>
+<li>Install-package Microsoft.AspNet.WebApi</li>
+<li>Add the ApiControllers</li>
+<li>Add the following class:</li>
+</ul>
+<div class="code">
+<p><span style="color: blue;">using</span> System.Collections.Generic;<br />
+<span style="color: blue;">using</span> System.Reflection;<br />
+<span style="color: blue;">using</span> System.Web.Http.Dispatcher;<br />
+&nbsp;<br />
+<span style="color: blue;">namespace</span> Library.Web<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//see http://www.strathweb.com/2012/06/using-controllers-from-an-external-assembly-in-asp-net-web-api/</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">CustomAssemblyResolver</span> : <span style="color: #2b91af;">DefaultAssembliesResolver</span><br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">override</span> <span style="color: #2b91af;">ICollection</span>&lt;<span style="color: #2b91af;">Assembly</span>&gt; GetAssemblies()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> baseAssemblies = <span style="color: blue;">base</span>.GetAssemblies();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> wrapped = <span style="color: blue;">new</span> <span style="color: #2b91af;">List</span>&lt;<span style="color: #2b91af;">Assembly</span>&gt;(baseAssemblies);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> controllersAssembly = GetType().Assembly;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; wrapped.Add(controllersAssembly);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> wrapped;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+<h3>Web project</h3>
+<ul>
+<li>Reference the class library</li>
+<li>In global.asax add the following:</li>
+</ul>
+<div class="code">
+<p><span style="color: #2b91af;">GlobalConfiguration</span>.Configuration.Services.Replace(<span style="color: blue;">typeof</span>(<span style="color: #2b91af;">IAssembliesResolver</span>), <span style="color: blue;">new</span> <span style="color: #2b91af;">CustomAssemblyResolver</span>());</p>
+</div>
+
+
+</div>
+<div class="Footer">
+<script type="text/javascript">
+</script>
+</div>
+</body>
+</html>

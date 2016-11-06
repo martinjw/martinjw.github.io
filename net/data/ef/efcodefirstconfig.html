@@ -1,0 +1,109 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Entity Framework Code First Configuration</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../io.html">Data &gt;</a></li>
+<li><a href="ef.html">Entity Framework &gt;</a></li>
+<li><a href="efcodefirst.html">EF Code First</a></li>
+<li><a href="efcodefirstvalidation.html">Validation</a></li>
+<li><a href="efcodefirstdb.html">Databases</a></li>
+<li><a href="efcodefirstmapping.html">Mapping</a></li>
+<li><a href="efcodefirstmigrations.html">Migrations</a></li>
+<li><a href="efcodefirstlogging.html">Logging</a></li>
+<li><a href="efcodefirstconfig.html">Configuration</a></li>
+<li><a href="efcodefirstoptimize.html">Optimization</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Entity Framework Code First Configuration</h2>
+<p>Available from EF 6+ (Oct 2013).</p>
+<h3>Overriding DbConfiguration</h3>
+<div class="code">
+<p><span style="color: green;">//Configure EF for this application. Only one per app. </span><br />
+<span style="color: green;">//Ideally in same assembly as DbContext</span><br />
+<span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">DataConfiguration</span> : System.Data.Entity.<span style="color: #2b91af;">DbConfiguration</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> DataConfiguration()<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//in ctor, call the config methods</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//for Azure, retry common transient exceptions</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; SetExecutionStrategy(<span style="color: #a31515;">"System.Data.SqlClient"</span>,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; () =&gt; <span style="color: blue;">new</span> System.Data.Entity.SqlServer.<span style="color: #2b91af;">SqlAzureExecutionStrategy</span>());<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+<p>If it is in the same assembly as the DbContext, it is found automatically. Otherwise use the DbConfigurationTypeAttribute with typeof() or assembly-qualified name.</p>
+<div class="code">
+<p>[<span style="color: #2b91af;">DbConfigurationType</span>(<span style="color: blue;">typeof</span>(<span style="color: #2b91af;">DataConfiguration</span>))]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">DataContext</span> : <span style="color: #2b91af;">DbContext</span></p>
+</div>
+<p>App.config configuration overrides any code configuration. See <a href="http://msdn.microsoft.com/en-us/data/jj556606">MSDN</a></p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">entityFramework</span><span style="color: blue;"> </span><span style="color: red;">codeConfigurationType</span><span style="color: blue;">=</span>"<span style="color: blue;">Data.DataConfiguration, Data</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">defaultConnectionFactory</span><span style="color: blue;"> </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">System.Data.Entity.Infrastructure.SqlConnectionFactory, EntityFramework</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">providers</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">provider</span><span style="color: blue;"> </span><span style="color: red;">invariantName</span><span style="color: blue;">=</span>"<span style="color: blue;">System.Data.SqlClient</span>"<span style="color: blue;"> </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">System.Data.Entity.SqlServer.SqlProviderServices, EntityFramework.SqlServer</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">providers</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">entityFramework</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+<h3>Configurable: Retry strategy</h3>
+<p>SetExecutionStrategy - only built in strategy is <cite>SqlAzureExecutionStrategy</cite>.</p>
+<ul>
+<li><cite>SqlAzureExecutionStrategy</cite> Ctor can take a maxRetryCount and a maxDelay</li>
+<li>Default is 5 retries up to 30 seconds.</li>
+<li>Override abstract DbExecutionStrategy to implement a non-Azure retry strategy.</li>
+<li>Throws a <cite>RetryLimitExceeded</cite> after it retries transient errors a few times.</li>
+</ul>
+<div class="alert">.AsStreaming() is not supported.<br/>
+Non-default transactions are also not supported (see <a href="http://msdn.microsoft.com/en-us/data/dn307226">MSDN</a>)</div>
+
+<h3>Configurable: Change __MigrationHistory table</h3>
+<p>SetHistoryContext - use a customized history table<br/>
+Create the HistoryContext like a normal DbContext:</p>
+<div class="code">
+<p><span style="color: green;">//inherit from HistoryContext</span><br />
+<span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">CustomHistoryContext</span> : <span style="color: #2b91af;">HistoryContext</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//use this ctor</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> CustomHistoryContext(<span style="color: #2b91af;">DbConnection</span> dbConnection, <span style="color: blue;">string</span> defaultSchema)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; : <span style="color: blue;">base</span>(dbConnection, defaultSchema)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">protected</span> <span style="color: blue;">override</span> <span style="color: blue;">void</span> OnModelCreating(<span style="color: #2b91af;">DbModelBuilder</span> modelBuilder)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//must call base</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">base</span>.OnModelCreating(modelBuilder);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//change the defaults</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; modelBuilder.Entity&lt;<span style="color: #2b91af;">HistoryRow</span>&gt;().ToTable(<span style="color: #a31515;">"DataVersioning"</span>, DefaultSchema);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+<h3>Configurable: Default connection</h3>
+<p>SetDefaultConnectionFactory - When creating new database (i.e. no connection string)</p>
+<div class="code">
+<p>SetDefaultConnectionFactory(<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> System.Data.Entity.Infrastructure.<span style="color: #2b91af;">LocalDbConnectionFactory</span>(<span style="color: #a31515;">"v11.0"</span>));</p>
+</div>
+
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

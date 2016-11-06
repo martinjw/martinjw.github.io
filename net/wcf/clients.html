@@ -1,0 +1,95 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>WCF Clients</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="wcf.html">WCF &gt;</a></li>
+<li><a href="behavior.html">Behavior</a></li>
+<li><a href="clients.html">Clients</a></li>
+<li><a href="contracts.html">Contracts</a></li>
+<li><a href="endpoints.html">Endpoints</a></li>
+<li><a href="faults.html">Faults</a></li>
+<li><a href="logging.html">Logging</a></li>
+<li><a href="routing.html">Routing</a></li>
+<li><a href="security.html">Security</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>WCF Clients</h2>
+<p><a href="faults.html">See Faults for error trapping FaultException/ TimeoutException and client.Abort()</a> (don't use "using")</p>
+
+<h3>WCF ClientBase</h3>
+<p>Client proxies (via Visual Studio Service Reference, or svcutil, or manual) inherit ClientBase&lt;IService&gt; </p>
+<ul>
+<li>Duplex clients with callbacks inherit from DuplexClientBase&lt;IService&gt;</li>
+<li>For duplex clients, create an InstanceContext with your Callback class and pass it to the proxy (a DuplexClientBase)</li>
+</ul>
+
+<h3>ChannelFactory</h3>
+<p>When you have shared DLLs between client and service, you don't have to use svcutil/Service Reference to generate a proxy. Instead create the proxy dynamically using <a href="http://msdn.microsoft.com/en-us/library/system.servicemodel.channelfactory.aspx">ChannelFactory</a>&lt;T&gt;:</p>
+<div class="code">
+<p><span style="color: blue;">using</span> (<span style="color: blue;">var</span> factory = <span style="color: blue;">new</span> <span style="color: #2b91af;">ChannelFactory</span>&lt;<span style="color: #2b91af;">IService</span>&gt;(<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">NetTcpBinding</span>(),<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #a31515;">"net.tcp://localhost:13024/calculator/"</span>))<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> proxy = factory.CreateChannel();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> result = proxy.Add(1, 2);<br />
+}</p>
+</div>
+
+<h3>Async Clients</h3>
+<p>Generate async code (in VS Service Reference/Advanced):</p>
+
+<h4>Async with AsyncCallback</h4>
+<div class="code">
+<p><span style="color: blue;">using</span>(<span style="color: blue;">var</span> proxy = <span style="color: blue;">new</span> <span style="color: #2b91af;">CalculatorClient</span>())<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> cb = <span style="color: blue;">new</span> <span style="color: #2b91af;">AsyncCallback</span>(<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; (asyncResult) =&gt;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> client = (<span style="color: #2b91af;">CalculatorClient</span>)asyncResult.AsyncState ;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> result = client.EndAdd(asyncResult);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; });<br />
+&nbsp;&nbsp;&nbsp; proxy.BeginAdd(1, 2, cb, <span style="color: blue;">null</span>);<br />
+}</p>
+</div>
+
+<h4>Async with *Completed event</h4>
+<div class="code">
+<p><span style="color: blue;">using</span> (<span style="color: blue;">var</span> client = <span style="color: blue;">new</span> <span style="color: #2b91af;">Service1Client</span>())<br />
+{<br />
+&nbsp;&nbsp;&nbsp; client.GetDataCompleted += (sender, e) =&gt;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <span style="color: green;">//GetDataCompletedEventArgs</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <span style="color: blue;">var</span> result = e.Result;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; };<br />
+&nbsp;&nbsp;&nbsp; client.GetDataAsync(1);<br />
+&nbsp;&nbsp;&nbsp; client.Close();<br />
+}</p>
+</div>
+
+
+
+
+</div>
+<div class="Footer"><script type="text/javascript">
+//<![CDATA[
+
+
+prettyPrint();
+//]]>
+</script></div>
+</body>
+</html>

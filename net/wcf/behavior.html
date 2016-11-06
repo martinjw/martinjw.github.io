@@ -1,0 +1,166 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>WCF Behavior</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="wcf.html">WCF &gt;</a></li>
+<li><a href="behavior.html">Behavior</a></li>
+<li><a href="clients.html">Clients</a></li>
+<li><a href="contracts.html">Contracts</a></li>
+<li><a href="endpoints.html">Endpoints</a></li>
+<li><a href="faults.html">Faults</a></li>
+<li><a href="logging.html">Logging</a></li>
+<li><a href="routing.html">Routing</a></li>
+<li><a href="security.html">Security</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>WCF Behavior</h2>
+
+<h3>Common Tweaks</h3>
+<p><q>The maximum message size quota for incoming messages (65536) has been exceeded.</q>- increase maxReceivedMessageSize!</p>
+<p>Throttling: maxConcurrentCalls.</p>
+
+<h3>InstanceContextMode</h3>
+<p>PerCall is default (NB: goes on implementation, not interface)</p>
+<div class="code">
+<p>[<span style="color: #2b91af;">ServiceBehavior</span>(InstanceContextMode = <span style="color: #2b91af;">InstanceContextMode</span>.PerCall)]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">Service1</span> : <span style="color: #2b91af;">IService</span></p>
+</div>
+<h4><a name="Sessions">Sessions</a></h4>
+<p>If you use sessions, the contract must state for the client</p>
+<div class="code">
+<p>[<span style="color: #2b91af;">ServiceContract</span>(SessionMode = <span style="color: #2b91af;">SessionMode</span>.Required)]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">interface</span> <span style="color: #2b91af;">IService</span></p>
+</div>
+<p>And then implement it</p>
+<div class="code">
+<p>[<span style="color: #2b91af;">ServiceBehavior</span>(InstanceContextMode = <span style="color: #2b91af;">InstanceContextMode</span>.PerSession)]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">Service1</span> : <span style="color: #2b91af;">IService</span></p>
+</div>
+<p>If the client tries to use an open session after it expired, it gets a CommunicationObjectFaultedException. The default is 10 minutes - see <a href="http://msdn.microsoft.com/en-us/library/system.servicemodel.reliablesession.inactivitytimeout.aspx">ReliableSession.InactivityTimeout</a> and <a href="http://msdn.microsoft.com/en-us/library/system.servicemodel.channels.binding.receivetimeout.aspx">Binding.ReceiveTimeout</a> (you can set "infinite" but IIS will recycle you anyway). basicHttpBinding does not support sessions.</p>
+<div class="code">
+<p>[<span style="color: #2b91af;">OperationContract</span>(IsInitiating = <span style="color: #2b91af;">false</span>, IsTerminating = <span style="color: #2b91af;">true</span>)]<br />
+<span style="color: #2b91af;">Response</span> Final(<span style="color: blue;">int</span> number);</p>
+</div>
+<dl>
+<dt>IsInitiating</dt>
+<dd>(Default true)- create a session or use existing.<br />If set to false, cannot open a session.</dd>
+
+<dt>IsTerminating</dt>
+<dd>(Default false)- close a session (still need the proxy to Close)</dd>
+</dl>
+<h4>Singleton</h4>
+<div class="code">
+<p>[<span style="color: #2b91af;">ServiceBehavior</span>(InstanceContextMode = <span style="color: #2b91af;">InstanceContextMode</span>.Single)]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">Service1</span> : <span style="color: #2b91af;">IService</span></p>
+</div>
+<p>It supports clients who uses sessions, but obviously everything must be thread-safe. You can create a self-hosted service passing in the singleton into the constructor. </p>
+
+<h4>Instance Behaviors</h4>
+<div class="code">
+<p>[<span style="color: #2b91af;">OperationBehavior</span>(ReleaseInstanceMode = <br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">ReleaseInstanceMode</span>.BeforeAndAfterCall)]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">void</span> UpdateResource()</p>
+</div>
+<dl>
+<dt>BeforeCall</dt>
+<dd>creates new instance (disposes any existing instance)</dd>
+
+<dt>AfterCall</dt>
+<dd>disposed when finished</dd>
+
+<dt>BerforeAndAfterCall</dt>
+<dd>InstanceContextMode.PerCall (for one method while the others have sessions)</dd>
+</dl>
+
+<h3>Concurrency</h3>
+<p>You can queue requests with Single concurrency (or Multiple to handle simultaneous calls)</p>
+<div class="code">
+<p>[<span style="color: #2b91af;">ServiceBehavior</span>(ConcurrencyMode = <span style="color: #2b91af;">ConcurrencyMode</span>.Single)]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">Service1</span> : <span style="color: #2b91af;">IService</span></p>
+</div>
+<p>Reentrant is locked like Single, but can release locks which processing (inner WCF calls)</p>
+<h4>Duplex messaging</h4>
+<p>Because it does a <a href="http://msdn.microsoft.com/en-us/library/system.servicemodel.concurrencymode.aspx">callback</a>, these must be ConcurrencyMode = <span style="color: #2b91af;">ConcurrencyMode</span>.Multiple or Reentrant (not single).</p>
+
+<h3>Transactions</h3>
+<p><a href="contracts.html#Transactions">See also contracts</a> where you can specify [<span style="color: #2b91af;">TransactionFlow</span>(<span style="color: #2b91af;">TransactionFlowOption</span>.Mandatory)]</p>
+ <div class="code">
+<p><span style="color: green;">//requires transaction and will commit when finished</span><br />
+[<span style="color: #2b91af;">OperationBehavior</span>(TransactionScopeRequired = <span style="color: blue;">true</span>)]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">void</span> DoWork()</p>
+</div>
+<p>MSMQ transactions can't span both ends of the queue, but you can do batch transactions by adding an endpointBehavior with &lt;transactedBatching maxBatchSize="100"/&gt;.<br />
+On the service implementation add [<span style="color: #2b91af;">ServiceBehavior</span>(<span style="color: #2b91af;">ReleaseServiceInstanceOnTransactionComplete</span> = false)] so the instance keeps alive through the batch</p>
+
+
+<h3>Anonymous Behavior</h3>
+<p>In <a href="http://msdn.microsoft.com/en-us/library/ee358768.aspx">.Net 4.0+</a>, you don't need a &lt;service&gt; configuration with endpoints at all- it can autogenerate for your contracts and schema (default for http is basicHttpBinding). Change the mappings (http default with &lt;protocolMapping&gt;&lt;add scheme="http" binding="wsHttpBinding" bindingConfiguration="MyBindingConfiguration"/&gt;</p>
+<p>Unnamed behavior elements (or name="") refer to the current service.</p>
+
+<h3>WCF Runtime Extensibility</h3>
+<p>You add an <a href="http://msdn.microsoft.com/en-us/library/system.servicemodel.description.iendpointbehavior.aspx">IEndpointBehavior</a> which implements ApplyClient/ApplyDispatchBahvior or ApplyBindingParameters: <br />
+endpoint.Behaviors.Add(myIEndpointBehavior)</p>
+
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">LoggingEndpointBehavior</span> : <span style="color: #2b91af;">IEndpointBehavior</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> AddBindingParameters(<span style="color: #2b91af;">ServiceEndpoint</span> endpoint,<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">BindingParameterCollection</span> bindingParameters)<br />
+&nbsp;&nbsp;&nbsp; { }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> ApplyClientBehavior(<span style="color: #2b91af;">ServiceEndpoint</span> endpoint, <span style="color: #2b91af;">ClientRuntime</span> clientRuntime)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//implements IClientMessageInspector</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> inspector = <span style="color: blue;">new</span> <span style="color: #2b91af;">MessageLogInspector</span>(); <br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; clientRuntime.MessageInspectors.Add(inspector);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> ApplyDispatchBehavior(<span style="color: #2b91af;">ServiceEndpoint</span> endpoint, <span style="color: #2b91af;">EndpointDispatcher</span> endpointDispatcher)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//implements IDispatchMessageInspector</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> inspector = <span style="color: blue;">new</span> <span style="color: #2b91af;">MessageLogInspector</span>();&nbsp; <br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; endpointDispatcher.DispatchRuntime.MessageInspectors.Add(inspector);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> Validate(<span style="color: #2b91af;">ServiceEndpoint</span> endpoint)<br />
+&nbsp;&nbsp;&nbsp; { }<br />
+}</p>
+</div>
+
+<ul>
+<li><a href="http://blogs.msdn.com/b/carlosfigueira/archive/2011/04/26/wcf-extensibility-iparameterinspector.aspx">IParameterInspector</a> (BeforeCall/ AfterCall): <ul>
+<li>Server: add in IEndpointBehavior.ApplyDispatchBehavior</li>
+<li>Client: add in IEndpointBehavior.ApplyClientBehavior</li></ul></li>
+<li><a href="http://msdn.microsoft.com/en-us/library/aa717047.aspx">MessageInspectors</a>- <br />
+on client, IClientMessageInspector (BeforeSendRequest, AfterReceiveReply), <br />
+on service, IDispatchClientInspector (AfterReceiveRequest, BeforeSendReply).<br />
+A serialized message body is a stream, so can be read only once (by ToString() or GetBody&lt;T&gt;())- so use a buffered copy<br />
+var buffer = request.CreateBufferedCopy(Int32.MaxValue)<br />
+var x = buffer.CreateMessage().GetBody&lt;T&gt;()</li>
+</ul>
+
+<p>To modify it through a configuration file (in extensions/behaviorExtensions- the name can then be an element under endpointBehaviors/behavior/), derive from <a href="http://msdn.microsoft.com/en-us/library/system.servicemodel.configuration.behaviorextensionelement.aspx">BehaviorExtensionElement</a> (CreateBehavior())</p>
+
+
+
+</div>
+<div class="Footer"><script type="text/javascript">
+//<![CDATA[
+
+
+prettyPrint();
+//]]>
+</script></div>
+</body>
+</html>

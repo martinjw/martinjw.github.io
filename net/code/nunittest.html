@@ -1,0 +1,93 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>NUnit Test template</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main</a></li>
+<li><a href="../dotnet.html">.Net</a></li>
+<li><a href="index.html">Code</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>NUnit Test template</h2>
+<p><a href="nunitmstest.html">See dual MSTest/NUnit test class</a>.</p>
+<div class="code">
+<span style="color:Green">/*<br />
+ * 1. Reference Nunit.Framework dll<br />
+ * 2. Reference project to test<br />
+ * 3. Import/using project namespace<br />
+*/<br />
+</span><span style="color:Blue">using</span><span style="color:Black"> NUnit.Framework;<br />
+</span><span style="color:Blue">using</span><span style="color:Black"> System;<br />
+<br />
+[TestFixture]<br />
+</span><span style="color:Blue">public</span><span style="color:Black"> </span><span style="color:Blue">class</span><span style="color:Black"> </span><span style="color:#2b91af">Test1<br />
+</span><span style="color:Black">{<br />
+</span><span style="color:Blue">&nbsp;&nbsp;&nbsp;&nbsp;#region</span><span style="color:Black"> Tests<br />
+&nbsp;&nbsp;&nbsp;&nbsp;[Test]<br />
+&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">public</span><span style="color:Black"> </span><span style="color:Blue">void</span><span style="color:Black"> TestMethod()<br />
+&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">// TODO: Add your test.<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">//Assert.IsTrue(true);<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> Test an exception<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;/summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;[Test]<br />
+&nbsp;&nbsp;&nbsp;&nbsp;[ExpectedException(</span><span style="color:Blue">typeof</span><span style="color:Black">(</span><span style="color:#2b91af">ArgumentNullException</span><span style="color:Black">))]<br />
+&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">public</span><span style="color:Black"> </span><span style="color:Blue">void</span><span style="color:Black"> TestException()<br />
+&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">int</span><span style="color:Black"> r = StaticClass.CauseException(</span><span style="color:Blue">null</span>);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;[<span style="color: #2b91af;">TestMethod</span>]<br />
+&nbsp;&nbsp;&nbsp;&nbsp;[RowTest] <span style="color: green;">/* Since NUnit 2.4.7, Nunit includes RowTest */</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;[Row(1)]<br />
+&nbsp;&nbsp;&nbsp;&nbsp;[Row(3)]<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue;">public</span> <span style="color: blue;">void</span> TestRowTest(<span style="color: blue;">int</span> i)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Assert</span>.LessOrEqual(i, 3);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+<br />
+<span style="color:Blue">&nbsp;&nbsp;&nbsp;&nbsp;#endregion<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;#region</span><span style="color:Black"> Setup/TearDown<br />
+&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> Initialise/ open resources.<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;/summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;[TestFixtureSetUp]<br />
+&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">public</span><span style="color:Black"> </span><span style="color:Blue">void</span><span style="color:Black"> Init()<br />
+&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">// TODO: Add Init code.<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> Release resources/ reset. This method runs once at the end.<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;/summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;[TestFixtureTearDown]<br />
+&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">public</span><span style="color:Black"> </span><span style="color:Blue">void</span><span style="color:Black"> Dispose()<br />
+&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">// TODO: Add tear down code.<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+</span><span style="color:Blue">&nbsp;&nbsp;&nbsp;&nbsp;#endregion<br />
+</span><span style="color:Black">}</span>
+</div>
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

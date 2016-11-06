@@ -1,0 +1,104 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP AJAX Page method</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main</a></li>
+<li><a href="../dotnet.html">.Net</a></li>
+<li><a href="index.html">Code</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>ASP AJAX Page method</h2>
+<p>UpdatePanel. WebService calls and the old ClientCallback have better documentation, but PageMethods are lean and easy. Here I return a string array for multiple pieces of data.<br />
+NB: for UpdatePanel, you can tell the postback by ScriptManager1.IsInAsyncPostBack (and the button/control that caused it in ScriptManager1.AsyncPostBackSourceElementID)</p>
+<h3>EnablePageMethods on ScriptManager</h3>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">ScriptManager</span> <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <span style="color: red;">ID</span><span style="color: blue;">="ScriptManager1"</span> <span style="color: red;">EnablePartialRendering</span><span style="color: blue;">="true"</span> <span style="color: red;">EnablePageMethods</span><span style="color: blue;">="true"</span> <span style="color: blue;">/&gt;</span></p>
+</div>
+<h3>CodeBehind Static [WebMethod]</h3>
+<p>In the code behind, decorate the static method with WebMethod.</p>
+<div class="code">
+<p>[System.Web.Services.<span style="color: #2b91af;">WebMethod</span>]</p>
+<p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">string</span>[] GetServerData(<span style="color: blue;">string</span> zip)</p>
+<p>{</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">ZipAddress</span> u = respository.GetZipAddress(zip, GetTheme());</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (u == <span style="color: blue;">null</span>) <span style="color: blue;">throw</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">Exception</span>(<span style="color: #a31515;">"No zip found"</span>);</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">new</span> <span style="color: blue;">string</span>[] { u.City, u.State };</p>
+<p>}</p>
+</div>
+<p>In this application, theme is used to partition the data by customer- so here's the hack to get Page.Theme.</p>
+<div class="code">
+<p><span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: #2b91af;">string</span> GetTheme()</p>
+<p>{</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Configuration</span> config = <span style="color: #2b91af;">WebConfigurationManager</span>.OpenWebConfiguration(<span style="color: #a31515;">"~"</span>);</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">PagesSection</span> pagesSection =</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; (<span style="color: #2b91af;">PagesSection</span>)config.GetSection(<span style="color: #a31515;">"system.web/pages"</span>);</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> theme = <span style="color: #a31515;">""</span>;</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (pagesSection != <span style="color: blue;">null</span>)</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; theme = pagesSection.Theme;</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> theme;</p>
+<p>}</p>
+</div>
+<h3>Client Side Code</h3>
+<p>In Javascript, call PageMethods.xxx(arg1, arg2, onSuccess, onFail) and supply the two callbacks.</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">Button</span> <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <span style="color: red;">ID</span><span style="color: blue;">="btnLookUp"</span> <span style="color: red;">Text</span><span style="color: blue;">="</span><span style="background: #ffee62;">&lt;%</span>$ Resources: FindAddress <span style="background: #ffee62;">%&gt;</span><span style="color: blue;">"</span> <span style="color: red;">CausesValidation</span><span style="color: blue;">="false"</span> <span style="color: red;">UseSubmitBehavior</span><span style="color: blue;">="false"</span> <span style="color: red;">OnClientClick</span><span style="color: blue;">="FindAddress();//"</span> <span style="color: blue;">/&gt;</span></p>
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">script</span> <span style="color: red;">type</span><span style="color: blue;">="text/javascript"&gt;</span></p>
+<p><span style="color: blue;">function</span> FindAddress() {</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> zip = $get(<span style="color: #a31515;">'&lt;%= txtZip.ClientID %&gt;'</span>);</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span>(zip.value == <span style="color: #a31515;">''</span>) <span style="color: blue;">return</span>;</p>
+<p>&nbsp;&nbsp;&nbsp; PageMethods.GetServerData(zip.value, OnSucceeded, OnFailed);</p>
+<p>}</p>
+<p>&nbsp;</p>
+<p><span style="color: blue;">function</span> OnSucceeded(result, userContext, methodName)&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> city = $get(<span style="color: #a31515;">'&lt;%= txtCity.ClientID %&gt;'</span>);</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> stae = $get(<span style="color: #a31515;">'&lt;%= txtState.ClientID %&gt;'</span>);</p>
+<p>&nbsp;&nbsp;&nbsp; city.value = result[0];</p>
+<p>&nbsp;&nbsp;&nbsp; state.value = result[1];</p>
+<p>}</p>
+<p>&nbsp;</p>
+<p><span style="color: blue;">function</span> OnFailed(error, userContext, methodName) {</p>
+<p>&nbsp;&nbsp; alert(error.get_message());</p>
+<p>}</p>
+<p><span style="color: blue;">&lt;/</span><span style="color: #a31515;">script</span><span style="color: blue;">&gt;</span></p>
+
+<h3>AutoComplete Extender</h3>
+<p>The ajaxtoolkit extender goes very well with page methods.</p>
+<div class="code">
+<p><span style="background: #ffee62;">&lt;%</span><span style="color: blue;">@</span> <span style="color: #a31515;">Register</span> <span style="color: red;">Assembly</span><span style="color: blue;">="AjaxControlToolkit"</span> <span style="color: red;">Namespace</span><span style="color: blue;">="AjaxControlToolkit"</span> <span style="color: red;">TagPrefix</span><span style="color: blue;">="tk"</span> <span style="background: #ffee62;">%&gt;</span></p>
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">Content</span> <span style="color: red;">ID</span><span style="color: blue;">="Content1"</span> <span style="color: red;">ContentPlaceHolderID</span><span style="color: blue;">="ContentPlaceHolder1"</span> <span style="color: red;">runat</span><span style="color: blue;">="Server"&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">TextBox</span> <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <span style="color: red;">ID</span><span style="color: blue;">="txtLocation"</span> <span style="color: blue;">/&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">tk</span><span style="color: blue;">:</span><span style="color: #a31515;">AutoCompleteExtender</span> <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <span style="color: red;">ID</span><span style="color: blue;">="acLocation"</span> <span style="color: red;">TargetControlID</span><span style="color: blue;">="txtLocation"</span> <span style="color: red;">ServiceMethod</span><span style="color: blue;">="GetCompletionList"</span> <span style="color: red;">MinimumPrefixLength</span><span style="color: blue;">="1"</span>&nbsp; <span style="color: blue;">/&gt;</span><br />
+&nbsp;&nbsp;&nbsp; ...</p>
+</div>
+<p>Code behind - use suitable data access</p>
+<div class="code">
+<p>[System.Web.Services.<span style="color: #2b91af;">WebMethod</span>]</p>
+<p>[System.Web.Script.Services.<span style="color: #2b91af;">ScriptMethod</span>]</p>
+<p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">string</span>[] GetCompletionList(<span style="color: blue;">string</span> prefixText, <span style="color: blue;">int</span> count)</p>
+<p>{</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> locMgr = <span style="color: #2b91af;">Respository</span>.LocationManager;</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> locMgr.GetLocations(prefixText, count).ToArray();</p>
+<p>}</p>
+</div>
+
+</div>
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

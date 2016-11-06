@@ -1,0 +1,78 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP.Net Core Controllers</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="core.html">DotNet Core</a></li>
+<li><a href="mvc.html">MVC</a></li>
+<li><a href="project.html">Core Project</a></li>
+<li><a href="startup.html">Startup</a></li>
+<li><a href="config.html">Config Settings</a></li>
+<li><a href="iis.html">IIS</a></li>
+<li><a href="controllers.html">Controllers</a></li>
+<li><a href="views.html">Views</a></li>
+<li><a href="di.html">Dependency Injection</a></li>
+<li><a href="security.html">Security</a></li>
+<li><a href="logging.html">Logging</a></li>
+<li><a href="localization.html">Localization</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>ASP.Net Core Controllers</h2>
+
+<p>Up to ASP.net 4.6, MVC used a "Controller" base class while WebApi had an "ApiController" base class. For Core, MVC and Api have a single base class, "Controller" (and they can use POCO controllers, with no base class).</p>
+<h3>Dependency Injection</h3>
+<ul>
+<li>In Startup.<strong>ConfigureServices</strong> add your services: services.AddTransient&lt;IService, MyService&gt;()</li>
+<li>Read it in:
+<ul>
+<li>Ctor injection- standard constructor<br/>
+You can also accept an IOptions&lt;settings&gt; instance to read your settings (configured in Startup.ConfigureServices)</li>
+<li>Method argument injection - public IActionResult Get([FromServices] IService service)</li>
+</ul>
+</li>
+</ul>
+
+<h3>Poco controllers</h3>
+<p>You don't have to inherit from Controller (which are in Microsoft.AspNetCore.Mvc.ViewFeatures, not Microsoft.AspNetCore.Mvc.Core), but pocos probably need extra information to be injected. </p>
+<p>Poco controllers get property injection for 3 properties: ActionContext (which gives you HttpContext), ViewData (ViewDataDictionary) and Url (IUrlHelper). At which point, you might as well inherit from controller.</p>
+
+<div class="code">
+<p><span style="color:blue;">public</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:darkblue;">MyPocoController</span><br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;[<span style="color:darkblue;">ActionContext</span>]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:darkblue;">ActionContext</span>&nbsp;<span style="color:purple;">ActionContext</span>&nbsp;{&nbsp;<span style="color:darkcyan;">get</span>;&nbsp;<span style="color:darkcyan;">set</span>;&nbsp;}<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">string</span>&nbsp;<span style="color:darkcyan;">Get</span>()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;user&nbsp;=&nbsp;<span style="color:purple;">ActionContext</span>.<span style="color:purple;">HttpContext</span>.<span style="color:purple;">User</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(user.<span style="color:darkcyan;">HasClaim</span>(<span style="color:#a31515;">&quot;Role&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;Admin&quot;</span>))</p>
+</div>
+
+<h3>Actions</h3>
+<p>Ideally return <span style="color: #2b91af;">IActionResult</span> (in MVC 5 we used ActionResult - you can still return a string or model).</p>
+
+<h3>WebApi routing</h3>
+<p>MVC5 automagically mapped HTTP verbs to action names (Get, Post). Now we have to use explicit [HttpGet] and [HttpPost] attributes (and mapping with attributes seems to be preferred generally)</p>
+
+<h3>Partial (Child) Actions - use ViewComponents</h3>
+<p>You cannot use MVC 5 <a href="../mvc/mvcactions.html">partial actions</a> - <span style="background: yellow;">@</span>Html.Action / [<span style="color: #2b91af;">ChildActionOnly</span>] / <span style="color: blue;">return</span> PartialView </p>
+<p>Use viewcomponents instead: <span style="background: yellow;">@</span>Component.Invoke("name",model) / component inherits from ViewComponent and implements Invoke(args)</p>
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

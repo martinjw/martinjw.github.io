@@ -1,0 +1,125 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Log4net logging</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main</a></li>
+<li><a href="../dotnet.html">.Net</a></li>
+<li><a href="index.html">Code</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>Log4net logging</h2>
+<p><a href="http://logging.apache.org/log4net/release/manual/configuration.html">Manual</a></p>
+<h3>Assembly attribute</h3>
+<p>In Properties/AssemblyInfo.cs or alongside it.</p>
+<div class="code">
+<p>[<span style="color: blue;">assembly</span>: log4net.Config.<span style="color: #2b91af;">XmlConfigurator</span>(ConfigFile = <span style="color: #a31515;">"log4net.config"</span>, Watch = <span style="color: blue;">true</span>)]</p>
+</div>
+<h3>Console startup</h3>
+<div class="code">
+<p><span style="color: blue;">class</span> <span style="color: #2b91af;">Program</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: blue;">readonly</span> <span style="color: #2b91af;">ILog</span> Logger = <span style="color: #2b91af;">LogManager</span>.GetLogger(<span style="color: blue;">typeof</span>(<span style="color: #2b91af;">Program</span>));<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">static</span> <span style="color: blue;">void</span> Main(<span style="color: blue;">string</span>[] args)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">XmlConfigurator</span>.Configure();</p>
+</div>
+<p>Configure and watch:</p>
+<div class="code">
+<p>log4net.Config.<span style="color: #2b91af;">XmlConfigurator</span>.ConfigureAndWatch(<span style="color: blue;">new</span> <span style="color: #2b91af;">FileInfo</span>(<span style="color: #a31515;">"log4net.xml"</span>));</p>
+</div>
+<h3>Website startup</h3>
+<p><a href="https://github.com/davidebbo/WebActivator">Web activator</a> helps.</p>
+<div class="code">
+<p>[<span style="color: blue;">assembly</span>: WebActivator.<span style="color: #2b91af;">PreApplicationStartMethod</span>(<span style="color: blue;">typeof</span>(Web.App_Start.<span style="color: #2b91af;">LoggingConfig</span>), <span style="color: #a31515;">"PreApplicationStart"</span>)]<br />
+&nbsp;<br />
+<span style="color: blue;">namespace</span> Web.App_Start<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">LoggingConfig</span><br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> PreApplicationStart()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; log4net.Config.<span style="color: #2b91af;">XmlConfigurator</span>.Configure();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+<h3>Configuration</h3>
+<p>Config section if in App/Web.config:</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">configuration</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">configSections</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">section</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">entityFramework</span>"<span style="color: blue;"> </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">System.Data.Entity.Internal.ConfigFile.EntityFrameworkSection, EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</span>"<span style="color: blue;"> </span><span style="color: red;">requirePermission</span><span style="color: blue;">=</span>"<span style="color: blue;">false</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;!--</span><span style="color: green;"> For more information on Entity Framework configuration, visit http://go.microsoft.com/fwlink/?LinkID=237468 </span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">section</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">log4net</span>"<span style="color: blue;"> </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">log4net.Config.Log4NetConfigurationSectionHandler, log4net</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">configSections</span><span style="color: blue;">&gt;</span></p>
+</div>
+<p>Logging to two different roll-over file appenders by level.</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">log4net</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">root</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">level</span><span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">WARN</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">appender-ref</span><span style="color: blue;"> </span><span style="color: red;">ref</span><span style="color: blue;">=</span>"<span style="color: blue;">LogFileAppender</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">appender-ref</span><span style="color: blue;"> </span><span style="color: red;">ref</span><span style="color: blue;">=</span>"<span style="color: blue;">ErrorFileAppender</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">root</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">appender</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">LogFileAppender</span>"<span style="color: blue;"> </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">log4net.Appender.RollingFileAppender</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">file</span><span style="color: blue;"> </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">log4net.Util.PatternString</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">conversionPattern</span><span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">..\logs\website\Log.log</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">file</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">param</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">AppendToFile</span>"<span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">rollingStyle</span><span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">Size</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">maxSizeRollBackups</span><span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">10</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">maximumFileSize</span><span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">1MB</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">staticLogFileName</span><span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">false</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">preserveLogFileNameExtension</span><span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">layout</span><span style="color: blue;"> </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">log4net.Layout.PatternLayout</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">param</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">ConversionPattern</span>"<span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">%-5p%d{yyyy-MM-dd hh:mm:ss} &#8211; %m%n</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">layout</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">appender</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">appender</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">ErrorFileAppender</span>"<span style="color: blue;"> </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">log4net.Appender.RollingFileAppender</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">filter</span><span style="color: blue;"> </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">log4net.Filter.LevelRangeFilter</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">levelMin</span><span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">ERROR</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">acceptOnMatch</span><span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">filter</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">file</span><span style="color: blue;"> </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">log4net.Util.PatternString</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">conversionPattern</span><span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">..\logs\website\Errors.log</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">file</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">param</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">AppendToFile</span>"<span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">rollingStyle</span><span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">Size</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">maxSizeRollBackups</span><span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">10</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">maximumFileSize</span><span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">1MB</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">staticLogFileName</span><span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">false</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">preserveLogFileNameExtension</span><span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">layout</span><span style="color: blue;"> </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">log4net.Layout.PatternLayout</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">param</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">ConversionPattern</span>"<span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">%-5p%d{yyyy-MM-dd hh:mm:ss} &#8211; %m%n</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">layout</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">appender</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">log4net</span><span style="color: blue;">&gt;</span></p>
+</div>
+<div class="alert">
+rollingStyle "Date" or "Composite" doesn't limit the number of backup files (like maxSizeRollBackups does for Size). 
+</div>
+<ul>
+<li>To preserve the file extension (rather than ".1"): &lt;</span><span style="color: #a31515;">preserveLogFileNameExtension</span><span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;"> /&gt;</li>
+</ul>
+
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Windows Tips</title>
+<link rel="stylesheet" type="text/css" href="../style.css" />
+<script type="text/javascript" src="../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../index.html">About</a></li>
+<li><a href="../blog/default.aspx">Blog</a></li>
+<li><a href="windows.html">Windows</a></li>
+<li><a href="../net/dotnet.html">.Net  &gt;</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Windows Tips</h2>
+<h3>Setting Up A New Machine</h3>
+
+<h4>Software</h4>
+<ul>
+<li><a href="http://notepad-plus-plus.org/">Notepad++</a> <br />
+<small>For .config syntax highlighting: Settings - Styler Configurator - pick xml - add "User ext"</small>
+</li>
+<li><a href="http://winmerge.sourceforge.net/">WinMerge</a></li>
+<li><a href="http://www.irfanview.com/">IrfanView</a></li>
+<li>Firefox extensions:
+<ul>
+<li><a href="https://addons.mozilla.org/en-US/firefox/addon/1865">Adblock Plus</a>.</li>
+<li><a href="https://addons.mozilla.org/firefox/addon/6622">Dom Inspector</a> (previously an install option on FF2, in 3 an addon)</li>
+<li><a href="https://addons.mozilla.org/firefox/60/">WebDeveloper</a></li>
+<li><a href="https://addons.mozilla.org/firefox/394/">ViewSource With</a></li>
+<li><a href="https://addons.mozilla.org/firefox/1843/">FireBug</a></li>
+<li><a href="https://addons.mozilla.org/en-US/firefox/addon/777">New Tab Homepage</a></li>
+<li><a href="http://mozbackup.jasnapaka.com/">MozBackup for syncing between machines</a></li>
+</ul></li>
+<li><a href="http://filezilla-project.org/">Filezilla</a>. To sync, Site Manager/File has import/export.</li>
+<!--li><a href="http://www.launchy.net/">Launchy- Vista like program launcher, still useful in Vista</a></li-->
+<li><a href="http://technet.microsoft.com/en-gb/sysinternals/default.aspx">SysInternals tools (esp Prcoess Explorer)</a> (also see <a href="http://ccollomb.free.fr/unlocker/">Unlocker- who locked my dll?</a>)</li>
+<li><a href="http://www.microsoft.com/downloads/details.aspx?FamilyID=c26efa36-98e0-4ee9-a7c5-98d0592d8c52&amp;DisplayLang=en">SyncToy</a> - designed for syncing photo folders, but useful as a general backup tool. For simple version control that watches a tree, <a href="http://www.mogware.com/filehamster/index.html">FileHamster</a></li>
+<li><a href="http://lessmsi.activescott.com/">LessMsi</a> - tool for looking into msi installers</li>
+<li>Windows XP/7: <a href="http://windows.microsoft.com/is-IS/windows-live/essentials-install-offline-faq">Windows Live Essentials (offline installer)</a></li>
+</ul>
+
+<h4>Settings</h4>
+<ul>
+<li>PATH Environment Variable: required for .net csc.<br />
+<table><tr><th>1.1</th><td>;%windir%\Microsoft.NET\Framework\v1.1.4322;C:\Program Files\Microsoft.NET\SDK\v1.1\Bin;</td></tr>
+<tr><th>2.0</th><td>;%windir%\Microsoft.NET\Framework\v2.0.50727;C:\Program Files\Microsoft Visual Studio 8\SDK\v2.0\Bin;</td></tr>
+<tr><th>3.5</th><td>%windir%\Microsoft.NET\Framework\v3.5</td></tr>
+<tr><th>4.0</th><td>%windir%\Microsoft.NET\Framework\v4.0.30319</td></tr>
+</table>
+<br />Gacutil and the .Net Framework SDK tools are in C:\Program Files\Microsoft SDKs\Windows\v6.0A\Bin 
+</li>
+<li>WindowsXP properties/security tab isn't there by default-<br /> Tools/Folder Options/View tab; deselect "Use simple file sharing"</li>
+<li><a href="http://support.microsoft.com/default.aspx?scid=KB;EN-US;309173">XP search doesn't search .cs/ .js etc- registry hack</a>
+<pre>[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\ContentIndex]
+"FilterFilesWithUnknownExtensions"=dword:00000001</pre></li>
+<li><strong>Vista/7</strong>: 
+<ul>
+<li>Vista run msi as administrator context menu (third setting stops Vista changing folder templates): <pre>Windows Registry Editor Version 5.00
+
+[HKEY_CLASSES_ROOT\Msi.Package\shell\RunAs]
+@="Install As Admin"
+
+[HKEY_CLASSES_ROOT\Msi.Package\shell\RunAs\command]
+@="msiexec /i \"%1\""
+
+[HKEY_CURRENT_USER\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders\Shell]
+"FolderType"="NotSpecified"
+</pre></li>
+<li>If installed SP1, <a href="http://technet2.microsoft.com/WindowsVista/en/library/0505991e-49c2-494b-8703-257a14c3d4721033.mspx?mfr=true">C:\WINDOWS\system32\VSP1CLN.exe to recover disc space</a>. For sp2, run Compcln.exe</li>
+</ul>
+</li>
+<li>Turn off CAPSLOCK<pre>Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Keyboard Layout]
+"Scancode Map"=hex:00,00,00,00,00,00,00,00,02,00,00,00,2a,00,3a,00,00,00,00,00</pre></li>
+</ul>
+<h3>Development machine- Visual Studio</h3>
+<ul>
+<li>Visual Studio latest + SPs + extensions/addins. 
+<ul>
+<li>Vista/7/8: go to C:\Program Files (x86)\Microsoft Visual Studio 10.0\Common7\IDE and right-click devenv.exe. In compatibility tab, set to run as administrator</li>
+<li>Vista/7/8: install IIS7 + IIS - Web Management - IIS6 Compatibility- IIS Metabase and IIS 6 configuration + IIS - WWW Services - ASP.Net + IIS - Security - Windows Authentication. See <a href="http://support.microsoft.com/kb/920201">KB for SQL Server</a></li>
+</ul></li>
+</ul>
+
+<p>General options</p>
+<ul>
+<li>Tools/Options/ TextEditor/ All Languages - Wordwrap and line numbers.</li>
+<li>In a web project File/Browse With - Add Firefox and make default.</li>
+<li>Add GhostDoc, Resharper</li></ul> </li>
+<li>SQL Server (Express) latest + SPs. In Management Studio, server node rightclick/ Properties/ Security/ SQL Server and Windows Authentication (i.e. mixed mode)</li>
+<li>SSMS can be slow so <em>uncheck</em> IE Options/Advanced tab/Security-<q>Check publisher's certificate revocation</q> (or put this entry in C:\windows\system32\drivers\etc\hosts: 127.0.0.1 crl.microsoft.com)</li>
+<li>For SSL: <ul><li>PreVista: download/install <a href="http://www.microsoft.com/downloads/details.aspx?FamilyID=56fc92ee-a71a-4c73-b628-ade629c89499amp;&amp;DisplayLang=en">IIS 6 resource kit</a> and run SelfSSL (selfssl /T for default localhost website)</li>
+<li>Vista/IIS7: all in IIS manager - <a href="http://weblogs.asp.net/scottgu/archive/2007/04/06/tip-trick-enabling-ssl-on-iis7-using-self-signed-certificates.aspx">Scottgu</a></li></ul> </li>
+</ul>
+<h3>Development machine- Node + Grunt</h3>
+<ul>
+<li>Install <a href="http://nodejs.org/">Node.js</a> either with installer or via chocolately <code>cinst nodejs.install</code> </li>
+<li><strong>Corporate Proxy</strong><ul>
+<li>In project root (project-based) or user root %USERPROFILE% (user-based), create a file ".npmrc" (in Windows explorer, name it ".npmrc." and the last dot will disappear)</li>
+<li>In .npmrc add the lines<br/>
+proxy = http://domain\username:password@proxy.x:8080<br/>
+https-proxy = http://domain\username:password@proxy.x:8080</li>
+<li>The command line version is npm config set proxy http://domain\username:password@proxy.x:8080</li>
+</ul></li>
+<li>Node includes an older version of npm. Update (as Administrator) <code>npm install npm@latest -g</code></li>
+<li>Install grunt: <code>npm install -g grunt-cli</code> 
+<ul>
+<li>To set up a project, create package.json then run <code>npm install</code></li>
+<li>To run grunt, <code>grunt</code></li>
+</ul></li>
+</ul>
+
+<h3>Git and Proxies</h3>
+<p>git.config for external (eg github) and internal. Set the proxy to empty.</p>
+<pre>
+[http]
+	proxy = http://proxy.corporate:80
+[http "https://internal-git"]
+	proxy =
+	sslVerify = false
+</pre>
+<p>Show what's set: git config --get-urlmatch http https://internal-git</p>
+<p>Environmental variables always override the git.config. NB: https_proxy must have http url (not https).</p>
+<pre>
+http_proxy=http://username:password@server.domain:port
+https_proxy=http://username:password@server.domain:port
+no_proxy=https://internal-git
+</pre>
+
+
+<h3>Home machine</h3>
+<ul>
+<li><a href="http://www.ubcd4win.com/contents.htm">ultimate Windows boot cd</a> (and <a href="http://www.ultimatebootcd.com/">the non-Windows original</a>)</li>
+<li>XP-Win7: <a href="http://www.slysoft.com/en/virtual-clonedrive.html">Mount iso images as drives</a></li>
+<li>XP-Win7: <a href="http://free.grisoft.com/ww.download-avg-anti-virus-free-edition">AVG Free</a></li>
+<li>Win 8 Shutdown tile: Create a shortcut to <code>Shutdown.exe -s -t 00</code> (shutdown in 0 seconds) on desktop, customize the icon, then right-click-Pin To Start.</li>
+</ul>
+<p>And see <a href="http://www.hanselman.com/tools">the Scott Hanselman tools list</a></p>
+<h3>Misc.</h3>
+<h4>VB6</h4>
+<p>Unfortunately still around :(</p>
+<ul>
+<li>Visual Studio add-ins: <a href="http://www.mztools.com/v3/mztools3.htm">MZTools</a>. <br />
+Also <a href="http://www.turbodeveloper.com/turbovblite.php">TurboVBLite add in (official)</a> <a href="http://www.devx.com/vb2themax/CodeDownload/19793 ">older version (incl more code maintenance, a little buggy with ' but nice)</a></li>
+<li><a href="http://support.microsoft.com/?id=837910">Mousewheel doesn't work fix (KB with download)</a></li>
+<li><a href="http://www.aivosto.com/project/project.html">Project Analyzer</a> - fxcop for vb6. Not free.</li>
+<li><a href="http://support.microsoft.com/kb/259725/">VB6/ASP3 debugging problems (ms kb)</a></li> 
+<li>_Register.bat: <code>For %%f in (*.dll) do regsvr32 /s %%f</code>.<br />
+For context-menu Register item, save and merge this reg file (use HKEY_CLASSES_ROOT for whole machine): 
+<pre>REGEDIT4
+[HKEY_CURRENT_USER\Software\Classes\dllfile\shell\Register\command]
+@="regsvr32.exe %1"
+[HKEY_CURRENT_USER\Software\Classes\dllfile\Shell\Unregister\command]
+@="regsvr32.exe /u %1"
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Folder\shell\Cmd Here\command]
+@="cmd.exe /k pushd %L "
+</pre></li>
+</ul>
+<h4>Assign a virtual drive letter to a folder</h4>
+<p>Use DOS subst: <code>subst x: c:\directory</code></p>
+<p>To persist it in w98, put it in autoexec.bat. Cannot be used for network drives (which you can map anyway).</p>
+<p>See also <a href="http://www.ntwind.com/software/utilities/visual-subst.html">Visual Subst</a></p>
+<h4>LUA</h4>
+<p><a href="http://www.microsoft.com/technet/prodtechnol/winxppro/maintain/luawinxp.mspx">MS guide</a> and see <a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dncode/html/secure11152004.asp">DropMyRights</a></p>
+<h4>DOS</h4>
+<ul>
+<li>Get a file list: <code>dir *.gif /B &gt; list.txt</code></li>
+<li>Append a number of files together: <code>copy *.txt output.txt</code></li>
+</ul>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

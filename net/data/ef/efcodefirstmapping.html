@@ -1,0 +1,190 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Entity Framework Code First Mapping</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../io.html">Data &gt;</a></li>
+<li><a href="ef.html">Entity Framework &gt;</a></li>
+<li><a href="efcodefirst.html">EF Code First</a></li>
+<li><a href="efcodefirstvalidation.html">Validation</a></li>
+<li><a href="efcodefirstdb.html">Databases</a></li>
+<li><a href="efcodefirstmapping.html">Mapping</a></li>
+<li><a href="efcodefirstmigrations.html">Migrations</a></li>
+<li><a href="efcodefirstlogging.html">Logging</a></li>
+<li><a href="efcodefirstconfig.html">Configuration</a></li>
+<li><a href="efcodefirstoptimize.html">Optimization</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Entity Framework Code First Mapping</h2>
+
+<ul>
+<li><a href="http://martinwilley.com/blog/2012/02/05/EFCodeFirstManyToManyMapping.aspx">My blog entry on mapping many-to-many</a></li>
+</ul>
+
+<h3>Optimistic Concurrency</h3>
+<p>EF CF follows SQL Server's confused naming (timestamp/rowversion)- the attribute is [<span style="color: #2b91af;">Timestamp</span>] and the fluent config marker is IsRowVersion()</p>
+<div class="code">
+<p>[<span style="color: #2b91af;">Timestamp</span>]<br/>
+<span style="color: blue;">public</span> <span style="color: blue;">byte</span>[] RowVersion { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }</p>
+</div>
+
+<div class="code">
+<p>Property(m =&gt; m.RowVersion).IsRowVersion();</p>
+</div>
+
+<p>For other non=primary key properties to be involved in optimistic concurrency, add [<span style="color: #2b91af;">ConcurrencyCheck</span>] or .IsConcurrencyToken()</p>
+<div class="code">
+<p>[<span style="color: #2b91af;">ConcurrencyCheck</span>]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">string</span> LoginName { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }</p>
+</div>
+<div class="code">
+<p>Property(m =&gt; m.LoginName).IsConcurrencyToken();</p>
+</div>
+
+
+
+<h3>Value Objects (aka Complex Types aka Components)</h3>
+<p>Value objects in DDD are objects defined by their attributes, not by identity (like Entities). The canonical example is a Person entity which has an Address value type. On the database side of an ORM, the value properties simply live inside the entity table (People table has [Address_AddressLine1] column). In NHibernate these are called Components, in EF they are Complex Types.<br />
+If you follow conventions, it should <q>just work</q>.  They must have no key ("Id" property) or be in a collection (ICollection&lt;Address&gt;), and you can't have nested complex types. If you have anything that looks like an "Id" property, mark the class with [ComplexType]. In code:</p> 
+<div class="code">
+<p><span style="color: green;">//must be AFTER model.Configurations.Add</span><br />
+modelBuilder.ComplexType&lt;<span style="color: #2b91af;">Address</span>&gt;()<br />
+&nbsp;&nbsp;&nbsp; .Property(p =&gt; p.AddressLine1).HasColumnName(<span style="color: #a31515;">"Address1"</span>);</p>
+</div>
+<p>Or create a mapping class:</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">AddressConfiguration</span> : <span style="color: #2b91af;">ComplexTypeConfiguration</span>&lt;<span style="color: #2b91af;">Address</span>&gt;</p>
+</div>
+
+
+<div class="alert">
+Instantiate the value object in the parent entity's constructor.
+</div>
+
+<h3>Ignoring classes and properties</h3>
+<p>Related classes will be mapped even if they are not in a DbSet. So mark them as [<span style="color: #2b91af;">NotMapped</span>] or in code:</p>
+<div class="code">
+<p>modelBuilder.Ignore&lt;<span style="color: #2b91af;">CalculatedClass</span>&gt;();</p>
+</div>
+
+<p>Unlike NHibernate, all properties with public getters and a public/internal/private setter are mapped automatically. Properties with getter but no setter are automatically ignored. Private setters are allowed, and the property will be mapped, so you may need to mark them to be ignored.</p>
+
+<p>For properties (such as calculated properties), use the same markers i.e.[<span style="color: #2b91af;">NotMapped</span>] and</p><div class="code">
+<p>Ignore(m =&gt; m.CalculatedProperty);</p>
+</div>
+
+<p>NB: you can map internal properties (if they are in the same assembly, or with InternalsVisibleTo) if you explicitly configure them in the fluent API. You can also map protected and private properties if the mapping configuration is nested inside the entity.<br />
+Setters can be private if the getter is public, but this doesn't work in MediumTrust (eg Azure hosting).</p>
+
+<h3>Indexes</h3>
+<p>Since EF 6.1 (2014), you can add an [System.ComponentModel.DataAnnotations.Schema.<span style="color: #2b91af;">Index</span>(IsUnique = <span style="color: blue;">true</span>)] to properties (if your entities project references EF).</p>
+<p>Fluent configuration in DbContext.OnModelCreating is available, but really ugly.</p>
+<div class="code">
+<p>modelBuilder.Entity&lt;<span style="color: #2b91af;">MyEntity</span>&gt;().Property(x =&gt; x.Name)<br />
+&nbsp;&nbsp;&nbsp; .HasColumnAnnotation(<span style="color: #2b91af;">IndexAnnotation</span>.AnnotationName,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">IndexAnnotation</span>(<span style="color: blue;">new</span> <span style="color: #2b91af;">IndexAttribute</span> { IsUnique = <span style="color: blue;">true</span> }));</p>
+</div>
+<p>Both these create the migration instruction, or you can add it manually:</p>
+<div class="code">
+<p>CreateIndex(<span style="color: #a31515;">"dbo.MyEntities"</span>, <span style="color: #a31515;">"Name"</span>, unique: <span style="color: blue;">true</span>);</p>
+</div>
+
+
+<h3>Table Per Hierarchy (TPH)</h3>
+<p>In the database, this is a single table with a discriminator column. This is the default inheritance model in CF if it finds class inheritance; it creates a column [Discriminator] nvarchar(128) NOT NULL. The type name is the value.</p>
+<div class="alert">
+By default, EF Code First turns inherited classes into TPH. If you specify table names for the derived classes you get TPT (see below).
+</div>
+<p>You can customize the discriminator column in the fluent API. For each derived class:</p>
+
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">CatConfiguration</span> : <span style="color: #2b91af;">EntityTypeConfiguration</span>&lt;<span style="color: #2b91af;">Cat</span>&gt;<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> CatConfiguration()<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Map(m =&gt; m.Requires(<span style="color: #a31515;">&quot;CarnivoreType&quot;</span>).HasValue(<span style="color: #a31515;">&quot;Cat&quot;</span>));<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+<p>If the base class is not abstract, it can also have the .Requires(name).HasValue(object). The value doesn't have to be a string... EF will infer the database type (int or bool).</p>
+
+<div class="alert">
+<p>There is a <a href="http://stackoverflow.com/questions/9915578/error-remapping-ef-code-first-tph-discriminator">bug in EF 4.3 (fixed in EF 5)</a>. Don't map the derived classes in the base class with chaining... you'll get an exception "Map was called more than once for type 'Cat' and at least one of the calls didn't specify the target table name."</p>
+</div>
+<p>From EF 5, the following chaining is also fine:</p>
+<div class="code">
+<p>Map(m =&gt;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; m.ToTable(<span style="color: #a31515;">&quot;Carnivores&quot;</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; m.Requires(<span style="color: #a31515;">&quot;CarnivoreType&quot;</span>).HasValue(<span style="color: #a31515;">&quot;Generic&quot;</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; })<br />
+.Map&lt;<span style="color: #2b91af;">Cat</span>&gt;(m =&gt; m.Requires(<span style="color: #a31515;">&quot;CarnivoreType&quot;</span>).HasValue(<span style="color: #a31515;">&quot;Cat&quot;</span>))<br />
+.Map&lt;<span style="color: #2b91af;">Dog</span>&gt;(m =&gt; m.Requires(<span style="color: #a31515;">&quot;CarnivoreType&quot;</span>).HasValue(<span style="color: #a31515;">&quot;Dog&quot;</span>));</p>
+</div>
+
+<h3>Type per Type (TPT)</h3>
+<p>In the database, this is a base table (= the base class) with separate tables for each derived class and a foreign key between them.<br />
+You can map the derived table classes to specific names with .ToTable("x") or more explicitly from the base class:</p>
+<div class="alert">There's a bug in EF 4.3 (possibly the same as in TPH), where the chaining in the base class doesn't work. The error is "The type 'Cat' has already been mapped to table 'Cats'. Specify all mapping aspects of a table in a single Map call."</div>
+
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">CarnivoreConfiguration</span> : <span style="color: #2b91af;">EntityTypeConfiguration</span>&lt;<span style="color: #2b91af;">Carnivore</span>&gt;<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> CarnivoreConfiguration()<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//the base table</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Map(m =&gt; m.ToTable(<span style="color: #a31515;">&quot;Carnivores&quot;</span>))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//the derived tables</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//EF 4.3 InvalidOperationException: </span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//&nbsp; The type 'Cat' has already been mapped to table 'Cats'. </span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//&nbsp; Specify all mapping aspects of a table in a single Map call.</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .Map&lt;<span style="color: #2b91af;">Cat</span>&gt;(m =&gt; m.ToTable(<span style="color: #a31515;">&quot;Cats&quot;</span>))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .Map&lt;<span style="color: #2b91af;">Dog</span>&gt;(m =&gt; m.ToTable(<span style="color: #a31515;">&quot;Dogs&quot;</span>));<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+<p>The less explicit way (workaround for EF 4.3):</p>
+<div class="code">
+<p>modelBuilder.Entity&lt;<span style="color: #2b91af;">Carnivore</span>&gt;().ToTable(<span style="color: #a31515;">&quot;Carnivores&quot;</span>);<br />
+modelBuilder.Entity&lt;<span style="color: #2b91af;">Cat</span>&gt;().ToTable(<span style="color: #a31515;">&quot;Cat&quot;</span>);<br />
+modelBuilder.Entity&lt;<span style="color: #2b91af;">Dog</span>&gt;().ToTable(<span style="color: #a31515;">&quot;Dog&quot;</span>);</p>
+</div>
+
+
+<h3>Table per Concrete Class (TPC)</h3>
+<p>In the database, this is a table per derived class, with no common base table. In the fluent API you use MapInheritedProperties - but you will have to add explicit mappings for navigation properties.</p>
+<div class="code">
+<p>modelBuilder.Entity&lt;<span style="color: #2b91af;">Cat</span>&gt;()<br />
+&nbsp;&nbsp;&nbsp; .Map(m =&gt;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; m.ToTable(<span style="color: #a31515;">&quot;Cats&quot;</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; m.MapInheritedProperties();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; });<br />
+modelBuilder.Entity&lt;<span style="color: #2b91af;">Dog</span>&gt;()<br />
+&nbsp;&nbsp;&nbsp; .Map(m =&gt;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; m.ToTable(<span style="color: #a31515;">&quot;Dogs&quot;</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; m.MapInheritedProperties();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; });</p>
+</div>
+
+
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

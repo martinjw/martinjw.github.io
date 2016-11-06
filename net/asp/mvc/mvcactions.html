@@ -1,0 +1,218 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP MVC Actions</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="../aspmvc.html">Asp MVC</a></li>
+<li><a href="mvccontrollers.html">MVC Controllers</a></li>
+<li><a href="mvcactions.html">MVC Actions</a></li>
+<li><a href="../asprouting.html">Asp Routing</a></li>
+<li><a href="../aspmvcview.html">Asp MVC Views</a></li>
+<li><a href="htmlhelpers.html">HTML Helpers</a></li>
+<li><a href="bundles.html">Bundling</a></li>
+<li><a href="errors.html">MVC Errors</a></li>
+<li><a href="mvcvalidation.html">MVC Validation</a></li>
+<li><a href="simplepaging.html">Simple Paging</a></li>
+<li><a href="webapi.html">WebApi</a></li>
+<li><a href="webapiformat.html">WebApi Formatting</a></li>
+<li><a href="webapiclient.html">WebApi HttpClient</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>ASP MVC Actions</h2>
+
+
+<h3>Actions</h3>
+<ul>
+<li>HttpGets should be idempotent. "Postback" actions aren't, so add [HttpPost] to Edits </li>
+<li>Use [<span style="color: #2b91af;">ActionName</span>(<span style="color: #a31515;">"Illegal-Name</span>")] to override names (non C# names, or methods that are the same except for HttpGet/Post).
+<div class="code">
+<p>[<span style="color: #2b91af;">ActionName</span>(<span style="color: #a31515;">"Person-Detail"</span>)]<br/>
+<span style="color: blue;">public</span> <span style="color: #2b91af;">ActionResult</span> Details(<span style="color: blue;">int</span> id)</p>
+</div>
+</li>
+<li>To make searches bookmarkable, use the Html.BeginForm overload:<br />
+<span style="background: yellow;">@</span><span style="color: blue;">using</span> (Html.BeginForm(<span style="color: #a31515;">"Index"</span>, <span style="color: #a31515;">"Categories"</span>, <span style="color: #2b91af;">FormMethod</span>.Get)) { </li>
+<li>Arguments are automatically bound to RouteData.Values[<span style="color: #a31515;">"x"</span>], Request.QueryString[<span style="color: #a31515;">"y"</span>] and/or Request.Form[<span style="color: #a31515;">"z"</span>]</li>
+</ul>
+<div class="alert">
+If an argument type is a value type (eg int) it may fail (YSOD ArgumentException).
+Best practice is to set a default (int id = 0), in which case they will just be an error in ModelState.
+<p><span style="color: blue;">public</span> <span style="color: #2b91af;">ActionResult</span> Edit(<span style="color: blue;">int</span> id = 0)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> isValid = ModelState.IsValid; <span style="color: green;">//false if id="a"</span></p>
+</div>
+
+
+<h3>Action Results</h3>
+<ul>
+<li><span style="color: blue;">return</span> View(category); <span style="color: green;">//ViewResult</span></li>
+<li><span style="color: blue;">return</span> RedirectToAction(<span style="color: #a31515;">"Index"</span>);&nbsp; <span style="color: green;">//RedirectResult</span></li>
+<li><span style="color: blue;">return</span> HttpNotFound();</li>
+<li><span style="color: blue;">return</span> Json(category); <span style="color: green;">//Json. Yes, that's all.</span>
+</li>
+<li><span style="color: blue;">return</span> Content(<span style="color: #a31515;">"Hello world"</span>); <span style="color: green;">//plain text</span><br />
+<span style="color: green;">//returning a date or int is automatically a ContentResult</span></li>
+ <li>Mark non-http public methods as [<span style="color: #2b91af;">NoAction</span>] as otherwise they'd be a ContentResult</li>
+<li><span style="color: blue;">return</span> PartialView(category); <span style="color: green;">//@Html.Action/[ChildActionOnly]</span></li>
+</ul>
+
+<p>To return simple values (such as an int) add [NoAction] attribute.</p>
+
+<h4>Post-Redirect-Get pattern</h4>
+<p>HttpPost actions usually redirect, with a RedirectToAction (or RedirectToRoute)</p>
+<div class="code">
+<p><span style="color: blue;">return</span> RedirectToAction(<span style="color: #a31515;">"Edit"</span>, <span style="color: blue;">new</span> { id });</p>
+<p><span style="color: blue;">return</span> RedirectToRoute(<span style="color: blue;">new</span> {controller = <span style="color: #a31515;">"Person"</span>, action = <span style="color: #a31515;">"Edit"</span>, id});</p>
+</div>
+<p>To pass data across, use TempData[<span style="color: #a31515;">"x"</span>] = x.</p>
+<div class="alert">
+TempData is Session and is deleted on first read ... unless you TempData.Peek(<span style="color: #a31515;">"x"</span>)
+ or TempData.Keep(<span style="color: #a31515;">"x"</span>)- Keep is one-time only.
+</div>
+
+<div class="alert">
+View HtmlHelpers use the POSTed values by preference (not the Model). Setting a model.Property in a postback does nothing. To make it work, do this:
+<div class="code">
+<p>ModelState.Remove(<span style="color: #a31515;">"HasBeenPosted"</span>); <span style="color: green;">//so the model value isn't overridden</span><br />
+model.HasBeenPosted = <span style="color: blue;">true</span>;</p>
+</div>
+
+</div>
+
+<h3>Partial Actions</h3>
+<p>An Html.Partial can just call a partial view/user control; Html.Action (and Html.RenderAction) calls a controller which in turn calls a partial view. In other words, Html.Action allows the view to do processing- the view calls a controller to call a view.</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: maroon;">div</span><span style="color: blue;">&gt;</span><span style="background: yellow;">@</span>Html.Action(<span style="color: #a31515;">"CategorySummary"</span>, <span style="color: #a31515;">"Category"</span>, Model)<span style="color: blue;">&lt;/</span><span style="color: maroon;">div</span><span style="color: blue;">&gt;</span></p>
+</div>
+<p>In CategoryController. Mark as [<span style="color: #2b91af;">ChildActionOnly</span>] if required. ControllerContext.IsChildAction can detect if within an Action.</p>
+<div class="code">
+<p>[<span style="color: #2b91af;">ChildActionOnly</span>]<br />
+<span style="color: blue;">public</span> <span style="color: #2b91af;">ActionResult</span> CategorySummary(<span style="color: #2b91af;">CategoryModel</span> category)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//(ControllerContext.IsChildAction)</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> PartialView(category);<br />
+}</p>
+</div>
+<p>If you use dependency injection, you'll get the error <cite>A single instance of controller 'Web.Controllers.MyController' cannot be used to handle multiple requests. If a custom controller factory is in use, make sure that it creates a new instance of the controller for each request.</cite>. The DI container is supplying the same instance per request (request-scoped).<br />
+Change the DI configuration to be scoped per call- eg StructureMap is <code>For&lt;<span style="color: #2b91af;">MyController</span>&gt;().AlwaysUnique();</code></p>
+
+<h3>Action Filters</h3>
+<p><a href="http://www.asp.net/mvc/tutorials/understanding-action-filters-cs">Asp.Net</a></p>
+
+<table>
+<tr>
+<td>[<span style="color: #2b91af;">OutputCache</span>]</td>
+<td>Duration, VaryByParams etc</td>
+</tr>
+<tr>
+<td>[<span style="color: #2b91af;">Authorize</span>]</td>
+<td>Any authenticated user - specifics with Users = "", Roles = ""</td>
+</tr>
+<tr>
+<td>[<span style="color: #2b91af;">AllowAnonymous</span>]</td>
+<td>MVC 4: whitelist for logon actions when you have a global [<span style="color: #2b91af;">Authorize</span>]</td>
+</tr>
+<tr>
+<td>[<span style="color: #2b91af;">ValidateAntiForgeryToken</span>]</td>
+<td>In conjunction with Html.AntiForgeryToken()</td>
+</tr>
+<tr>
+<td>[<span style="color: #2b91af;">HandleError</span>]</td>
+<td>Error trapping, It goes to the default Shared/Errors.cshtml.<br />
+<ul>
+<li>Attribute on method (specific action) or class (=all controller actions)</li>
+<li>CustomErrors=RemoteOnly by default</li>
+<li>If you don't use HandleError, it falls through to global.asax Application_Error</li>
+<li>Alternatively (in MVC3) apply global filters</li>
+</ul>
+</td>
+</tr>
+</table>
+
+<h4>HandleErrors in GlobalFilters</h4>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> RegisterGlobalFilters(<span style="color: #2b91af;">GlobalFilterCollection</span> filters)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//multiple filters are applied with ascending Order (default = -1)</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//database errors</span><br />
+&nbsp;&nbsp;&nbsp; filters.Add(<span style="color: blue;">new</span> <span style="color: #2b91af;">HandleErrorAttribute</span><br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; ExceptionType = <span style="color: blue;">typeof</span>(System.Data.Common.<span style="color: #2b91af;">DbException</span>),<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; View = <span style="color: #a31515;">"DatabaseError"</span>, <span style="color: green;">//-&gt; Shared/DatabaseError.cshtml</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Order = 1<br />
+&nbsp;&nbsp;&nbsp; });<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//generic errors (default order is -1)</span><br />
+&nbsp;&nbsp;&nbsp; filters.Add(<span style="color: blue;">new</span> <span style="color: #2b91af;">HandleErrorAttribute</span> { Order = 2 });<br />
+}<br />
+&nbsp;<br />
+<span style="color: blue;">protected</span> <span style="color: blue;">void</span> Application_Start()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">AreaRegistration</span>.RegisterAllAreas();<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; RegisterGlobalFilters(<span style="color: #2b91af;">GlobalFilters</span>.Filters);<br />
+&nbsp;&nbsp;&nbsp; RegisterRoutes(<span style="color: #2b91af;">RouteTable</span>.Routes);<br />
+}</p>
+</div>
+
+<p>Error views have no controller. The model is <span style="background: yellow;">@model </span>System.Web.Mvc.<span style="color: #2b91af;">HandleErrorInfo</span></p>
+
+
+<h3>Action Input Binding</h3>
+<p>You can still access Request.Form, or accept a FormCollection, but AspMVC's DefaultModelBinder is quite good at mapping the HttpPosted fields (and Route data) into simple model classes.</p>
+<p>You can use simple arguments (which can have defaults), with UpdateModel (or TryUpdateModel) - which can take an interface (as well as inclusions/ exclusions).</p>
+<div class="code">
+<p>[<span style="color: #2b91af;">HttpPost</span>]<br />
+<span style="color: blue;">public</span> <span style="color: #2b91af;">ActionResult</span> Edit(<span style="color: blue;">int</span> categoryId, <span style="color: blue;">string</span> categoryName)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> category = <span style="color: blue;">new</span> <span style="color: #2b91af;">CategoryModel</span>();<br />
+&nbsp;&nbsp;&nbsp; UpdateModel(category, <span style="color: blue;">new</span>[] { <span style="color: #a31515;">"CategoryName"</span>, <span style="color: #a31515;">"CategoryId"</span> });<br />
+&nbsp;</p>
+</div>
+<p>...Or...</p>
+<div class="code">
+<p>[<span style="color: #2b91af;">HttpPost</span>]<br />
+<span style="color: blue;">public</span> <span style="color: #2b91af;">ActionResult</span> Edit(<span style="color: #2b91af;">CategoryModel</span> category)<br />
+&nbsp;</p>
+</div>
+
+<h4>BindAttribute</h4>
+<p>This applies to the individual parameters - or to your model class.</p>
+<div class="code">
+<p>[<span style="color: #2b91af;">HttpPost</span>]<br />
+<span style="color: blue;">public</span> <span style="color: #2b91af;">ActionResult</span> Edit(<br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">Bind</span>(Include = <span style="color: #a31515;">"CategoryName,CategoryId"</span>)]<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">CategoryModel</span> category)</p>
+</div>
+
+
+<h4>Custom ModelBinders</h4>
+<ul>
+<li>In MVC 1-2, you could add an IModelBinder via ModelBinders.Binders.Add(x)</li>
+<li>IModelBinder.BindModel(<span style="color: #2b91af;">ControllerContext</span> controllerContext,<br /> <span style="color: #2b91af;">ModelBindingContext</span> bindingContext)<br />
+You can access Request.Form or bindingContext.ValueProvider.GetValue
+</li>
+<li>You can inherit from the DefaultModelBinder and override CreateModel to create your models from a repository/IoC</li>
+<li>In MVC3, there is an IModelBinderProvider.GetBinder(type) which can be added to ModelBinderProviders.BinderProviders.Add(x).</li>
+</ul>
+
+
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP.Net Core Views</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="core.html">DotNet Core</a></li>
+<li><a href="mvc.html">MVC</a></li>
+<li><a href="project.html">Core Project</a></li>
+<li><a href="startup.html">Startup</a></li>
+<li><a href="config.html">Config Settings</a></li>
+<li><a href="iis.html">IIS</a></li>
+<li><a href="controllers.html">Controllers</a></li>
+<li><a href="views.html">Views</a></li>
+<li><a href="di.html">Dependency Injection</a></li>
+<li><a href="security.html">Security</a></li>
+<li><a href="logging.html">Logging</a></li>
+<li><a href="localization.html">Localization</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>ASP.Net Core Views</h2>
+
+<p>Views aren't much different to MVC5 (<a href="../aspmvcview.html">notes</a>)</p>
+<ul>
+<li>_ViewStart.cshtml defines the layout page</li>
+<li>Shared/_Layout.cshtml is the master page, with @RenderBody()</li>
+<li>Razor templates are under controller/page.cshtml structure</li>
+</ul>
+
+<div class="alert">
+You can't precompile Razor views in Core v1 (&lt;MvcBuildViews&gt;false&lt;/MvcBuildViews&gt; in csproj) - cshtml files must be deployed unless you embed them and use EmbeddedFilesProvider
+</div>
+
+<h3>Nuget packages</h3>
+<p>You can use Razor views without any packages. </p>
+<ul>
+<li>"Microsoft.AspNetCore.Mvc.TagHelpers" - adds taghelpers</li>
+<li>"Microsoft.AspNetCore.Tooling.Razor" - adds intellisense in razor.</li>
+</ul>
+
+<h3>View Location</h3>
+<p>Instead of the default folders (controllers, models, views) some people prefer "feature folders", where the project has a folder per feature; controllers live alongside the model and view.</p>
+<p>You need to tell MVC where to find the views...</p>
+<ul>
+<li>Implement an <cite>IViewLocationExpander</cite>, specifically the ExpandViewLocations.
+<div class="code">
+<p><span style="color:green;">//using&nbsp;Microsoft.AspNet.Mvc.Razor;</span><br/>
+<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:darkblue;">ChangeViewLocationExpander</span>&nbsp;:&nbsp;<span style="color:darkblue;">IViewLocationExpander</span><br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:darkcyan;">PopulateValues</span>(<span style="color:darkblue;">ViewLocationExpanderContext</span>&nbsp;context)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//NA</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:darkblue;">IEnumerable</span>&lt;<span style="color:blue;">string</span>&gt;&nbsp;<span style="color:darkcyan;">ExpandViewLocations</span>(<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:darkblue;">ViewLocationExpanderContext</span>&nbsp;context,&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:darkblue;">IEnumerable</span>&lt;<span style="color:blue;">string</span>&gt;&nbsp;viewLocations)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//find&nbsp;the&nbsp;views&nbsp;in&nbsp;&quot;Modules&quot;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">return</span>&nbsp;viewLocations.<span style="color:darkcyan;">Select</span>(v&nbsp;=&gt;&nbsp;v.<span style="color:darkcyan;">Replace</span>(<span style="color:#a31515;">&quot;/Views&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;/Modules&quot;</span>));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+}</p>
+</div>
+</li>
+<li>In Startup.ConfigureServices after the AddMvc() 
+<div class="code">
+<p><span style="color:blue;">public</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:darkcyan;">ConfigureServices</span>(<span style="color:darkblue;">IServiceCollection</span>&nbsp;services)<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;services.<span style="color:darkcyan;">AddMvc</span>();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;services.<span style="color:darkcyan;">Configure</span>&lt;<span style="color:darkblue;">RazorViewEngineOptions</span>&gt;(options&nbsp;=&gt;&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;options.<span style="color:purple;">ViewLocationExpanders</span>.<span style="color:darkcyan;">Add</span>(<span style="color:blue;">new</span>&nbsp;<span style="color:darkblue;">ChangeViewLocationExpander</span>()));<br/>
+</p>
+</div>
+</li>
+</ul>
+
+<h3>Injecting services</h3>
+<p>You should be populating your view model (or ViewBag) with all the data for the page. We can now inject services into the view (which uses <a href="di.html">dependency injection</a>). This sounds like the wrong thing to do, but at least one scenario (<a href="localization.html">localization</a>) it makes sense.</p>
+
+<h3>TagHelpers</h3>
+<ul>
+<li><a href="../mvc/htmlhelpers.html">HtmlHelpers</a> (<span style="background: yellow;">@</span>Html.TextBox) still exist</li>
+<li>Taghelpers are <strong>server-side</strong> html extensions (like Angular directives)- the cshtml is more HTML-like and less C# codes</li>
+<li>They arem't webforms controls- you can have several taghelpers on the same element - but some helpers write large chunks of code and even javascript (script asp-fallback-src)</li>
+<li><a href="https://docs.asp.net/projects/mvc/en/latest/views/tag-helpers/intro.html">docs.asp.net</a> - <a href="https://github.com/aspnet/Mvc/tree/dev/src/Microsoft.AspNetCore.Mvc.TagHelpers">source</a></li>
+</ul>
+<p>Instead of <span style="background: yellow;">@</span>Html.ActionLink("Log in", "Account", "Login"), use a taghelper (and it's easier to add a class or other attributes)</p>
+<div class="code">
+<p><span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">a</span>&nbsp;<span style="font-weight:bold;color:purple;">asp-controller</span><span style="color:blue;">=</span><span style="color:blue;">&quot;Account&quot;</span>&nbsp;<span style="font-weight:bold;color:purple;">asp-action</span><span style="color:blue;">=</span><span style="color:blue;">&quot;Login&quot;</span><span style="color:blue;">&gt;</span>Log&nbsp;in<span style="color:blue;">&lt;/</span><span style="font-weight:bold;color:purple;">a</span><span style="color:blue;">&gt;</span></p>
+</div>
+<p>The code-like <span style="background: yellow;">@</span><span style="color: blue;">using</span> (Html.BeginForm()) becomes much nicer</p>
+<div class="code">
+<p><span style="color:blue;">&lt;</span><span style="color:maroon;">form</span>&nbsp;<span style="color:red;">asp-controller</span><span style="color:blue;">=</span><span style="color:blue;">&quot;Product&quot;</span>&nbsp;<span style="color:red;">asp-action</span><span style="color:blue;">=</span><span style="color:blue;">&quot;Update&quot;</span>&nbsp;<span style="color:red;">method</span><span style="color:blue;">=</span><span style="color:blue;">&quot;post&quot;</span>&nbsp;<span style="color:red;">class</span><span style="color:blue;">=</span><span style="color:blue;">&quot;bootstrappy-stuff&quot;</span>&nbsp;<span style="color:red;">role</span><span style="color:blue;">=</span><span style="color:blue;">&quot;form&quot;</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">input</span>&nbsp;<span style="color:red;">asp-for</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="background:yellow;">@</span>product.ProductName<span style="color:blue;">&quot;</span>&nbsp;<span style="color:red;">type</span><span style="color:blue;">=</span><span style="color:blue;">&quot;text&quot;</span>&nbsp;<span style="color:blue;">/&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">input</span>&nbsp;<span style="color:red;">asp-for</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="background:yellow;">@</span>product.ProductId<span style="color:blue;">&quot;</span>&nbsp;<span style="color:red;">type</span><span style="color:blue;">=</span><span style="color:blue;">&quot;text&quot;</span>&nbsp;<span style="color:blue;">/&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">input</span>&nbsp;<span style="color:red;">type</span><span style="color:blue;">=</span><span style="color:blue;">&quot;submit&quot;</span>&nbsp;<span style="color:red;">class</span><span style="color:blue;">=</span><span style="color:blue;">&quot;btn&nbsp;btn-default&quot;</span>&nbsp;<span style="color:red;">value</span><span style="color:blue;">=</span><span style="color:blue;">&quot;Update&quot;</span>&nbsp;<span style="color:red;">title</span><span style="color:blue;">=</span><span style="color:blue;">&quot;Update&nbsp;</span><span style="background:yellow;">@</span>account.ProductName<span style="color:blue;">&nbsp;to new value&quot;</span>&nbsp;<span style="color:blue;">/&gt;</span><br/>
+<span style="color:blue;">&lt;/</span><span style="color:maroon;">form</span><span style="color:blue;">&gt;</span></p>
+</div>
+<ul>
+<li>form, a<ul>
+<li><strong>asp-controller</strong></li>
+<li><strong>asp-action</strong></li>
+<li><strong>asp-antiforgery</strong></li>
+</ul></li>
+<li>input<ul>
+<li><strong>asp-for</strong> - sets value (if type isn't specified, it is set based on the model datatype/DataAnnotation)</li>
+<li><strong>asp-format</strong> - format the value</li>
+</ul></li>
+<li>select<ul>
+<li><strong>asp-for</strong></li>
+<li><strong>asp-items</strong> - a list of SelectListItem (to get value and text)</li>
+</ul></li>
+<li>label<ul>
+<li><strong>asp-for</strong></li>
+</ul></li>
+<li>Others<ul>
+<li><strong>asp-validation-summary</strong> - add to a div</li>
+<li><strong>asp-validation-for</strong> - equivalent to Html.ValidationMessageFor</li>
+</ul></li>
+<li><strong>&lt;environment names="Development"&gt;</strong> - basically an <span style="background: yellow;">@</span>if(IHostingEnvironment.EnvironmentName = "x") {} without having to inject the IHostingEnvironment</li>
+</ul>
+
+<p>In _layout.cshtml</p>
+
+<div class="code">
+<p><span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">environment</span>&nbsp;<span style="font-weight:bold;color:purple;">names</span><span style="color:blue;">=</span><span style="color:blue;">&quot;Development&quot;</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">script</span>&nbsp;<span style="color:red;">src</span><span style="color:blue;">=</span><span style="color:blue;">&quot;~/lib/jquery/dist/jquery.js&quot;</span><span style="color:blue;">&gt;&lt;/</span><span style="color:maroon;">script</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">script</span>&nbsp;<span style="color:red;">src</span><span style="color:blue;">=</span><span style="color:blue;">&quot;~/lib/bootstrap/dist/js/bootstrap.js&quot;</span><span style="color:blue;">&gt;&lt;/</span><span style="color:maroon;">script</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">script</span>&nbsp;<span style="font-weight:bold;color:purple;">src</span><span style="color:blue;">=</span><span style="color:blue;">&quot;~/js/site.js&quot;</span>&nbsp;<span style="font-weight:bold;color:purple;">asp-append-version</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:blue;">true</span><span style="color:blue;">&quot;</span><span style="color:blue;">&gt;&lt;/</span><span style="font-weight:bold;color:purple;">script</span><span style="color:blue;">&gt;</span><br/>
+<span style="color:blue;">&lt;/</span><span style="font-weight:bold;color:purple;">environment</span><span style="color:blue;">&gt;</span></p>
+</div>
+
+<p>To run the taghelpers, you need a Views/_ViewImports.cshtml. This is a magic file (like _ViewStart.cshtml which indicates the layout page, Shared/_Layout.cshtml).</p>
+
+<div class="code">
+<p><span style="background:yellow;">@</span><span style="color:blue;">using</span>&nbsp;MyProject<br/>
+<span style="background:yellow;">@</span><span style="color:blue;">using</span>&nbsp;MyProject.Models<br/>
+<span style="background:yellow;">@</span><span style="color:blue;">using</span>&nbsp;Microsoft.AspNet.Identity<br/>
+<span style="background:yellow;">@addTagHelper&nbsp;</span><span style="color:#a31515;">&quot;*,&nbsp;Microsoft.AspNet.Mvc.TagHelpers&quot;</span></p>
+</div>
+<p>Add an additional <span style="background:yellow;">@addTagHelper&nbsp;</span> line for other assemblies containing taghelpers.</p>
+<p>You can "escape" taghelpers by adding a ! prefix to the html-element- <span style="color:blue;">&lt;</span>!<span style="font-weight:bold;color:purple;">a</span>&nbsp;<span style="font-weight:bold;color:purple;">asp-controller</span><span style="color:blue;">=</span><span style="color:blue;">&quot;Account&quot;</span> /<span style="color:blue;">&gt;</span> would send write an &lt;a&gt; element with the asp-controller attribute to the browser.</p>
+</div>
+<div class="Footer"></div>
+</body>
+</html>

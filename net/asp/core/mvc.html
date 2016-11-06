@@ -1,0 +1,81 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP.Net Core</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="core.html">DotNet Core</a></li>
+<li><a href="mvc.html">MVC</a></li>
+<li><a href="project.html">Core Project</a></li>
+<li><a href="startup.html">Startup</a></li>
+<li><a href="config.html">Config Settings</a></li>
+<li><a href="iis.html">IIS</a></li>
+<li><a href="controllers.html">Controllers</a></li>
+<li><a href="views.html">Views</a></li>
+<li><a href="di.html">Dependency Injection</a></li>
+<li><a href="security.html">Security</a></li>
+<li><a href="logging.html">Logging</a></li>
+<li><a href="localization.html">Localization</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>ASP.Net Core</h2>
+
+
+<h3>MVC</h3>
+<ul>
+<li>Dependencies: "Microsoft.AspNetCore.Mvc"<br/>
+"Microsoft.AspNetCore.Mvc.TagHelpers"<br/>
+"Microsoft.AspNetCore.Tooling.Razor"<br/>
+"Microsoft.AspNetCore.StaticFiles"<br/>
+"Microsoft.AspNetCore.Diagnostics" (error pages, etc)</li>
+<li>Startup.ConfigureServices : services.AddMvc();</li>
+<li>Startup.Configure: app.UseMvc() for attribute routing, for routes:
+<div class="code">
+<p>app.UseMvc(routes&nbsp;=&gt;<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;routes.MapRoute(<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name:&nbsp;<span style="color:#a31515;">&quot;default&quot;</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;template:&nbsp;<span style="color:#a31515;">&quot;{controller=Home}/{action=Index}/{id?}&quot;</span>);<br/>
+});<br/>
+</p>
+</div>
+</li>
+</ul>
+<p>You can break down into individual components of MVC (a WebApi may just have Microsoft,AspNet.Mvc.Core and Microsoft.AspNet.Mvc.Formatters.Json - configureServices as services.AddMvcCore().AddJsonFormatters();).</p>
+<h3>Differences from .net 4.5/MVC 5</h3>
+<ul>
+<li>Project<ul>
+<li><span style="text-decoration: line-through red;">No csproj - it uses xproj and project.json</span> As of May 2016, we are back to csproj (MSBuild xml) and a project.json that may be renamed nuget.json</li>
+<li>References are now Nuget packages (dependencies in <span style="text-decoration: line-through red;">project.json</span> csproj)</li>
+<li>No global.asax - use startup.cs</li>
+<li>It is multi-targeting- you build both for full framework .net (4.6) and the multi-platform .net core.</li>
+</ul></li>
+<li>Asp<ul>
+<li>No Asp lifecycle events- it has OWIN type middleware</li>
+<li>You can't just deploy the asp project folder. The web root is now the wwwroot folder. Binaries are written to the solution/artifacts folder (outside wwwroot).</li>
+<li>No bundling - use gulp instead</li>
+<li>Front-end resources (jquery etc) are not nuget any more, they are bower</li>
+<li>Dependency injection is pervasive (not service-locator as before)</li>
+<li>MVC and WebApi are the same now, not parallel frameworks with misleading similarities (2 different AuthorizeAttributes)</li>
+<li>Less IIS. If you use IIS, it just launches the dotnet process, there are no handlers, modules or application pools.</li>
+<li>A minimal, static web.config. All configuration settings are via the configuration system- environment variables, json files.. </li>
+</ul></li>
+</ul>
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>SSL</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspsecurity.html">Asp Security</a></li>
+<li><a href="forms.html">Forms Authentication</a></li>
+<li><a href="wsfederation.html">WS-Federation</a></li>
+<li><a href="wsfederationconfig.html">WS-Federation Config</a></li>
+<li><a href="ssl.html">SSL</a></li>
+<li><a href="owin.html">Owin</a></li>
+<li><a href="oauth.html">OAuth</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>SSL/TLS</h2>
+<p>SSL/TLS (https) is increasingly required for security (e.g. it's mandatory for OAuth2).</p>
+<div class="alert">
+SSL (Secure Sockets Layer) has been replaced with TLS (transport layer security). Most people still refer to "SSL" even though they mean TLS.<br/>
+SSL 3.0 (from 1996) is insecure. Most servers and clients (and IE 7+) use TLS 1.1 or later.<br/>
+"POODLE" hacks work by downgrading from TLS to insecure SSL. If you don't support IE6, the server can disable SSL.
+</div>
+<ul>
+<li><a href="http://www.asp.net/web-api/overview/security/working-with-ssl-in-web-api">SSL in webAPI [www.asp.net]</a></li>
+</ul>
+<h3>RequireHttps</h3>
+<p>MVC has a [<span style="color: #2b91af;">RequireHttps</span>] attribute, which automatically redirects GET requests from http:// to https://. (Not POSTS, which would invoke dreaded "do you want to re-submit" dialogs).</p>
+<p>WebAPI doesn't have RequireHttps, so here's a simple implementation:</p>
+<div class="code">
+<p><span style="color: blue;">using</span> System;<br />
+<span style="color: blue;">using</span> System.Net;<br />
+<span style="color: blue;">using</span> System.Net.Http;<br />
+<span style="color: blue;">using</span> System.Text;<br />
+<span style="color: blue;">using</span> System.Web.Http.Controllers;<br />
+<span style="color: blue;">using</span> System.Web.Http.Filters;<br />
+&nbsp;<br />
+<span style="color: blue;">namespace</span> Mvc5Auth.Infrastructure<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">WebApiRequireHttpsAttribute</span> : <span style="color: #2b91af;">AuthorizationFilterAttribute</span><br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">override</span> <span style="color: blue;">void</span> OnAuthorization(<span style="color: #2b91af;">HttpActionContext</span> actionContext)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> request = actionContext.Request;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (request.RequestUri.Scheme == <span style="color: #2b91af;">Uri</span>.UriSchemeHttps) <span style="color: blue;">return</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//it's http</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">HttpResponseMessage</span> response;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!request.Method.Equals(<span style="color: #2b91af;">HttpMethod</span>.Get))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//post etc</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; response = request.CreateResponse(<span style="color: #2b91af;">HttpStatusCode</span>.NotFound);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; response.ReasonPhrase = <span style="color: #a31515;">"Must use https"</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">else</span> <span style="color: green;">//GET</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//create a copy of the uri with https</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> uri = <span style="color: blue;">new</span> <span style="color: #2b91af;">UriBuilder</span>(request.RequestUri) { Scheme = <span style="color: #2b91af;">Uri</span>.UriSchemeHttps, Port = 443 };<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//build a redirect with the header location and helpful html</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; response = request.CreateResponse(<span style="color: #2b91af;">HttpStatusCode</span>.Redirect);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; response.Headers.Location = uri.Uri;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> body = <span style="color: blue;">string</span>.Format(<span style="color: #a31515;">"&lt;p&gt;Resource available at &lt;a href=\"</span><span style="color: #3cb371;">{0}</span><span style="color: #a31515;">\"&gt;</span><span style="color: #3cb371;">{0}</span><span style="color: #a31515;">&lt;/a&gt;.&lt;/p&gt;"</span>,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; uri.Uri.AbsoluteUri);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; response.Content = <span style="color: blue;">new</span> <span style="color: #2b91af;">StringContent</span>(body, <span style="color: #2b91af;">Encoding</span>.UTF8, <span style="color: #a31515;">"text/html"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; actionContext.Response = response;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+<p>Either use it directly on the controller/method with [<span style="color: #2b91af;">WebApiRequireHttps</span>] or apply it in App_Start/WebApiConfig (with a little config switch for local debugging)</p>
+<div class="code">
+<p><span style="color: blue;">if</span> (<span style="color: blue;">string</span>.Equals(<span style="color: #2b91af;">ConfigurationManager</span>.AppSettings[<span style="color: #a31515;">"RequireHttps"</span>], <span style="color: #a31515;">"true"</span>, <span style="color: #2b91af;">StringComparison</span>.OrdinalIgnoreCase))<br />
+{<br />
+&nbsp;&nbsp;&nbsp; config.Filters.Add(<span style="color: blue;">new</span> <span style="color: #2b91af;">WebApiRequireHttpsAttribute</span>());<br />
+}</p>
+</div>
+
+<ul>
+<li>Visual Studio https: in project Properties Window (F4), Development Server / SSL Enabled.</li>
+<li>The https URL is a different port. RequireHttps cannot redirect. Copy and paste it from the F4 properties.</li>
+<li>Th browser will complain the localhost certificate isn't trusted!</li>
+<li>In Visual Studio 2013, project Properties (Alt-Enter) - "Web" page - Debuggers (near bottom), uncheck "Edit and Continue" so IISExpress runs continuously.</li>
+</ul>
+
+<h3>SSL from Certificate Authority</h3>
+<p><a href="http://azure.microsoft.com/en-us/documentation/articles/web-sites-configure-ssl-certificate/">Azure has a good explanation</a>.</p>
+<ul>
+<li>A <strong>basic</strong> certificate is for a specific domain name; a <strong>wildcard</strong> certificate allows www. and subdomains. A <strong>Subject Alternative Name (SAN)</strong> cert allows specific alternative names (known subdomains).</li>
+<li>Create a certificate request (for the correct domain name!) with IIS, certreq.exe or OpenSSL (NB: the OID for an SSL cert is 1.3.6.1.5.5.7.3.1).</li>
+<li>Submit the .csr (or paste in text), and get a .cer file. When you accept the .cer file, it is placed in the windows certificate store.</li>
+<li>You probably have to get intermediate (chain) certificates from the CA. Install those.</li>
+<li>Export the certificate from the Personal store with the private key, Personal Information Exchange - PKCS #12 (.pfx), Include all certificates in the certificate chain.</li>
+</ul>
+
+<h3>Local SSL certificates</h3>
+<ul>
+<li>An SSL certificate contains the server/machine name.</li>
+<li>You can create a generic root certificate (company name) which is installed to Trusted Root on each machine (share the root .cer file) then...</li>
+<li>Each application has a host name with an SSL certificate. The host name is created in IIS and System32/drivers/etc/hosts. The SSL certificate is signed with the root certificate, and the .pfx file is shared. Because the root certificate is trusted, the SSL certificate is implicitly trusted.</li>
+</ul>
+
+<h4>IIS</h4>
+<p>For development, you can create a certificate with IIS (IIS section, Server certificates icon, actions "Create Self-Signed Certificate", which puts it in the Personal certificates) or use makecert.</p>
+<h4>Certificates mmc</h4>
+<p>Open the Certificates mmc (MMC/ File - Add/Remove Snap-In / pick "Certificates" and "Add" / "Computer Account" / "Local Computer"</p>
+<p>The certificate store you need is "Trusted Root Certification Authorities"</p>
+
+<h4>MakeCert</h4>
+<p>Makecert is available using the Visual Studio command prompt (Common7\Tools\VsDevCmd.bat), usually in C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\Bin</p>
+<p><a href="http://msdn.microsoft.com/en-us/library/bfsktky3(v=vs.110).aspx">makecert.exe</a> generates an X509 (.cer) certificate and a private key file (.pvk).</p>
+<p>This version (from the Pluralsight course WebAPi2 Security) creates a "certification authority" type cert and converts the pvk and cert files to a more portable pfx.  NB dates are mm/dd/yyyy</p>
+<pre>makecert.exe -r -n "CN=DevRoot" -pe -sv DevRoot.pvk -a sha1 -len 2048 -b 01/31/2010 -e 01/31/2030 -cy authority DevRoot.cer
+pvk2pfx.exe -pvk DevRoot.pvk -spc DevRoot.cer -pfx DevRoot.pfx
+</pre>
+<p>Import the .cer into <cite>Trusted Root Certification Authorities</cite> using MMC (NB: just the public key)</p>
+<p>Then make an SSL certificate (the obscure -eku OID) using the root certificate.</p>
+<pre>makecert.exe -iv DevRoot.pvk -ic DevRoot.cer -n "CN=%1" -pe -sv %1.pvk -a sha1 -len 2048 -b 01/31/2010 -e 01/31/2020 -sky exchange %1.cer -eku 1.3.6.1.5.5.7.3.1
+pvk2pfx.exe -pvk %1.pvk -spc %1.cer -pfx %1.pfx</pre>
+<p>Import the .pfx (NB: NOT .cer as you need the private key) into <cite>Personal</cite> using MMC. Because it was signed with the Trusted Root certificate, the chain is trusted.</p>
+<p>In IIS manager, go to Edit Site/Bindings and add an https binding with the SSL certificate.</p>
+<p>If you add a new site, ensure IIS_IUSERS has access to the site folder, and add the binding, host name and (in IIS8/Windows Server 2012) <a href="http://www.iis.net/learn/get-started/whats-new-in-iis-8/iis-80-server-name-indication-sni-ssl-scalability">Require Server Name Indication</a> (allows multiple host names to use the same server/port)</p>
+<p>Finally, in System32/drivers/etc edit hosts to add the alias to the 127.0.0.1</p>
+<p>You can also create client SSL certificates, if you can distribute them and configure IIS to accept client certificates (system.webServer/security/access sslFlags="Ssl, SslNegotiateCert" )</p>
+
+<h4>OpenSSL</h4>
+<p><a href="https://www.openssl.org/related/binaries.html">OpenSSL</a> includes a set of command lines tools for converting different file formats.</p>
+<p>If you update a certificate, you'll get a .crt and .p7b (without private keys). To create a .pfx, you can use OpenSSL.</p>
+<p>To extract the private key from original .pfx if you don't have the private key (normally a .key or .pem extension, internally it's .pem)</p>
+<pre>openssl pkcs12 -in certname.pfx -nocerts -out key.pem -nodes</pre>
+<p>To create a .pfx from a private key and a .crt/.cer file:</p>
+<pre>openssl pkcs12 -export -out certname.pfx -in certname.crt -inkey key.pem</pre>
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

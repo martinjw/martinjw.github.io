@@ -1,0 +1,144 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Xml</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="io.html">IO</a></li>
+<li><a href="xml.html">Xml</a></li>
+<li><a href="xmlpatterns.html">Xml Patterns</a></li>
+<li><a href="adodotnet.html">ADO.Net</a></li>
+<li><a href="adopatterns.html">ADO Patterns</a></li>
+<li><a href="transactions.html">Transactions</a></li>
+<li><a href="sql.html">SQL</a></li>
+<li><a href="ef/ef.html">EF/Linq2Sql &gt;</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>Xml</h2>
+
+<h3>Xslt</h3>
+<p>To debug in Visual Studio 2005, use the XslCompiledTransform(true) constructor.</p>
+<div class="code">
+<p> <span style="color: #2b91af;">XslCompiledTransform</span> transformer = <span style="color: blue;">new</span> <span style="color: #2b91af;">XslCompiledTransform</span>();<br />
+ transformer.Load(<span style="color: #a31515;">"transform.xslt"</span>);<br />
+ <span style="color: #2b91af;">XsltArgumentList</span> args = <span style="color: blue;">new</span> <span style="color: #2b91af;">XsltArgumentList</span>();<br />
+ args.AddParam(<span style="color: #a31515;">"ID"</span>, <span style="color: #a31515;">""</span>, <span style="color: #a31515;">"Value"</span>); <span style="color: green;">//second argument is namespace</span><br />
+ transformer.Transform(<span style="color: #a31515;">"data.xml"</span>, args, Response.OutputStream);</p>
+</div>
+
+<h3>Formatted XmlDocument</h3>
+<div class="code">
+<p><span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: blue;">string</span> FormattedXml(<span style="color: #2b91af;">XmlNode</span> doc) <span style="color: green;">//quickly format xml string</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">MemoryStream</span> ms = <span style="color: blue;">new</span> <span style="color: #2b91af;">MemoryStream</span>(); <span style="color: green;">//could use stringbuilder but always utf16</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">XmlWriterSettings</span> settings = <span style="color: blue;">new</span> <span style="color: #2b91af;">XmlWriterSettings</span>();<br />
+&nbsp;&nbsp;&nbsp; settings.Indent = <span style="color: blue;">true</span>; <span style="color: green;">//in 1.1 an xmlTextwriter with Formatting= Formatting.Indented</span><br />
+&nbsp;&nbsp;&nbsp; settings.Encoding = <span style="color: #2b91af;">Encoding</span>.UTF8;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: #2b91af;">XmlWriter</span> writer = <span style="color: #2b91af;">XmlWriter</span>.Create(ms, settings))<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; doc.WriteTo(writer);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: #2b91af;">Encoding</span>.UTF8.GetString(ms.ToArray());<br />
+}</p>
+</div>
+
+<h3>AddElement</h3>
+<p>Everybody writes a version of this when using XmlDocument. Makes it easy to chain together too.</p>
+<div class="code">
+<p><span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: #2b91af;">XmlElement</span> AddElement(<span style="color: #2b91af;">XmlNode</span> parent, <span style="color: blue;">string</span> name)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">XmlElement</span> element = parent.OwnerDocument.CreateElement(name);<br />
+&nbsp;&nbsp;&nbsp; parent.AppendChild(element);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> element;<br />
+}</p>
+</div>
+
+<h3>XPath in XDocument</h3>
+<p>XPath is often more readable for complex parsing. The extension requires "using System.Xml.XPath;"</p>
+<div class="code">
+<p><span style="color: green;">//using System.Xml.Linq;</span><br />
+<span style="color: blue;">var</span> webConfig = <span style="color: #2b91af;">XDocument</span>.Load(fileName);<br />
+<span style="color: green;">//using System.Xml.XPath;</span><br />
+<span style="color: #2b91af;">XElement</span> e = webConfig.XPathSelectElement(<span style="color: #a31515;">"configuration/system.web/httpModules/add[@name='AuthModule']"</span>);</p>
+</div>
+
+
+<h3>XHTML</h3>
+<p>Doesn't work if the page uses html entities (&amp;nbsp;) and non-closing tags (look out for &lt;script /&gt;), but otherwise this is okay.</p>
+<div class="code">
+<p><span style="color: #2b91af;">XmlDocument</span> doc = <span style="color: blue;">new</span> <span style="color: #2b91af;">XmlDocument</span>();<br />
+doc.PreserveWhitespace = <span style="color: blue;">true</span>; <span style="color: green;">//if saving</span><br />
+doc.XmlResolver = <span style="color: blue;">null</span>; <span style="color: green;">//we don't want to resolve the w3c DTD</span><br />
+<span style="color: #2b91af;">XmlNamespaceManager</span> ns = <span style="color: blue;">new</span> <span style="color: #2b91af;">XmlNamespaceManager</span>(doc.NameTable);<br />
+ns.AddNamespace(<span style="color: #a31515;">"html"</span>, <span style="color: #a31515;">"http://www.w3.org/1999/xhtml"</span>);</p>
+</div>
+<p>To use entities, <a href="code/xhtmldoc.html">create a custom XmlResolver</a></p>
+
+<h3>SQL Server 2005</h3>
+<p><a href="http://msdn2.microsoft.com/en-us/library/ms178107.aspx">FOR XML</a> returns Xml Fragments (no root node- append <code>, root('rootName')</code>).<br />
+Rename columns with aliases (and tables for xml auto).</p>
+<table>
+<tr><th>SQLServer</th><th>Clause</th><th colspan="2">Result</th></tr>
+<tr><td>2000+</td>
+<td>
+For Xml Raw[('ElementName')]
+</td>
+<td colspan="2">
+&lt;row NAME="RED"/&gt;<br />
+&lt;ElementName NAME="RED"/&gt; with for xml Raw('ElementName')
+</td>
+</tr>
+<tr><td>2000+</td>
+<td>
+For Xml Auto [,Elements]
+</td>
+<td>
+&lt;TABLENAME NAME="RED"/&gt;<br />
+NB joined tables are nested</td>
+<td>
+&lt;TABLENAME&gt; <br />&lt;NAME&gt;RED&lt;NAME&gt;<br />&lt;/TABLENAME&gt;
+</td>
+</tr>
+<tr><td>2005+</td>
+<td>
+For Xml Path
+</td>
+<td colspan="2">
+Easy elements/attributes and nesting- use xpath in alias<br />
+<code>select '1' as '@id', 'New York' as 'address/city/@value'</code>
+<ul>
+<li>Keep together: <code>select '1' as '@id', 'New York' as 'address/city', 'John' as 'name', 'NY' as 'address/state' for xml path</code> has two adddress nodes</li>
+<li>NULLS: <code>for xml path, elements xsinil</code> to get "null" elements: &lt;CouldbeNull xsi:nil="true" /&gt;
+</li>
+<li><a href="http://msdn2.microsoft.com/en-us/library/ms177400.aspx">WITH NAMESPACES</a>('uri' as prefix)</li>
+</ul>
+</td>
+</tr>
+</table>
+<p><a href="http://msdn2.microsoft.com/en-us/library/ms189075.aspx">XQuery</a>: For the SQL2005 xml data type, use <code>xmlColumn.query('/xpath')</code> in the sql.<br />
+<code>Where xmlColumn.exists('/root/possiblenode')=1</code><br />
+Namespaces: <code>xmlColumn.query(declare namespace a='uri'; /a:element)</code><br />
+Xml contsriuction (with curly braces): <code>xmlColumn.query('&lt;NewRoot&gt; { /OldRoot } &lt;/NewRoot&gt;')</code><br />
+There's a for-loop construct<br /><code>xmlColumn.query('{ for $n in /root/a<br />return string($n)<br /> }')</code><br />
+There's even <a href="http://msdn2.microsoft.com/en-us/library/ms177454.aspx">xml DML</a>: <code>xmlDolumn.modify('replace value of (/root/a)[1] with "New Text")</code> </p>
+
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

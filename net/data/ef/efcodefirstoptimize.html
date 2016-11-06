@@ -1,0 +1,134 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Entity Framework Code First Optimization</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../io.html">Data &gt;</a></li>
+<li><a href="ef.html">Entity Framework &gt;</a></li>
+<li><a href="efcodefirst.html">EF Code First</a></li>
+<li><a href="efcodefirstvalidation.html">Validation</a></li>
+<li><a href="efcodefirstdb.html">Databases</a></li>
+<li><a href="efcodefirstmapping.html">Mapping</a></li>
+<li><a href="efcodefirstmigrations.html">Migrations</a></li>
+<li><a href="efcodefirstlogging.html">Logging</a></li>
+<li><a href="efcodefirstconfig.html">Configuration</a></li>
+<li><a href="efcodefirstoptimize.html">Optimization</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Entity Framework Code First Optimization</h2>
+<p>Optimizations for EF Code First, especially at startup.</p>
+<h3>NGen</h3>
+<p>EF 6+ is released by Nuget, and so not NGened. Optimizing the 5Mb dll is an easy fix (run as Admin, this is 64bit).</p>
+<pre>
+%WINDIR%\Microsoft.NET\Framework64\v4.0.30319\ngen install EntityFramework.dll
+</pre>
+
+<h3>No Migrations / Hard-code ManifestToken</h3>
+<p>The migrations code is easy in development, but startup will be slow in production. See <a href="http://romiller.com/2014/06/10/reducing-code-first-database-chatter/">Rowan Miller on the CF database calls</a>. As he explains, the database version is generally know too, so you can eliminate all the calls with this DbConfiguration:</p>
+<div class="code">
+<p><span style="color: blue;">using</span> System.Data.Common;<br />
+<span style="color: blue;">using</span> System.Data.Entity;<br />
+<span style="color: blue;">using</span> System.Data.Entity.Infrastructure;<br />
+<span style="color: blue;">using</span> System.Data.SqlClient;<br />
+&nbsp;<br />
+<span style="color: blue;">namespace</span> Data<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> DbConfiguration</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">CustomConfiguration</span> : <span style="color: #2b91af;">DbConfiguration</span><br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> CustomConfiguration()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; SetDatabaseInitializer&lt;<span style="color: #2b91af;">CustomContext</span>&gt;(<span style="color: blue;">null</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; SetManifestTokenResolver(<span style="color: blue;">new</span> <span style="color: #2b91af;">CustomManifestTokenResolver</span>());<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">internal</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">CustomManifestTokenResolver</span> : <span style="color: #2b91af;">IManifestTokenResolver</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">readonly</span> <span style="color: #2b91af;">IManifestTokenResolver</span> _defaultResolver = <span style="color: blue;">new</span> <span style="color: #2b91af;">DefaultManifestTokenResolver</span>();<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">string</span> ResolveManifestToken(<span style="color: #2b91af;">DbConnection</span> connection)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> sqlConn = connection <span style="color: blue;">as</span> <span style="color: #2b91af;">SqlConnection</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//for SQLServer, 2008 or 2012</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> sqlConn != <span style="color: blue;">null</span> ? <span style="color: #a31515;">"2012"</span> : _defaultResolver.ResolveManifestToken(connection);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+<p>If the DbConfiguration is not in the same assembly as the DbContext, add <br/>
+<span style="color: blue;">&lt;</span><span style="color: #a31515;">entityFramework</span><span style="color: blue;"> </span><span style="color: red;">codeConfigurationType</span><span style="color: blue;">=</span>"<span style="color: blue;">Data.CustomConfiguration, Data</span>"<span style="color: blue;">&gt;</span><br />
+or...
+</p>
+<div class="code">
+<p>[<span style="color: #2b91af;">DbConfigurationType</span>(<span style="color: blue;">typeof</span>(<span style="color: #2b91af;">CustomConfiguration</span>))]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">CustomContext</span> : <span style="color: #2b91af;">DbContext</span></p>
+</div>
+
+<h3>Transient SQL errors</h3>
+<p>In EF 6.1, this only exists for Azure errors in the DbConfiguration:</p>
+<div class="code">
+<p>SetExecutionStrategy(<span style="color: #a31515;">"System.Data.SqlClient"</span>, () =&gt; <span style="color: blue;">new</span> System.Data.Entity.SqlServer.<span style="color: #2b91af;">SqlAzureExecutionStrategy</span>());</p>
+</div>
+<p>There is no in-the-box support for non-Azure errors (like deadlocks).</p>
+
+<h3>Lazy loading</h3>
+<p>Can be good or bad...</p>
+<ul>
+<li>You can avoid N+1 problems with LazyLoading with Includes</li>
+<li>You can turn off LazyLoading with context.Configuration.LazyLoadingEnabled = <span style="color: blue;">false</span>; </li>
+<li>You can disable LazyLoading by forgetting to make association properties <em>virtual</em></li>
+<li>Too many Includes make big, complex queries.</li>
+<li>Preload the associations with dbSet.Load(), then do the query and reply on EF fixing up the associations.</li>
+</ul>
+
+<h3>Project queries (use DTOs)</h3>
+<p>dbSet.AsNoTracking() creates entities without change tracking (or context.dbSet.MergeOption = MergeOption.NoTracking; )</p>
+<p>Otherwise, consider using query projection into a DTO (with Linq .Select). Don't load what you don't need.</p>
+<p>For maximum efficiency, use rawSql, via the DbContext.Database or Dapper:</p>
+<div class="code">
+<p><span style="color: blue;">var</span> products = context.Database.SqlQuery&lt;<span style="color: #2b91af;">Product</span>&gt;(<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #a31515;">"select * from Products where Price&gt;@p0"</span>, 2);</p>
+</div>
+
+
+<h3>EntityFramework.Extended</h3>
+<p>The nuget package <a href="https://nuget.org/packages/EntityFramework.Extended">EntityFramework.Extended</a> (<a href="https://github.com/loresoft/EntityFramework.Extended">github</a>) includes batch updates and deletes, .Future() and .FromCache() (uses memory cache or provider).</p>
+
+<h3>Multi-tenant DbContext</h3>
+<p>Generally simpler, smaller models are much more efficient. If you don't use migrations (use a Database null initializer) you can have true multi-tenant DbContexts. Since EF 6.1, we can have multiple DbContexts per database. In the migration configuration, there is a ContextKey which is by default the <span title="fully qualified name, eg namespace.class">FQN</span> of the DbContext.</p>
+
+<p>Then when creating the migration specify which you are using.</p>
+<pre>
+enable-migrations -contextTypeName:OrderContext -MigrationsDirectory:OrderMigrations
+enable-migrations -contextTypeName:productContext -MigrationsDirectory:ProductMigrations
+add-migration -configuration:Data.OrderMigrations.Configuration "Initial"
+add-migration -configuration:Data.ProductMigrations.Configuration "Initial"
+update-database -configuration:Data.OrderMigrations.Configuration
+</pre>
+
+<h3>Other</h3>
+<ul>
+<li>DbContext should be short-lived (in asp, per-request). In longer-lived console batches, a single open DbContext is a bad idea.</li>
+<li>See <a href="http://msdn.microsoft.com/en-us/data/hh949853">MSDN</a> for info on pre-generated views etc.</li>
+</ul>
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

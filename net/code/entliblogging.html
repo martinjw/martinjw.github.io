@@ -1,0 +1,156 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Enterprise Library Logging</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main</a></li>
+<li><a href="../dotnet.html">.Net</a></li>
+<li><a href="index.html">Code</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>Enterprise Library Logging</h2>
+
+<h3>Logger code</h3>
+<p>Log4net handles logging info/ warning/ error type messages simple, but Enterprise Library Logging Application Block isn't so obvious. Here's a simple facade I use. <a href="entliblognoconfig.html">See also my no-configuration log loader</a>.</p>
+
+<div class="code">
+<p><span style="color: blue;">using</span> System.Diagnostics;<br />
+<span style="color: blue;">using</span> Microsoft.Practices.EnterpriseLibrary.Logging;<br />
+&nbsp;<br />
+<span style="color: blue;">namespace</span> EntLib5Logging<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> Facade for writing log entries in log4net style to EntLib Logging</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">Log</span><br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">/*</span><br />
+<span style="color: green;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; * We don't use priority or eventId </span><br />
+<span style="color: green;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; * We get the calling method from the stackFrame (careful with inlining here)</span><br />
+<span style="color: green;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; */</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: blue;">string</span> GetCallingMethod(<span style="color: #2b91af;">StackFrame</span> frame)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//don't calculate this if we aren't logging</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!<span style="color: #2b91af;">Logger</span>.IsLoggingEnabled()) <span style="color: blue;">return</span> <span style="color: blue;">string</span>.Empty;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> method = frame.GetMethod();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> method.DeclaringType.FullName + <span style="color: #a31515;">"."</span> + method.Name;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> Logs an informational message</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;param name="message"&gt;</span><span style="color: green;">The message.</span><span style="color: gray;">&lt;/param&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> Info(<span style="color: blue;">string</span> message)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> category = GetCallingMethod(<span style="color: blue;">new</span> <span style="color: #2b91af;">StackFrame</span>(1));<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Logger</span>.Write(message, category, 0, 0, <span style="color: #2b91af;">TraceEventType</span>.Information);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> Logs a warning message</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;param name="message"&gt;</span><span style="color: green;">The message.</span><span style="color: gray;">&lt;/param&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> Warn(<span style="color: blue;">string</span> message)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> category = GetCallingMethod(<span style="color: blue;">new</span> <span style="color: #2b91af;">StackFrame</span>(1));<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Logger</span>.Write(message, category, 0, 0, <span style="color: #2b91af;">TraceEventType</span>.Warning);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> Logs an error message</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;param name="message"&gt;</span><span style="color: green;">The message.</span><span style="color: gray;">&lt;/param&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> Error(<span style="color: blue;">string</span> message)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> category = GetCallingMethod(<span style="color: blue;">new</span> <span style="color: #2b91af;">StackFrame</span>(1));<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Logger</span>.Write(message, category, 0, 0, <span style="color: #2b91af;">TraceEventType</span>.Error);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+<h3>Configuration</h3>
+<p>99% of the time I use a simple text log files, and I want to switch between logging everything and logging just errors. This is EntLib 5- EntLib 4 was exactly the same (if you change the EntLib version number to 4.1.0.0). Here's the copy to paste...</p>
+
+<div class="code">
+<p><span style="color: blue;">&lt;?</span><span style="color: #a31515;">xml</span><span style="color: blue;"> </span><span style="color: red;">version</span><span style="color: blue;">=</span>"<span style="color: blue;">1.0</span>"<span style="color: blue;"> </span><span style="color: red;">encoding</span><span style="color: blue;">=</span>"<span style="color: blue;">utf-8</span>"<span style="color: blue;"> ?&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: #a31515;">configuration</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">configSections</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">section</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">loggingConfiguration</span>"<span style="color: blue;"> </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">Microsoft.Practices.EnterpriseLibrary.Logging.Configuration.LoggingSettings, Microsoft.Practices.EnterpriseLibrary.Logging, Version=5.0.414.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35</span>"<span style="color: blue;"> </span><span style="color: red;">requirePermission</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &lt;/</span><span style="color: #a31515;">configSections</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">loggingConfiguration</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>""<span style="color: blue;"> </span><span style="color: red;">tracingEnabled</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;"> </span><span style="color: red;">defaultCategory</span><span style="color: blue;">=</span>"<span style="color: blue;">General</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">listeners</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Error Trace Listener</span>"<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">Microsoft.Practices.EnterpriseLibrary.Logging.TraceListeners.RollingFlatFileTraceListener, Microsoft.Practices.EnterpriseLibrary.Logging, Version=5.0.414.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35</span>"<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: red;">listenerDataType</span><span style="color: blue;">=</span>"<span style="color: blue;">Microsoft.Practices.EnterpriseLibrary.Logging.Configuration.RollingFlatFileTraceListenerData, Microsoft.Practices.EnterpriseLibrary.Logging, Version=5.0.414.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35</span>"<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: red;">fileName</span><span style="color: blue;">=</span>"<span style="color: blue;">errors.log</span>"<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: red;">formatter</span><span style="color: blue;">=</span>"<span style="color: blue;">Simple Text Formatter</span>"<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: red;">header</span><span style="color: blue;">=</span>""<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: red;">footer</span><span style="color: blue;">=</span>""<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: red;">filter</span><span style="color: blue;">=</span>"<span style="color: blue;">Error</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Full Trace Listener</span>"<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">Microsoft.Practices.EnterpriseLibrary.Logging.TraceListeners.RollingFlatFileTraceListener, Microsoft.Practices.EnterpriseLibrary.Logging, Version=5.0.414.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35</span>"<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: red;">listenerDataType</span><span style="color: blue;">=</span>"<span style="color: blue;">Microsoft.Practices.EnterpriseLibrary.Logging.Configuration.RollingFlatFileTraceListenerData, Microsoft.Practices.EnterpriseLibrary.Logging, Version=5.0.414.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35</span>"<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: red;">fileName</span><span style="color: blue;">=</span>"<span style="color: blue;">full.log</span>"<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: red;">rollFileExistsBehavior</span><span style="color: blue;">=</span>"<span style="color: blue;">Increment</span>"<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: red;">rollInterval</span><span style="color: blue;">=</span>"<span style="color: blue;">Day</span>"<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: red;">header</span><span style="color: blue;">=</span>""<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: red;">footer</span><span style="color: blue;">=</span>""<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: red;">formatter</span><span style="color: blue;">=</span>"<span style="color: blue;">Simple Text Formatter</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;/</span><span style="color: #a31515;">listeners</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">formatters</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">Microsoft.Practices.EnterpriseLibrary.Logging.Formatters.TextFormatter, Microsoft.Practices.EnterpriseLibrary.Logging, Version=5.0.414.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35</span>"<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: red;">template</span><span style="color: blue;">=</span>"<span style="color: blue;">{timestamp}{tab}{category}{tab}{message}</span>"<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Simple Text Formatter</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;/</span><span style="color: #a31515;">formatters</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">categorySources</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;/</span><span style="color: #a31515;">categorySources</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">specialSources</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">allEvents</span><span style="color: blue;"> </span><span style="color: red;">switchValue</span><span style="color: blue;">=</span>"<span style="color: blue;">All</span>"<span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">All Events</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">listeners</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Full Trace Listener</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Error Trace Listener</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;/</span><span style="color: #a31515;">listeners</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;/</span><span style="color: #a31515;">allEvents</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">notProcessed</span><span style="color: blue;"> </span><span style="color: red;">switchValue</span><span style="color: blue;">=</span>"<span style="color: blue;">All</span>"<span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Unprocessed Category</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">errors</span><span style="color: blue;"> </span><span style="color: red;">switchValue</span><span style="color: blue;">=</span>"<span style="color: blue;">All</span>"<span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Logging Errors </span><span style="color: red;">&amp;amp;</span><span style="color: blue;"> Warnings</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">listeners</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Error Trace Listener</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;/</span><span style="color: #a31515;">listeners</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;/</span><span style="color: #a31515;">errors</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;/</span><span style="color: #a31515;">specialSources</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &lt;/</span><span style="color: #a31515;">loggingConfiguration</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">configuration</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+<h3>Switching configuration - full to just errors</h3>
+<p>There are different ways to do this, so this is just the way I found works for me.<br />
+There are two listeners, for the error file and the full file. The error listener has a filter="Error" on it so it only writes errors. specialSources / allEvents just sends everything (switchValue="All") through to both listeners. To switch to error-only logging, just delete the full trace listener and (optionally as we already do this in the listener) change to allEvents switchValue="Error".</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">allEvents</span><span style="color: blue;"> </span><span style="color: red;">switchValue</span><span style="color: blue;">=</span>"<span style="color: blue;">Error</span>"<span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">All Events</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;"> &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">listeners</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;"> &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;!--</span><span style="color: green;">&lt;add name="Full Trace Listener" /&gt;</span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;"> &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Error Trace Listener</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;"> &nbsp;&nbsp;&nbsp; &lt;/</span><span style="color: #a31515;">listeners</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">allEvents</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

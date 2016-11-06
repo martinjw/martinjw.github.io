@@ -1,0 +1,140 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Build Test</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main</a></li>
+<li><a href="../dotnet.html">.Net</a></li>
+<li><a href="index.html">Code</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>Build Test</h2>
+<p>This is a test to build a project which has code generation (the generation is omitted here). The core code is based on <a href="http://msdn.microsoft.com/en-us/library/microsoft.build.buildengine.engine.aspx">Msdn</a>, to programmatically build projects, useful in other scenarios. For Visual Studio 2008 I had to do some things that weren't in the Msdn.</p>
+<ul>
+<li>Set references to Microsoft.Build.Engine and Microsoft.Build.Framework (3.5 versions)</li>
+<li>In .Net 4.0, reference Microsoft.Build.</li>
+<li>In .Net 3.5, App.config must have a bindingRedirect for Microsoft.Build.Framework from any version to 3.5 (see below)</li>
+<li>In the code below, there is a compiler directive to mark .Net 4.0 code. Microsoft.Build.BuildEngine.Engine is deprecated and replaced by Microsoft.Build.Evaluation.Project.</li>
+<li>DeploymentItem specifies a project folder in the test project. This contains a csproj, various cs files and dll dependencies, all set as Build Action= content, Copy To Output Directory = copy always.</li>
+</ul>
+
+<div class="code">
+<p><span style="color: green;">//#define NET4</span><br />
+<span style="color: blue;">using</span> System;<br />
+<span style="color: blue;">using</span> System.IO;<br />
+<span style="color: blue;">using</span> Microsoft.Build.BuildEngine;<br />
+<span style="color: blue;">#if</span> NET4<br />
+<span style="color: gray;">using Microsoft.Build.Evaluation; //reference Microsoft.Build.dll v4.0</span><br />
+<span style="color: blue;">#endif</span><br />
+<span style="color: blue;">using</span> Microsoft.VisualStudio.TestTools.UnitTesting;<br />
+&nbsp;<br />
+<span style="color: blue;">namespace</span> Testing<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> Tests a project builds correctly</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">TestClass</span>]<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">TestBuild</span><br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">TestMethod</span>]<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">DeploymentItem</span>(<span style="color: #a31515;">@"Project"</span>, <span style="color: #a31515;">@"Project"</span>)]<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> BuildProject()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> workingDirectory = <span style="color: #2b91af;">Path</span>.Combine(<span style="color: #2b91af;">Environment</span>.CurrentDirectory, <span style="color: #a31515;">@"Project\"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> csproj = <span style="color: #2b91af;">Path</span>.Combine(workingDirectory, <span style="color: #a31515;">@"MyProject.csproj"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!<span style="color: #2b91af;">File</span>.Exists(csproj))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Assert</span>.Inconclusive(<span style="color: #a31515;">"Sources were not deployed"</span>);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; BuildProject(csproj);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> Builds the project - based on http://msdn.microsoft.com/en-us/library/microsoft.build.buildengine.engine.aspx. Asserts success.</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;param name="projectPath"&gt;</span><span style="color: green;">The project (csproj) path</span><span style="color: gray;">&lt;/param&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;returns&gt;</span><span style="color: green;">True if builds okay</span><span style="color: gray;">&lt;/returns&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: blue;">bool</span> BuildProject(<span style="color: blue;">string</span> projectPath)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> logPath = <span style="color: #2b91af;">Path</span>.Combine(<span style="color: #2b91af;">Path</span>.GetDirectoryName(projectPath), <span style="color: #a31515;">"build.log"</span>);<br />
+&nbsp;<br />
+<span style="color: blue;">#if</span> NET4<br />
+<span style="color: gray;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; //.Net 4 Microsoft.Build.Evaluation.Project and ProjectCollection</span><br />
+<span style="color: gray;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; var engine = new ProjectCollection();</span><br />
+<span style="color: blue;">#else</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">// Instantiate a new Engine object</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> engine = <span style="color: blue;">new</span> <span style="color: #2b91af;">Engine</span>();<br />
+<span style="color: blue;">#endif</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">// Point to .NET Framework 2.0 CLR (not needed in 3.5 apparently)</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//engine.BinPath = RuntimeEnvironment.GetRuntimeDirectory();</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">// Instantiate a new FileLogger to generate build log</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> logger = <span style="color: blue;">new</span> <span style="color: #2b91af;">FileLogger</span>();<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">// Set the logfile parameter to indicate the log destination</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; logger.Parameters = <span style="color: #a31515;">@"logfile="</span> + logPath;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">// Register the logger with the engine</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; engine.RegisterLogger(logger);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">// Build a project file</span><br />
+<span style="color: blue;">#if</span> NET4<br />
+<span style="color: gray;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; bool success = engine.LoadProject(projectPath).Build();</span><br />
+<span style="color: blue;">#else</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">bool</span> success = engine.BuildProjectFile(projectPath);<br />
+<span style="color: blue;">#endif</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//Unregister all loggers to close the log file</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; engine.UnregisterAllLoggers();<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//if fails, put the log file into the assert statement</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> txt = <span style="color: #a31515;">"Should have built"</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!success &amp;&amp; <span style="color: #2b91af;">File</span>.Exists(logPath))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; txt = <span style="color: #2b91af;">File</span>.ReadAllText(logPath);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//assert succeeded</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Assert</span>.IsTrue(success, txt);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> success;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+
+<h3>App.Config with binding redirect</h3>
+<div class="code">
+<p><span style="color: blue;">&lt;?</span><span style="color: #a31515;">xml</span><span style="color: blue;"> </span><span style="color: red;">version</span><span style="color: blue;">=</span>"<span style="color: blue;">1.0</span>"<span style="color: blue;"> </span><span style="color: red;">encoding</span><span style="color: blue;">=</span>"<span style="color: blue;">utf-8</span>"<span style="color: blue;"> ?&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: #a31515;">configuration</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">runtime</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">assemblyBinding</span><span style="color: blue;"> </span><span style="color: red;">xmlns</span><span style="color: blue;">=</span>"<span style="color: blue;">urn:schemas-microsoft-com:asm.v1</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">dependentAssembly</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">assemblyIdentity</span><span style="color: blue;"> </span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Microsoft.Build.Framework</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: red;">publicKeyToken</span><span style="color: blue;">=</span>"<span style="color: blue;">b03f5f7f11d50a3a</span>"<span style="color: blue;"> </span><span style="color: red;">culture</span><span style="color: blue;">=</span>"<span style="color: blue;">neutral</span>"<span style="color: blue;">/&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">bindingRedirect</span><span style="color: blue;"> </span><span style="color: red;">oldVersion</span><span style="color: blue;">=</span>"<span style="color: blue;">0.0.0.0-99.9.9.9</span>"<span style="color: blue;"> </span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; </span><span style="color: red;">newVersion</span><span style="color: blue;">=</span>"<span style="color: blue;">3.5.0.0</span>"<span style="color: blue;">/&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">dependentAssembly</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">assemblyBinding</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">runtime</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">configuration</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Image Thumbnail Example</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main</a></li>
+<li><a href="../dotnet.html">.Net</a></li>
+<li><a href="index.html">Code</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>Image Thumbnail Example</h2>
+<ul>
+<li><a href="imgthumb.html">Image HttpHandler</a></li>
+<li><a href="imgthumbhelper.html">Image helper</a></li>
+<li><a href="imgthumbeg.html">Example use</a></li>
+</ul>
+<h3>Page Load</h3>
+<div class="code">
+<p><span style="color: #2b91af;">DirectoryInfo</span> dir = <span style="color: blue;">new</span> <span style="color: #2b91af;">DirectoryInfo</span>(Server.MapPath(<span style="color: #a31515;">@"~/Repository/Assets"</span>));<br />
+List1.DataSource= dir.GetFiles(<span style="color: #a31515;">"*.jpg"</span>);<br />
+List1.DataBind();</p>
+</div>
+<h3>Markup</h3>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">DataList</span> <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <span style="color: red;">ID</span><span style="color: blue;">="List1"</span> <span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">ItemTemplate</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">Image</span> <span style="color: red;">ID</span><span style="color: blue;">="Image1"</span> <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <span style="color: red;">ImageUrl</span><span style="color: blue;">='</span><span style="background: #ffee62;">&lt;%</span># Eval("Name","imgHandler.ashx?name={0}&amp;size=1") <span style="background: #ffee62;">%&gt;</span><span style="color: blue;">'</span> <span style="color: blue;">/&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">Image</span> <span style="color: red;">ID</span><span style="color: blue;">="Image2"</span> <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <span style="color: red;">ImageUrl</span><span style="color: blue;">='</span><span style="background: #ffee62;">&lt;%</span># Eval("Name","imgHandler.ashx?name={0}&amp;size=2") <span style="background: #ffee62;">%&gt;</span><span style="color: blue;">'</span> <span style="color: blue;">/&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">Image</span> <span style="color: red;">ID</span><span style="color: blue;">="Image3"</span> <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <span style="color: red;">ImageUrl</span><span style="color: blue;">='</span><span style="background: #ffee62;">&lt;%</span># Eval("Name","imgHandler.ashx?name={0}&amp;size=3") <span style="background: #ffee62;">%&gt;</span><span style="color: blue;">'</span> <span style="color: red;">Width</span><span style="color: blue;">="200px"</span> <span style="color: blue;">/&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;/</span><span style="color: #a31515;">ItemTemplate</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">DataList</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

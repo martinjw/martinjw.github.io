@@ -1,0 +1,301 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>CSS3 Layout</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+<link rel="stylesheet" type="text/css" href="../js/prettify.css" />
+<script type="text/javascript" src="../utilities.js">
+</script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js">
+</script>
+<style type="text/css">
+pre {
+max-height: 14em;
+}
+    
+#giveMeColumns {
+-moz-column-count: 2;
+-moz-column-gap: 2em;
+-moz-column-rule: 1px dotted green;
+
+-webkit-column-count: 2;
+-webkit-column-gap: 2em;
+-webkit-column-rule: 1px dotted green;
+
+column-count: 2;
+column-gap: 2em;
+column-rule: 1px dotted green;
+}
+
+#boxSizing {
+background-color: Teal;
+padding:0;
+border:1px solid #ddd;
+overflow: auto;
+width: 100%;
+}
+#boxSizing div {
+float:left;
+width: 50%;
+padding: 2px;
+border: 1px dashed red;
+margin:0;
+background-color: Orange;
+}
+
+#flexContainer 
+{
+background-color: Teal;
+
+/* set up flexibox */
+display: -ms-flexbox;
+display: -webkit-flex;
+display: -moz-flex; /* FF is behind a preference */
+display: flex;
+}
+#flexContainer > div
+{
+background-color: Orange;
+border: 1px dashed red;
+-webkit-flex: 1 1 auto;
+-moz-flex: 1 1 auto;
+flex: 1 1 auto;
+}
+#flexContainer > #flexItem1 
+{
+background-color: Red;
+color: white;
+-ms-flex-order: 3;
+-webkit-order: 3;
+order:3;
+-ms-flex: 3 auto;
+-webkit-flex: 3 auto;
+flex: 3 auto;
+}
+
+#containingBlock 
+{
+background-color: Teal;
+position: relative;
+}
+#exclusion {
+background-color: Orange;
+border: 1px solid red;
+position: absolute;
+top: 15px;
+left: 200px;
+width: 150px;
+height: 50px;
+opacity: 0.5;
+-ms-wrap-margin: 5px;
+wrap-margin: 3px;
+}
+</style>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../index.html">Home &gt;</a></li>
+<li><a href="index.html">HTML5</a></li>
+<li><a href="forms.html">Forms</a></li>
+<li><a href="offline.html">AppCache</a></li>
+<li><a href="storage.html">LocalStorage and IndexedDB</a></li>
+<li><a href="webworkers.html">WebWorkers</a></li>
+<li><a href="fileapi.html">File API</a></li>
+<li><a href="canvas.html">Canvas</a></li>
+<li><a href="css3effects.html">CSS3 Visual Effects</a></li>
+<li><a href="css3layout.html">CSS3 Layout</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>CSS3 Layout</h2>
+
+<div class="alert">
+Written September 2012- specs and browser support will change!
+</div>
+
+<h3>Multi-column</h3>
+<ul>
+<li>Prefixed, except in IE 10.</li>
+<li><a href="https://developer.mozilla.org/en-US/docs/CSS/Using_CSS_multi-column_layouts">MDN</a></li>
+</ul>
+<div id="giveMeColumns">
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas faucibus eleifend tincidunt. Nam adipiscing nisl ut arcu congue consectetur. Vivamus tincidunt felis at risus luctus bibendum eget sed eros. Nam fermentum, nulla et dignissim tincidunt, massa elit dignissim massa, vel semper est purus vitae lorem. Integer nec varius libero. Donec sodales, ligula vel mattis convallis, diam orci vehicula diam, ac iaculis justo orci non tortor. Aliquam sit amet magna vel elit condimentum aliquam id eget magna. Aenean in rhoncus urna. Nullam porttitor viverra risus eu faucibus. In et sem massa. Aenean eget odio eleifend purus rhoncus ornare quis in mi. Donec urna nibh, posuere id dictum elementum, ultrices at orci. Nunc lorem dolor, scelerisque ut laoreet vitae, egestas non mi. Aliquam non scelerisque metus. Donec nec turpis eu quam condimentum cursus.
+</div>
+<label>Columns <input type="number" id="numCols" min="1" max="10" step="1" value="2" /></label> <input type="button" value="Apply" id="ApplyCols" />
+<script type="text/javascript">
+    $(function () {
+        $("#ApplyCols").click(function () {
+            var cols = parseInt($("#numCols").val(), 10);
+            if (isNaN(cols)) cols = 2;
+            var giveMe = $("#giveMeColumns").get(0);
+            giveMe.style.MozColumnCount = cols;
+            giveMe.style.webkitColumnCount = cols;
+            giveMe.style.columnCount = cols;
+        });
+    });
+</script>
+
+<pre class="prettyprint">
+[-webkit-|-moz-]column-count: 2<br/>
+column-width: 200px;
+columns: width or count;
+column-rule: 1px dashed green;
+/* break-before: column | avoid-column */
+</pre>
+
+
+<h3>Box sizing</h3>
+<p>The default box model (width + padding + border) is difficult so the old IE model, now called box-content, is preferred (width = box + padding + border). NB: FF is -moz-prefixed, IE 8+/Chrome are not prefixed.</p>
+<div id="boxSizing">
+<div>width:50%;border:1px;padding:2px;</div>
+<div>width:50%;border:1px;padding:2px;</div>
+</div>
+<div id="boxSizingPicker">
+<label><input type="radio" name="boxSizing" id="boxSizingOld" checked="checked" />
+ box-sizing:content-box</label>
+<label><input type="radio" name="boxSizing" id="boxSizingNew" />
+ box-sizing:border-box</label>
+</div>
+<script type="text/javascript">
+    $(function () {
+        var applyBoxSizing = function () {
+            var divs= $("#boxSizing div");
+            if ($("#boxSizingOld").prop("checked")) {
+                //jquery automagically adds -moz-box-sizing
+                divs.css("box-sizing", "content-box");
+            } else {
+                divs.css("box-sizing", "border-box");
+            }
+            $("#boxSizingLog").text("box-sizing=" + divs.css("box-sizing") + " width=" + divs.css("width"));
+        };
+        applyBoxSizing();
+        $("#boxSizingPicker input").click(applyBoxSizing);
+    });
+    
+</script>
+<div id="boxSizingLog">
+</div>
+
+<h3>Flexibox</h3>
+<ul>
+<li>IE 10 uses an old version (-ms-flexbox instead of flex, plus ms-flex:). Webkit is prefixed. FF is prefixed and behind a preference.</li>
+<li><a href="https://developer.mozilla.org/en-US/docs/CSS/Using_CSS_flexible_boxes">MDN</a></li>
+<li><a href="http://msdn.microsoft.com/en-us/library/ie/hh673531(v=vs.85).aspx">IE 10</a></li>
+</ul>
+
+<pre class="prettyprint">
+/* set up flexibox */
+display: -ms-flexbox;
+display: -webkit-flex;
+display: -moz-flex; /* FF is behind a preference */
+display: flex;
+</pre>
+
+<div id="flexContainer">
+<div id="flexItem1">child 1</div>
+<div>child 2</div>
+<div>child 3</div>
+</div>
+
+<script type="text/javascript">
+    $(function () {
+        var displayMode = $("#flexContainer").css("display");
+        if (displayMode == "block") displayMode += " Not available in this browser!";
+        $("#flexContainer > div:nth-child(1)").text("display:" + displayMode);
+    });
+    
+</script>
+<p>Default for sub-blocks (NB: uses writing direction, clipping of parent)</p>
+<ul>
+<li>flex-direction: [row] | column | row-reverse ...</li>
+<li>flex-align: [stretch] | start (=top) | end (=bottom) | center</li>
+<li>flex-wrap: [none] (fills width) | wrap | wrap-reverse (=left to right, then up)</li>
+<li>flex-flow: direction wrap (shortcut)</li>
+<li>#flexItem1 { css for sub-items<ul>
+<li>order: [initial] | {number} . IE10 is -ms-flex-order</li>
+<li>flex: 0 0 auto; = grow shrink preferred<br />
+Flex item can grow/shrink by proportion (eg flex:2, it's twice as big, flex: 0 2 it's half as big), or uses preferred width/height. 
+</li>
+</ul></li>
+</ul>
+
+<h3>Exclusions (Wrap-flow)</h3>
+<p>Free-floats. This is IE 10 only (end 2012), -ms-warp-flow. Auto means no exclusion (overlap), both means both sides.</p>
+
+<div id="containingBlock">
+<div id="exclusion"> </div>
+<p>Exclusion elements define exclusion areas that contribute to their containing block's wrapping context. As a consequence, exclusions impact the layout of their containing block's descendants. Elements layout their inline content in their content area and wrap around the areas in their associated wrapping context. If the element is itself an exclusion, it does not wrap around its own exclusion shape and the impact of other exclusions on other exclusions is controlled by the ‘z-index’ property as explained in the exclusions order section.</p>
+</div>
+<div id="exclusionPicker">
+<label><input type="radio" name="exclusions" id="wrapAuto" checked="checked" />
+ -ms-wrap-flow:auto</label>
+<label><input type="radio" name="exclusions" id="wrapBoth" />
+ -ms-wrap-flow:both</label>
+<label><input type="radio" name="exclusions" id="wrapStart" />
+ -ms-wrap-flow:start</label>
+</div>
+<script type="text/javascript">
+    $(function () {
+        var applyExclusion = function () {
+            var excl = $("#exclusion");
+            if ($("#wrapAuto").prop("checked")) {
+                excl.css("-ms-wrap-flow", "auto");
+            } else if ($("#wrapBoth").prop("checked")) {
+                excl.css("-ms-wrap-flow", "both");
+            } else {
+                excl.css("-ms-wrap-flow", "start");
+            }
+        };
+        applyExclusion();
+        $("#exclusionPicker input").click(applyExclusion);
+    });
+</script>
+
+
+<h3>Grid layout</h3>
+<ul>
+<li>IE 10 only, -ms- prefixed. Spec may still change. <a href="http://msdn.microsoft.com/en-us/library/ie/hh673533(v=vs.85).aspx">MSDN</a></li>
+</ul>
+<p>Assign the container</p>
+<pre class="prettyprint">
+/* set up container with rows and columns */
+#grid {
+    display: -ms-grid;
+    /* space delimited columns
+    column 1 = auto, size of content
+    column 2 = 200px, fixed width
+    column 3 = 2fr, 2 fractions of remaining space (2fr+1fr = 3, so 2/3rds)
+    column 4 = 1fr, 1 fraction of remaining space (2fr+1fr = 3, so 1/3rd)
+     */
+    -ms-grid-columns: auto 200px 2fr 1fr;
+    /* space delimited rows
+    max-content is maximum height of any elements. Also min-content, minmax(x,y)
+     */
+    -ms-grid-rows: auto max-content 10em;
+}
+</pre>
+<p>The assign items to columns and rows.</p>
+<pre class="prettyprint">
+#item {
+  -ms-grid-row: 2;
+  -ms-grid-column: 2;
+  -ms-grid-column-align: end; /* align to end of the column */
+  -ms-grid-row-align: center; /* align to center of row */
+}
+</pre>
+<p>Two items in the same row will overlay (use z-index)</p>
+
+</div>
+<div class="Footer"><script type="text/javascript" src="../js/prettify.js">
+</script>
+<script type="text/javascript">
+prettyPrint();
+</script>
+</div>
+</body>
+</html>

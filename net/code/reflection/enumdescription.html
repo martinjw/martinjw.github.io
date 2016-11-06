@@ -1,0 +1,65 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Enum description</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../index.html">Code &gt;</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>Get Enum Description</h2>
+<p>Use System.ComponentModel for the DescriptionAttribute.</p>
+<div class="code">
+<p style="margin: 0px;"><span style="color: green;">//using DescriptionAttribute = System.ComponentModel.DescriptionAttribute;</span><br />
+<span style="color: blue;">public</span> <span style="color: blue;">enum</span> <span style="color: #2b91af;">Country</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">Description</span>(<span style="color: #a31515;">"United Kingdom"</span>)]<br />
+&nbsp;&nbsp;&nbsp; UK,<br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">Description</span>(<span style="color: #a31515;">"United States"</span>)]<br />
+&nbsp;&nbsp;&nbsp; USA,<br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">Description</span>(<span style="color: #a31515;">"Belgium"</span>)]<br />
+&nbsp;&nbsp;&nbsp; BE<br />
+}<br />
+&nbsp;<br />
+[<span style="color: #2b91af;">TestMethod</span>]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">void</span> TestMethod1()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> name = GetDescription(<span style="color: #2b91af;">Country</span>.UK);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Assert</span>.AreEqual(<span style="color: #a31515;">"United Kingdom"</span>, name);<br />
+}<br />
+&nbsp;<br />
+<span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">string</span> GetDescription(<span style="color: #2b91af;">Enum</span> e)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> description = e.ToString(); <span style="color: green;">//default will be the string value</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//get the type and find the member</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">MemberInfo</span>[] memberInfo = e.GetType().GetMember(description);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//try to find the DescriptionAttribute</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">object</span>[] attributes = memberInfo[0].GetCustomAttributes(<span style="color: blue;">typeof</span>(<span style="color: #2b91af;">DescriptionAttribute</span>), <span style="color: blue;">false</span>);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//if we found the [Description], cast and pull off the description</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span>(attributes.Length&gt; 0)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; description = (attributes[0] <span style="color: blue;">as</span> <span style="color: #2b91af;">DescriptionAttribute</span>).Description;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> description;<br />
+}</p>
+</div>
+
+
+
+</div>
+<div class="Footer">
+
+</div></body>
+</html>

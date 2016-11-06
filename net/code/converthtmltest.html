@@ -1,0 +1,215 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Convert HTML to XHTML</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main</a></li>
+<li><a href="../dotnet.html">.Net</a></li>
+<li><a href="index.html">Code</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>Convert HTML to XHTML</h2>
+<p>Test the <a href="converthtml.html">version using regex</a>- showing some of the features (and oddities).</p>
+
+<div class="code">
+<span style="color:Blue">using</span><span style="color:Black"> NUnit.Framework;<br />
+</span><span style="color:Blue">using</span><span style="color:Black"> System;<br />
+<br />
+</span><span style="color:Blue">namespace</span><span style="color:Black"> XHtmlConvertor<br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> Test the html conversion with regex.<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;/summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;remarks&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> Most of these fail with Agility because of slight differences- <br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> some are minor formatting, but some are corner cases (both will change INSIDE server tags occasionally)<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;/remarks&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;[TestFixture]<br />
+&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">public</span><span style="color:Black"> </span><span style="color:Blue">class</span><span style="color:Black"> </span><span style="color:#2b91af">TestConvertWithRegex<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> Lowercase and close elements. <br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;/summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;remarks&gt;</span><span style="color:Green">Fails with agility (agility uses (space)/&gt; to close tags)</span><span style="color:Gray">&lt;/remarks&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Test]<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">public</span><span style="color:Black"> </span><span style="color:Blue">void</span><span style="color:Black"> TestBr()<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> input = </span><span style="color:#a31515">@"&lt;P&gt;&lt;BR&gt;&lt;br/&gt;&lt;/P&gt;"</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> expected = </span><span style="color:#a31515">@"&lt;p&gt;&lt;br/&gt;&lt;br/&gt;&lt;/p&gt;"</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">ConvertWithRegex</span><span style="color:Black"> c = </span><span style="color:Blue">new</span><span style="color:Black"> </span><span style="color:#2b91af">ConvertWithRegex</span><span style="color:Black">();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c.LoadHtml(input);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> output = c.SaveToString();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Assert.AreEqual(expected, output);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> Lines within elements.<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;/summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;remarks&gt;</span><span style="color:Green">Regex version preserves the spaces and line bresaks, agility removes them and closes the div</span><span style="color:Gray">&lt;/remarks&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Test]<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">public</span><span style="color:Black"> </span><span style="color:Blue">void</span><span style="color:Black"> TestMultiLine()<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> input = </span><span style="color:#a31515">@"&lt;DIV<br />
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ID=""MYID""&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CLASS = ""UGLY""&gt;"</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> expected = </span><span style="color:#a31515">@"&lt;div<br />
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;id=""MYID""&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;class = ""UGLY""&gt;"</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">ConvertWithRegex</span><span style="color:Black"> c = </span><span style="color:Blue">new</span><span style="color:Black"> </span><span style="color:#2b91af">ConvertWithRegex</span><span style="color:Black">();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c.LoadHtml(input);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> output = c.SaveToString();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Assert.AreEqual(expected, output);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> Three different types of attribute (single/double quoted, unquoted, no value)<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;/summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;remarks&gt;</span><span style="color:Green">Agility makes single quotes to double quotes</span><span style="color:Gray">&lt;/remarks&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Test]<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">public</span><span style="color:Black"> </span><span style="color:Blue">void</span><span style="color:Black"> TestAttributes()<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> input = </span><span style="color:#a31515">@"&lt;INPUT VALUE='1' ID=""A"" READONLY TYPE=""text""&gt;"</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> expected = </span><span style="color:#a31515">@"&lt;input value='1' id=""A"" readonly=""readonly"" type=""text""/&gt;"</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">ConvertWithRegex</span><span style="color:Black"> c = </span><span style="color:Blue">new</span><span style="color:Black"> </span><span style="color:#2b91af">ConvertWithRegex</span><span style="color:Black">();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c.LoadHtml(input);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> output = c.SaveToString();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Assert.AreEqual(expected, output);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> Insert a doctype<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;/summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Test]<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">public</span><span style="color:Black"> </span><span style="color:Blue">void</span><span style="color:Black"> TestDocType()<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> input = </span><span style="color:#a31515">@"&lt;HTML&gt;&lt;HEAD&gt;&lt;/HEAD&gt;&lt;BODY bgColor=#eeeeee&gt;&lt;H1&gt;HELLO&lt;/H1&gt;&lt;/BODY&gt;&lt;/HTML&gt;"</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> expected = </span><span style="color:#a31515">@"&lt;!DOCTYPE html PUBLIC ""-//W3C//DTD XHTML 1.0 Transitional//EN"" ""http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd""&gt;"</span><span style="color:Black"> +<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#a31515">"\r\n"</span><span style="color:Black"> + </span><span style="color:#a31515">@"&lt;html xmlns=""http://www.w3.org/1999/xhtml""&gt;&lt;head&gt;&lt;/head&gt;&lt;body bgcolor=""#eeeeee""&gt;&lt;h1&gt;HELLO&lt;/h1&gt;&lt;/body&gt;&lt;/html&gt;"</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">ConvertWithRegex</span><span style="color:Black"> c = </span><span style="color:Blue">new</span><span style="color:Black"> </span><span style="color:#2b91af">ConvertWithRegex</span><span style="color:Black">();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c.LoadHtml(input);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> output = c.SaveToString();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Assert.AreEqual(expected, output);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> Remove the language tag<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;/summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Test]<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">public</span><span style="color:Black"> </span><span style="color:Blue">void</span><span style="color:Black"> TestScriptLanguage()<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> input = </span><span style="color:#a31515">@"&lt;SCRIPT LANGUAGE=""JAVASCRIPT""&gt;&lt;!--\nalert(""Here"");\n//--&gt;&lt;/SCRIPT&gt;"</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> expected = </span><span style="color:#a31515">@"&lt;script&gt;&lt;!--\nalert(""Here"");\n//--&gt;&lt;/script&gt;"</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">ConvertWithRegex</span><span style="color:Black"> c = </span><span style="color:Blue">new</span><span style="color:Black"> </span><span style="color:#2b91af">ConvertWithRegex</span><span style="color:Black">();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c.LoadHtml(input);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> output = c.SaveToString();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Assert.AreEqual(expected, output);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> Change html tags but not asp controls<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;/summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;remarks&gt;</span><span style="color:Green">Agility alters the case of asp controls and adds a closing element</span><span style="color:Gray">&lt;/remarks&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Test]<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">public</span><span style="color:Black"> </span><span style="color:Blue">void</span><span style="color:Black"> TestAspControl()<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> input = </span><span style="color:#a31515">@"&lt;P&gt;&lt;asp:TextBox Runat=""Server"" Value=""Test""/&gt;&lt;/P&gt;"</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> expected = </span><span style="color:#a31515">@"&lt;p&gt;&lt;asp:TextBox Runat=""Server"" Value=""Test""/&gt;&lt;/p&gt;"</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">ConvertWithRegex</span><span style="color:Black"> c = </span><span style="color:Blue">new</span><span style="color:Black"> </span><span style="color:#2b91af">ConvertWithRegex</span><span style="color:Black">();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c.LoadHtml(input);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> output = c.SaveToString();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Assert.AreEqual(expected, output);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> Input with complicated server controls in attribute values, attribute place and text<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;/summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;remarks&gt;</span><span style="color:Green">Agility lowercases MORESERVER STUFF</span><span style="color:Gray">&lt;/remarks&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Test]<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">public</span><span style="color:Black"> </span><span style="color:Blue">void</span><span style="color:Black"> TestInputWithServer()<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> input = </span><span style="color:#a31515">@"&lt;INPUT VALUE=""&lt;%=UPPERCASE RUNNING=SERVER%&gt;"" &lt;%=MORESERVER STUFF%&gt;&gt;"</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> expected = </span><span style="color:#a31515">@"&lt;input value=""&lt;%=UPPERCASE RUNNING=SERVER%&gt;"" &lt;%=MORESERVER STUFF%&gt;/&gt;"</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">ConvertWithRegex</span><span style="color:Black"> c = </span><span style="color:Blue">new</span><span style="color:Black"> </span><span style="color:#2b91af">ConvertWithRegex</span><span style="color:Black">();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c.LoadHtml(input);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> output = c.SaveToString();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Assert.AreEqual(expected, output);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> some &amp;lt;&amp;gt; within the server control that looks like a tag<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;/summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Test]<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">public</span><span style="color:Black"> </span><span style="color:Blue">void</span><span style="color:Black"> TestTagLikeInServer()<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> input = </span><span style="color:#a31515">@"&lt;% if(A&lt;B &amp;&amp; B&gt;A)Response.Write('OK')%&gt;"</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> expected = </span><span style="color:#a31515">@"&lt;% if(A&lt;B &amp;&amp; B&gt;A)Response.Write('OK')%&gt;"</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">ConvertWithRegex</span><span style="color:Black"> c = </span><span style="color:Blue">new</span><span style="color:Black"> </span><span style="color:#2b91af">ConvertWithRegex</span><span style="color:Black">();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c.LoadHtml(input);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> output = c.SaveToString();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Assert.AreEqual(expected, output);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> Writing tags within server control (corner case whether to allow this?)<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;/summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;remarks&gt;</span><span style="color:Green">Agility doesn't lowercase the img, but regex does</span><span style="color:Gray">&lt;/remarks&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Test]<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">public</span><span style="color:Black"> </span><span style="color:Blue">void</span><span style="color:Black"> TestTagInServer()<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> input = </span><span style="color:#a31515">@"&lt;P&gt;&lt;% if(HasImage) Response.Write(""&lt;IMG SRC='MyImg.gif'&gt;"")%&gt;&lt;/P&gt;"</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> expected = </span><span style="color:#a31515">@"&lt;p&gt;&lt;% if(HasImage) Response.Write(""&lt;img src='MyImg.gif'/&gt;"")%&gt;&lt;/p&gt;"</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">ConvertWithRegex</span><span style="color:Black"> c = </span><span style="color:Blue">new</span><span style="color:Black"> </span><span style="color:#2b91af">ConvertWithRegex</span><span style="color:Black">();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c.LoadHtml(input);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> output = c.SaveToString();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Assert.AreEqual(expected, output);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> Don't touch stuff within the server tag (generally)<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;/summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Test]<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">public</span><span style="color:Black"> </span><span style="color:Blue">void</span><span style="color:Black"> TestDontTouchServer()<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> input = </span><span style="color:#a31515">@"&lt;% strHTML = strHTML &amp; ""&lt;OPTION value="" + strQuote + a[""ID""] %&gt;"</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">//note this will be converted...<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Green">//string output= @"&lt;% strHTML = strHTML &amp; ""&lt;OPTION value="" + strQuote + a[""ID""] + ""&gt;"" %&gt;";<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> expected = </span><span style="color:#a31515">@"&lt;% strHTML = strHTML &amp; ""&lt;OPTION value="" + strQuote + a[""ID""] %&gt;"</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">ConvertWithRegex</span><span style="color:Black"> c = </span><span style="color:Blue">new</span><span style="color:Black"> </span><span style="color:#2b91af">ConvertWithRegex</span><span style="color:Black">();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c.LoadHtml(input);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> output = c.SaveToString();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Assert.AreEqual(expected, output);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> Simple server controls with attribute value<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;/summary&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Gray">///</span><span style="color:Green"> </span><span style="color:Gray">&lt;remarks&gt;</span><span style="color:Green">Agility puts quotes around the server attribute, but regex doesn't. Pick which you prefer...</span><span style="color:Gray">&lt;/remarks&gt;<br />
+</span><span style="color:Black">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Test]<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">public</span><span style="color:Black"> </span><span style="color:Blue">void</span><span style="color:Black"> TestSelectWithServerAttribute()<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> input = </span><span style="color:#a31515">@"&lt;SELECT ID=&lt;%=Server%&gt;&gt;&lt;OPTION VALUE=1&gt;1&lt;/OPTION&gt;&lt;/Select&gt;"</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> expected = </span><span style="color:#a31515">@"&lt;select id=&lt;%=Server%&gt;&gt;&lt;option value=""1""&gt;1&lt;/option&gt;&lt;/select&gt;"</span><span style="color:Black">;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:#2b91af">ConvertWithRegex</span><span style="color:Black"> c = </span><span style="color:Blue">new</span><span style="color:Black"> </span><span style="color:#2b91af">ConvertWithRegex</span><span style="color:Black">();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c.LoadHtml(input);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color:Blue">string</span><span style="color:Black"> output = c.SaveToString();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Assert.AreEqual(expected, output);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+}<br />
+</span>
+</div>
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

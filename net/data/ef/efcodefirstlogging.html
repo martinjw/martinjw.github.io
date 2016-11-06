@@ -1,0 +1,101 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Entity Framework Code First Logging</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../io.html">Data &gt;</a></li>
+<li><a href="ef.html">Entity Framework &gt;</a></li>
+<li><a href="efcodefirst.html">EF Code First</a></li>
+<li><a href="efcodefirstvalidation.html">Validation</a></li>
+<li><a href="efcodefirstdb.html">Databases</a></li>
+<li><a href="efcodefirstmapping.html">Mapping</a></li>
+<li><a href="efcodefirstmigrations.html">Migrations</a></li>
+<li><a href="efcodefirstlogging.html">Logging</a></li>
+<li><a href="efcodefirstconfig.html">Configuration</a></li>
+<li><a href="efcodefirstoptimize.html">Optimization</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Entity Framework Code First Logging</h2>
+
+<h3>Glimpse</h3>
+<p><a href="http://getglimpse.com/">Glimpse has EF plugins for profiling</a> for all versions of EF</p>
+
+<h3>Logging (EF 6+)</h3>
+<p>EF 6 (Oct 2013+) has <a href="http://msdn.microsoft.com/en-us/data/dn469464">logging support</a>. dbContext.Database.Log takes an Action&lt;string&gt;</p>
+<div class="code">
+<p>dbContext.Database.Log = s =&gt; <span style="color: #2b91af;">Trace</span>.TraceInformation(s);</p>
+</div>
+<p>You can set this in the dbContext ctor.</p>
+<p>For more control, use the static DbInterception to add an IDbInterceptor. </p>
+<div class="code">
+<p><span style="color: #2b91af;">DbInterception</span>.Add(<span style="color: blue;">new</span> <span style="color: #2b91af;">LoggingCommandInterceptor</span>());</p>
+</div>
+<p>Or using a DbConfiguration in the same assembly as the DbContext</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">AppConfig</span> : <span style="color: #2b91af;">DbConfiguration</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> AppConfig()<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; AddInterceptor(<span style="color: blue;">new</span> <span style="color: #2b91af;">LoggingCommandInterceptor</span>());<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+<p>IDbInterceptor is an empty interface, so you really want to implement IDbCommandInterceptor</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">LoggingCommandInterceptor</span> : <span style="color: #2b91af;">IDbCommandInterceptor</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> NonQueryExecuting(<span style="color: #2b91af;">DbCommand</span> command, <span style="color: #2b91af;">DbCommandInterceptionContext</span>&lt;<span style="color: blue;">int</span>&gt; interceptionContext)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Trace</span>.TraceInformation(command.CommandText);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> NonQueryExecuted(<span style="color: #2b91af;">DbCommand</span> command, <span style="color: #2b91af;">DbCommandInterceptionContext</span>&lt;<span style="color: blue;">int</span>&gt; interceptionContext)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (interceptionContext.Exception != <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Trace</span>.TraceError(command.CommandText + <span style="color: #a31515;">" errored "</span> + interceptionContext.Exception);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> ReaderExecuting(<span style="color: #2b91af;">DbCommand</span> command, <span style="color: #2b91af;">DbCommandInterceptionContext</span>&lt;<span style="color: #2b91af;">DbDataReader</span>&gt; interceptionContext)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Trace</span>.TraceInformation(command.CommandText);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> ReaderExecuted(<span style="color: #2b91af;">DbCommand</span> command, <span style="color: #2b91af;">DbCommandInterceptionContext</span>&lt;<span style="color: #2b91af;">DbDataReader</span>&gt; interceptionContext)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (interceptionContext.Exception != <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Trace</span>.TraceError(command.CommandText + <span style="color: #a31515;">" errored "</span> + interceptionContext.Exception);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> ScalarExecuting(<span style="color: #2b91af;">DbCommand</span> command, <span style="color: #2b91af;">DbCommandInterceptionContext</span>&lt;<span style="color: blue;">object</span>&gt; interceptionContext)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Trace</span>.TraceInformation(command.CommandText);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> ScalarExecuted(<span style="color: #2b91af;">DbCommand</span> command, <span style="color: #2b91af;">DbCommandInterceptionContext</span>&lt;<span style="color: blue;">object</span>&gt; interceptionContext)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (interceptionContext.Exception != <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Trace</span>.TraceError(command.CommandText + <span style="color: #a31515;">" errored "</span> + interceptionContext.Exception);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+<h3>Logging (pre EF 6)</h3>
+
+<p>Pre EF 6, I used <a href="http://code.msdn.microsoft.com/EFProviderWrappers-c0b88f32">EF Provider wrappers</a> (with bug fixes) which worked well. <br/>
+<a href="http://martinwilley.com/blog/2012/02/14/EFCodeFirstTracingLoggingTheSQL.aspx">My blog entry on using using the EF provider wrappers for SQL logging a DbContext</a>.</p>
+</div>
+<div class="Footer"></div>
+</body>
+</html>

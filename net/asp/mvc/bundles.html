@@ -1,0 +1,154 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP Bundles</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="../aspmvc.html">Asp MVC</a></li>
+<li><a href="mvccontrollers.html">MVC Controllers</a></li>
+<li><a href="mvcactions.html">MVC Actions</a></li>
+<li><a href="../asprouting.html">Asp Routing</a></li>
+<li><a href="../aspmvcview.html">Asp MVC Views</a></li>
+<li><a href="htmlhelpers.html">HTML Helpers</a></li>
+<li><a href="bundles.html">Bundling</a></li>
+<li><a href="errors.html">MVC Errors</a></li>
+<li><a href="mvcvalidation.html">MVC Validation</a></li>
+<li><a href="simplepaging.html">Simple Paging</a></li>
+<li><a href="webapi.html">WebApi</a></li>
+<li><a href="webapiformat.html">WebApi Formatting</a></li>
+<li><a href="webapiclient.html">WebApi HttpClient</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>ASP Bundles</h2>
+
+<p><a href="http://www.asp.net/mvc/tutorials/mvc-4/bundling-and-minification">ASP.Net</a>, <a href="http://msdn.microsoft.com/en-us/library/system.web.optimization%28v=vs.110%29.aspx">MSDN</a><br />
+Bundling and minification can reduce the number of http connections (the normal simultaneous limit is 6) and the KBs downloaded (still a problem on mobile, of course). Internally it creates a BundleModule and watches for bundle requests. It includes automatic caching (1 year) with a <cite>v</cite> querystring based on a hash of the contents.<br />
+<a href="http://blogs.msdn.com/b/rickandy/archive/2012/08/14/adding-bundling-and-minification-to-web-forms.aspx">You can also use it with webforms</a>. Webforms allows bundles to be configured in a bundle.config xml file.</p>
+<p>It doesn't really fit with require.js/AMD, which has it's own optimizer (usually Node).</p>
+<h3>Nuget</h3>
+<p>Package is <cite>Microsoft.AspNet.Web.Optimization</cite>, dll is System.Web.Optimization.<br />
+It depends on Microsoft.Web.Infrastructure and WebGrease (WebGrease depends on Antlr)</p>
+<h3>Creating bundles</h3>
+<p>In application start (Global.asax):</p>
+<div class="code">
+<p><span style="color: blue;">protected</span> <span style="color: blue;">void</span> Application_Start()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">BundleConfig</span>.RegisterBundles(<span style="color: #2b91af;">BundleTable</span>.Bundles);<br />
+}</p>
+</div>
+<p>In App_Start add a BundleConfig.cs:</p>
+<div class="code">
+<p><span style="color: green;">//add specific files</span><br />
+bundles.Add(<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">ScriptBundle</span>(<span style="color: #a31515;">"~/bundles/jquery"</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .Include(<span style="color: #a31515;">"~/Scripts/jquery-{version}.js"</span> <span style="color: green;">//can be a params list of files </span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; ));<br />
+<span style="color: green;">//or entire directory </span><br />
+bundles.Add(<span style="color: blue;">new</span> <span style="color: #2b91af;">ScriptBundle</span>(<span style="color: #a31515;">"~/bundles/scripts"</span>)<br />
+&nbsp;&nbsp;&nbsp; .IncludeDirectory(<span style="color: #a31515;">"~/Scripts"</span>,<span style="color: #a31515;">"*.js"</span>));</p>
+</div>
+<div class="alert">
+Look-out for conflicts between the virtual path with physical files (~/Scripts/jQuery.js). The standard is to use ~/bundles/
+</div>
+
+<p>IncludeDirectory is dangerous. Css files may be import each other, and files are added in alphabetic order. Adding individual files is more explicit and safe.</p>
+
+<div class="code">
+<p><span style="color: green;">//if css includes relative paths, fix them up</span><br />
+bundles.Add(<span style="color: blue;">new</span> <span style="color: #2b91af;">StyleBundle</span>(<span style="color: #a31515;">"~/bundle/sitecss"</span>)<br />
+&nbsp;&nbsp;&nbsp; .Include(<span style="color: #a31515;">"~/Content/nested/site.css"</span>, <span style="color: blue;">new</span> <span style="color: #2b91af;">CssRewriteUrlTransform</span>()));</p>
+</div>
+
+
+<h3>Pattern rules and advanced use</h3>
+<ul>
+<li>There is one * wildcard per string, as a prefix or suffix ("*.js", not "a*.js").
+<ul>
+<li>Wildcards are added in alphabetic order! See ordering below.</li>
+</ul>
+</li>
+<li>{version} is a special token and matches numeric patterns. So jquery-{version}.js doesn't match jquery-ui-*</li>
+<li>If two files differ by suffixes like *-min.js, then the non-min version is in debug and the min version is in release/optimized (the patterns are in BundleCollection.FileExtensionReplacementList)</li>
+</ul>
+<div class="code">
+<p><span style="color: green;">//when in debug, use the log form. In release/optimized use the non-log form.</span><br />
+bundles.FileExtensionReplacementList.Add(<span style="color: #a31515;">"log"</span>, <span style="color: #2b91af;">OptimizationMode</span>.WhenDisabled);</p>
+</div>
+
+
+<p>Ordering is controlled by the BundleCollection.FileSetOrderList</p>
+<div class="code">
+<p><span style="color: green;">//mu.js will be moved to the front of the list</span><br />
+<span style="color: blue;">var</span> ordering = <span style="color: blue;">new</span> <span style="color: #2b91af;">BundleFileSetOrdering</span>(<span style="color: #a31515;">"mu"</span>);<br />
+ordering.Files.Add(<span style="color: #a31515;">"mu.js"</span>);<br />
+<span style="color: #2b91af;">BundleTable</span>.Bundles.FileSetOrderList.Insert(0, ordering);<br />
+<span style="color: green;">//the default orderlist has jquery first (and moo, prototype, ext)</span><br />
+<span style="color: green;">//for css reset.css then normalize.css are first</span></p>
+</div>
+
+<p>You can ignore files. There is an empty BundleCollection.IgnoreList and, for use with IncludeDirectory only, a BundleCollection.DirectoryFilter which deals with *-min.js etc. NB: <cite>FileExtensionReplacementList</cite> does the standard min/debug switching.</p>
+<div class="code">
+<p><span style="color: green;">//ignore unit test files</span><br />
+<span style="color: #2b91af;">BundleTable</span>.Bundles.IgnoreList.Ignore(<span style="color: #a31515;">"*test.js"</span>);<br />
+&nbsp;<br />
+<span style="color: green;">//IncludeDirectory - ignore logging only in release, but include it in DEBUG</span><br />
+<span style="color: #2b91af;">BundleTable</span>.Bundles.DirectoryFilter.Ignore(<span style="color: #a31515;">"*logging.js"</span>, <span style="color: #2b91af;">OptimizationMode</span>.WhenEnabled);<br />
+<span style="color: green;">//default ignores in debug and release: *.intellisense, *.vsdoc</span><br />
+<span style="color: green;">//default ignores when debug or optimized: *.min, *.map, *.debug</span></p>
+</div>
+
+
+<h3>Configuration</h3>
+<p>In debug mode (system.web/compilation[@debug=true] ) it is OFF. The files in a bundle are sent individually, un-minimized.<br />
+Override it with <span style="color: #2b91af;">BundleTable</span>.EnableOptimizations = <span style="color: blue;">true</span>. 
+</p>
+
+
+<h3>Razor views</h3>
+<p>Use @Scripts.Render or @Styles.Render, or @Scripts.Url</p>
+<div class="code">
+<p><span style="background: yellow;">@</span><span style="color: #2b91af;">Styles</span>.Render(<span style="color: #a31515;">"~/bundles/css"</span>)<br />
+<span style="background: yellow;">@</span><span style="color: #2b91af;">Scripts</span>.Render(<span style="color: #a31515;">"~/bundles/scripts"</span>)</p>
+</div>
+
+<h3>CDNs</h3>
+<p>For public websites, you'll probably want a jquery CDN:</p>
+
+<div class="code">
+<p><span style="color: #2b91af;">BundleTable</span>.EnableOptimizations = <span style="color: blue;">true</span>; <span style="color: green;">//rqd for cdn</span><br />
+bundles.UseCdn = <span style="color: blue;">true</span>; <span style="color: green;">//must set this!!!</span><br />
+<span style="color: blue;">var</span> bundle = <span style="color: blue;">new</span> <span style="color: #2b91af;">ScriptBundle</span>(<span style="color: #a31515;">"~/bundles/jquery"</span>, <br />
+&nbsp;&nbsp;&nbsp; <span style="color: #a31515;">"http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"</span>)<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//this is the debug file (not the backup!)</span><br />
+&nbsp;&nbsp;&nbsp; .Include(<span style="color: #a31515;">"~/Scripts/jquery-{version}.js"</span>);<br />
+<span style="color: green;">//is this global variable truthy?</span><br />
+bundle.CdnFallbackExpression = <span style="color: #a31515;">"window.jQuery"</span>;<br />
+bundles.Add(bundle);</p>
+</div>
+
+<p>In the html, the Scripts.Render adds this:</p>
+<div class="code">
+<p>&lt;script&gt;(window.jQuery)||document.write('&lt;script src="/bundles/jquery"&gt;&lt;\/script&gt;');&lt;/script&gt;</p>
+</div>
+
+<h3>Transformers</h3>
+<p>There are 3rd party nuget packages for Less, Sass and CoffeeScript (eg BundleTransformers.*). Alternatively just use the Visual Studio Web Essentials extension.</p>
+<p>You could use bundles to output server localized resources to javascript. IBundleTransform and implement Process (BundleResponse.Content is the concatenated file content). If you create a new Bundle (instead of ScriptBundle), a ctor overload allows you to add transforms, so you can add JsMinify() Transform (i.e. minimization) as well as a custom transform.</p>
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

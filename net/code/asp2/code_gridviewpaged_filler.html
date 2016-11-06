@@ -1,0 +1,71 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Paged GridView: GridViewFiller</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main</a></li>
+<li><a href="../../dotnet.html">.Net</a></li>
+<li><a href="../index.html">Code</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>Paged GridView: GridViewFiller</h2>
+<p>The utility classes used by the <a href="code_gridviewpaged.html">paged GridView</a>. You only directly work with GridViewFiller. It uses the <a href="code_gridviewpaged_adaptor.html">ObjectAdaptor</a>.</p>
+<div class="code">
+<p><span style="color: blue;">using</span> System.Collections.Generic;<br />
+<span style="color: blue;">using</span> System.Web.UI.WebControls;<br />
+&nbsp;<br />
+<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> Fills a GridView with paged data</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+<span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">GridViewFiller</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> Fills the specified gridview with a page of data.</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;param name="gv"&gt;</span><span style="color: green;">The gridview.</span><span style="color: gray;">&lt;/param&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;param name="list"&gt;</span><span style="color: green;">The single page of data.</span><span style="color: gray;">&lt;/param&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;param name="count"&gt;</span><span style="color: green;">The total count (to work out number of pages).</span><span style="color: gray;">&lt;/param&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;param name="pageSize"&gt;</span><span style="color: green;">Size of the page.</span><span style="color: gray;">&lt;/param&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> Fill(<span style="color: #2b91af;">GridView</span> gv, <span style="color: #2b91af;">IList</span>&lt;<span style="color: blue;">object</span>&gt; list, <span style="color: blue;">int</span> count, <span style="color: blue;">int</span> pageSize)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//create an ObjectDateSource object programmatically</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">ObjectDataSource</span> ods = <span style="color: blue;">new</span> <span style="color: #2b91af;">ObjectDataSource</span>();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; ods.ID = <span style="color: #a31515;">"ods"</span> + gv.ID;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; ods.EnablePaging = gv.AllowPaging;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; ods.TypeName = <span style="color: #a31515;">"ObjectAdaptor"</span>; <span style="color: green;">//can be a common base class</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; ods.SelectMethod = <span style="color: #a31515;">"Select"</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; ods.SelectCountMethod = <span style="color: #a31515;">"Count"</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; ods.StartRowIndexParameterName = <span style="color: #a31515;">"startRowIndex"</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; ods.MaximumRowsParameterName = <span style="color: #a31515;">"maximumRows"</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; ods.EnableViewState = <span style="color: blue;">false</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//when creating, inject the data into the table adaptor</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; ods.ObjectCreating += <span style="color: blue;">delegate</span>(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">ObjectDataSourceEventArgs</span> e)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; { e.ObjectInstance = <span style="color: blue;">new</span> <span style="color: #2b91af;">ObjectAdaptor</span>(list, count); };<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; gv.PageSize = pageSize;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; gv.DataSource = ods;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; gv.DataBind();<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

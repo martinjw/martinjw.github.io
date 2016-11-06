@@ -1,0 +1,150 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>.Net 1 Remoting and WebServices.Net</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+<script type="text/javascript" src="../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../index.html">Main &gt;</a></li>
+<li><a href="dotnet.html">.Net</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>Remoting and WebServices.Net</h2>
+<p>THIS PAGE IS .NET 1 ONLY. <a href="data/wcf.html">See WCF</a></p>
+<h3>WebServices</h3>
+<ul>
+<li>Sessions- must be explicitly added on both client and service<br />
+Server: <code>[WebMethod(EnableSession=true)] public void NewGame()</code><br />
+Client: <code>service1.CookieContainer = new System.Net.CookieContainer();</code></li>
+<li>Other WebMethod attributes: <strong>CacheDuration </strong>(cache it), <strong>TransactionOption</strong> (NB: if call other webmethods, transaction aren't passed over Soap, so multiple calls aren't Acid)</li>
+<li>Exceptions: any exceptions in a webmethod are passed as a <strong>SoapException</strong></li>
+<li>Authentication: pass your windows auth by 
+<code>server.Credentials = System.Net.CredentialCache.DefaultCredentials;</code>
+<br />
+otherwise
+<code>serviceobj.Credentials = new NetworkCredential(username, password);</code> </li>
+<li>Custom authentication: use <a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/cpref/html/frlrfSystemWebServicesProtocolsSoapHeaderClassTopic.asp">SoapHeaders</a>- create a custom class derived from SoapHeader, and make it a member of your WebService assembly; then decorate the WebMethod with the attribute specifying the member name<br />
+<code> [WebMethod, SoapHeader("MyHeader",Direction=SoapHeaderDirection.InOut)]</code></li>
+<li>SOAP Extensions. You extend <strong>SoapExtension</strong> with overrides GetInitializer, Initialize, ChainStream, ProcessMessage (switch/case SoapMessageStage). Generally you're doing things (like encryption or value translations) in .<strong>AfterSerialize</strong> (sender- just before sent) and/or .<strong>BeforeDeserialize </strong>(receiver- as soon as received). You may also need a SoapExtensionAttribute class so it can be used.</li>
+<li>The serializer may not work out all derived types in a hierarchy, so add a [<strong>XmlInclude</strong>(typeof(MySpecificObj))] attribute</li>
+<li>You can customise the Soap format- SoapDocumentService(Use=SoapBindingUse.Encoded) or SoapRpcService (for class) or SoapDocumentMethod (for method). Literal is default, encoded and rpc have namespaces for each datatype. The literal and encoded (document style) also allow SoapParameterStyle.Bare and XmlElement attributes.</li>
+<li>To show an aspx if you browse to a webservice: wsdlHelpGenerator href="form.aspx" (NB: only works for subfolders- .Net 1.1 has error in root directory)</li>
+</ul>
+
+<h3>Remoting</h3>
+<ul>
+<li><strong>Marshal-by-value</strong> objects implement ISerializable</li>
+<li><strong>Marshal-by-reference objects</strong> extend System.Marshal-ByRefObject and become proxies on the client<br />
+Have LifetimeLeases (clients can renew by getting the ILease from GetLifetimeService)</li>
+<li><strong>Server Activation</strong> - created by first method call (not on "new obj")<ul>
+<li>WellKnownObjectMode.<strong>Singleton</strong> (shared): 
+<pre>ChannelServices.RegisterChannel(new TcpChannel(8020)); 
+WellKnownServiceTypeEntry myservice = 
+	new WellKnownServiceTypeEntry(typeof(MyService),"TcpService", 
+		WellKnownObjectMode.Singleton); 
+RemotingConfiguration.ApplicationName = " TcpService"; 
+RemotingConfiguration.RegisterWellKnownServiceType(myservice);</pre></li>
+<li>WellKnownObjectMode.<strong>SingleCall</strong> (created each call, stateless) <br />
+In xml: configuration/system.runtime.remoting/application/service/wellknown/@mode="SingleCall" @type=MyRemoteClass,RemoteAssembly<br />
+NB: most scalable, suitable for load-balancing
+</li>
+<li>Can host in <strong>IIS</strong> (for SSL etc). Just put system.runtime.remoting into web.config (no channel- it's 80, no tcp obviously), and register objectUri with ".rem" extension.</li>
+</ul>
+</li>
+<li><strong>Client Activation</strong> (created by "new")<ul>
+<li><a href="http://msdn2.microsoft.com/en-us/library/bbab2dx1.aspx">Versioning:</a> The client specifies the version- server can't specify the version (as opposed to SOAs)</li>
+<li>Can't use IIS as a host - only SAOs</li>
+</ul></li>
+<li>XML config: <code>RemotingConfiguration.Configure("my.config"); //remember to do this!</code></li>
+<li>Channels: <pre>HttpServerChannel channel=new HttpServerChannel(0); //0= available port (if already used-exception)
+ChannelServices.RegisterChannel(channel);</pre>
+NB: clients don't specify port. <br />
+NB: http channels can be more secure than tcp if hosted in IIS</li>
+<li>You can do remoting asynchronously: 
+<pre>
+// Create delegate to a method that is executed when async method done.
+AsyncCallback callBackDelegate = new AsyncCallback(CallBackMethod);
+
+// Create a delegate to the method that will be executed asynchronously
+MyAsyncDelegate startLongCallDelegate = new MyAsyncDelegate(obj.LongCall);
+
+// Begin the invocation of the asynchronous method.
+startLongCallDelegate.BeginInvoke(remoteMethod,nothing);
+</pre></li>
+<li>Avoiding client copies<ul>
+<li>Interface assembly. As interfaces don't have constructors, use Activator.GetObject  (for server activated) or Activator.CreateInstance (for client-activated)</li>
+<li>Or use soapsuds.exe (for http channels) to generate a proxy (dll or source)</li></ul></li>
+</ul>
+
+<h3>Serviced components (.Net COM+ apps)</h3>
+<ul>
+<li>Derive from System.EnterpriseServices.<strong>ServicedComponent</strong> </li>
+<li>Decorate with attributes eg ObjectPoolingAttribute (default is false), ApplicationActivation (Library or Server- latter must be in GAC), 
+TransactionsAttribute on class, AutoCompleteAttribute on a method (calls SetComplete/ SetAbort)</li>
+<li>Register manually with RegSvcs.exe (shows errors), or in code using RegistrationHelper class</li>
+<li>AccessControl integrates with COM+ security via attributes such as Application/ComponentAccessControl and SecurityRole</li>
+<li>Queued: <ul>
+<li>Assembly- support queues: [assembly:<strong>ApplicationQueuing</strong>(Enabled=true,QueueListenerEnabled=true)]</li>
+<li>Class- show interface: [<strong>InterfaceQueuing</strong>(Enabled=true,Interface="IMyInterface")]</li>
+<li>No callbacks or app-specific errors, or return values</li>
+<li>Client uses Marshal.<strong>BindToMoniker</strong>: <pre>
+IInterface i =(IInterface) <em>Marshal.BindToMoniker(@"queue:/new:</em>MyNameSpace.IMyInterface");
+i.DoMyMethod();
+Marshal.ReleaseComObject(i);</pre></li>
+</ul></li>
+<li>DEBUGGING: attach to DllHost.exe</li>
+</ul>
+
+
+<h3>Windows Services</h3>
+<ul>
+<li>System.ServiceProcess namespace has 
+<ul>
+<li>ServiceBase class (services, either Win32OwnProcess (single process) services or Win32ShareProcess (shared process) services).<br />
+VS: change Name and ServiceName properties and the Main sub<br />
+Override OnStart, OnStop etc + OnCustomCommand, OnPowerEvent (if Can* properties =true)<br />
+AutoLog=true + EventLog.WriteLog(mess) (false to send to custom event log)
+</li>
+<li>ServiceInstaller and ServiceProcessInstaller classes to install<br />
+VS Designer: rightclick- Add Installer - ProjectInstaller class contains instances of both with [RunInstaller(true)] 
+attribute (for Installutil.exe)<br />
+ServiceProcessInstaller.Account= LocalService, LocalSystem, NetworkService, or User
+</li>
+<li>ServiceController class to start/stop/pause (rather than via Service Control Manager (SCM))<br />
+Should be a separate exe! Create a winform and drop ServiceController from toolbox (or Server Explorer- rightclick the service + "Add To Designer").<br />
+Check .Status = .Running before ops<br />
+.ExecuteCommand(int) /*between 128 and 256*/, GetServices()
+</li>
+</ul></li>
+<li>You can drag a performance counter from the Server Explorer - NB remove MachineName</li>
+</ul>
+<h3>WCF</h3>
+<ul>
+<li>X509 Certificates
+<ul>
+<li><a href="http://www.codeplex.com/WCFSecurity/Wiki/View.aspx?title=How%20To%20-%20Use%20Certificate%20Authentication%20and%20Message%20Security%20in%20WCF%20calling%20from%20Windows%20Forms">How To  Use Certificate Authentication and Message Security in WCF [CodePlex]</a></li>
+<li><a href="http://msdn.microsoft.com/en-us/library/ms731899.aspx">MSDN: Working with certificates</a></li>
+<li>Certicates mmc: Start - Run - MMC - File - Add/Remove Snap-In - [Add] - Certificates - Computer Account - Local Computer.</li>
+<li>For test certificates: <a href="http://msdn.microsoft.com/en-us/library/bfsktky3.aspx">makecert</a>. Eg <code>makecert -r -pe -n "CN=XYZ Company" -sky exchange -sr LocalMachine -ss my</code> (an exportable self signed certificate with a subject for the Trusted People store for LocalMachine</li>
+<li>ASP access to certificates: <a href="http://www.microsoft.com/downloads/details.aspx?familyid=c42e27ac-3409-40e9-8667-c748e422833f&amp;displaylang=en">Download WinHttpCertCfg</a> and run it <code>winhttpcertcfg -g -c LOCAL_MACHINE\My -s "My Server Machine" -a "ASPNET"</code> (for XP; -a "NETWORK SERVICE" for Windows Server 2003)</li>
+<li><a href="http://www.codeproject.com/KB/WCF/wcf_certificates.aspx">Using Windows CERTSRV to request/issue client and server X.509 certificates [CodeProject, nicely illustrated]</a></li>
+</ul></li>
+<li>WCF binding for Ws-Security (message mode): system.serviceModel/bindings/wsHttpBinding/binding/security mode="Message"/message clientCredentialType="Certificate"</li>
+<li>behaviors/endpointBehaviors/behavior/clientCredentials/serviceCertificate/authentication certificateValidationMode="PeerOrChainTrust" allows a self signed certificate if it is in the Trusted People store. </li>
+</ul>
+
+</div>
+<div class="Footer">
+
+</div></body>
+</html>

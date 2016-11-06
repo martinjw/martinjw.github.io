@@ -1,0 +1,226 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP Webforms AJAX</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="aspcontrols.html">Asp Webforms Controls</a></li>
+<li><a href="aspdotnetbind.html">Asp Webforms Binding</a></li>
+<li><a href="aspdotnetjs.html">Asp Webforms Js/Css/Img</a></li>
+<li><a href="asp2.html">Asp Webforms 2.0</a></li>
+<li><a href="aspajax.html">Asp Webforms Ajax</a></li>
+<li><a href="aspvalidation.html">Asp Webforms Validomatic</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>ASP Webforms AJAX</h2>
+
+<h3>Webforms UpdatePanels</h3>
+<p>These are very easy way of updating webform sections with ajax. Under the covers it's fairly heavyweight, but for a traditional webform pages it's very effective.<br />
+Remember to add EnablePartialRendering</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: maroon;">asp</span><span style="color: blue;">:</span><span style="color: maroon;">ScriptManager</span> <span style="color: red;">ID</span><span style="color: blue;">="ScriptManager1"</span> <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <span style="color: red;">EnablePartialRendering</span><span style="color: blue;">="true"</span> <span style="color: blue;">/&gt;</span></p>
+</div>
+<p>A <span style="color: maroon;">ScriptManagerProxy</span> can be used on content pages if the ScriptManager is in a MasterPage<br />
+By default, each panel update is fired by its children (ChildrenAsTriggers). Add triggers, either a PostBackTrigger to force a full page refresh, or a AsyncPostBackTrigger to fire a partial update from any control on the page.<br />
+Use asp:<span style="color: maroon;">Timer</span> either inside the UpdatePanel, or outside with a trigger, to refresh at Interval (ms).<br />
+Use asp:<span style="color: maroon;">UpdateProgress</span> (with <span style="color: red;">displayAfter</span><span style="color: blue;">="1000"</span>) with a &lt;<span style="color: maroon;">ProgressTemplate</span>&gt; to show a loading image or text.</p>
+<ul>
+<li><span style="color: red;">UpdateMode</span><span style="color: blue;">=Always</span> means it refreshes for any postback anywhere on page (INCLUDING partial updates in other updatePanels).</li>
+<li>Use <span style="color: red;">UpdateMode</span><span style="color: blue;">=Conditional</span> with nested updatePanels so only child updatePanels update.</li>
+</ul>
+<p>For back/forward support (<a href="http://msdn.microsoft.com/en-us/library/cc488548.aspx">MSDN</a>):</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: maroon;">asp</span><span style="color: blue;">:</span><span style="color: maroon;">ScriptManager</span> <span style="color: red;">ID</span><span style="color: blue;">="ScriptManager1"</span> <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <br />
+&nbsp;&nbsp;&nbsp; <span style="color: red;">EnableHistory</span><span style="color: blue;">="true"</span> <span style="color: red;">EnableSecureHistoryState</span><span style="color: blue;">="false"</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: red;">onNavigate</span><span style="color: blue;">="ScriptManager1_Navigate"&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: maroon;">asp</span><span style="color: blue;">:</span><span style="color: maroon;">ScriptManager</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: maroon;">asp</span><span style="color: blue;">:</span><span style="color: maroon;">UpdatePanel</span> <span style="color: red;">ID</span><span style="color: blue;">="UpdatePanel1"</span> <span style="color: red;">runat</span><span style="color: blue;">="server"&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: maroon;">ContentTemplate</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: maroon;">asp</span><span style="color: blue;">:</span><span style="color: maroon;">Button</span> <span style="color: red;">ID</span><span style="color: blue;">="Button1"</span> <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <span style="color: red;">Text</span><span style="color: blue;">="Button"</span> <span style="color: red;">onclick</span><span style="color: blue;">="Button1_Click"</span> <span style="color: blue;">/&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: maroon;">asp</span><span style="color: blue;">:</span><span style="color: maroon;">Label</span> <span style="color: red;">ID</span><span style="color: blue;">="Label1"</span> <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <span style="color: blue;">/&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;/</span><span style="color: maroon;">ContentTemplate</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: maroon;">asp</span><span style="color: blue;">:</span><span style="color: maroon;">UpdatePanel</span><span style="color: blue;">&gt;</span></p>
+</div>
+<p>Record the history transitions in code behind with AddHistoryPoint and handle the ScriptManager.OnNavigate event.</p>
+<div class="code">
+<p><span style="color: blue;">protected</span> <span style="color: blue;">void</span> Button1_Click(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">EventArgs</span> e)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; ShowData(<span style="color: #2b91af;">DateTime</span>.Now.ToLongTimeString());<br />
+}<br />
+&nbsp;<br />
+<span style="color: blue;">private</span> <span style="color: blue;">void</span> ShowData(<span style="color: blue;">string</span> s)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; Label1.Text = s;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (ScriptManager1.IsInAsyncPostBack &amp;&amp; !ScriptManager1.IsNavigating)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; ScriptManager1.AddHistoryPoint(<span style="color: #a31515;">"History"</span>, s, s);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}<br />
+&nbsp;<br />
+<span style="color: blue;">protected</span> <span style="color: blue;">void</span> ScriptManager1_Navigate(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">HistoryEventArgs</span> e)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; ShowData(e.State[<span style="color: #a31515;">"History"</span>]);<br />
+}</p>
+</div>
+
+
+<h3>Asmx ScriptService</h3>
+<p>Just add the [ScriptService] to the class and [WebMethod].<br />
+Client side it's much more lightweight with jQuery (see <a href="../../jquery.html">jQuery notes</a>)</p>
+<div class="code">
+<p><span style="color: blue;">var</span> notify = $(<span style="color: maroon;">&quot;#notification&quot;</span>);<br/>
+$.ajax({<br/>
+&nbsp;&nbsp;&nbsp; url: <span style="color: maroon;">'</span><span style="color: maroon; background: yellow;">&lt;%</span><span style="color: maroon;">= ResolveClientUrl(&quot;~/NotificationService.svc&quot;) </span><span style="color: maroon; background: yellow;">%&gt;</span><span style="color: maroon;">/Load'</span>,<br/>
+&nbsp;&nbsp;&nbsp; success: <span style="color: blue;">function</span> (data) {<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; data = data.d ? data.d : data;<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; notify.text(data.message);<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; notify.show(<span style="color: maroon;">&quot;slow&quot;</span>);<br/>
+&nbsp;&nbsp;&nbsp; },<br/>
+&nbsp;&nbsp;&nbsp; error: <span style="color: blue;">function</span> (jqXHR, msg) { notify.show(<span style="color: maroon;">&quot;slow&quot;</span>).text(<span style="color: maroon;">&quot;Error: &quot;</span> + msg); }<br/>
+});</p>
+</div>
+<p>With a POST</p>
+
+<div class="code">
+<p>$.ajax({<br />
+&nbsp;&nbsp;&nbsp; type: <span style="color: maroon;">"POST"</span>,<br />
+&nbsp;&nbsp;&nbsp; contentType: <span style="color: maroon;">"application/json"</span>,<br />
+&nbsp;&nbsp;&nbsp; url: <span style="color: maroon;">"WebService.asmx/WebMethodName"</span>,<br />
+&nbsp;&nbsp;&nbsp; data: <span style="color: maroon;">"{}"</span>,<br />
+&nbsp;&nbsp;&nbsp; success: <span style="color: blue;">function</span> (x) { <br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; data = data.d ? data.d : data;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; alert(x.Message); }<br />
+});</p>
+</div>
+
+<p>Important: the jQuery data parameter should be quoted (a string - eg use JSON.stringify()), otherwise jQuery URL encodes your object (and asmx MUST be json).<br />
+$.getJSON(url) doesn't send the contentType of application/json (apparently) so doesn't work.<br />
+You may need to add a jQuery dataFilter to deal with ASP.Net dates (json doesn't have native date support).</p>
+
+<p>Caution: unlike ASP MVC's DefaultDataBinder, the WCF is very fussy so [DataContract] inputs must match the posted json exactly. Here's the pattern:</p>
+
+<div class="code">
+<p><span style="color: blue;">var</span> data = { category: {<br />
+&nbsp;&nbsp;&nbsp; id: $(<span style="color: maroon;">'#</span><span style="color: maroon; background: yellow;">&lt;%</span><span style="color: maroon;">= SelectId.ClientID </span><span style="color: maroon; background: yellow;">%&gt;</span><span style="color: maroon;">'</span>).val(),<br />
+&nbsp;&nbsp;&nbsp; name: $(<span style="color: maroon;">'#</span><span style="color: maroon; background: yellow;">&lt;%</span><span style="color: maroon;">= CategoryName.ClientID </span><span style="color: maroon; background: yellow;">%&gt;</span><span style="color: maroon;">'</span>).val()<br />
+&nbsp;&nbsp;&nbsp; }<br />
+};<br />
+<span style="color: blue;">var</span> s = JSON.stringify(data);<br />
+<span style="color: blue;">var</span> throbber = $(<span style="color: maroon;">'#</span><span style="color: maroon; background: yellow;">&lt;%</span><span style="color: maroon;">= Throbber.ClientID </span><span style="color: maroon; background: yellow;">%&gt;</span><span style="color: maroon;">'</span>);<br />
+throbber.toggleClass(<span style="color: maroon;">"hidden"</span>);<br />
+$.ajax({<br />
+&nbsp;&nbsp;&nbsp; type: <span style="color: maroon;">"POST"</span>,<br />
+&nbsp;&nbsp;&nbsp; contentType: <span style="color: maroon;">"application/json"</span>,<br />
+&nbsp;&nbsp;&nbsp; url: <span style="color: maroon;">"Service1.svc/SaveCategory"</span>,<br />
+&nbsp;&nbsp;&nbsp; data: s,<br />
+&nbsp;&nbsp;&nbsp; success: <span style="color: blue;">function</span> (data) { <br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; data = data.d ? data.d : data;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; show(data); },<br />
+&nbsp;&nbsp;&nbsp; error: <span style="color: blue;">function</span> (msg) { show(msg); throbber.toggleClass(<span style="color: maroon;">"hidden"</span>); }<br />
+});</p>
+</div>
+<p>The contract must match in case.</p>
+<div class="code">
+<p>[<span style="color: #2b91af;">DataContract</span>(Name = <span style="color: #a31515;">"category"</span>)]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">Category</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">DataMember</span>(Name = <span style="color: #a31515;">"name"</span>, IsRequired = <span style="color: blue;">false</span>)]<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">string</span> CategoryName { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">DataMember</span>(Name = <span style="color: #a31515;">"id"</span>, IsRequired = <span style="color: blue;">false</span>)]<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">string</span> CategoryId { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }</p>
+</div>
+
+<p style="background-color:#eee474;border:1px solid red;">ASP.Net 3.5+ returns a Json object wrapped with a "d" to prevent XSS. Either <br />
+data = data.d ? data.d : data;<br />
+or (slightly safer if you return a boolean)<br />
+data = data.hasOwnProperty("d") ? data.d : data;
+</p>
+
+<div style="background-color:#eee474;border:1px solid red;">
+IE json caching: set cache:false.
+</div>
+
+<h3>AjaxMethods</h3>
+<p><a href="../code/aspajaxpagemethod.html">Full details here</a>, but basically you need:</p>
+<ul>
+<li><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">ScriptManager</span> <span style="color: red;">EnablePageMethods</span><span style="color: blue;">="true"</span></li>
+<li>[<span style="color: #2b91af;">WebMethod</span>] on a <em>static</em> method of the code behind Page</li>
+<li>In client javascript, you get a PageMethods.xxx(arg1, arg2, onSuccess, onFail) function.</li>
+</ul>
+
+<h3><a name="wcf">Exposing WCF to Ajax</a></h3>
+<p>See also <a href="../wcf/wcf.html">WCF</a>; <a href="http://msdn.microsoft.com/en-us/library/bb412172.aspx">MSDN RESTful WCF</a></p>
+<p>Use Add New Item = <cite>AJAX-enabled WCF Service</cite> template. </p>
+<p>On service class add </p>
+<div class="code">
+<p>[<span style="color: #2b91af;">AspNetCompatibilityRequirements</span>(RequirementsMode = <span style="color: #2b91af;">AspNetCompatibilityRequirementsMode</span>.Allowed)]<br />
+&nbsp;</p>
+</div>
+<ul>
+<li>On the [<span style="color: #2b91af;">OperationContract</span>] you can add [<span style="color: #2b91af;">WebInvoke</span>]/ [<span style="color: #2b91af;">WebGet</span>]</li>
+<li>HTTP verbs: GET= [<span style="color: #2b91af;">WebGet</span>]. Or: [<span style="color: #2b91af;">WebInvoke</span>(Method = <span style="color: #a31515;">"GET"</span>)] (default = POST)</li>
+<li>Default request/response is Json<br />
+On the js client, use "Content-Type", "application/json" mime type (see above)</li>
+<li>For xml - use [<span style="color: #2b91af;">WebInvoke</span>(ResponseFormat = <span style="color: #2b91af;">WebMessageFormat</span>.Xml)] and add the line <br />
+<span style="color: #2b91af;">WebOperationContext</span>.Current.OutgoingResponse.ContentType = <span style="color: #a31515;">"text/xml"</span>;</li>
+<li>The request format can be dynamic (Json/Xml/querystring depending on what is sent)- <a href="http://msdn.microsoft.com/en-us/library/ee476510.aspx">automaticFormatSelectionEnabled=true</a>
+<br /><span style="color: blue;">&lt;</span><span style="color: #a31515;">behaviors</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">endpointBehaviors</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">behavior</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">webHttp</span><span style="color: blue;"> </span><span style="color: red;">automaticFormatSelectionEnabled</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">behavior</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">endpointBehaviors</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">behaviors</span><span style="color: blue;">&gt;</span>
+</li>
+<li><a href="http://msdn.microsoft.com/en-us/library/bb515847.aspx">WebOperationContext</a>.Current has properties IncomingRequest and OutgoingResponse, methods CreateJsonResponse&lt;T&gt; (and Xml, Text and Atom).</li>
+<li>There's URI routing/mapping for simple scalar arguments:<br />
+[<span style="color: #2b91af;">WebInvoke</span>(UriTemplate = <span style="color: #a31515;">"Stuff?id={id}"</span>)]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">string</span> GetStuff(<span style="color: blue;">int</span> id)
+</li>
+</ul>
+
+<p>You can delete all the WCF configuration if you change the .svc to use the WebScriptServiceHostFactory.</p>
+<div class="code">
+<p><span style="background: yellow;">&lt;%</span><span style="color: blue;">@</span> <span style="color: maroon;">ServiceHost</span> <span style="color: red;">Language</span><span style="color: blue;">="C#"</span> <span style="color: red;">Debug</span><span style="color: blue;">="true"</span> <span style="color: red;">Service</span><span style="color: blue;">="MyWebApp.Service1"</span> <span style="color: red;">CodeBehind</span><span style="color: blue;">="Service1.svc.cs"</span> <br />
+<span style="color: red;">Factory</span><span style="color: blue;">="System.ServiceModel.Activation.WebScriptServiceHostFactory"</span> <span style="background: yellow;">%&gt;</span><br />
+&nbsp;</p>
+</div>
+
+<p>In WCF, you can authenticate using ASP.Net authentication by creating an svc/endpoint with <a href="http://msdn.microsoft.com/en-us/library/system.web.applicationservices.authenticationservice.aspx">Service="System.Web.ApplicationServices.AuthenticationService"</a>. Enable the services in system.web.extensions/scripting/webServices/authenticationService enabled="true".</p>
+
+<h4>WCF vs Ajax ScriptService</h4>
+<table style="text-align:left">
+<tr><th>Asmx</th><th>WCF</th></tr>
+<tr>
+<td>[<span style="color: #2b91af;">ScriptService</span>]</td>
+<td>[<span style="color: #2b91af;">ServiceContract</span>]<br />
+[<span style="color: #2b91af;">AspNetCompatibilityRequirements</span>(RequirementsMode = <span style="color: #2b91af;">AspNetCompatibilityRequirementsMode</span>.Allowed)]</td>
+</tr>
+<tr>
+<td>[<span style="color: #2b91af;">WebMethod</span>]</td>
+<td>[<span style="color: #2b91af;">OperationContract</span>] plus [<span style="color: #2b91af;">WebInvoke</span>]/ [<span style="color: #2b91af;">WebGet</span>]</td>
+</tr>
+<tr>
+<td colspan="2">Ajax's JavascriptSerializer is better with dictionaries with string keys than WCF's DataContractJsonSerializer, and more flexible with dates</td>
+</tr>
+</table>
+
+</div>
+<div class="Footer">
+
+</div></body>
+</html>

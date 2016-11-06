@@ -1,0 +1,184 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Patterns primer</title>
+<link rel="stylesheet" type="text/css" href="../style.css" />
+<script type="text/javascript" src="../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../index.html">Main &gt;</a></li>
+<li><a href="dotnet.html">.Net</a></li>
+<li><a href="dotnetlinks.html">.Net Links</a></li>
+<li><a href="visualstudio.html">Visual Studio</a></li>
+<li><a href="string.html">Strings</a></li>
+<li><a href="io.html">Data &gt;</a></li>
+<li><a href="wcf/wcf.html">WCF &gt;</a></li>
+<li><a href="dotnetwinform.html">Winforms.Net</a></li>
+<li><a href="wpf/index.html">WPF</a></li>
+<li><a href="propomatic.html">Prop-o-matic</a></li>
+<li><a href="fcl/index.html">Other FCL &gt;</a></li>
+<li><a href="asp/aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="azure/index.html">Azure &gt;</a></li>
+<li><a href="code/index.html">Code &gt;</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Patterns primer</h2>
+<p>A quick jargon buster for common patterns and terms.</p>
+<h3>Object oriented programming (OOP)</h3>
+<ul>
+<li>An object encapsulates state (data properties) with behaviour (methods).<br/>
+If an object has just properties (a property bag) it can be called an <strong>anaemic domain model</strong> and may be an anti-pattern.</li>
+<li>The <strong>encapsulation</strong> ensures some of the data and methods are public and some may be hidden (private)</li>
+<li>Objects may <strong>inherit</strong> from others. Subtypes may be polymorphic (a method can use a common supertype e.g. "cat" while accepting "tiger", "lion" etc).<br/>
+Inheritance is problematic, and most recommend "composition over inheritance" (contain or wrap objects).</li>
+<li>You may use <strong>polymorphism</strong>, where you don't use the exact type, but instead a subtype (inheritance or interface).<br/>
+The capability is behind most OO recommendations to "code to interfaces, not implementations", Liskov, etc.</li>
+<li>There are variations (class-based versus prototype based)</li>
+<li>There are alternatives: 
+<ul>
+<li>purely procedural code,</li>
+<li>declarative code ("what", not "how": xml, regex, sql)</li>
+<li>functional programming (declarative code that uses functions, avoiding state and mutable data). .Net lambdas and the strategy and visitor pattern are functional.</li>
+<li>Static typing vs dynamic typing and <a href="http://en.wikipedia.org/wiki/Duck_typing">duck typing</a> - runtime vs compile-time type checking.  .Net is mostly static typed with "dynamic". The .net compiler has duck typing in that you can foreach over anything with GetEnumerator(). </li>
+</ul>
+</li>
+</ul>
+<p>OO has potential problems. Doing too much inheritance, over-abstraction, encapsulating too much (god classes) makes things complicated. Hence the SOLID principles and design patterns (which in turn can be over-engineered).</p>
+<h3>General Principles</h3>
+<ul>
+<li><strong>Depend on abstractions</strong>. Don't rely on concrete types because they may change. Not to the extreme that everything has an interface (eg just for test mocks), or abstractions of abstractions (a repository around an ORM is probably dumb).</li>
+<li><strong>Loose coupling</strong> : Another expression for the above. Loosely coupled systems allow individual types to change, or new ones to be added, without rewriting everything.</li>
+<li><strong>DRY</strong> : Don't repeat yourself. Don't duplicate code. NB: Test code is usually not very DRY, as it's clearer to be explicit in each tests.</li>
+<li><strong>Law of Demeter</strong>: Only use an object and it's direct methods, not indirect. Also "Don't talk to strangers" and "count the dots" (x = a.b.c().d.e() is dangerous)</li>
+<li><strong>3 tier</strong>/<strong>n-tier</strong> : classical Microsoft layers: UI, logic, data access. Easy to overdo this (project hell), but the principle is separation of concerns (separate UI from business from data). </li>
+<li><strong>YAGNI</strong> : "You're not going to need it". Don't add stuff (esp extensibility points) unless you actually need it.</li>
+<li><strong>Inversion of control (IoC)</strong> : Break complex dependencies by giving control to the consumer object, instead of the provider. IoC containers (dependency injection frameworks) make building dependency chains easier.</li>
+</ul>
+<h3>SOLID</h3>
+<p>An acronym for 5 principles of OO. Unfortunately even these can be taken to extremes, with "good" practices justifying over-complicated architectures. Only the "D"- dependency injection - is relatively unambiguous.</p>
+<ul>
+<li><strong>Single Responsibility Principle</strong> (SRP). An object does one thing only. <br/>
+But not too simple (DTOs, anaemic domain models).</li>
+<li><strong>Open/Closed</strong> (open for extension, closed for modification). A switch statement may violate OCP as you'll need to change it when there is a new value. <br/>
+In practice, extend vs modify is a bit vague, and OCP can encourage over-engineering.</li>
+<li><strong>Liskov substitution principle</strong>. Allow replacing subtypes. <br/>
+In .net, the common LSP violation is IStream, where some streams can't seek (hence the awkward Stream.CanSeek). In practice, rarely a concern.</li>
+<li><strong>Interface segregation principle</strong>. Use many specific interfaces over a general one. But too granular interfaces are also complicated.</li>
+<li><strong>Dependency injection</strong>. Control dependencies by injecting them (eg constructor arguments).</li>
+</ul>
+<h3>Design Patterns</h3>
+<p>Patterns are reusable solutions to common problems. The patterns movement started with the <a href="http://en.wikipedia.org/wiki/Design_Patterns_%28book%29">"Design Patterns" book by the "Gang of Four"</a> (1994). <a href="http://en.wikipedia.org/wiki/Design_pattern_%28computer_science%29">Follow links on Wikipedia</a>.</p>
+<ul>
+<li><strong>Creational</strong>: 
+<ul>
+<li><strong>Factory</strong> : create objects without specifying exact type (enabling polymorphism). Eg WebRequest.Create returns an HttpWebRequest or a FileWebRequest.</li>
+<li><strong>Builder</strong> : build complex objects (instead of huge constructors/factory argument lists). Eg ConnectionStringBuilder.</li>
+<li><strong>Singleton</strong> : there is only one</li>
+</ul>
+</li>
+<li><strong>Structural</strong> (composition, "wrapping")
+<ul>
+<li><strong>Adapter</strong> and <strong>Facade</strong> present different interfaces (in .net, calling COM is via an adaptor wrapper)<br />
+A facade is a simpler interface; adapter meshes multiple interfaces.</li>
+<li><strong>Decorator</strong> : wrap classes with the same interface, adds behaviour in methods which can call inner wrapped instances<br />
+Decorators can be nested like Russian dolls (chaining).<br />
+A decorator (and <strong>proxy</strong>) has the same interface as the subject; facade/adapter have different interfaces. </li>
+</ul>
+</li>
+<li><strong>Behavioural</strong>:
+<ul>
+<li><strong>Iterator</strong> is built into .net (IEnumerator, foreach)</li>
+<li><strong>Command</strong> is self explanatory</li>
+<li><strong>Strategy</strong> : pass a method/function which does processing. In .net, List.Sort(IComparer) is using strategy.</li>
+</ul>
+</li>
+</ul>
+<div class="alert">
+Beware of <strong>anti-patterns</strong> or <strong>code smells</strong>- things to avoid.
+<ul>
+<li>Cargo cult programming - using patterns without understanding (see also architecture astronauts, who over-engineer).</li>
+<li>God object (often "xManager") - an object that does everything</li>
+<li>Anaemic domain model- no logic, just properties (DTOs- data transfer objects - can get away with this)</li>
+<li>Sequential coupling - methods must be called in a specific order.</li>
+<li>In .net, try/catch(ex) { throw ex } throws away the stack</li>
+<li>In javascript, putting everything in global scope.</li>
+</ul>
+</div>
+<h3>Other patterns</h3>
+<ul>
+<li><strong>3-tier/n-tier (layers)</strong>: Typically a web (or windows) solution would have 3 core projects: domain/model, data access and UI. In other words, separation of concerns. A very old but still well-used pattern. A variation is <strong>hexagonal architecture</strong> (aka "ports and adaptors"). The domain is in the centre, with available ports (contracts/interfaces). Plugging into the ports are adaptors, which are the data access and UI.</li>
+<li><strong>Service oriented architecture (SOA)</strong> : loosely coupled components ("services") performing self-contained actions. In practice, interaction becomes RPC (remote procedure call) using SOAP (xml) messages.</li>
+<li><strong>MVC</strong> : model view controller, a pattern for separating UI code.</li>
+<li><strong>MVVM</strong> : model view-model model is a variation of MVC, initially WPF and now most javascript SPA frameworks. The view-model exposes the model for data binding (data binding is the controller).</li>
+<li><strong>REST</strong> : Representational State Transfer has resources (URI) which use standard methods (HTTP verbs, GET, POST) as opposed to the RPC style of SOAP. <br/>
+REST is not CRUD (although WebAPI makes it look like it)- resources aren't entities, and there should be no fixed resource names. Versioning may be better expressed as new resources, not HTTP headers/URL version numbers (this is controversial!). <br/>
+In practise, there are compromises (Http DELETE and PUT are rare, PATCH is only proposed), and a lot of scope for discussion over exactly what a resource is. <br/>
+Some Rest enthusiasts("Restafarians") insist on PUT for new records, POST for updates, but others say either is ok, as long as PUT is idempotent (can be called multiple times safely).<br/>
+In the Richardson maturity model, the most RESTful API has hypermedia controls, which have links for what to do next (<a href="http://en.wikipedia.org/wiki/HATEOAS">HATEOAS</a>). Ideally, you just know the initial URL and every other URI can be discovered.</li>
+<li><strong>CQRS</strong> : Command query responsibility segregation. Keep commands (inserts) separate from queries (reads). Useful when contention over limited data (forces asynchronous flow- to ask if command worked, you poll with queries). Often used with event sourcing (see below), which solves contention by being non-blocking append only. </li>
+<li><strong>Event sourcing</strong> : Each state change raises an event, which is saved in an event store. The log of events can be queried (tracking), replayed (subscribing UI), or reversed (roll back). Writing is simple (a stack), but reading may require a snapshot aggregate record (perhaps with a delay- "eventual consistency").</li>
+<li><strong>Distributed computing</strong> : See the famous <a href="http://en.wikipedia.org/wiki/Fallacies_of_Distributed_Computing">Fallacies of Distributed Computing</a>. Some of this, in the modern world of HTTP, is less likely to be a fallacy (we know the network is not reliable, bandwidth is not infinite).<br/>
+For reliability, use multiple services/servers (active-active with load balancing, or active-passive with failover)<br/>
+On failure, <a href="http://msdn.microsoft.com/en-us/library/dn589788.aspx">retry with exponential back-off</a> algorithms can be used for transient errors; the <a href="http://msdn.microsoft.com/en-us/library/dn589784.aspx">circuit breaker pattern</a> can help for longer lasting dependency failures.</li>
+<li>There are a number of patterns to support <strong>testing</strong>. Arrange-Act-Assert (or BDD reformulation, Given-When-Then) is the standard structure. To make code testable, dependency injection and mocking are often prescribed (and over-used), as well as simple "extract and override" and dumb stubs. The "pesticide paradox" is that static test data only exercises specific paths; other bugs take over- so tests must be regularly revised.</li>
+<li>Cloud services:<ul>
+<li><strong>IaaS - Infrastructure as a service</strong>: Virtual machines. Close to traditional hosting.</li>
+<li><strong>PaaS - Platform aas</strong>: cloud services/websites, provisioned and updated for you.</li>
+<li><strong>SaaS - Software aas</strong>: a service API or website. </li>
+</ul></li>
+</ul>
+<h3>Approaches</h3>
+<ul>
+<li><strong>Waterfall and agile</strong> - <ul>
+<li>Waterfall is the traditional project management approach- analysis, design, code, test, install. There are some versions with very formal stages and job roles like SSADM and Prince2.</li>
+<li>Agile is a more modern (since 2001) approach, the most well-known version being <strong>scrum</strong>. Requirements go into a "backlog", and are processed in short iterations ("sprints" in scrum), which are incremental. Unlike waterfall, plans are expected to change and evolve (although a sprint is fixed). Scrum has a scrum master and daily stand-up meetings, and can become very formal (and not particularly agile, which is supposed to emphasise people over process). There's even a Prince2 for agile.</li>
+<li>Lean is an agile "just in time" approach. It uses short iterations with customer feedback, driven by the "empowered" developers.</li>
+<li>Kanban is a work progress approach, often associated with agile (it is an alternative to sprints). Trello is one website version; physical boards with post-it notes are common. The project is a board with columns (minimally, Todo-In Progress-Done) and horizontal swim-lanes (often, "urgent"-"normal"-"blocked", otherwise individuals or user stories). It is easy to view work moving left to right.</li>
+</ul></li>
+<li><strong>TDD - Test driven</strong> : design tests first or at the same time. It helps define APIs as the tests use the API.</li>
+<li><strong>BDD - Behaviour driven</strong> : a rework of TDD to define user stories (as a X I want to Y) with scenarios (Given - When - Then). Specifications are lower level (technical) than stories. <br/>
+The most common language is Gherkin (used in Cucumber). Jasmine and Chai are javascript testing frameworks, .net has SpecFlow and NSpec. <br/>
+In practice most people name their *Unit/Test tests in BDD style (Given_When_Then) even if they don't do BDD.</li>
+<li><strong>DDD - Domain driven</strong> : The domain is modelled in a "ubiquitous language", with sub-domains as "bounded contexts". Entities are defined into groups with an "aggregate root" which is the only externally accessible entity (Order has orderlines, but you must always load the order first)</li>
+</ul>
+<h3>Don't forget</h3>
+<p>No application/service is production-ready without some these:</p>
+<ul>
+<li>Documentation. At least a technical "read-me" (volumes of comprehensive text will be ignored). Must be up-to-date.</li>
+<li>Developer Tests (unit and/or integration as applicable and practical).</li>
+<li>Some kind of performance profiling. From manual acceptance tests to NewRelic type analytics.</li>
+<li><a href="http://msdn.microsoft.com/en-us/library/dn589789.aspx">Monitoring</a>. From simple pings to detailed analysis. For historical data and alerts when it dies.</li>
+<li>Logging. At least exception logging.</li>
+<li>Security. Even inside an organization you need some.</li>
+<li>Build process. Visual Studio/Source control/build server may be enough, but you need to be able to produce a repeatable deployment package.</li>
+<li>Deployment plan. Plan for initial deployment as well as upgrades, server maintenance and server moves.</li>
+<li>Dependencies: You need an agreed list of core dependencies.<ul>
+<li>IDE (Visual Studio, Resharper), source control (git, svn, TFS), build servers.</li>
+<li>Data access e.g. ORM like Entity Framework or Dapper, or raw ADO</li>
+<li>UI e.g. Winforms, MV Razor, an SPA like Angular...</li>
+<li>Dependency Injection e.g. StructureMap</li>
+<li>Logging e.g. log4net, NLog, Serilog, EntLib, .net Trace. "Common logging" is normally an abstraction too far.</li>
+<li>Exception logging e.g. ELMAH</li>
+<li>Tracing e,g. Glimpse</li>
+<li>Testing framework e.g. MsTest, XUnit, NUnit. Some like extension assertions like Shouldly (some, like me, dislike them)</li>
+<li>Mocking (ideally limited, but probably required) e.g. Moq</li>
+<li>Others: AutoMapper, Swagger ...</li>
+</ul></li>
+</ul>
+<div class="alert">Not having any one of these is bad. Having too much of any, or complicated processes, are just as bad.</div>
+<p>The 4+1 architectural model is the most common "view model" where there are multiple views of the system: logical (class and sequence diagrams), implementation (UML component diagram), process (UML activity), physical (deployment), plus use cases.</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>
+

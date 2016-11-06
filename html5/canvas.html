@@ -1,0 +1,114 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Canvas</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+<link rel="stylesheet" type="text/css" href="../js/prettify.css" />
+<style type="text/css">
+pre {
+max-height: 14em;
+}
+canvas {
+width: 200px;
+height: 60px;
+border: 1px dashed #ddd;
+background-color: antiqueWhite;
+box-shadow: #ccc 5px 5px 10px;
+}
+</style>
+<script type="text/javascript" src="../utilities.js">
+</script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../index.html">Home &gt;</a></li>
+<li><a href="index.html">HTML5</a></li>
+<li><a href="forms.html">Forms</a></li>
+<li><a href="offline.html">AppCache</a></li>
+<li><a href="storage.html">LocalStorage and IndexedDB</a></li>
+<li><a href="webworkers.html">WebWorkers</a></li>
+<li><a href="fileapi.html">File API</a></li>
+<li><a href="canvas.html">Canvas</a></li>
+<li><a href="css3effects.html">CSS3 Visual Effects</a></li>
+<li><a href="css3layout.html">CSS3 Layout</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Canvas</h2>
+<ul>
+<li>FF, Chrome, Safari, IE 9+ </li>
+<li><a href="http://diveintohtml5.info/canvas.html">DiveIntoHtml5</a></li>
+<li><a href="https://developer.mozilla.org/en-US/docs/HTML/Canvas">MDN</a></li>
+</ul>
+<h3>Drawing context</h3>
+<p>You need to get a "2D" drawing context.</p>
+<p>NB: &lt;canvas id="myCanvas" &gt; is NOT self-closing.</p>
+<pre class="prettyprint">
+var context = document.getElementById("myCanvas").getContext("2d");
+</pre>
+<canvas id="myCanvas">Canvas not supported
+</canvas>
+
+<script type="text/javascript">
+    $(function () {
+        var context = document.getElementById("myCanvas").getContext("2d");
+
+        //filled rectangle
+        context.fillStyle = "red";
+        context.fillRect(10, 20, 100, 80);
+        //outline rectangle ("stroke")
+        context.strokeStyle = "#00f";
+        context.strokeRect(20, 30, 100, 80);
+
+        //gradients
+        var gradient = context.createLinearGradient(0, 0, 200, 80);
+        gradient.addColorStop(0, "orange");
+        gradient.addColorStop(1, "red");
+        context.fillStyle = gradient;
+        context.fillRect(0, 0, 200, 60);
+
+        //lines
+        context.beginPath(); //start new line with new style
+        context.strokeStyle = "#000";
+        context.moveTo(100, 10);
+        context.lineTo(200, 107); //NB not written until...
+        context.lineTo(100, 107);
+        context.closePath();
+        //for a shape context.closePath() will return to origin without explicitly drawing it
+        context.stroke(); //or fill - actually write it
+
+        //text
+        context.font = "20px sans-serif bold";
+        context.fillStyle = "black";
+        context.fillText("Hello fillText", 120, 120);
+
+        //image
+        var img = new Image();
+        img.src = "../alert.png"; //take an existing image
+        img.onload = function () {
+            //only when it's loaded
+            context.drawImage(img, 180, 60);
+            //overloads for scaling/ slicing
+        };
+    });
+</script>
+
+
+
+
+
+</div>
+<div class="Footer"><script type="text/javascript" src="../js/prettify.js">
+</script>
+<script type="text/javascript">
+prettyPrint();
+</script>
+</div>
+</body>
+</html>

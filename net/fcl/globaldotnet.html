@@ -1,0 +1,103 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Globalization in .net</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="dotnetcollections.html">Collections</a></li>
+<li><a href="events.html">Events</a></li>
+<li><a href="globaldotnet.html">Globalization</a></li>
+<li><a href="reflection.html">Reflection</a></li>
+<li><a href="dotnetsecurity.html">Security</a></li>
+<li><a href="claims.html">Claims Security</a></li>
+<li><a href="dotnetsecurity_crypto.html">Crypto+ signing</a></li>
+<li><a href="serialization.html">Serialization</a></li>
+<li><a href="dotnetthreads.html">Threading</a></li>
+<li><a href="async.html">Async</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>Globalization</h2>
+<div class="alert">
+<a href="http://www.microsoft.com/language/en-us/Search.aspx">Microsoft language portal</a> has a useful lookup of technical translations in Microsoft applications. 
+</div>
+
+<h3>Setting the culture</h3>
+<ul>
+<li><cite>CurrentCulture</cite> is date/numbers (ddmmyy or mmddyy; 1.5 or 1,5)</li>
+<li><cite>CurrentUICulture</cite> is for looking up resources</li>
+</ul>
+<p>On all string/number/date operations use the optional formatting argument (FXCop will complain if you don't). Either System.Globalization.CultureInfo.CurrentCulture or .InvariantCulture (if applicable).</p>
+<p class="asp2">See <a href="http://www.west-wind.com/presentations/wwDbResourceProvider/introtolocalization.aspx">Intro (Rick Strahl)</a></p>
+<p>For the web, the HTTP header contains user languages (set within IE-Tools-Internet Options-Languages) which you can read in Request.UserLanguages[0] (for the first one).  ASP 1: Read it (or a cookie from a user form) in Global.asax Session_Start. In ASP 2 it's automatic.</p>
+<h3>Resource Files</h3>
+<p>Use assembly linker for satellite assemblies: al /t:lib /culture:en-UK /embed:strings.en-UK.resources /out:myapp.resources.dll</p>
+<h3>Asp 2+</h3>
+<p>App_GlobalResources (Resources namespace, with intellisense) or App_LocalResources 
+ (page specific) .No more ResourceManager as in .Net 1!</p>
+ <div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">p</span><span style="color: blue;">&gt;</span>Implicit Local: <br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">Label</span> <span style="color: red;">ID</span><span style="color: blue;">="Label0"</span> <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <span style="color: red;">Text</span><span style="color: blue;">="Hello world"</span> <br />
+&nbsp;&nbsp;&nbsp; <span style="color: #a31515;">meta</span><span style="color: blue;">:</span><span style="color: red;">resourcekey</span><span style="color: blue;">="LabelResource1"</span> <span style="color: blue;">/&gt;&lt;/</span><span style="color: #a31515;">p</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: #a31515;">p</span><span style="color: blue;">&gt;</span>Explicit Local: <br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">Label</span> <span style="color: red;">ID</span><span style="color: blue;">="Label1"</span> <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <br />
+&nbsp;&nbsp;&nbsp; <span style="color: red;">Text</span><span style="color: blue;">='</span><span style="background: #ffee62;">&lt;%</span>$ Resources:HelloWorld <span style="background: #ffee62;">%&gt;</span><span style="color: blue;">'</span> <span style="color: blue;">/&gt;&lt;/</span><span style="color: #a31515;">p</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: #a31515;">p</span><span style="color: blue;">&gt;</span>Global:<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">Label</span> <span style="color: red;">ID</span><span style="color: blue;">="Label2"</span> <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <br />
+&nbsp;&nbsp;&nbsp; <span style="color: red;">Text</span><span style="color: blue;">='</span><span style="background: #ffee62;">&lt;%</span>$ Resources:Resource1, GlobalKey <span style="background: #ffee62;">%&gt;</span><span style="color: blue;">'</span> <span style="color: blue;">/&gt;&lt;/</span><span style="color: #a31515;">p</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+<ul>
+<li>App_GlobalResources folder (normally just one .resx). Each directory has App_LocalResources with .resx for for each page (key is page name with extension- default.aspx- not the class name).</li>
+<li>In asp markup: implicit (Tools-Localize -adds meta:resourcekey to controls) vs explicit (&lt;asp:Label ID="lab" runat="server" Text='&lt;%$ Resources:lab %&gt;' / &gt; 
+ (globals have $Resources:classname, id format)</li>
+ <li>In code:  <div class="code">
+<p><span style="color: blue;">string</span> txt1 = (<span style="color: blue;">string</span>)<span style="color: #2b91af;">HttpContext</span>.GetGlobalResourceObject(<span style="color: #a31515;">"GlobalResources"</span>, <span style="color: #a31515;">"MyText"</span>);<br />
+<span style="color: green;">//or (strong typed but less efficient)</span><br />
+<span style="color: blue;">string</span> txt2 = Resources.<span style="color: #2b91af;">GlobalResources</span>.MyText;<br />
+<span style="color: green;">//or (local) </span><br />
+<span style="color: blue;">string</span> txt3 = (<span style="color: blue;">string</span>)<span style="color: #2b91af;">HttpContext</span>.GetLocalResourceObject(<span style="color: #a31515;">"~/WebForm1.aspx"</span>, <span style="color: #a31515;">"HelloWorld"</span>);</p>
+</div>
+
+ </li>
+<li>Use asp:Localize (like asp:Literal with a meta:resourcekey)</li>
+<li>Web.config globalization (and Page) culture="auto" uiCulture="auto".<br />
+Override Page.InitializeCulture event (to read from cookie/db setting)
+ <div class="code">
+<p><span style="color: blue;">protected</span> <span style="color: blue;">override</span> <span style="color: blue;">void</span> InitializeCulture()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (Request.Form[<span style="color: #a31515;">"ListBox1"</span>] != <span style="color: blue;">null</span>) <span style="color: green;">//controls not available</span><br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> selectedLanguage = Request.Form[<span style="color: #a31515;">"ListBox1"</span>];<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//set the page properties</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; UICulture = selectedLanguage;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Culture = selectedLanguage;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//set the thread using CultureInfo - needs 2 different ways :(</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Thread</span>.CurrentThread.CurrentCulture = <span style="color: #2b91af;">CultureInfo</span>.CreateSpecificCulture(selectedLanguage);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Thread</span>.CurrentThread.CurrentUICulture = <span style="color: blue;">new</span> <span style="color: #2b91af;">CultureInfo</span>(selectedLanguage);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">base</span>.InitializeCulture();<br />
+}</p>
+</div>
+</li>
+<li>Sitemaps must be done manually: title="$Resources: SiteMap, Home"</li>
+</ul>
+
+
+</div>
+<div class="Footer">
+
+</div></body>
+</html>

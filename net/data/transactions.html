@@ -1,0 +1,116 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Transactions</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="io.html">IO</a></li>
+<li><a href="xml.html">Xml</a></li>
+<li><a href="xmlpatterns.html">Xml Patterns</a></li>
+<li><a href="adodotnet.html">ADO.Net</a></li>
+<li><a href="adopatterns.html">ADO Patterns</a></li>
+<li><a href="transactions.html">Transactions</a></li>
+<li><a href="sql.html">SQL</a></li>
+<li><a href="ef/ef.html">EF/Linq2Sql &gt;</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>ADO.Net</h2>
+
+<h3>Transactions</h3>
+<ul>
+<li>For high-load read-write tables, you need transactions on the selects (otherwise they become deadlock victims). Use<ul>
+<li>SELECT * FROM Users WITH (NOLOCK) </li>
+<li>In sql SET TRANSACTION LEVEL READ UNCOMMITTED;</li>
+<li>A TransactionScope with IsolationLevel.ReadUncommitted</li>
+</ul></li>
+<li>If using .Net transactions: check overlap with TSQL BEGIN/END TRANSACTION</li>
+<li>Manual Transactions: <strong>SqlConnection.BeginTransaction</strong> returns a transaction object which must be attached to the commands. Change Transaction.IsolationLevel when writing data.</li>
+<li>1.x Automatic Transactions: Uses COM+ DTC. Can use distributed databases. Classes must inherit from System.EnterpriseServices.ServicedComponent and add <strong>[Transaction]</strong> attributes with the options (TransactionOption, IsolationLevel etc). <ul>
+<li><strong>ContextUtil.SetComplete</strong> and <strong>.SetAbort</strong> static methods (you can .SetAbort at the start, then .SetComplete only when done). Or use <strong>[AutoComplete]</strong> attribute on methods (but if you catch errors it won't detect the abort).</li>
+</ul>
+</li>
+</ul>
+
+<h3>.Net 2 System.Transactions</h3>
+<ul><li>2.0 System.Transactions: wrap ADO in <span style="color: blue;">using</span> (<span style="color: #2b91af;">TransactionScope</span> tscope = <span style="color: blue;">new</span> <span style="color: #2b91af;">TransactionScope</span>()) and at the end tscope.Complete= true (an exception leaves it false when it disposes, so aborts).<br />
+As soon as a second transaction enlists, it is promoted to a distributed transaction under DTC<ul>
+<li>Default = new TransactionScope(TransactionScopeOption.Required) (if a higher transaction, joins it)</li>
+<li>RequiresNew for new transaction that doesn't affect higher level transactions</li>
+<li>Suppress for non-transactional bits (logging)</li>
+<li>Set a timeout TimeSpan if could deadlock (or to test failure)</li>
+<li>Default = TransactionOptions =IsolationLevel.Serializable.</li>
+<li>You can explicitly create an ICommittableTransaction t= Transaction.Create(), call connection.EnlistTransaction, then t.Commit()</li>
+</ul>
+</li>
+</ul>
+<p>The <code> WITH (READPAST)</code> hint skips any locked rows while reading. It can conflict with default isolation levels (e.g. serializable; error is <em>You can only specify the READPAST lock in the READ COMMITTED or REPEATABLE READ isolation levels.</em>). Fix by specifying something manually:</p>
+<div class="code">
+<p><span style="color: blue;">using</span> (<span style="color: blue;">var</span> transaction = <span style="color: blue;">new</span> <span style="color: #2b91af;">TransactionScope</span>(<span style="color: #2b91af;">TransactionScopeOption</span>.Required, <span style="color: blue;">new</span> <span style="color: #2b91af;">TransactionOptions</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; IsolationLevel = <span style="color: #2b91af;">IsolationLevel</span>.ReadCommitted<br />
+}))</p>
+</div>
+
+<h3>Transactions.IsolationLevel</h3>
+<p><a href="http://msdn.microsoft.com/en-us/library/system.transactions.isolationlevel.aspx">MSDN</a></p>
+<table class="dataTable">
+<thead>
+<tr><th>Name</th><th>Locks</th><th>Notes</th></tr></thead>
+<tbody>
+<tr>
+<td>ReadUncommitted</td>
+<td>Write lock. <strong>No read locks</strong> (so dirty reads possible)</td>
+<td>Lowest level.</td>
+</tr>
+<tr>
+<td>ReadCommitted<br/>(default SQLServer, EF v1-5)</td>
+<td>Short read locks (released as soon as read), write locks. </td>
+<td>Read data may change before it is written.</td>
+</tr>
+<tr>
+<td>Snapshot<br/>(default EF v6)</td>
+<td>A form of readcommitted, but checks on commit for changes. </td>
+<td>Throws exception if data has changed between read and write.</td>
+</tr>
+<tr>
+<td>RepeatableRead</td>
+<td>Read data locked until commit.</td>
+<td>Read data cannot change but new data may be added before write.</td>
+</tr>
+<tr>
+<td>Serializable<br/>(default ADO TransactionScope)</td>
+<td>Locks fully. <strong>Cannot write when someone is reading it.</strong></td>
+<td>Highest level, so risk of lock blocking delays and deadlocks.</td>
+</tr>
+
+</tbody>
+</table>
+<p>There's another level with the wonderful name <cite>IsolationLevel.Chaos</cite> which SQLServer doesn't support.</p>
+<p>Snapshot must be enabled in the database: ALTER DATABASE MyDatabase SET ALLOW_SNAPSHOT_ISOLATION ON</p>
+
+<h3>Async/Await vs TransactionScope</h3>
+<p>TransactionScope is thread static, which is a problem with multi-threading and async/await. .net 4.5.1 + has new ctors on TransactionScope for TransactionScopeAsyncFlowOption.Enabled which make it work.</p>
+<div class="code">
+<p><span style="color: blue;">var</span> opts = <span style="color: blue;">new</span> <span style="color: #2b91af;">TransactionOptions</span> { IsolationLevel = <span style="color: #2b91af;">IsolationLevel</span>.RepeatableRead };<br />
+<span style="color: blue;">using</span> (<span style="color: blue;">var</span> tx = <span style="color: blue;">new</span> <span style="color: #2b91af;">TransactionScope</span>(<span style="color: #2b91af;">TransactionScopeOption</span>.Required, opts, <span style="color: #2b91af;">TransactionScopeAsyncFlowOption</span>.Enabled))<br />
+{</p>
+</div>
+
+</div>
+<div class="Footer">
+
+</div></body>
+</html>

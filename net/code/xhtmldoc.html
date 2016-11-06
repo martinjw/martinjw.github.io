@@ -1,0 +1,136 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Read XHTML into XmlDocument</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main</a></li>
+<li><a href="../dotnet.html">.Net</a></li>
+<li><a href="index.html">Code</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>Read XHTML into XmlDocument</h2>
+<p>We want Html entities in our xml, but don't need to validate against all the other XHtml DTDs. So the XmlResolver just shows a single document containing all the entities.</p>
+<ul>
+<li>XHTML Documents must be well formed (but not necessarily valid Xhtml). If it's not well formed, use <a href="http://www.codeplex.com/htmlagilitypack">Html Agility Pack</a>.</li>
+<li>If you edit and save, XmlDocument.PreserveWhitespace ensures original format is preserved. BUT XmlDocument will rewrite the DocType (see test below for the quick fix).</li>
+<li><a href="#XDocument">Reading into an XDocument</a> is much the same. <a href="xhtmlxdoc.html">See a fuller XDocument example</a></li>
+</ul>
+<h3>Testing</h3>
+<div class="code">
+<p>&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">XmlDocument</span> doc = <span style="color: blue;">new</span> <span style="color: #2b91af;">XmlDocument</span>();</p>
+<p>&nbsp;&nbsp;&nbsp; doc.PreserveWhitespace = <span style="color: blue;">true</span>; <span style="color: green;">//keep all line breaks</span></p>
+<p>&nbsp;&nbsp;&nbsp; doc.XmlResolver = <span style="color: blue;">new</span> <span style="color: #2b91af;">HtmlResolver</span>(); <span style="color: green;">//will resolve entities</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">XmlNamespaceManager</span> ns = <span style="color: blue;">new</span> <span style="color: #2b91af;">XmlNamespaceManager</span>(doc.NameTable);</p>
+<p>&nbsp;&nbsp;&nbsp; ns.AddNamespace(<span style="color: #a31515;">"html"</span>, <span style="color: #a31515;">"http://www.w3.org/1999/xhtml"</span>);</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> html =</p>
+<p><span style="color: #a31515;">@"&lt;!DOCTYPE html PUBLIC ""-//W3C//DTD XHTML 1.0 Transitional//EN"" </span></p>
+<p><span style="color: #a31515;">""http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd""&gt;</span></p>
+<p><span style="color: #a31515;">&lt;html xmlns=""http://www.w3.org/1999/xhtml"" xml:lang=""en"" lang=""en""&gt;</span></p>
+<p><span style="color: #a31515;">&lt;head&gt;&lt;title&gt;None&lt;/title&gt;</span></p>
+<p><span style="color: #a31515;">&lt;/head&gt;</span></p>
+<p><span style="color: #a31515;">&lt;body&gt;&lt;p class=""nbsp""&gt;Hello&amp;nbsp;you&lt;/p&gt;&lt;p&gt;It costs &amp;euro;5&lt;/p&gt;&lt;/body&gt;</span></p>
+<p><span style="color: #a31515;">&lt;/html&gt;"</span>;</p>
+<p>&nbsp;&nbsp;&nbsp; doc.LoadXml(html);</p>
+<p>&nbsp;</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: green;">//The DocType is always rewritten as one line (no internal line breaks)</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: green;">//and appends a "[]" (the internal DTD subset- i.e. inline dtd).</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: green;">//So we do a quick fix here.</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> dtd = html.Substring(0, html.IndexOf(<span style="color: #a31515;">"&lt;html"</span>));</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> newhtml = doc.OuterXml;</p>
+<p>&nbsp;&nbsp;&nbsp; newhtml = dtd + newhtml.Remove(0, html.IndexOf(<span style="color: #a31515;">"&lt;html"</span>));</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Assert</span>.AreEqual(html, newhtml);</p>
+<p>&nbsp;</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">XmlNode</span> p = doc.SelectSingleNode(<span style="color: #a31515;">"//html:p[@class='nbsp']"</span>, ns);</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">XmlText</span> txt1 = (<span style="color: #2b91af;">XmlText</span>)p.ChildNodes[0];</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Assert</span>.AreEqual(<span style="color: #a31515;">"Hello"</span>, txt1.Value);</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">XmlEntityReference</span> ent = (<span style="color: #2b91af;">XmlEntityReference</span>)p.ChildNodes[1];</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Assert</span>.AreEqual(<span style="color: #a31515;">"nbsp"</span>, ent.Name);</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">XmlText</span> txt2 = (<span style="color: #2b91af;">XmlText</span>)p.ChildNodes[2];</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Assert</span>.AreEqual(<span style="color: #a31515;">"you"</span>, txt2.Value);</p>
+</div>
+<h3><a name="XDocument">Using Linq to Xml</a></h3>
+<p>Reading into an XDocument is much the same as an XmlDocument. Saving does not preserve the named entities, so you have to do lots of ugly string replaces. But see  <a href="xhtmlxdoc.html">a fuller XDocument example</a></p>
+<div class="code">
+<p><span style="color: blue;">var</span> settings = <span style="color: blue;">new</span> <span style="color: #2b91af;">XmlReaderSettings</span> { ProhibitDtd = <span style="color: blue;">false</span>, XmlResolver = <span style="color: blue;">new</span> <span style="color: #2b91af;">HtmlResolver</span>() };<br />
+<span style="color: blue;">var</span> reader = <span style="color: #2b91af;">XmlReader</span>.Create(path, settings);<br />
+<span style="color: blue;">var</span> doc = <span style="color: #2b91af;">XDocument</span>.Load(reader, <span style="color: #2b91af;">LoadOptions</span>.PreserveWhitespace);</p>
+</div>
+
+<h3>HtmlResolver</h3>
+<p>Fixup the namespaces, especially for the embedded resource.</p>
+<div class="code">
+<p><span style="color: blue;">using</span> System;</p>
+<p><span style="color: blue;">using</span> System.Xml;</p>
+<p>&nbsp;</p>
+<p><span style="color: blue;">namespace</span> Library.ParseXHtml</p>
+<p>{</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">HtmlResolver</span> : <span style="color: #2b91af;">XmlUrlResolver</span></p>
+<p>&nbsp;&nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">override</span> <span style="color: blue;">object</span> GetEntity(<span style="color: #2b91af;">Uri</span> absoluteUri, <span style="color: blue;">string</span> role, <span style="color: #2b91af;">Type</span> ofObjectToReturn)</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (absoluteUri.AbsoluteUri.Equals(<span style="color: #a31515;">"urn:XHTMLEntities"</span>, <span style="color: #2b91af;">StringComparison</span>.OrdinalIgnoreCase))</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//ensure the embedded resource is suitably namespaced</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> System.Reflection.<span style="color: #2b91af;">Assembly</span>.GetExecutingAssembly().</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; GetManifestResourceStream(<span style="color: #a31515;">"Library.ParseXHtml.xhtml-entities.ent"</span>);</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">null</span>; <span style="color: green;">//we don't return any other external resources</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }</p>
+<p>&nbsp;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">override</span> <span style="color: #2b91af;">Uri</span> ResolveUri(<span style="color: #2b91af;">Uri</span> baseUri, <span style="color: blue;">string</span> relativeUri)</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//make all the XHTML urls resolve to the single "dtd" which is actually just the entities</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (relativeUri.Equals(<span style="color: #a31515;">"-//W3C//DTD XHTML 1.0 Transitional//EN"</span>, <span style="color: #2b91af;">StringComparison</span>.OrdinalIgnoreCase)</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; || relativeUri.Equals(<span style="color: #a31515;">"-//W3C//DTD XHTML 1.0 Strict//EN"</span>, <span style="color: #2b91af;">StringComparison</span>.OrdinalIgnoreCase)</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; || relativeUri.Equals(<span style="color: #a31515;">"-//W3C//DTD XHTML 1.0 Frameset//EN"</span>, <span style="color: #2b91af;">StringComparison</span>.OrdinalIgnoreCase)</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; || relativeUri.Equals(<span style="color: #a31515;">"-//W3C//DTD XHTML 1.1//EN"</span>, <span style="color: #2b91af;">StringComparison</span>.OrdinalIgnoreCase))</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">Uri</span>(<span style="color: #a31515;">"urn:XHTMLEntities"</span>);</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">base</span>.ResolveUri(baseUri, relativeUri);</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }</p>
+<p>&nbsp;&nbsp;&nbsp; }</p>
+<p>}</p>
+</div>
+<h3>XHTML Entity DTD (extract)</h3>
+<p>Too long to post here, so this is the first few lines. Append the entities from the URLs listed... When referenced by the HtmlResolver above, check the namespace.</p>
+<div class="code">
+<p><span style="color: blue;">&lt;!--</span><span style="color: green;"> A local copy of (X)HTML entities, containing the three subsets:</span></p>
+<p><span style="color: green;">Latin-1 characters: http://www.w3.org/TR/xhtml1/DTD/xhtml-lat1.ent</span></p>
+<p><span style="color: green;">Special characters: http://www.w3.org/TR/xhtml1/DTD/xhtml-special.ent</span></p>
+<p><span style="color: green;">Mathematical, Greek and Symbolic characters: http://www.w3.org/TR/xhtml1/DTD/xhtml-symbol.ent</span></p>
+<p><span style="color: blue;">--&gt;</span></p>
+<p><span style="color: blue;">&lt;!--</span><span style="color: green;"> Portions (C) International Organization for Standardization 1986:</span></p>
+<p><span style="color: green;">&nbsp;&nbsp;&nbsp;  Permission to copy in any form is granted for use with</span></p>
+<p><span style="color: green;">&nbsp;&nbsp;&nbsp;  conforming SGML systems and applications as defined in</span></p>
+<p><span style="color: green;">&nbsp;&nbsp;&nbsp;  ISO 8879, provided this notice is included in all copies.</span></p>
+<p><span style="color: blue;">--&gt;</span></p>
+<p>&nbsp;</p>
+<p><span style="color: blue;">&lt;!</span><span style="color: #a31515;">ENTITY</span><span style="color: blue;"> </span><span style="color: red;">nbsp</span><span style="color: blue;">&nbsp;&nbsp; </span>"<span style="color: red;">&amp;#160;</span>"<span style="color: blue;">&gt;</span> <span style="color: blue;">&lt;!--</span><span style="color: green;"> no-break space = non-breaking space,</span></p>
+<p><span style="color: green;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; U+00A0 ISOnum </span><span style="color: blue;">--&gt;</span></p>
+<p><span style="color: blue;">&lt;!</span><span style="color: #a31515;">ENTITY</span><span style="color: blue;"> </span><span style="color: red;">iexcl</span><span style="color: blue;">&nbsp; </span>"<span style="color: red;">&amp;#161;</span>"<span style="color: blue;">&gt;</span> <span style="color: blue;">&lt;!--</span><span style="color: green;"> inverted exclamation mark, U+00A1 ISOnum </span><span style="color: blue;">--&gt;</span></p>
+<p><span style="color: blue;">&lt;!</span><span style="color: #a31515;">ENTITY</span><span style="color: blue;"> </span><span style="color: red;">cent</span><span style="color: blue;">&nbsp;&nbsp; </span>"<span style="color: red;">&amp;#162;</span>"<span style="color: blue;">&gt;</span> <span style="color: blue;">&lt;!--</span><span style="color: green;"> cent sign, U+00A2 ISOnum </span><span style="color: blue;">--&gt;</span></p>
+<p><span style="color: blue;">&lt;!</span><span style="color: #a31515;">ENTITY</span><span style="color: blue;"> </span><span style="color: red;">pound</span><span style="color: blue;">&nbsp; </span>"<span style="color: red;">&amp;#163;</span>"<span style="color: blue;">&gt;</span> <span style="color: blue;">&lt;!--</span><span style="color: green;"> pound sign, U+00A3 ISOnum </span><span style="color: blue;">--&gt;</span></p>
+<p><span style="color: blue;">&lt;!</span><span style="color: #a31515;">ENTITY</span><span style="color: blue;"> </span><span style="color: red;">curren</span><span style="color: blue;"> </span>"<span style="color: red;">&amp;#164;</span>"<span style="color: blue;">&gt;</span> <span style="color: blue;">&lt;!--</span><span style="color: green;"> currency sign, U+00A4 ISOnum </span><span style="color: blue;">--&gt;</span></p>
+<p><span style="color: blue;">&lt;!</span><span style="color: #a31515;">ENTITY</span><span style="color: blue;"> </span><span style="color: red;">yen</span><span style="color: blue;">&nbsp;&nbsp;&nbsp; </span>"<span style="color: red;">&amp;#165;</span>"<span style="color: blue;">&gt;</span> <span style="color: blue;">&lt;!--</span><span style="color: green;"> yen sign = yuan sign, U+00A5 ISOnum </span><span style="color: blue;">--&gt;</span></p>
+</div>
+<p>... (etc)</p>
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

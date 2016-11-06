@@ -1,0 +1,67 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="aspcache.html">Asp Cache</a></li>
+<li><a href="asp2config.html">Asp 2 config</a></li>
+<li><a href="aspdotneterr.html">Asp Errors</a></li>
+<li><a href="dataannotations.html">Data Annotations</a></li>
+<li><a href="aspjobs.html">Background jobs</a></li>
+<li><a href="aspsecurity.html">Asp Security &gt;</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>ASP</h2>
+<h3>Long running processes</h3>
+<p>Several ways, often not reliable (the first 2 run in IIS and could be easily recycled...)</p>
+<ul>
+<li>Thread it. You can use a hashtable to signal results ("LongProcess" can be an instance method of the Page, accessing controls). <a href="http://www.simple-talk.com/dotnet/asp.net/implementing-waiting-pages-in-asp.net/">Full example</a>
+<div class="code">
+<p><span style="color: #2b91af;">ThreadStart</span> ts = <span style="color: blue;">new</span> <span style="color: #2b91af;">ThreadStart</span>(LongProcess);<br />
+<span style="color: #2b91af;">Thread</span> workerThread = <span style="color: blue;">new</span> <span style="color: #2b91af;">Thread</span>(ts);<br />
+workerThread.Start();</p>
+</div>
+</li>
+<li>Use a web service with the attributes [WebMethod] [SoapDocumentMethod(OneWay=true)]</li>
+<li>A windows service, if you can persuade people to deploy one.</li>
+<li><a href="http://www.west-wind.com/weblog/posts/2013/Oct/02/Use-IIS-Application-Initialization-for-keeping-ASPNET-Apps-alive">IIS Application Initialization Module</a>.
+<ul>
+<li>
+<ul>
+<li>It's a <a href="http://www.iis.net/downloads/microsoft/application-initialization">separate download in IIS 7/7.5</a>, and an optional "windows feature" that must be turned on in IIS 8 (IIS. WWW Services, Application Development Features, Application Initialization.</li>
+</ul>
+</li>
+<li>In IIS7, edit ApplicationHost.config (see post above).</li>
+<li>In IIS8,
+<ul>
+<li>on AppPool, Start Automatically=true <strong>and</strong> Start Mode= AlwaysRunning</li>
+<li>On Application, Advanced Settings, Preload Enabled = true</li>
+</ul>
+</li>
+<li>If the AppDomain restarts, in Application_End, do a WebClient ping to restart it.</li>
+<li>The job is just a static member on Global.asax which is created in Application_Start. If you implement <a href="http://msdn.microsoft.com/en-us/library/system.web.hosting.iregisteredobject.stop.aspx">IRegisterdObject.Stop</a>, you can HostingEnvironment.RegisterObject(job);</li>
+</ul>
+</li>
+<li><a href="http://hangfire.io/">Hangfire</a> is a Sql-Server backed solution.</li>
+<li>In .net 4.5.2 (May 2013), there is <span style="color: #2b91af;">HostingEnvironment</span>.<span style="color: black;">QueueBackgroundWorkItem</span>(cancellationToken =&gt; { <span style="color: green;">/* code */</span> });</li>
+<li>In Azure, there are <a href="https://azure.microsoft.com/en-us/documentation/articles/web-sites-create-web-jobs/">WebJobs</a></li>
+</ul>
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

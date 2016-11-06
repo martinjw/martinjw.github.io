@@ -1,0 +1,154 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Entity Framework Code First Databases</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../io.html">Data &gt;</a></li>
+<li><a href="ef.html">Entity Framework &gt;</a></li>
+<li><a href="efcodefirst.html">EF Code First</a></li>
+<li><a href="efcodefirstvalidation.html">Validation</a></li>
+<li><a href="efcodefirstdb.html">Databases</a></li>
+<li><a href="efcodefirstmapping.html">Mapping</a></li>
+<li><a href="efcodefirstmigrations.html">Migrations</a></li>
+<li><a href="efcodefirstlogging.html">Logging</a></li>
+<li><a href="efcodefirstconfig.html">Configuration</a></li>
+<li><a href="efcodefirstoptimize.html">Optimization</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Entity Framework Code First Databases</h2>
+
+<ul>
+<li><a href="http://romiller.com/2012/04/20/what-tables-are-in-my-ef-model-and-my-database/">Get tables from DbContext </a></li>
+</ul>
+
+<p>Connection strings are normal (no EDMX).</p>
+
+<h3>Metadata Tables</h3>
+<ul>
+<li><strong>EdmMetadata</strong> was created in EF 4.1/4.2 and stores a simple hash of the DbModel</li>
+<li><strong>__MigrationHistory</strong> is created in EF 4.3 (and is marked as a system table, so hidden)</li>
+</ul>
+<p>There's one table per context- so you can't have multi-tenant DbContexts for database initializers/migrations.</p>
+<h3>Initializing</h3>
+
+<p>In global.asax Application_Start, or DbContext.OnModelCreating add <a href="http://msdn.microsoft.com/en-us/library/gg679461%28v=vs.103%29.aspx">Database.SetInitializer</a></p>
+<div class="code">
+<p><span style="color: blue;">protected</span> <span style="color: blue;">override</span> <span style="color: blue;">void</span> OnModelCreating(<span style="color: #2b91af;">DbModelBuilder</span> modelBuilder)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Database</span>.SetInitializer(<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">DropCreateDatabaseIfModelChanges</span>&lt;<span style="color: #2b91af;">ModelContext</span>&gt;());<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//new DropCreateDatabaseAlways&lt;ModelContext&gt;();</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//new CreateDatabaseIfNotExists&lt;ModelContext&gt;();</span><br />
+}</p>
+</div>
+
+<p>Here's the EF 4.3 auto-migrations initializer:</p>
+<div class="code">
+<p><span style="color: #2b91af;">Database</span>.SetInitializer(<span style="color: blue;">new</span> <span style="color: #2b91af;">MigrateDatabaseToLatestVersion</span>&lt;<span style="color: #2b91af;">ModelContext</span>, <span style="color: #2b91af;">Configuration</span>&gt;());<br />
+&nbsp;</p>
+</div>
+
+<p>Except when starting a new database, you'll never want to recreate the database. You can get the DDL script.</p>
+<div class="code">
+<p><span style="color: green;">//don't rebuild it</span><br />
+<span style="color: #2b91af;">Database</span>.SetInitializer&lt;<span style="color: #2b91af;">ModelContext</span>&gt;(<span style="color: blue;">null</span>);</p>
+</div>
+
+<p>From EF 4.3 you can set it in app.config.</p>
+
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">configSections</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">section</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>&quot;<span style="color: blue;">entityFramework</span>&quot;<span style="color: blue;"> </span><span style="color: red;">type</span><span style="color: blue;">=</span>&quot;<span style="color: blue;">System.Data.Entity.Internal.ConfigFile.EntityFrameworkSection, EntityFramework, Version=4.3.1.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</span>&quot;<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">configSections</span><span style="color: blue;">&gt;</span><br />
+&nbsp;<br />
+<span style="color: blue;">&lt;</span><span style="color: #a31515;">entityFramework</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">contexts</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;!--</span><span style="color: green;"> shared databases - no initialization</span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;!--</span><span style="color: green;">&lt;context type=&quot;MyDomain.Entities.EntitiesContext, MyDomain.Entities&quot; </span><br />
+<span style="color: green;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; disableDatabaseInitialization=&quot;true&quot; /&gt;</span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;!--</span><span style="color: green;"> developer database- migrate to latest version </span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">context</span><span style="color: blue;"> </span><span style="color: red;">type</span><span style="color: blue;">=</span>&quot;<span style="color: blue;">MyDomain.Entities.EntitiesContext, MyDomain.Entities</span>&quot;<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">databaseInitializer</span><span style="color: blue;"> </span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: red;">type</span><span style="color: blue;">=</span>&quot;<span style="color: blue;">System.Data.Entity.MigrateDatabaseToLatestVersion`2[[MyDomain.Entities.EntitiesContext, MyDomain.Entities], [MyDomain.Entities.Migrations.Configuration, MyDomain.Entities]], EntityFramework</span>&quot;<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">context</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">contexts</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">entityFramework</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+
+<p>If you are recreating the database in EF 4.1 and EF 4.2, you may not want the EdmMetadata table (it's off by default and marked obsolete in EF 4.3+)</p>
+<div class="code">
+<p>modelBuilder.Conventions.Remove&lt;<span style="color: #2b91af;">IncludeMetadataConvention</span>&gt;();<br />
+&nbsp;</p>
+</div>
+
+<p>You can check manually if the database is up-to-date with <a href="http://msdn.microsoft.com/en-us/library/system.data.entity.database.compatiblewithmodel%28v=VS.103%29.aspx">Database.CompatibleWithModel</a> (it checks the hash in __MigrationHistory or EdmMetadata if present).</p> 
+<div class="code">
+<p><span style="color: blue;">if</span> (!Database.CompatibleWithModel(<span style="color: blue;">false</span>)) <span style="color: #2b91af;">Console</span>.WriteLine(<span style="color: #a31515;">"The database is out of date"</span>);</p>
+</div>
+
+<p>You can get the DDL script from the underlying EF ObjectContext</p>
+<div class="code">
+<p><span style="color: green;">//just get the script manually</span><br />
+<span style="color: green;">//you can't access this in OnModelCreating</span><br />
+<span style="color: blue;">var</span> objectContext = ((System.Data.Entity.Infrastructure.<span style="color: #2b91af;">IObjectContextAdapter</span>)context).ObjectContext;<br />
+<span style="color: blue;">string</span> script = objectContext.CreateDatabaseScript();</p>
+</div>
+
+
+<h4>Testing Databases</h4>
+<p>You can create a custom <a href="http://msdn.microsoft.com/en-us/library/gg696323%28v=vs.103%29.aspx">IDatabaseInitializer</a> (e.g. inheriting from a standard one) and override void Seed(TContext context)
+</p>
+
+<h3>Mapping</h3>
+<p>You can map with attributes ([Key], [Required], [Column], [Table], [ForeignKey], [DatabaseGenerated]
+Components can be mapped with [ComplexType]<br />
+Or use fluent mapping:</p>
+<div class="code">
+<p><span style="color: blue;">protected</span> <span style="color: blue;">override</span> <span style="color: blue;">void</span> OnModelCreating(<span style="color: #2b91af;">DbModelBuilder</span> modelBuilder)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; modelBuilder.Entity&lt;<span style="color: #2b91af;">Train</span>&gt;()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .Property(p =&gt; p.TrainNumber).IsRequired();<br />
+}</p>
+</div>
+
+
+
+<p>For configuration see <a href="http://msdn.microsoft.com/en-us/library/gg679527%28v=VS.103%29.aspx">System.Data.Entity.ModelConfiguration</a>: modelBuilder.Configurations.Add(<span style="color: blue;">new</span> <span style="color: #2b91af;">ProductConfiguration</span>()); You can map with EntityTypeConfiguration&lt;T&gt; (in the ctor.</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">ProductConfiguration</span> : <span style="color: #2b91af;">EntityTypeConfiguration</span>&lt;<span style="color: #2b91af;">Product</span>&gt;<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//configure in ctor</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> ProductConfiguration()<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Property(p =&gt; p.Code).HasMaxLength(10);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//map a foreign key column</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; HasRequired(l =&gt; l.Category)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .WithMany(d =&gt; d.Product)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .Map(c =&gt; c.MapKey(<span style="color: #a31515;">"product_id"</span>));<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+<ul>
+<li><a href="http://martinwilley.com/blog/2012/02/05/EFCodeFirstManyToManyMapping.aspx">My blog entry on mapping many-to-many</a></li>
+</ul>
+
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

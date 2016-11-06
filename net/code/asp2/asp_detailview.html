@@ -1,0 +1,218 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP Detail View</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main</a></li>
+<li><a href="../../dotnet.html">.Net</a></li>
+<li><a href="../index.html">Code</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>ASP Detail View</h2>
+<p>DetailsView is nice but there's a lot of similar code every time. Like this... (In practice, all the BoundFields would be TemplateFields because you need validators)<br />
+This uses an identity column. <a href="asp_sqldatasource.html">See a Guid version</a>.</p>
+<h3>Markup</h3>
+<div class="code">
+<p><span style="background: #ffee62;">&lt;%</span><span style="color: green;">--&nbsp;&nbsp;&nbsp;  SqlDataSource&nbsp;&nbsp;&nbsp; --</span><span style="background: #ffee62;">%&gt;</span></p>
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">SqlDataSource</span> <span style="color: red;">ID</span><span style="color: blue;">="SqlDataSourceDetail"</span> <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <span style="color: red;">ConnectionString</span><span style="color: blue;">="</span><span style="background: #ffee62;">&lt;%</span>$ ConnectionStrings:ConnectionString <span style="background: #ffee62;">%&gt;</span><span style="color: blue;">"</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: red;">InsertCommand</span><span style="color: blue;">="INSERT INTO [Product] ([Name], [Price], [AvailableFrom], [Category_Id]) VALUES (@Name, @Price, @AvailableFrom, @Category_Id);SET @Id = SCOPE_IDENTITY()"</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: red;">SelectCommand</span><span style="color: blue;">="SELECT [Id], [Name], [Price], [AvailableFrom], [Category_Id] FROM [Product] WHERE ([Id] = @Id)"</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: red;">UpdateCommand</span><span style="color: blue;">="UPDATE [Product] SET [Name] = @Name, [Price] = @Price, [AvailableFrom] = @AvailableFrom, [Category_Id] = @Category_Id WHERE [Id] = @Id"</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: red;">OnInserted</span><span style="color: blue;">="SqlDataSourceDetail_Inserted"&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">SelectParameters</span><span style="color: blue;">&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">QueryStringParameter</span> <span style="color: red;">DefaultValue</span><span style="color: blue;">="0"</span> <span style="color: red;">Name</span><span style="color: blue;">="Id"</span> <span style="color: red;">QueryStringField</span><span style="color: blue;">="Id"</span> <span style="color: red;">Type</span><span style="color: blue;">="Int32"</span> <span style="color: blue;">/&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;/</span><span style="color: #a31515;">SelectParameters</span><span style="color: blue;">&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">UpdateParameters</span><span style="color: blue;">&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">Parameter</span> <span style="color: red;">Name</span><span style="color: blue;">="Name"</span> <span style="color: red;">Type</span><span style="color: blue;">="String"</span> <span style="color: blue;">/&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">Parameter</span> <span style="color: red;">Name</span><span style="color: blue;">="Price"</span> <span style="color: red;">Type</span><span style="color: blue;">="Decimal"</span> <span style="color: blue;">/&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">Parameter</span> <span style="color: red;">Name</span><span style="color: blue;">="AvailableFrom"</span> <span style="color: red;">Type</span><span style="color: blue;">="DateTime"</span> <span style="color: blue;">/&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">Parameter</span> <span style="color: red;">Name</span><span style="color: blue;">="Category_Id"</span> <span style="color: red;">Type</span><span style="color: blue;">="Int32"</span> <span style="color: blue;">/&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">Parameter</span> <span style="color: red;">Name</span><span style="color: blue;">="Id"</span> <span style="color: red;">Type</span><span style="color: blue;">="Int32"</span> <span style="color: blue;">/&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;/</span><span style="color: #a31515;">UpdateParameters</span><span style="color: blue;">&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">InsertParameters</span><span style="color: blue;">&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">Parameter</span> <span style="color: red;">Name</span><span style="color: blue;">="Name"</span> <span style="color: red;">Type</span><span style="color: blue;">="String"</span> <span style="color: blue;">/&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">Parameter</span> <span style="color: red;">Name</span><span style="color: blue;">="Price"</span> <span style="color: red;">Type</span><span style="color: blue;">="Decimal"</span> <span style="color: blue;">/&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">Parameter</span> <span style="color: red;">Name</span><span style="color: blue;">="AvailableFrom"</span> <span style="color: red;">Type</span><span style="color: blue;">="DateTime"</span> <span style="color: blue;">/&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">Parameter</span> <span style="color: red;">Name</span><span style="color: blue;">="Category_Id"</span> <span style="color: red;">Type</span><span style="color: blue;">="Int32"</span> <span style="color: blue;">/&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">Parameter</span> <span style="color: red;">Name</span><span style="color: blue;">="Id"</span> <span style="color: red;">Type</span><span style="color: blue;">="Int32"</span> <span style="color: red;">Direction</span><span style="color: blue;">="Output"</span> <span style="color: blue;">/&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;/</span><span style="color: #a31515;">InsertParameters</span><span style="color: blue;">&gt;</span></p>
+<p><span style="color: blue;">&lt;/</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">SqlDataSource</span><span style="color: blue;">&gt;</span></p>
+<p><span style="background: #ffee62;">&lt;%</span><span style="color: green;">--&nbsp;&nbsp;&nbsp; Foreign key datasource&nbsp;&nbsp;&nbsp; --</span><span style="background: #ffee62;">%&gt;</span></p>
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">SqlDataSource</span> <span style="color: red;">ID</span><span style="color: blue;">="SqlDataSource1"</span> <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <span style="color: red;">ConnectionString</span><span style="color: blue;">="</span><span style="background: #ffee62;">&lt;%</span>$ ConnectionStrings:ConnectionString <span style="background: #ffee62;">%&gt;</span><span style="color: blue;">"</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: red;">SelectCommand</span><span style="color: blue;">="SELECT [Id], [Name] FROM [Category]"&gt;&lt;/</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">SqlDataSource</span><span style="color: blue;">&gt;</span></p>
+<p><span style="background: #ffee62;">&lt;%</span><span style="color: green;">--&nbsp;&nbsp;&nbsp;  UI- DetailsView&nbsp;&nbsp;&nbsp; --</span><span style="background: #ffee62;">%&gt;</span></p>
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">DetailsView</span> <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <span style="color: red;">ID</span><span style="color: blue;">="DetailsView1"</span> <span style="color: red;">DataSourceID</span><span style="color: blue;">="SqlDataSourceDetail"</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: red;">DataKeyNames</span><span style="color: blue;">="Id"</span> <span style="color: red;">AutoGenerateEditButton</span><span style="color: blue;">="True"</span> <span style="color: red;">AutoGenerateInsertButton</span><span style="color: blue;">="True"</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: red;">AutoGenerateRows</span><span style="color: blue;">="False"</span> <span style="color: red;">OnItemInserted</span><span style="color: blue;">="DetailsView1_ItemInserted"</span> <span style="color: red;">OnItemUpdated</span><span style="color: blue;">="DetailsView1_ItemUpdated"</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: red;">OnModeChanging</span><span style="color: blue;">="DetailsView1_ModeChanging"&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">Fields</span><span style="color: blue;">&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">BoundField</span> <span style="color: red;">DataField</span><span style="color: blue;">="Id"</span> <span style="color: red;">HeaderText</span><span style="color: blue;">="Id"</span> <span style="color: red;">InsertVisible</span><span style="color: blue;">="False"</span> <span style="color: red;">ReadOnly</span><span style="color: blue;">="True"</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: red;">SortExpression</span><span style="color: blue;">="Id"</span> <span style="color: blue;">/&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">BoundField</span> <span style="color: red;">DataField</span><span style="color: blue;">="Name"</span> <span style="color: red;">HeaderText</span><span style="color: blue;">="Name"</span> <span style="color: red;">SortExpression</span><span style="color: blue;">="Name"</span> <span style="color: blue;">/&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">BoundField</span> <span style="color: red;">DataField</span><span style="color: blue;">="Price"</span> <span style="color: red;">DataFormatString</span><span style="color: blue;">="{0:c}"</span> <span style="color: red;">HeaderText</span><span style="color: blue;">="Price"</span> <span style="color: red;">SortExpression</span><span style="color: blue;">="Price"</span> <span style="color: blue;">/&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">BoundField</span> <span style="color: red;">ApplyFormatInEditMode</span><span style="color: blue;">="True"</span> <span style="color: red;">DataField</span><span style="color: blue;">="AvailableFrom"</span> <span style="color: red;">DataFormatString</span><span style="color: blue;">="{0:d}"</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: red;">HeaderText</span><span style="color: blue;">="AvailableFrom"</span> <span style="color: red;">SortExpression</span><span style="color: blue;">="AvailableFrom"</span> <span style="color: blue;">/&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">TemplateField</span> <span style="color: red;">HeaderText</span><span style="color: blue;">="Category"&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">EditItemTemplate</span><span style="color: blue;">&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">DropDownList</span> <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <span style="color: red;">ID</span><span style="color: blue;">="ddlCategory"</span> <span style="color: red;">DataSourceID</span><span style="color: blue;">="SqlDataSource1"</span> <span style="color: red;">DataValueField</span><span style="color: blue;">="Id"</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: red;">DataTextField</span><span style="color: blue;">="Name"</span> <span style="color: red;">SelectedValue</span><span style="color: blue;">='</span><span style="background: #ffee62;">&lt;%</span># Bind("Category_Id") <span style="background: #ffee62;">%&gt;</span><span style="color: blue;">'</span> <span style="color: blue;">/&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;/</span><span style="color: #a31515;">EditItemTemplate</span><span style="color: blue;">&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;/</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">TemplateField</span><span style="color: blue;">&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;/</span><span style="color: #a31515;">Fields</span><span style="color: blue;">&gt;</span></p>
+<p><span style="color: blue;">&lt;/</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">DetailsView</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+<h3>Code Behind</h3>
+<div class="code">
+<p><span style="color: blue;">#region</span> Standard DetailsView Events</p>
+<p>&nbsp;</p>
+<p><span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span></p>
+<p><span style="color: gray;">///</span><span style="color: green;"> Initializes the DetailsView (called from Page_Load)</span></p>
+<p><span style="color: gray;">///</span><span style="color: green;"> Checks querystring id to swap the detailsView mode between insert and update</span></p>
+<p><span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span></p>
+<p><span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;returns&gt;&lt;/returns&gt;</span></p>
+<p><span style="color: blue;">private</span> <span style="color: blue;">bool</span> DetailsViewInit()</p>
+<p>{</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (<span style="color: blue;">string</span>.IsNullOrEmpty(Request.QueryString[<span style="color: #a31515;">"Id"</span>]))</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; DetailsView1.ChangeMode(<span style="color: #2b91af;">DetailsViewMode</span>.Insert);</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">else</span></p>
+<p>&nbsp;&nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">int</span> result;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!<span style="color: #2b91af;">Int32</span>.TryParse(Request.QueryString[<span style="color: #a31515;">"Id"</span>], <span style="color: blue;">out</span> result))</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Page.Validators.Add(<span style="color: blue;">new</span> <span style="color: #2b91af;">BusinessValidationError</span>(<span style="color: #a31515;">"The ID is not in correct format."</span>));</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; DetailsView1.Visible = <span style="color: blue;">false</span>;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">false</span>;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; DetailsView1.ChangeMode(<span style="color: #2b91af;">DetailsViewMode</span>.Edit);</p>
+<p>&nbsp;&nbsp;&nbsp; }</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">true</span>;</p>
+<p>}</p>
+<p>&nbsp;</p>
+<p><span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span></p>
+<p><span style="color: gray;">///</span><span style="color: green;"> After you've updated or inserted or cancelled, this is what happens next...</span></p>
+<p><span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span></p>
+<p><span style="color: blue;">protected</span> <span style="color: blue;">void</span> PostUpdateAction()</p>
+<p>{</p>
+<p>&nbsp;&nbsp;&nbsp; Response.Redirect(<span style="color: #a31515;">"TestGridView.aspx"</span>);</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: green;">//or hide/show panels</span></p>
+<p>}</p>
+<p>&nbsp;</p>
+<p><span style="color: green;">//if you're editing and Select returns no data, handle it</span></p>
+<p><span style="color: blue;">protected</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> DetailsView1_ItemCreated(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">EventArgs</span> e)</p>
+<p>{</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> dv = (<span style="color: #2b91af;">DetailsView</span>)sender;</p>
+<p>&nbsp;</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> ((dv.CurrentMode == <span style="color: #2b91af;">DetailsViewMode</span>.Edit) &amp;&amp;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; (dv.DataItemCount == 0))</p>
+<p>&nbsp;&nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; dv.Page.Validators.Add(<span style="color: blue;">new</span> <span style="color: #2b91af;">BusinessValidationError</span>(<span style="color: #a31515;">"ID doesn't exist"</span>));</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span>;</p>
+<p>&nbsp;&nbsp;&nbsp; }</p>
+<p>}</p>
+<p>&nbsp;</p>
+<p><span style="color: blue;">protected</span> <span style="color: blue;">void</span> DetailsView1_ModeChanging(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">DetailsViewModeEventArgs</span> e)</p>
+<p>{</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (e.CancelingEdit) PostUpdateAction();</p>
+<p>}</p>
+<p>&nbsp;</p>
+<p><span style="color: blue;">protected</span> <span style="color: blue;">void</span> DetailsView1_ItemUpdated(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">DetailsViewUpdatedEventArgs</span> e)</p>
+<p>{</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (HasSqlError(e)) <span style="color: blue;">return</span>;</p>
+<p>&nbsp;&nbsp;&nbsp; PostUpdateAction();</p>
+<p>}</p>
+<p>&nbsp;</p>
+<p><span style="color: blue;">protected</span> <span style="color: blue;">void</span> DetailsView1_ItemInserted(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">DetailsViewInsertedEventArgs</span> e)</p>
+<p>{</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (HasSqlError(e)) <span style="color: blue;">return</span>;</p>
+<p>&nbsp;&nbsp;&nbsp; PostUpdateAction();</p>
+<p>}</p>
+<p>&nbsp;</p>
+<p><span style="color: blue;">#endregion</span></p>
+<p>&nbsp;</p>
+<p><span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span></p>
+<p><span style="color: gray;">///</span><span style="color: green;"> Handles the Inserted event of the SqlDataSourceDetail control.</span></p>
+<p><span style="color: gray;">///</span><span style="color: green;"> Shows the identity that has been created </span></p>
+<p><span style="color: gray;">///</span><span style="color: green;"> (because we added SET @Id = SCOPE_IDENTITY() tp the commandText)</span></p>
+<p><span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span></p>
+<p><span style="color: blue;">protected</span> <span style="color: blue;">void</span> SqlDataSourceDetail_Inserted(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">SqlDataSourceStatusEventArgs</span> e)</p>
+<p>{</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (e.Exception == <span style="color: blue;">null</span>)</p>
+<p>&nbsp;&nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">DbCommand</span> command = e.Command;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">int</span> id = (<span style="color: blue;">int</span>)command.Parameters[<span style="color: #a31515;">"@Id"</span>].Value;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Page.Validators.Add(<span style="color: blue;">new</span> <span style="color: #2b91af;">BusinessValidationError</span>(id + <span style="color: #a31515;">" added"</span>));</p>
+<p>&nbsp;&nbsp;&nbsp; }</p>
+<p>}</p>
+<p>&nbsp;</p>
+<p><span style="color: blue;">#region</span> HasSqlError overloads</p>
+<p><span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span></p>
+<p><span style="color: gray;">///</span><span style="color: green;"> Determines whether has SQL error. Called from DetailsView1_ItemUpdated</span></p>
+<p><span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span></p>
+<p><span style="color: blue;">protected</span> <span style="color: blue;">bool</span> HasSqlError(<span style="color: #2b91af;">DetailsViewUpdatedEventArgs</span> e)</p>
+<p>{</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!HasSqlError(e.Exception)) <span style="color: blue;">return</span> <span style="color: blue;">false</span>;</p>
+<p>&nbsp;&nbsp;&nbsp; e.ExceptionHandled = <span style="color: blue;">true</span>;</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">true</span>;</p>
+<p>}</p>
+<p>&nbsp;</p>
+<p><span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span></p>
+<p><span style="color: gray;">///</span><span style="color: green;"> Determines whether has SQL error. Called from DetailsView1_ItemInserted</span></p>
+<p><span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span></p>
+<p><span style="color: blue;">protected</span> <span style="color: blue;">bool</span> HasSqlError(<span style="color: #2b91af;">DetailsViewInsertedEventArgs</span> e)</p>
+<p>{</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!HasSqlError(e.Exception)) <span style="color: blue;">return</span> <span style="color: blue;">false</span>;</p>
+<p>&nbsp;&nbsp;&nbsp; e.ExceptionHandled = <span style="color: blue;">true</span>;</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">true</span>;</p>
+<p>}</p>
+<p>&nbsp;</p>
+<p><span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span></p>
+<p><span style="color: gray;">///</span><span style="color: green;"> Determines whether has SQL error, the foundation.</span></p>
+<p><span style="color: gray;">///</span><span style="color: green;"> You probably should use template fields with validators, but you probably won't check uniqueness constraints.</span></p>
+<p><span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span></p>
+<p><span style="color: blue;">protected</span> <span style="color: blue;">bool</span> HasSqlError(<span style="color: #2b91af;">Exception</span> ex)</p>
+<p>{</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (ex != <span style="color: blue;">null</span>)</p>
+<p>&nbsp;&nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> msg = ex.Message;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (ex <span style="color: blue;">is</span> <span style="color: #2b91af;">FormatException</span>) msg = <span style="color: #a31515;">"Invalid data- check numbers and dates"</span>;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">SqlException</span> exSql = ex <span style="color: blue;">as</span> <span style="color: #2b91af;">SqlException</span>;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (exSql != <span style="color: blue;">null</span>)</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">switch</span> (exSql.Number) <span style="color: green;">//check for others if rqd</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">case</span> 2627:</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; msg = <span style="color: #a31515;">"Data is not unique"</span>;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">break</span>;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">case</span> 515:</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; msg = <span style="color: #a31515;">"Mandatory fields must be entered"</span>;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">break</span>;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Page.Validators.Add(<span style="color: blue;">new</span> <span style="color: #2b91af;">BusinessValidationError</span>(msg));</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">true</span>;</p>
+<p>&nbsp;&nbsp;&nbsp; }</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">false</span>;</p>
+<p>}</p>
+<p><span style="color: blue;">#endregion</span></p>
+</div>
+
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

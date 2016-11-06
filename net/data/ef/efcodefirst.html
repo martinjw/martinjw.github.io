@@ -1,0 +1,276 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Entity Framework 6 Code First</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../io.html">Data &gt;</a></li>
+<li><a href="ef.html">Entity Framework &gt;</a></li>
+<li><a href="efcodefirst.html">EF Code First</a></li>
+<li><a href="efcodefirstvalidation.html">Validation</a></li>
+<li><a href="efcodefirstdb.html">Databases</a></li>
+<li><a href="efcodefirstmapping.html">Mapping</a></li>
+<li><a href="efcodefirstmigrations.html">Migrations</a></li>
+<li><a href="efcodefirstlogging.html">Logging</a></li>
+<li><a href="efcodefirstconfig.html">Configuration</a></li>
+<li><a href="efcodefirstoptimize.html">Optimization</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Entity Framework v4.1-v6 Code First</h2>
+<p>EF v4.1 with Code First was released in 2011. EF v6  was released in 2013.<br />
+EF v6 was still the recommended EF after <a href="efcore1.html">EF Core v1</a> (originally EF7) was released in 2016 (EF Core was missing some critical features, including lazy loading)</p>
+<h3>Links</h3>
+<ul>
+<li><a href="http://blogs.msdn.com/b/adonet/archive/2011/01/27/using-dbcontext-in-ef-feature-ctp5-part-1-introduction-and-model.aspx">ADO.Net team introduction )blogs.msdn.com)</a></li>
+<li><a href="http://msdn.microsoft.com/en-us/data/ee712907">MSDN</a></li>
+<li><a href="http://getglimpse.com/">Glimpse has MVC plugins for profiling</a></li>
+<li><a href="../../code/data/genericrepository.html">EF Code First generic repository</a></li>
+<li><a href="efcodefirstdb.html">EF Code First Databases</a></li>
+</ul>
+<p>You can't have a code first model in the same project as an EDMX model.</p>
+
+<h3>DbContext (Unit of Work)</h3>
+<p>DbContext = EF 4 ObjectContext</p>
+<ul>
+<li>Default ctor: uses the namespace qualified name of the class (or, if app.config defines one, a connection with name or namespace.name)</li>
+<li>ctor(string): uses the connection string with that name (also: "name=MyDb")</li>
+<li>The context name should match the connection string name (if the database doesn't exist, it creates it - default SqlExpress- and adds an EdmMetadata table)</li>
+</ul>
+<p>It's better to expose DbSets as IDbSet. DbSet properties can be readonly: get { return Set&lt;T&gt;(); }
+</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: #2b91af;">IDbSet</span>&lt;<span style="color: #2b91af;">Product</span>&gt; Products<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">get</span> { <span style="color: blue;">return</span> Set&lt;<span style="color: #2b91af;">Product</span>&gt;(); }<br />
+}</p>
+</div>
+
+<h3>DbSet</h3>
+<p>DbSet&lt;T&gt; = EF 4 ObjectSet</p>
+
+<table>
+<tr>
+<td>Query</td>
+<td>set.Find(1) //Get by id (from 1st level cache, then store, or null)</td>
+</tr>
+<tr>
+<td>Insert</td>
+<td>set.Add(entity)</td>
+</tr>
+<tr>
+<td>Update</td>
+<td>
+<p>Either load and change...</p>
+<div class="code">
+<p><span style="color: blue;">var</span> entity = context.Products.Find(1);<br />
+entity.Code = <span style="color: #a31515;">"232A"</span>;<br />
+context.SaveChanges();</p>
+</div>
+<p>(DO NOT set.Add ... you'll create a new entity) ... OR...</p>
+<div class="code">
+<p><span style="color: green;">//create a detached entity and populate *all* fields</span><br />
+<span style="color: blue;">var</span> entity = <span style="color: blue;">new</span> <span style="color: #2b91af;">Product</span>();<br />
+entity.Id = 1; <span style="color: green;">//set explicitly</span><br />
+entity.Code = <span style="color: #a31515;">"233A"</span>;<br />
+<span style="color: green;">//set the state manually</span><br />
+<span style="color: #2b91af;">DbEntityEntry</span>&lt;<span style="color: #2b91af;">Product</span>&gt; entry = context.Entry(entity);<br />
+entry.State = <span style="color: #2b91af;">EntityState</span>.Modified;<br />
+context.SaveChanges();</p>
+</div>
+</td>
+</tr>
+<tr>
+<td>Attach</td>
+<td>
+<div class="code">
+<p><span style="color: blue;">var</span> entity = <span style="color: blue;">new</span> <span style="color: #2b91af;">Product</span>();<br />
+entity.Code = <span style="color: #a31515;">"123"</span>;<br />
+<span style="color: blue;">var</span> fk = <span style="color: blue;">new</span> <span style="color: #2b91af;">Category</span> { Id = 1 };<br />
+context.Products.Attach(fk); <span style="color: green;">//State == EntityState.Unchanged </span><br />
+<span style="color: green;">//add a fk relation without loading the actual opbject</span><br />
+entity.Category = fk;<br />
+context.Products.Add(entity);</p>
+</div>
+
+</td>
+</tr>
+
+<tr>
+<td>InsertOrUpdate</td>
+<td>
+<p>You need to know the primary key.</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">void</span> InsertOrUpdate(<span style="color: #2b91af;">DbContext</span> context, <span style="color: #2b91af;">Station</span> entity)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; context.Entry(entity).State = entity.Id == 0 ?<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <span style="color: #2b91af;">EntityState</span>.Added :<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <span style="color: #2b91af;">EntityState</span>.Modified;<br />
+}</p>
+</div>
+
+</td>
+</tr>
+
+</table>
+
+<h4>Exceptions</h4>
+<ul>
+<li>DbEntityValidationException  - validation</li>
+<li>DbUpdateConcurrencyException  - concurrency</li>
+<li>DbUpdateException  - updates (sometimes validation)</li>
+</ul>
+
+<div class="code">
+<p><span style="color: blue;">try</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; context.SaveChanges();<br />
+}<br />
+<span style="color: blue;">catch</span> (System.Data.Entity.Validation.<span style="color: #2b91af;">DbEntityValidationException</span> validationException)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">foreach</span> (<span style="color: blue;">var</span> error <span style="color: blue;">in</span> validationException.EntityValidationErrors)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> entry = error.Entry;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">foreach</span> (<span style="color: blue;">var</span> err <span style="color: blue;">in</span> error.ValidationErrors)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Debug</span>.WriteLine(err.PropertyName + <span style="color: #a31515;">" "</span> + err.ErrorMessage);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}<br />
+<span style="color: blue;">catch</span> (<span style="color: #2b91af;">DbUpdateConcurrencyException</span> concurrencyException)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//assume just one</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> dbEntityEntry = concurrencyException.Entries.First();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//store wins</span><br />
+&nbsp;&nbsp;&nbsp; dbEntityEntry.Reload();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//OR client wins</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> dbPropertyValues = dbEntityEntry.GetDatabaseValues();<br />
+&nbsp;&nbsp;&nbsp; dbEntityEntry.OriginalValues.SetValues(dbPropertyValues); <span style="color: green;">//orig = db</span><br />
+}<br />
+<span style="color: blue;">catch</span> (<span style="color: #2b91af;">DbUpdateException</span> updateException)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//often in innerException</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (updateException.InnerException != <span style="color: blue;">null</span>) <br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Debug</span>.WriteLine(updateException.InnerException.Message);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//which exceptions does it relate to</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">foreach</span> (<span style="color: blue;">var</span> entry <span style="color: blue;">in</span> updateException.Entries)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Debug</span>.WriteLine(entry.Entity);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+
+
+<h4>Lazy/Eager loading</h4>
+<ul>
+<li>Lazy load with .Include(x=&gt;x.Reference)</li>
+<li>Collections can be non-lazy if they are not virtual, or in the context Configuration.LazyLoadingEnabled = <span style="color: blue;">false</span>;</li>
+<li>Eager loading:<br />
+context.Entry(entity).Reference(x =&gt; x.Reference).Load();<br />
+context.Entry(entity).Collection(x =&gt; x.Children).Load();</li>
+<li>Filtered loads:<br />
+<div class="code">
+<p>context.Entry(entity)<br />
+&nbsp;&nbsp;&nbsp; .Collection(x =&gt; x.Children)<br />
+&nbsp;&nbsp;&nbsp; .Query()<br />
+&nbsp;&nbsp;&nbsp; .Where(x=&gt; x.DateOfBirth &gt; <span style="color: #2b91af;">DateTime</span>.Now)<br />
+&nbsp;&nbsp;&nbsp; .Load();<br />
+<span style="color: blue;">var</span> count = context.Entry(entity)<br />
+&nbsp;&nbsp;&nbsp; .Collection(x =&gt; x.Children)<br />
+&nbsp;&nbsp;&nbsp; .Query()<br />
+&nbsp;&nbsp;&nbsp; .Count();</p>
+</div>
+</li>
+</ul>
+<div class="code">
+<p><span style="color: green;">//load all into memory</span><br />
+context.Categories.Load();<br />
+<span style="color: green;">//get all without tracking (NOT in dbContext)</span><br />
+<span style="color: blue;">var</span> cachableCategories = context.Categories.AsNoTracking().ToList();</p>
+</div>
+<p>WCF/WebAPI may have problems with proxies so:</p>
+<div class="code">
+<p>context.Configuration.ProxyCreationEnabled = <span style="color: blue;">false</span>;<br />
+context.Configuration.LazyLoadingEnabled = <span style="color: blue;">false</span>;</p>
+</div>
+<p>You may have to have [System.Runtime.Serialization.<span style="color: #2b91af;">IgnoreDataMember</span>] on association properties to foil the DataContractSerializer.</p>
+
+<h4>Other DbSet properties</h4>
+<ul>
+<li>context.Categories.Local - an ObservableCollection of the first level cache.</li>
+</ul>
+<div class="code">
+<p><span style="color: green;">//what's changed...</span><br />
+<span style="color: blue;">foreach</span> (<span style="color: blue;">var</span> dbEntityEntry <span style="color: blue;">in</span> context.ChangeTracker.Entries&lt;<span style="color: #2b91af;">Category</span>&gt;())<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Debug</span>.WriteLine(dbEntityEntry.State);<br />
+}</p>
+</div>
+
+
+<h3>Entities</h3>
+<ul>
+<li>Entities should have a primary key (by default "Id" or "classId" or [Key] attribute)</li>
+<li>Can be lazy loading proxies or change tracking proxies depending on entity definition and how they are created.
+<ul>
+<li>For simple lazy loading proxies, only navigation properties have to be virtual.</li>
+<li>For change tracking proxies (IEntityWithChangeTracker) ALL properties must be virtual (so everything is tracked), and navigation properties must be virtual ICollection&lt;T&gt;. NOT IList&lt;T&gt;</li>
+<li>For change tracking proxies, navigation collections are EntityCollection&lt;T&gt; at runtime. If your code initializes them (as List&lt;T&gt; in the constructor, for instance), you get a runtime error. This makes them awkward for use in test vs runtime code as the collection magically appears when using CodeFirst.</li>
+<li>If context.Configuration.ProxyCreationEnabled = true (default) proxies are created over the pocos for tracking.</li>
+</ul>
+</li>
+<li>You can also have readonly non-tracking) entities, use DbSet.AsNoTracking() - <br/>
+eg context.Products.AsNoTracking().Where(x =&gt; x.CategoryId == 2) (using System.Data.Entity)</li>
+</ul>
+
+<p>To get a proxy, you can't new it up, use DbSet.Create() - eg context.Products.Create().<br/>
+Also you can create derived classes: context.Products.Create&lt;FoodProduct&gt;()</p>
+<div class="code">
+<p><span style="color: green;">//create a proxy (NOT ADDED TO SET)</span><br />
+<span style="color: blue;">var</span> entity = context.Categories.Create();</p>
+</div>
+
+<h4>Change tracking</h4>
+<p>For POCOs/lazy loading proxies, DetectChanges is used (implicitly or explicitly); change tracking proxies have it built in.</p>
+<div class="code">
+<p><span style="color: #2b91af;">DbEntityEntry</span>&lt;<span style="color: #2b91af;">Category</span>&gt; entry = context.Entry(entity);<br />
+<span style="color: green;">//entry.State</span><br />
+<span style="color: blue;">var</span> prop = entry.Property(x =&gt; x.Name);<br />
+<span style="color: green;">//prop.IsModified;</span><br />
+<span style="color: green;">//prop.OriginalValue vs prop.CurrentValue</span><br />
+entry.GetDatabaseValues(); <span style="color: green;">//force a db update</span><br />
+&nbsp;<br />
+<span style="color: green;">//automap</span><br />
+<span style="color: blue;">var</span> clone = <span style="color: blue;">new</span> <span style="color: #2b91af;">Category</span>();<br />
+context.Entry(entity).CurrentValues.SetValues(clone);</p>
+</div>
+
+
+<h3>Raw SQL</h3>
+<div class="code">
+<p><span style="color: green;">//can grab DbSet entities (by default tracked)</span><br />
+<span style="color: green;">//or any type incl. primitive types</span><br />
+context.Categories.SqlQuery(<span style="color: #a31515;">"select * from categories"</span>); <span style="color: green;">//only DbSet, not IDbSet</span><br />
+<span style="color: blue;">var</span> categoriesByRawSql = context.Database.SqlQuery&lt;<span style="color: #2b91af;">Category</span>&gt;(<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #a31515;">"exec mysproc @p1, @p2"</span>,<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">SqlParameter</span>(<span style="color: #a31515;">"p1"</span>, 1),<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">SqlParameter</span>(<span style="color: #a31515;">"p2"</span>, 2));<br />
+context.Database.ExecuteSqlCommand(<span style="color: #a31515;">"drop database"</span>);</p>
+</div>
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

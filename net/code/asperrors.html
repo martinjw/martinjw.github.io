@@ -1,0 +1,124 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP Error Handling</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main</a></li>
+<li><a href="../dotnet.html">.Net</a></li>
+<li><a href="index.html">Code</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>ASP Error Handling</h2>
+<p>With log4net. See <a href="../asp/aspdotneterr.html">more</a></p>
+<h3>Web.config (log4net)</h3>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">configuration</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">configSections</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">section</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">log4net</span>"<span style="color: blue;"> </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">log4net.Config.Log4NetConfigurationSectionHandler, log4net</span>"<span style="color: blue;">/&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &lt;/</span><span style="color: #a31515;">configSections</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">log4net</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">appender</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">File</span>"<span style="color: blue;"> </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">log4net.Appender.RollingFileAppender</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">file</span><span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">log4net.log</span>"<span style="color: blue;">/&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">appendToFile</span><span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;">/&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">rollingStyle</span><span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">Date</span>"<span style="color: blue;">/&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">datePattern</span><span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">yyyyMMdd</span>"<span style="color: blue;">/&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">layout</span><span style="color: blue;"> </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">log4net.Layout.PatternLayout</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">conversionPattern</span><span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">%date [%thread] %-5level %logger [%ndc] - %message%newline</span>"<span style="color: blue;">/&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;/</span><span style="color: #a31515;">layout</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;/</span><span style="color: #a31515;">appender</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">root</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">level</span><span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">ERROR</span>"<span style="color: blue;">/&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">appender-ref</span><span style="color: blue;"> </span><span style="color: red;">ref</span><span style="color: blue;">=</span>"<span style="color: blue;">File</span>"<span style="color: blue;">/&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;/</span><span style="color: #a31515;">root</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp; &lt;/</span><span style="color: #a31515;">log4net</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+<h3>Global.asax</h3>
+<div class="code">
+<p><span style="color: blue;">void</span> Application_Error(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">EventArgs</span> e)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">// Code that runs when an unhandled error occurs</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Exception</span> ex = <span style="color: #2b91af;">HttpContext</span>.Current.Server.GetLastError();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (ex != <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">ErrorHandler</span>.HandleException(ex);<br />
+}<br />
+&nbsp;<br />
+<span style="color: blue;">void</span> Application_Start(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">EventArgs</span> e) <br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">// Code that runs on application startup</span><br />
+&nbsp;&nbsp;&nbsp; log4net.Config.<span style="color: #2b91af;">XmlConfigurator</span>.Configure(); <span style="color: green;">//comment this to stop logging</span><br />
+}</p>
+</div>
+<h3>Error Logging class</h3>
+<p>From: ASP.NET 2.0 Anthology, 2007.</p>
+<div class="code">
+<p><span style="color: blue;">using</span> System;<br />
+<span style="color: blue;">using</span> System.Reflection;<br />
+<span style="color: blue;">using</span> System.Text;<br />
+<span style="color: blue;">using</span> System.Web;<br />
+<span style="color: blue;">using</span> log4net;<br />
+&nbsp;<br />
+<span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">ErrorHandler</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: blue;">readonly</span> <span style="color: #2b91af;">ILog</span> Log = <span style="color: #2b91af;">LogManager</span>.GetLogger(typeof(<span style="color: #2b91af;">ErrorHandler</span>));<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> HandleException(<span style="color: #2b91af;">Exception</span> ex)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (ex == <span style="color: blue;">null</span>) <span style="color: blue;">return</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Exception</span> exceptionLayer = <span style="color: blue;">null</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (ex <span style="color: blue;">is</span> <span style="color: #2b91af;">HttpUnhandledException</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (ex.InnerException != <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; exceptionLayer = ex.InnerException;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">else</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; exceptionLayer = ex;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">StringBuilder</span> sb = <span style="color: blue;">new</span> <span style="color: #2b91af;">StringBuilder</span>();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">while</span> (exceptionLayer != <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; sb.AppendLine(ex.ToString());<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; sb.AppendLine(<span style="color: #a31515;">"------------------------"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; exceptionLayer = exceptionLayer.InnerException;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Log.Error(sb.ToString());<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+<h3>Quick text logging (no log4net)</h3>
+<div class="code">
+<p><span style="color: blue;">private</span> <span style="color: blue;">void</span> SaveError()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Exception</span> lastError = Server.GetLastError();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (lastError == <span style="color: blue;">null</span>) <span style="color: blue;">return</span>;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (lastError.InnerException != <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; lastError = lastError.GetBaseException();<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (System.IO.<span style="color: #2b91af;">StreamWriter</span> sw = <span style="color: blue;">new</span> System.IO.<span style="color: #2b91af;">StreamWriter</span>(Server.MapPath(<span style="color: #a31515;">"~/error.txt"</span>), <span style="color: blue;">true</span>))<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; sw.WriteLine(<span style="color: #a31515;">"{0} [{1}] {2}"</span>, <span style="color: #2b91af;">DateTime</span>.Now, lastError.Message, lastError.GetType());<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; sw.WriteLine(lastError.StackTrace);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

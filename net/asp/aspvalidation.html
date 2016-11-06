@@ -1,0 +1,184 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP Valid-o-matic</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<link rel="stylesheet" href="../../js/prettify.css" type="text/css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+<script type="text/javascript" src="../../formValidator.js">
+</script>
+<style type="text/css">
+/*<![CDATA[*/
+.e1 {color:red;}
+.attr {color:blue;}
+.attv {color: green;}
+label, input, select {float:none;text-align:left;width:auto;}
+div#output {text-align:left;background-color:aliceblue;border:1px dotted #0234ff;padding:10px;}
+/*]]>*/
+</style>
+<script type="text/javascript" src="../aspvalidation.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="aspcontrols.html">Asp Webforms Controls</a></li>
+<li><a href="aspdotnetbind.html">Asp Webforms Binding</a></li>
+<li><a href="aspdotnetjs.html">Asp Webforms Js/Css/Img</a></li>
+<li><a href="asp2.html">Asp Webforms 2.0</a></li>
+<li><a href="aspajax.html">Asp Webforms Ajax</a></li>
+<li><a href="aspvalidation.html">Asp Webforms Validomatic</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>ASP Valid-o-matic</h2>
+<p>Generate the validators for standard SQLServer datatypes (<a href="http://msdn2.microsoft.com/en-us/library/ms131092.aspx">MSDN SQLServer-.Net datatype translation</a>)</p>
+<fieldset>
+<p><label for="type">SQLServer Datatype
+<select id="type" name="type" onchange="aspValidomatic.showValidation()">
+<option>datetime</option>
+<option>smalldatetime</option>
+<option>bigint</option>
+<option>int</option>
+<option>smallint</option>
+<option>tinyint</option>
+<option>numeric/decimal</option>
+<option>money</option>
+<option>smallmoney</option>
+<option>varchar</option>
+</select></label>
+<span id="precisionscale" style="display:none">
+<label for="precision" title="number of digits in a number- 123.45 has a precision of 5">Precision <input type="textbox" id="precision" name="precision" value="10" maxlength="2" size="2" class="Numeric" onchange="aspValidomatic.showValidation()" /></label>
+<label for="scale" title="number of digits to the right of the decimal point - 123.45 has a scale of 2">Scale <input type="textbox" id="scale" name="scale" value="2" maxlength="2" size="2" class="Numeric" onchange="aspValidomatic.showValidation()" /></label>
+</span>
+<span id="stringlength" style="display:none">
+<label for="MaxLength">MaxLength <input type="textbox" id="MaxLength" name="MaxLength" value="4000" maxlength="6" size="2" class="Numeric" onchange="aspValidomatic.showValidation()" /></label>
+</span>
+</p> 
+<p><label for="isAsp2"><input type="checkbox" id="isAsp2" name="isAsp2" checked="checked" value="1" onclick="aspValidomatic.showValidation()" /> ASP 2 format (<span class="attr">SetFocusOnError</span>="true")</label></p></fieldset>
+<p>Change IDs and ControlToValidate (plus errormessages if required). NB bigint is a Currency type for validation purposes; int is the same so uses compareValidator instead of a rangeValidator.</p>
+<div id="output">
+&lt;<span class="e1">asp:RangeValidator</span> id="Range1" ControlToValidate="TextBox1" SetFocusOnError="true"<br /> <span class="attr">MinimumValue</span>="<span class="attv">1753/01/01</span>"<br /> <span class="attr">MaximumValue</span>="<span class="attv">9999/12/31</span>"<br /> <span class="attr">Type</span>="<span class="attv">Date</span>"<br /> Text="*" ErrorMessage="Must be between 1753 and 9999" ToolTip="Must be between 1753 and 9999"<br /> <span class="attr">Display</span>="<span class="attv">Dynamic</span>"  runat="server"/&gt;
+</div>
+<ul>
+<li>Remember Page.Validate() is called AFTER Page.Load (and not if control.CausesValidation=false).</li>
+<li><strong>Currency type doesn't work with currency symbol</strong>. Beware when binding:<br /> <code>Text='&lt;%# Bind("Money", "{0:C}") %&gt;'</code> will not validate! (even with new CultureInvariant flag)</li>
+<li>Default <span class="attr">Display</span>="<span class="attv">Static</span>" which hides the message (or asterisk) with visibility (vertical alignment problems)- use <span class="attv">Dynamic</span> or <span class="attv">None</span> with a ValidationSummary</li>
+<li>To validate user and custom controls, add <cite>ValidationPropertyAttribute</cite>("valueproperty")</li>
+<li>ASP 2- Putting sets of controls into ValidationGroups is useful.</li>
+<li>See also <a href="../code/code_businessvalidation.html">Business Validation class</a> for server side "business" errors</li>
+</ul>
+<h4><a name="hi" id="hi">Highlight on error</a></h4>
+<p>Version 1: (Very) basic. To change the control dynamically, add (clientside) onchange function pointing to the control and validation id / clientID (in the latter case, inject via ScriptManager)</p>
+<pre class="prettyprint">
+function MyFieldOnChange() {
+   // Do nothing if client validation is not active
+   if (typeof(Page_Validators) == "undefined")  return;
+   // Change the color of the label
+   MyField.style.color = MyFieldValidator.isvalid ? "Black" : "Red";
+}
+</pre>
+<p>Version 2: Asp Ajax methods. The pageLoad initialization uses asp ajax methods ($addhandler == addEvent, $get == document.getElementById) but you can also use onchange="showIfError(this)".
+</p>
+<pre class="prettyprint">
+function pageLoad() {
+	if($addhandler) { //or your addEvent
+		for (var i = 0; i &lt; Page_Validators.length; i++) {  
+		  var v = Page_Validators[i];
+		  var id = v.controltovalidate;
+		  var ctl= $get(id);
+		  //if is textbox, monitor the change event
+		  if(obj.type &amp;&amp; (obj.type == 'text' || obj.type == 'textarea')) {
+			  $addhandler(ctl, "change", showIfError);
+		  }
+		 }
+	}
+}
+
+function showIfError(obj) {
+	if(!checkValidators(obj.id) &amp;&amp; obj.className.indexOf(" error") == -1)
+		obj.className+= " error";
+	else
+		obj.className = new String(obj.className).replace(new RegExp("(?:^|\\s+)error(?:\\s+|$)", "g"), '');
+}
+
+function checkValidators(id) {
+	for (var i = 0; i &lt; Page_Validators.length; i++) {  
+	  var v = Page_Validators[i];
+	  if(v.controltovalidate == id) { //validate just this field
+		ValidatorValidate(v); //force a validation
+		if (v.isvalid == false) return false; //not valid
+	   }
+	}
+	return true;
+}
+</pre>
+<p>Version 3: JQuery. Here's a slightly more evolved JQuery script, which survives postbacks and sets the control with a class of "error".</p>
+<pre class="prettyprint">$(document).ready(function() {
+    if (self.ValidatorUpdateDisplay) {
+        BaseValidatorUpdateDisplay = ValidatorUpdateDisplay;
+        ValidatorUpdateDisplay = function(val) {
+            BaseValidatorUpdateDisplay(val);
+            $(function() {
+                var errorCssClass = 'error';
+                var ctl = document.getElementById(val.controltovalidate);
+                if (ctl == null)
+                    return;
+                var vals;
+                if (!ctl.Validators)
+                    return;
+                var vals = ctl.Validators;
+                var showerror = false;
+                for (var i = 0; i &lt; vals.length; i++) {
+                    if (!vals[i].isvalid) {
+                        showerror = true;
+                        break;
+                    }
+                }
+                if (showerror) {
+                    $(ctl).addClass(errorCssClass);
+                }
+                else {
+                    $(ctl).removeClass(errorCssClass);
+                }
+            });
+        }
+    }
+
+    //loop thru Page_Validators
+    if (self.Page_Validators)
+        return;
+    var i, val;
+    for (i = 0; i &lt; Page_Validators.length; i++) {
+        val = Page_Validators[i];
+        if (!val.isvalid &amp;&amp; val.controltovalidate.length &gt; 0) {
+            var ctl = document.getElementById(val.controltovalidate);
+            if (ctl != null) {
+                $(ctl).addClass('error');
+            }
+        }
+    }
+});
+</pre>
+</div>
+<div class="Footer">
+<script type="text/javascript" src="../../js/prettify.js">
+</script>
+<script type="text/javascript">
+//<![CDATA[
+
+
+prettyPrint();
+//]]>
+</script>
+</div></body>
+</html>

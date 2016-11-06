@@ -1,0 +1,80 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>NHibernate sample code</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../index.html">Code &gt;</a></li>
+<li><a href="index.html">NHibernate</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>NHibernate</h2>
+<p>Simplistic "get started" code for NHibernate (version 1.2, 2 and 3). </p>
+<ol>
+<li>Download the latest version from <a href="http://www.nhforge.org/">NHForge.org</a></li>
+<li>In your data access layer, reference the NHibernate.dll<ul>
+<li>Optional extras include <a href="http://fluentnhibernate.org/">Fluent mapping</a> and <a href="http://sourceforge.net/projects/nhcontrib/files/NHibernate.Caches/">NHibernate.Caches</a></li>
+<li>From v2.1 up to 3.2, add the proxy generator such as Castle- after v.3.2 it's built in</li>
+<li>For version 2 consider <a href="http://code.google.com/p/nhlambdaextensions/">Lambda Extensions</a> (it's superceded in v3).</li>
+</ul></li>
+<li>Create the <a href="appconfig.html">configuration</a> (contains connection string). </li>
+<li>Create the <a href="sampleentities.html">domain entities</a>. <em>Entities are mostly <abbr title="Plain Old CLR Object">POCO</abbr>s but you probably should <a href="entitybase.html">inherit from a base class for identity</a>.</em></li>
+<li><a href="mapping.html">Create the mapping to the database tables</a> (in hbm.xml or use <a href="http://fluentnhibernate.org/">Fluent mapping</a>)</li>
+<li>In Application Start create the <a href="sessionmanager.html">session factory</a> (don't create it for every session or operation).<em>Simplest is to hold it in a static or singleton object such as a <a href="sessionmanager.html">SessionManager</a>.</em></li>
+<li>Open an ISession from the Session Factory (in asp.net you may use an <a href="httpmodule.html">IHttpModule</a>; in MVC a global ActionFilter). Use Load/Get/SaveOrUpdate etc- then Flush/Commit to database. In asp, typically create a session with a begin request, but you could store it in Session to span requests ("conversations"). <em>Ideally create <a href="genericrepository.html">repositories</a> (data access objects) for each domain entity, using the SessionManager.</em></li>
+</ol>
+<p>For quick-start database-driven NHibernate, check out my <a href="http://dbschemareader.codeplex.com/">Database schema reader</a> which has a simplistic code generator.</p>
+
+<h3>Example Domain</h3>
+<p>Here we just use Category and Product from Northwind.</p>
+<ul>
+<li><a href="sampleentities.html">Sample entities</a></li>
+<li><a href="entitybase.html">EntityBase</a> - a base class overriding GetHashCode and Equals.</li>
+<li><a href="mapping.html">Sample hbm (and fluent) mapping</a></li>
+<li><a href="productrepository.html">ProductRepository</a></li>
+</ul>
+<p><a href="activerecord.html">Here are the same entities in ActiveRecord</a>- the mapping is done by property attributes.</p>
+<h3>NHibernate helpers</h3>
+<ul>
+<li><a href="appconfig.html">App.config</a> - minimum required settings. And Fluent configuration in code.</li>
+<li><a href="sessionmanager.html">SessionManager - configure NHibernate and create sessions</a></li>
+</ul>
+<h3>NHibernate helpers - optional</h3>
+<ul>
+<li><a href="genericrepository.html">GenericRepository</a></li>
+<li><a href="transactionrequired.html">TransactionRequired- transaction wrapper</a></li>
+<li><a href="httpmodule.html">IHttpModule for hooking up asp.net</a></li>
+<li><a href="unitofwork.html">UnitOfWork - an IDisposable wrapper</a></li>
+<li><a href="unittest.html">Unit test - putting it together</a></li>
+</ul>
+<h3>Intermediate</h3>
+<ul>
+<li><a href="query.html">Queries</a></li>
+<li><a href="query2.html">More Queries</a></li>
+<li><a href="moremapping.html">More mapping</a></li>
+<li><a href="usertype.html">IUserType example</a></li>
+<li><a href="sql.html">Using sql directly</a></li>
+<li><a href="cache.html">Caching</a></li>
+<li><a href="advanced.html">Advanced NHibernate</a></li>
+</ul>
+
+
+
+</div>
+<div class="Footer">
+
+</div></body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP Webforms 2.0</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="aspcontrols.html">Asp Webforms Controls</a></li>
+<li><a href="aspdotnetbind.html">Asp Webforms Binding</a></li>
+<li><a href="aspdotnetjs.html">Asp Webforms Js/Css/Img</a></li>
+<li><a href="asp2.html">Asp Webforms 2.0</a></li>
+<li><a href="aspajax.html">Asp Webforms Ajax</a></li>
+<li><a href="aspvalidation.html">Asp Webforms Validomatic</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>ASP Webforms 2.0</h2>
+
+<p><a href="asp2config.html">Asp 2 configuration (appsettings, health monitoring etc)</a></p>
+
+<h3>Compilation</h3>
+<ul>
+<li>Asp.net has 2 types of compilation:<ul>
+<li>Project compilation - msbuild .csproj and the .cs/embedded resources into a dll.</li>
+<li>Runtime compilation - not msbuild. Parses .aspx into codeDOM, then dlls (which are written to temporary ASP.Net Files folder)</li>
+<li>Precompilation (publish) - is a wrapper around runtime compilation.</li>
+</ul></li>
+<li>Publish Website (or aspnet_compiler.exe -p c:\src -v /myvirtual).</li>
+<li>Aspx markup is compiled by default. Use -u (updateable) so aspx/ascx not compiled.</li>
+<li>New dll names are created by default. Use -fixednames.</li>
+<li>One dll per page by default. Use <a href="http://msdn.microsoft.com/asp.net/reference/infrastructure/wdp/default.aspx">WDP</a> aspnet_merge.exe to make one dll per folder (or -o for one dll to rule them all).</li>
+</ul>
+<h3>Expressions</h3>
+<table>
+<tr><th>Expression</th><th>When</th><th>Use</th></tr>
+<tr><td>%= value %</td>
+<td>Render</td>
+<td>Not in %asp: server controls.</td></tr>
+<tr><td>%: value %</td>
+<td>Render with HtmlEncode (.Net 4.0+)</td>
+<td>Not in %asp: server controls.</td></tr>
+<tr><td>%# value %</td>
+<td>After DataBind only</td>
+<td>Can be in %asp: server controls. See <a href="aspdotnetbind.html">here</a></td></tr>
+<tr><td>%$ value %</td>
+<td>PreInit</td>
+<td>The <a href="http://msdn2.microsoft.com/en-us/library/d5bd1tad.aspx">Expression Builders:</a> <br />AppSettings:, ConnectionStrings: and Resources:<br />Can be in %asp: server controls.</td></tr>
+</table>
+
+<h3>Event Validation</h3>
+<p><a href="http://odetocode.com/Blogs/scott/search.aspx?q=event+validation&amp;p=1">Event validation problems</a></p>
+
+<h3>Master Pages</h3>
+<ul>
+<li><a href="http://odetocode.com/Articles/450.aspx">Master Pages Tips and Traps</a></li>
+<li><a href="http://msdn.microsoft.com/asp.net/reference/design/templates/default.aspx">Master Pages templates (msdn)</a></li>
+</ul>
+<p>URL Rebasing is a problem. Use &lt;img src="&lt;%= ResolveClientUrl("imgs/tab2.gif") %&gt;" </p>
+
+<h3>Themes and Skins</h3>
+<ul>
+<li><a href="http://msdn2.microsoft.com/en-us/library/ykzx33wh.aspx">MSDN Themes</a></li>
+<li>Themes can be applied in two ways:<ul>
+<li><cite>Theme</cite> = applied after control style properties, so cannot be overriden</li>
+<li><cite>StyleSheetTheme</cite> = applied before control style properties, so can be overriden</li>
+</ul></li>
+<li>Themes can be applied
+<ul>
+<li>for a site (in web.config &lt;pages Theme="myTheme")</li>
+<li>on a single page (@page Theme-)</li>
+<li>globally in wwwroot\Aspnet_client\System_web\ or %SystemRoot%\Microsoft.NET\Framework\x\ASP.NETClientFiles\Themes</li>
+</ul></li>
+<li>Skin files have:<ul>
+<li>Default skin controls: &lt;asp;Button runat="server" BackColor="Blue" /%gt;</li>
+<li>Named skin controls: &lt;asp;Button runat="server" SkinId="Red" BackColor="Red" /%gt;<br />
+These have to be refered to explicitly.</li>
+</ul></li>
+<li>You can dynamically change a theme only in (master)page.PreInit</li>
+</ul>
+<p>Problems with themes:</p>
+<ul>
+<li>All the css files are automatically linked in- you can't do conditional stylesheet links for specific browsers or section of the site</li>
+<li>Themed images are supposed to have a SkinId, and the skin file contains as asp:Image.</li>
+<li>With authorization, your login page can be unstyled. You have to allow users="*" (in web.config location, or create an AppThemes/web.config)</li>
+<li>Enumerating themes is not obvious (foreach thru  HostingEnvironment.VirtualPathProvider.GetDirectory("~/App_Themes").Directories )</li>
+<li>With precompiled websites, you can't change the theme in web.config. You have to recompile. <a href="http://west-wind.com/weblog/posts/6168.aspx">Doh!</a></li>
+</ul>
+
+<h3>Membership Providers</h3>
+<ul>
+<li><a href="http://www.ben-rush.net/source/OracleProviders/ ">Oracle Membership provider for asp2</a> vb with the table schema in comments</li>
+<li><a href="http://www.codeplex.com/Wiki/View.aspx?ProjectName=AltairisWebProviders ">Simple asp2 providers</a> </li>
+<li><a href="http://www.manuelabadia.com/blog/PermaLink,guid,3b6ccb3f-2f2a-4dcb-a414-605371a00618.aspx">Simple membership provider with NHibernate</a></li>
+</ul>
+</div>
+<div class="Footer">
+
+</div></body>
+</html>

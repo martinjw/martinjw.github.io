@@ -1,0 +1,218 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>NHibernate queries</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../index.html">Code &gt;</a></li>
+<li><a href="index.html">NHibernate</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>NHibernate Queries</h2>
+<p>NHibernate's methods of querying are powerful. NHibernate's older HQL and Criteria/QueryOver support advanced scenarios, but there's a learning curve. NHibernate supports Linq (session.Query) but it is not quite as capable as Linq2Sql or Entity Framework (which have their own limitations).</p>
+<ul>
+<li>Get by primary key is built-in (session.Get and session.Load; latter loads a proxy which only does the database select when needed).</li>
+<li>HQL - a provider-neutral Sql-like language. Unfortunately it's just a big string. It's good for static queries and has the most advanced capabilities.</li>
+<li>Criteria - more object like and good for building dynamic runtime queries. Property names are still strings.</li>
+<li>QueryOver - (NHibernate 3+) uses lambdas over Criteria to make it strongly typed.</li>
+<li>Linq - <ul>
+<li>In NHibernate 2 and 2.1, this is a <a href="http://sourceforge.net/projects/nhcontrib/files/">NHibernate Contrib</a> extension  (as ISession.Linq&lt;T&gt;). You need to get the source and rebuild against the latest NHibernate 2.1 version. It works well for simple queries.</li>
+<li>From NHibernate 3.0, Linq is part of the NHibernate core (as ISession.Query&lt;T&gt;) and gives more advanced features, although not everything may be there.</li>
+</ul></li>
+</ul>
+
+<p><a href="query2.html">See more NHibernate query features</a></p>
+
+<h3>Lists with restrictions</h3>
+<div class="code">
+<p><span style="color: green;">//directly get by id (see also Load&lt;&gt; - loads proxy)</span><br />
+<span style="color: blue;">var</span> category = session.Get&lt;<span style="color: #2b91af;">Category</span>&gt;(2);<br />
+&nbsp;<br />
+<span style="color: green;">//hql</span><br />
+<span style="color: blue;">var</span> hqlQuery = session.CreateQuery(<span style="color: #a31515;">"from Product p where p.Category.Id = ? order by p.Id"</span>)<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//set the parameter</span><br />
+&nbsp;&nbsp;&nbsp; .SetInt32(0, 2)<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//second page of 10</span><br />
+&nbsp;&nbsp;&nbsp; .SetFirstResult(10).SetMaxResults(10);<br />
+&nbsp;<br />
+<span style="color: blue;">var</span> list = hqlQuery.List&lt;<span style="color: #2b91af;">Product</span>&gt;();<br />
+&nbsp;<br />
+<span style="color: green;">//criteria</span><br />
+<span style="color: blue;">var</span> criteria = session.CreateCriteria&lt;<span style="color: #2b91af;">Product</span>&gt;()<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//"Restrictions" used to be "Expression"</span><br />
+&nbsp;&nbsp;&nbsp; .Add(<span style="color: #2b91af;">Restrictions</span>.Eq(<span style="color: #a31515;">"Category.Id"</span>, 2))<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//ordering</span><br />
+&nbsp;&nbsp;&nbsp; .AddOrder(NHibernate.Criterion.<span style="color: #2b91af;">Order</span>.Asc(<span style="color: #a31515;">"Id"</span>))<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//paging, 2nd page of 10</span><br />
+&nbsp;&nbsp;&nbsp; .SetFirstResult(10) <span style="color: green;">//zero based</span><br />
+&nbsp;&nbsp;&nbsp; .SetMaxResults(10);<br />
+&nbsp;<br />
+<span style="color: blue;">var</span> list2 = criteria.List&lt;<span style="color: #2b91af;">Product</span>&gt;();<br />
+&nbsp;<br />
+<span style="color: green;">//query over</span><br />
+<span style="color: blue;">var</span> queryOver = session.QueryOver&lt;<span style="color: #2b91af;">Product</span>&gt;()<br />
+&nbsp;&nbsp;&nbsp; .Where(x =&gt; x.Category.Id == 2)<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//simple restrictions- And or &amp;&amp;/||</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//.And(x =&gt; !x.Discontinued)</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//.And(x =&gt; !x.Discontinued &amp;&amp; x.UnitsInStock &gt; 0)</span><br />
+&nbsp;&nbsp;&nbsp; .OrderBy(x =&gt; x.Id).Asc<br />
+&nbsp;&nbsp;&nbsp; .Skip(10)<br />
+&nbsp;&nbsp;&nbsp; .Take(10);<br />
+<span style="color: blue;">var</span> list3 = queryOver.List();<br />
+&nbsp;<br />
+&nbsp;<br />
+<span style="color: green;">//using NHibernate.Linq (session.Linq in NH 2/session.Query in NH3)</span><br />
+<span style="color: blue;">var</span> linq = (<span style="color: blue;">from</span> product <span style="color: blue;">in</span> session.Query&lt;<span style="color: #2b91af;">Product</span>&gt;()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">where</span> product.Category.Id == 2<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">orderby</span> product.Id<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">select</span> product)<br />
+&nbsp;&nbsp;&nbsp; .Skip(10)<br />
+&nbsp;&nbsp;&nbsp; .Take(10);<br />
+<span style="color: blue;">var</span> list4 = linq.ToList();</p>
+</div>
+
+
+<h3>Single Results</h3>
+<div class="code">
+<p><span style="color: green;">//HQL counts</span><br />
+<span style="color: blue;">var</span> hqlCountQuery = session.CreateQuery(<span style="color: #a31515;">"select count(*) from Product p where p.Category.Id = ?"</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .SetInt32(0, 2);<br />
+<span style="color: blue;">var</span> count1 = hqlCountQuery.UniqueResult&lt;<span style="color: blue;">long</span>&gt;(); <span style="color: green;">//always a long</span><br />
+&nbsp;<br />
+<span style="color: green;">//criteria counts</span><br />
+<span style="color: blue;">var</span> countCriteria = session.CreateCriteria&lt;<span style="color: #2b91af;">Product</span>&gt;()<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//add rowcount projection - NB: RowCountInt64 for long</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .SetProjection(<span style="color: #2b91af;">Projections</span>.RowCount())<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .Add(<span style="color: #2b91af;">Restrictions</span>.Eq(<span style="color: #a31515;">"Category.Id"</span>, 2));<br />
+<span style="color: blue;">var</span> count2 = countCriteria.UniqueResult&lt;<span style="color: blue;">int</span>&gt;();<br />
+&nbsp;<br />
+<span style="color: green;">//queryOver counts</span><br />
+<span style="color: blue;">var</span> count3 = session.QueryOver&lt;<span style="color: #2b91af;">Product</span>&gt;()<br />
+&nbsp;&nbsp;&nbsp; .Where(x =&gt; x.Category.Id == 2)<br />
+&nbsp;&nbsp;&nbsp; .RowCount();<br />
+&nbsp;<br />
+<span style="color: green;">//linq counts</span><br />
+<span style="color: blue;">var</span> count4 = session.Query&lt;<span style="color: #2b91af;">Product</span>&gt;().Count(p =&gt; p.Category.Id == 2);</p>
+</div>
+
+
+<h3>Joins</h3>
+<p>In criteria, use a nested criteria or alias.</p>
+<div class="code">
+<p><span style="color: green;">//no join, it knows Id is on Product</span><br />
+<span style="color: blue;">var</span> list1 = session.CreateCriteria&lt;<span style="color: #2b91af;">Product</span>&gt;()<br />
+&nbsp;&nbsp;&nbsp; .Add(<span style="color: #2b91af;">Restrictions</span>.Eq(<span style="color: #a31515;">"Discontinued"</span>, <span style="color: blue;">false</span>))<br />
+&nbsp;&nbsp;&nbsp; .Add(<span style="color: #2b91af;">Restrictions</span>.Eq(<span style="color: #a31515;">"Category.Id"</span>, 2))<br />
+&nbsp;&nbsp;&nbsp; .List&lt;<span style="color: #2b91af;">Product</span>&gt;();<br />
+&nbsp;<br />
+<span style="color: green;">//for any other category properties create nested criteria</span><br />
+<span style="color: blue;">var</span> list2 = session.CreateCriteria&lt;<span style="color: #2b91af;">Product</span>&gt;()<br />
+&nbsp;&nbsp;&nbsp; .Add(<span style="color: #2b91af;">Restrictions</span>.Eq(<span style="color: #a31515;">"Discontinued"</span>, <span style="color: blue;">false</span>))<br />
+&nbsp;&nbsp;&nbsp; .CreateCriteria(<span style="color: #a31515;">"Category"</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .Add(<span style="color: #2b91af;">Restrictions</span>.Eq(<span style="color: #a31515;">"CategoryName"</span>, <span style="color: #a31515;">"Condiments"</span>))<br />
+&nbsp;&nbsp;&nbsp; .List&lt;<span style="color: #2b91af;">Product</span>&gt;();<br />
+&nbsp;<br />
+<span style="color: green;">//use alias to flatten</span><br />
+<span style="color: blue;">var</span> list4 = session.CreateCriteria&lt;<span style="color: #2b91af;">Product</span>&gt;()<br />
+&nbsp;&nbsp;&nbsp; .Add(<span style="color: #2b91af;">Restrictions</span>.Eq(<span style="color: #a31515;">"Discontinued"</span>, <span style="color: blue;">false</span>))<br />
+&nbsp;&nbsp;&nbsp; .CreateAlias(<span style="color: #a31515;">"Category"</span>, <span style="color: #a31515;">"c"</span>)<br />
+&nbsp;&nbsp;&nbsp; .Add(<span style="color: #2b91af;">Restrictions</span>.Eq(<span style="color: #a31515;">"c.CategoryName"</span>, <span style="color: #a31515;">"Condiments"</span>))<br />
+&nbsp;&nbsp;&nbsp; .List&lt;<span style="color: #2b91af;">Product</span>&gt;();<br />
+&nbsp;<br />
+<span style="color: green;">//queryOver with join</span><br />
+<span style="color: blue;">var</span> qover = session.QueryOver&lt;<span style="color: #2b91af;">Product</span>&gt;()<br />
+&nbsp;&nbsp;&nbsp; .Where(x =&gt; !x.Discontinued)<br />
+&nbsp;&nbsp;&nbsp; .JoinQueryOver(x =&gt; x.Category)<br />
+&nbsp;&nbsp;&nbsp; .Where(c =&gt; c.CategoryName == <span style="color: #a31515;">"Condiments"</span>)<br />
+&nbsp;&nbsp;&nbsp; .List();<br />
+&nbsp;<br />
+<span style="color: green;">//queryOver with join and aliases</span><br />
+<span style="color: #2b91af;">Product</span> productAlias = <span style="color: blue;">null</span>; <span style="color: green;">//you need null objects</span><br />
+<span style="color: #2b91af;">Category</span> categoryAlias = <span style="color: blue;">null</span>;<br />
+<span style="color: blue;">var</span> qoAlias = session.QueryOver(() =&gt; productAlias)<br />
+&nbsp;&nbsp;&nbsp; .JoinQueryOver(x =&gt; x.Category, () =&gt; categoryAlias)<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//you can use the simple </span><br />
+&nbsp;&nbsp;&nbsp; .Where(() =&gt; categoryAlias.CategoryName == <span style="color: #a31515;">"Condiments"</span>)<br />
+&nbsp;&nbsp;&nbsp; .And(() =&gt; !productAlias.Discontinued)<br />
+&nbsp;&nbsp;&nbsp; .List();<br />
+&nbsp;<br />
+<span style="color: green;">//linq</span><br />
+<span style="color: blue;">var</span> linq = (<span style="color: blue;">from</span> product <span style="color: blue;">in</span> session.Query&lt;<span style="color: #2b91af;">Product</span>&gt;()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">join</span> category <span style="color: blue;">in</span> session.Query&lt;<span style="color: #2b91af;">Category</span>&gt;()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <span style="color: blue;">on</span> product.Category.Id <span style="color: blue;">equals</span> category.Id<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">where</span> category.CategoryName == <span style="color: #a31515;">"Condiments"</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &amp;&amp; !product.Discontinued<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">select</span> product).ToList();</p>
+</div>
+
+
+<h3>Subqueries</h3>
+<div class="code">
+<p><span style="color: green;">//with HQL</span><br />
+<span style="color: blue;">var</span> hqlList = session.CreateQuery(<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #a31515;">@"from Product p where p.Id in </span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; (select n.Id from Product n</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; where (n.UnitsInStock = :units</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; or n.Discontinued = :dis))</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; and p.Category.Id = :cat"</span>)<br />
+&nbsp;&nbsp;&nbsp; .SetInt16(<span style="color: #a31515;">"units"</span>, (<span style="color: blue;">short</span>)0)<br />
+&nbsp;&nbsp;&nbsp; .SetBoolean(<span style="color: #a31515;">"dis"</span>, <span style="color: blue;">true</span>)<br />
+&nbsp;&nbsp;&nbsp; .SetInt32(<span style="color: #a31515;">"cat"</span>, 2)<br />
+&nbsp;&nbsp;&nbsp; .List&lt;<span style="color: #2b91af;">Product</span>&gt;();<br />
+&nbsp;<br />
+<span style="color: green;">//with Criteria and DetachedCriteria</span><br />
+<span style="color: blue;">var</span> notForSale = <span style="color: #2b91af;">DetachedCriteria</span>.For&lt;<span style="color: #2b91af;">Product</span>&gt;(<span style="color: #a31515;">"noSale"</span>)<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//for subquery you must project</span><br />
+&nbsp;&nbsp;&nbsp; .SetProjection(<span style="color: #2b91af;">Projections</span>.Property(<span style="color: #a31515;">"noSale.id"</span>))<br />
+&nbsp;&nbsp;&nbsp; .Add(<span style="color: #2b91af;">Restrictions</span>.Disjunction()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .Add(<span style="color: #2b91af;">Restrictions</span>.Eq(<span style="color: #a31515;">"noSale.UnitsInStock"</span>, (<span style="color: blue;">short</span>)0))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .Add(<span style="color: #2b91af;">Restrictions</span>.Eq(<span style="color: #a31515;">"noSale.Discontinued"</span>, <span style="color: blue;">true</span>)))<br />
+&nbsp;&nbsp;&nbsp; .Add(<span style="color: #2b91af;">Restrictions</span>.Eq(<span style="color: #a31515;">"Category.Id"</span>, 2));<br />
+&nbsp;<br />
+<span style="color: blue;">var</span> criteriaList = session.CreateCriteria&lt;<span style="color: #2b91af;">Product</span>&gt;()<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//the id must be in our subquery select</span><br />
+&nbsp;&nbsp;&nbsp; .Add(<span style="color: #2b91af;">Subqueries</span>.PropertyIn(<span style="color: #a31515;">"Id"</span>,notForSale))<br />
+&nbsp;&nbsp;&nbsp; .List&lt;<span style="color: #2b91af;">Product</span>&gt;();<br />
+&nbsp;<br />
+<span style="color: green;">//with QueryOver (NH3)</span><br />
+<span style="color: blue;">var</span> detachedQueryOver = <span style="color: #2b91af;">QueryOver</span>.Of&lt;<span style="color: #2b91af;">Product</span>&gt;()<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//you can .And or use simple expressions with &amp;&amp; and ||</span><br />
+&nbsp;&nbsp;&nbsp; .Where(x =&gt; x.UnitsInStock == 0 || x.Discontinued)<br />
+&nbsp;&nbsp;&nbsp; .And(x=&gt; x.Category.Id == 2)<br />
+&nbsp;&nbsp;&nbsp; .Select(x =&gt; x.Id) <span style="color: green;">//simple projection</span><br />
+&nbsp;&nbsp;&nbsp; ;<br />
+<span style="color: blue;">var</span> queryOverList = session.QueryOver&lt;<span style="color: #2b91af;">Product</span>&gt;()<br />
+&nbsp;&nbsp;&nbsp; .WithSubquery<br />
+&nbsp;&nbsp;&nbsp; .WhereProperty(x =&gt; x.Id)<br />
+&nbsp;&nbsp;&nbsp; .In(detachedQueryOver)<br />
+&nbsp;&nbsp;&nbsp; .List();<br />
+&nbsp;<br />
+<span style="color: green;">//NH Linq doesn't support subqueries :(</span><br />
+<span style="color: blue;">var</span> linq = <span style="color: blue;">from</span> product <span style="color: blue;">in</span> session.Query&lt;<span style="color: #2b91af;">Product</span>&gt;()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <span style="color: blue;">where</span> <br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; (product.Discontinued <br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; || product.UnitsInStock == 0)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; &amp;&amp; product.Category.Id == 2<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <span style="color: blue;">select</span> product;</p>
+</div>
+
+
+
+</div>
+<div class="Footer">
+
+</div></body>
+</html>

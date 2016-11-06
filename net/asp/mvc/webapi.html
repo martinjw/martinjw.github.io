@@ -1,0 +1,325 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP WebAPI</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="../aspmvc.html">Asp MVC</a></li>
+<li><a href="mvccontrollers.html">MVC Controllers</a></li>
+<li><a href="mvcactions.html">MVC Actions</a></li>
+<li><a href="../asprouting.html">Asp Routing</a></li>
+<li><a href="../aspmvcview.html">Asp MVC Views</a></li>
+<li><a href="htmlhelpers.html">HTML Helpers</a></li>
+<li><a href="bundles.html">Bundling</a></li>
+<li><a href="errors.html">MVC Errors</a></li>
+<li><a href="mvcvalidation.html">MVC Validation</a></li>
+<li><a href="simplepaging.html">Simple Paging</a></li>
+<li><a href="webapi.html">WebApi</a></li>
+<li><a href="webapiformat.html">WebApi Formatting</a></li>
+<li><a href="webapiclient.html">WebApi HttpClient</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>WebAPI</h2>
+<p>See <a href="http://www.asp.net/web-api">Asp/Net</a>.</p>
+<p>It's sort of like MVC without the V (automatic json/xml content negotiation). Within an MVC website, where your pages are probably consuming just json, normal MVC controller returning JsonResults are easier to manage.</p>
+<h3>REST</h3>
+<p>Generally POST is create, PUT is update, PATCH is partial update, but all 3 can create.</p>
+<table>
+<tr>
+<th>HTTP Verb</th>
+<th>Response Code</th>
+<th>Notes</th>
+</tr>
+<tr>
+<td>GET</td>
+<td>200</td>
+<td>Commonly GET resource/ returns a list (collection resource)<br/>
+GET resource/1 returns a single by id (item resource)<br/>
+With <cite>If-ModifiedSince</cite> may return 304 NotModified</td>
+</tr>
+<tr>
+<td>HEAD</td>
+<td>200</td>
+<td>Headers only</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>200 OK<br/>
+201 Created<br/>
+204 No Content</td>
+<td>Create new (or general update)<br/>
+The Location: header may contain the URI of the new resource.</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td>200 OK<br/>
+201 Created<br/>
+204 No Content</td>
+<td>Replace resource (but can create)</td>
+</tr>
+<tr>
+<td>PATCH</td>
+<td>200 OK<br/>
+201 Created<br/>
+204 No Content</td>
+<td>Partial update (not widely used).</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td>200 OK<br/>
+202 Accepted (pending)<br/>
+204 No Content</td>
+<td>Delete resource</td>
+</tr>
+</table>
+<p>Only POST is not idempotent (PUT and DELETE can be replayed).</p>
+
+<h3>Routes</h3>
+<p>Very much like MVC, but from a HttpConfiguration rather than RouteTable</p>
+<div class="code">
+<p><span style="color: #2b91af;">WebApiConfig</span>.Register(<span style="color: #2b91af;">GlobalConfiguration</span>.Configuration);<br />
+<span style="color: #2b91af;">RouteConfig</span>.RegisterRoutes(<span style="color: #2b91af;">RouteTable</span>.Routes);</p>
+</div>
+<p>Then you MapHttpRoute (not MapRoute).</p>
+<ul>
+<li>The default path is "api".</li>
+<li>There's no "{action}" - it's the http method (get/post/put/delete).</li>
+</ul>
+<div class="code">
+<p>config.Routes.MapHttpRoute(<br />
+&nbsp;&nbsp;&nbsp; name: <span style="color: #a31515;">"DefaultApi"</span>,<br />
+&nbsp;&nbsp;&nbsp; routeTemplate: <span style="color: #a31515;">"api/{controller}/{id}"</span>,<br />
+&nbsp;&nbsp;&nbsp; defaults: <span style="color: blue;">new</span> { id = <span style="color: #2b91af;">RouteParameter</span>.Optional }<br />
+);</p>
+</div>
+<p>Routing rules:</p>
+<ul>
+<li>Controllers: derive from ApiController</li>
+<li>Public methods except for [NonAction] and derived methods.</li>
+<li>Method name <strong>starts with</strong> http method (eg HttpGet is Get or GetProduct) or you can use [<span style="color: #2b91af;">HttpGet</span>] etc</li>
+<li>Arguments: by default, simple types (int, string) come from the route, complex types from the request body. Add [<span style="color: #2b91af;">FromBody</span>] to change this.</li>
+</ul>
+
+<h3>API Controllers</h3>
+<ul>
+<li>Derived from [System.Web.Http.]ApiController (not System.Web.Mvc.Controller).</li>
+<li>Don't return ActionResult, return void, normal type or an <span style="color: #2b91af;">HttpResponseMessage</span> for customization</li>
+</ul>
+<p>Simple action:</p>
+<div class="code">
+<p><span style="color: green;">// GET api/Product/5</span><br />
+<span style="color: blue;">public</span> <span style="color: #2b91af;">Product</span> Get(<span style="color: blue;">int</span> id)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> product = _repository.Get(id);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (product == <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//return 404 (not trapped by [ExceptionFilter])</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">throw</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpResponseException</span>(<span style="color: #2b91af;">HttpStatusCode</span>.NotFound);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> product;<br />
+}</p>
+</div>
+
+<h4>JSON.net</h4>
+
+<p>The JSON serializer is JSON.net. It may choke on self-referencing entities (<q>Self referencing loop detected for property ...</q>). You can ignore the property ([<span style="color: #2b91af;">JsonIgnore</span>]) or in App_Start/WebApiConfig.cs ignore it globally:</p>
+<div class="code">
+<p>config.Formatters.JsonFormatter.SerializerSettings.ReferenceLoopHandling<br />
+&nbsp;&nbsp;&nbsp; = Newtonsoft.Json.<span style="color: #2b91af;">ReferenceLoopHandling</span>.Ignore;</p>
+</div>
+
+<p>Sometimes you want enums serialized as strings (not ints).</p>
+<div class="code">
+<p>[<span style="color: #2b91af;">JsonConverter</span>(<span style="color: blue;">typeof</span>(Newtonsoft.Json.Converters.<span style="color: #2b91af;">StringEnumConverter</span>))]<br />
+<span style="color: blue;">public</span> <span style="color: #2b91af;">DaysOfTheWeek</span> WeekDay { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }</p>
+</div>
+
+<p>Set it globally:</p>
+<div class="code">
+<p><span style="color: blue;">var</span> config = <span style="color: #2b91af;">GlobalConfiguration</span>.Configuration; <span style="color: green;">//HttpConfiguration</span><br />
+config.Formatters.JsonFormatter.SerializerSettings.Converters.Add(<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> Newtonsoft.Json.Converters.<span style="color: #2b91af;">StringEnumConverter</span>());</p>
+</div>
+
+
+<h3>Responses - WebApi v1</h3>
+
+
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: #2b91af;">HttpResponseMessage</span> Post(<span style="color: #2b91af;">Product</span> product)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!ModelState.IsValid)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> Request.CreateErrorResponse(<span style="color: #2b91af;">HttpStatusCode</span>.BadRequest, ModelState); <span style="color: green;">//400</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//or ... return new HttpResponseMessage(HttpStatusCode.BadRequest);</span><br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!User.IsInRole(<span style="color: #a31515;">"Admin"</span>))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> Request.CreateErrorResponse(<span style="color: #2b91af;">HttpStatusCode</span>.Unauthorized, <span style="color: #a31515;">"Return 401"</span>); <span style="color: green;">//401</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (product.Id == <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">throw</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpResponseException</span>(<span style="color: #2b91af;">HttpStatusCode</span>.NotFound); <span style="color: green;">//404</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (product.IsDeleted) <span style="color: green;">//redirect (not a good example in a POST)</span><br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> link = Url.Link(<span style="color: #a31515;">"DefaultApi"</span>, <span style="color: blue;">new</span> { controller = <span style="color: #a31515;">"</span><span style="color: #a31515;">DeletedProduct</span><span style="color: #a31515;">"</span> });<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> response = Request.CreateResponse(<span style="color: #2b91af;">HttpStatusCode</span>.Redirect); <span style="color: green;">//302</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; response.Headers.Location = <span style="color: blue;">new</span> <span style="color: #2b91af;">Uri</span>(link);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> response;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (_productService.Save(product))<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//for POST return a 201, instead of 200</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> Request.CreateResponse(<span style="color: #2b91af;">HttpStatusCode</span>.Created, product);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//normal 200</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> Request.CreateResponse(<span style="color: #2b91af;">HttpStatusCode</span>.OK, product);<br />
+}</p>
+</div>
+
+<p>Testing a v1 action using controller.Url means you have to configure routes and the request (ugh): </p>
+<div class="code">
+<p>controller.Configuration = <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpConfiguration</span>();<br />
+controller.Configuration.Routes.MapHttpRoute(<span style="color: #a31515;">"DefaultApi"</span>, <span style="color: #a31515;">"api/{controller}/{id}"</span>, <span style="color: blue;">new</span> { id = <span style="color: #2b91af;">RouteParameter</span>.Optional });</p>
+</div>
+
+<h3>Responses - WebApi v2</h3>
+<p>WebApi v2 has IHttpActionResult and a pretty full set of methods for each HTTP response.</p>
+
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: #2b91af;">IHttpActionResult</span> Post(<span style="color: #2b91af;">Product</span> product)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!ModelState.IsValid)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> BadRequest(ModelState); <span style="color: green;">//400</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!User.IsInRole(<span style="color: #a31515;">"Admin"</span>))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> Unauthorized(); <span style="color: green;">//401</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (product.Id == 0)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> NotFound(); <span style="color: green;">//404</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (product.IsDeleted) <span style="color: green;">//redirect (not a good example in a POST)</span><br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> link = Url.Link(<span style="color: #a31515;">"DefaultApi"</span>, <span style="color: blue;">new</span> { controller = <span style="color: #a31515;">"</span><span style="color: #a31515;">DeletedProduct</span><span style="color: #a31515;">"</span> });<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> Redirect(link); <span style="color: green;">//302</span><br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (_productService.Save(product))<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//for POST return a 201, instead of 200</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;"><span style="color: blue;">return</span> CreatedAtRoute(<span style="color: #a31515;">"DefaultApi"</span>, <span style="color: blue;">new</span> { controller = <span style="color: #a31515;">"Product"</span>, id = product.Id }, product);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//Created(location, product) requires a Url.Link<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//normal 200</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> Ok(product); <span style="color: green;">//return a 200 with payload</span><br />
+}</p>
+</div>
+
+<p>Testing (async version, <span style="color: blue;">async</span> <span style="color: #2b91af;">Task</span>&lt;<span style="color: #2b91af;">IHttpActionResult</span>&gt;:</p>
+<div class="code">
+<p><span style="color: green;">//act</span><br />
+<span style="color: blue;">var</span> result = (<span style="color: blue;">await</span> controller.Post(product)) <span style="color: blue;">as</span> <span style="color: #2b91af;">CreatedAtRouteNegotiatedContentResult</span>&lt;<span style="color: #2b91af;">Product</span>&gt;;<br />
+&nbsp;<br />
+<span style="color: green;">//assert</span><br />
+<span style="color: #2b91af;">Assert</span>.IsNotNull(result);<br />
+<span style="color: #2b91af;">Assert</span>.AreNotEqual(0, result.Content.Id);</p>
+</div>
+
+
+
+<h3>Cookies</h3>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: #2b91af;">HttpResponseMessage</span> GetTranslation(<span style="color: blue;">string</span> text)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">const</span> <span style="color: blue;">string</span> cookieName = <span style="color: #a31515;">"language"</span>;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//read a request cookie</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> cookie =<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Request.Headers.GetCookies(cookieName).FirstOrDefault();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> language = (cookie != <span style="color: blue;">null</span>) ? cookie[cookieName].Value : <span style="color: blue;">null</span>;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> translated = Translate(language, text);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> response = Request.CreateResponse(<span style="color: #2b91af;">HttpStatusCode</span>.OK, translated);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//response cookie</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> responseCookie = <span style="color: blue;">new</span> <span style="color: #2b91af;">CookieHeaderValue</span>(<span style="color: #a31515;">"lastTranslation"</span>, text)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  Expires = DateTimeOffset.Now.AddDays(1),<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  Domain = Request.RequestUri.Host,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  Path = <span style="color: #a31515;">"/"</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  };<br />
+&nbsp;&nbsp;&nbsp; response.Headers.AddCookies(<span style="color: blue;">new</span>[] { responseCookie });<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> response;<br />
+}</p>
+</div>
+
+
+<h3>Exceptions</h3>
+<ul>
+<li><a href="errors.html#webapi">See also MVC/WebApi exception handling</a></li>
+<li>MVC's [HandleError] does NOT work!</li>
+<li>HttpResponseException: <span style="color: blue;">throw</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpResponseException</span>(<span style="color: #2b91af;">HttpStatusCode</span>.NotFound);</li>
+<li>Derive from (abstract) System.Web.Http.Filters.ExceptionFilterAttribute for [HandleError] type functionality. <a href="errors.html#webapi">See example</a></li>
+<li>To add globally, use GlobalConfiguration.Configuration.Filters</li>
+<li>You can also return an HttpError (a dictionary) in the HttpResponseMessage, or throw passing in the ResponseMessage</li>
+</ul>
+<div class="code">
+<p><span style="color: green;">// GET api/Product/5</span><br />
+<span style="color: blue;">public</span> <span style="color: #2b91af;">HttpResponseMessage</span> Get(<span style="color: blue;">int</span> id)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> item = _repository.Get(id);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (item == <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> err = <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpError</span>(id + <span style="color: #a31515;">" not found"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> Request.CreateResponse(<span style="color: #2b91af;">HttpStatusCode</span>.NotFound, err);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//or...</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> Request.CreateErrorResponse(<span style="color: #2b91af;">HttpStatusCode</span>.NotFound, id + <span style="color: #a31515;">" not found"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//or...</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">throw</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpResponseException</span>(<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Request.CreateErrorResponse(<span style="color: #2b91af;">HttpStatusCode</span>.NotFound, id + <span style="color: #a31515;">" not found"</span>));<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> Request.CreateResponse(<span style="color: #2b91af;">HttpStatusCode</span>.OK, item);<br />
+}</p>
+</div>
+
+<p>You can easily return the ModelState for validations</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: #2b91af;">HttpResponseMessage</span> PostProduct(<span style="color: #2b91af;">Product</span> item)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!ModelState.IsValid)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> Request.CreateErrorResponse(<span style="color: #2b91af;">HttpStatusCode</span>.BadRequest, ModelState);<br />
+&nbsp;&nbsp;&nbsp; }</p>
+</div>
+
+
+<h3>Tracing</h3>
+<p>Config</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> Register(<span style="color: #2b91af;">HttpConfiguration</span> config)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; config.Services.Replace(<span style="color: blue;">typeof</span>(System.Web.Http.Tracing.<span style="color: #2b91af;">ITraceWriter</span>), myTraceWriter);</p>
+</div>
+<p>Write</p>
+<div class="code">
+<p>Configuration.Services.GetTraceWriter().Info(Request, <span style="color: #a31515;">"Category"</span>, <span style="color: #a31515;">"message or exception"</span>);</p>
+</div>
+
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

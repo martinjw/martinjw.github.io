@@ -1,0 +1,190 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>.Net Strings</title>
+<link rel="stylesheet" type="text/css" href="../style.css" />
+<script type="text/javascript" src="../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../index.html">Main &gt;</a></li>
+<li><a href="dotnet.html">.Net</a></li>
+<li><a href="dotnetlinks.html">.Net Links</a></li>
+<li><a href="visualstudio.html">Visual Studio</a></li>
+<li><a href="string.html">Strings</a></li>
+<li><a href="io.html">Data &gt;</a></li>
+<li><a href="wcf/wcf.html">WCF &gt;</a></li>
+<li><a href="dotnetwinform.html">Winforms.Net</a></li>
+<li><a href="wpf/index.html">WPF</a></li>
+<li><a href="propomatic.html">Prop-o-matic</a></li>
+<li><a href="fcl/index.html">Other FCL &gt;</a></li>
+<li><a href="asp/aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="azure/index.html">Azure &gt;</a></li>
+<li><a href="code/index.html">Code &gt;</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>.Net Strings</h2>
+<h3>String.Format(?)</h3>
+<p>For use with obj.ToString("x") and string.Format("The value is {0:x)",obj) (<a href="http://msdn2.microsoft.com/en-us/library/c3s1ez6e.aspx">msdn</a>)</p>
+<div class="code">
+<p><span style="color: #2b91af;">CultureInfo</span> c = <span style="color: blue;">new</span> <span style="color: #2b91af;">CultureInfo</span>(<span style="color: #a31515;">"en-CA"</span>);</p>
+<p>&nbsp;</p>
+<p><span style="color: blue;">decimal</span> dec = 19.956m;</p>
+<p><span style="color: #2b91af;">Assert</span>.AreEqual(<span style="color: #a31515;">"$19.96"</span>, dec.ToString(<span style="color: #a31515;">"C"</span>, c)); <span style="color: green;">//currency</span></p>
+<p><span style="color: #2b91af;">Assert</span>.AreEqual(<span style="color: #a31515;">"19.96"</span>, dec.ToString(<span style="color: #a31515;">"F2"</span>, c)); <span style="color: green;">//decimal places (rounding)</span></p>
+<p><span style="color: #2b91af;">Assert</span>.AreEqual(<span style="color: #a31515;">"019"</span>, 19.ToString(<span style="color: #a31515;">"D3"</span>, c)); <span style="color: green;">//integers- add leading zeroes</span></p>
+<p><span style="color: green;">//Dates</span></p>
+<p><span style="color: #2b91af;">DateTime</span> d = <span style="color: blue;">new</span> <span style="color: #2b91af;">DateTime</span>(2009, 5, 10, 13, 25, 10);</p>
+<p><span style="color: #2b91af;">Assert</span>.AreEqual(<span style="color: #a31515;">"10/05/2009"</span>, d.ToString(<span style="color: #a31515;">"d"</span>, c)); <span style="color: green;">//short date</span></p>
+<p><span style="color: #2b91af;">Assert</span>.AreEqual(<span style="color: #a31515;">"2009/05/10 13:25:10"</span>, </p>
+<p>&nbsp;&nbsp;&nbsp; d.ToString(<span style="color: #a31515;">"yyyy/MM/dd HH:mm:ss"</span>, c)); <span style="color: green;">//specific format</span></p>
+<p><span style="color: #2b91af;">Assert</span>.AreEqual(<span style="color: #a31515;">"2009-05-10T13:25:10"</span>, </p>
+<p>&nbsp;&nbsp;&nbsp; d.ToString(<span style="color: #a31515;">"s"</span>, c)); <span style="color: green;">//sortable</span></p>
+<p><span style="color: green;">//MM is month, mm is minute, HH is 24hour, hh is 12hour</span></p>
+<p><span style="color: green;">//Alignment&nbsp; comma with padding (- for left align)</span></p>
+<p><span style="color: #2b91af;">Assert</span>.AreEqual(<span style="color: #a31515;">"City: Ft Meade&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;  Zip:&nbsp;&nbsp;&nbsp; &nbsp; 21113"</span>,</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">String</span>.Format(<span style="color: #a31515;">"City: {0,-20} Zip: {1,10}"</span>, <span style="color: #a31515;">"Ft Meade"</span>, <span style="color: #a31515;">"21113"</span>));</p>
+<p><span style="color: green;">//Conditional&nbsp;&nbsp;&nbsp;  </span></p>
+<p><span style="color: #2b91af;">Assert</span>.AreEqual(<span style="color: #a31515;">"positive"</span>, </p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">String</span>.Format(<span style="color: #a31515;">"{0:positive;negative;zero}"</span>, 10)); <span style="color: green;">//"positive" for &gt;0 etc</span></p>
+</div>
+
+<h3>Enums</h3>
+<ul>
+<li><span style="color: blue;">string</span> s = enumValue.ToString();</li>
+<li><span style="color: #2b91af;">MyEnum</span> value = (<span style="color: #2b91af;">MyEnum</span>)<span style="color: #2b91af;">Enum</span>.Parse(<span style="color: blue;">typeof</span>(<span style="color: #2b91af;">MyEnum</span>), key, <span style="color: blue;">true</span>);<ul>
+<li>Throws ArgumentException if not in enum. There's no TryParse.</li>
+<li><span style="color: #2b91af;">Enum</span>.IsDefined(<span style="color: blue;">typeof</span>(<span style="color: #2b91af;">MyEnum</span>), key ) uses reflection, doesn't understand [<span style="color: #2b91af;">Flags</span>]</li>
+</ul>
+</li>
+<li>[Flags] enum common operations (using System.Security.AccessControl.FileSystemRights for acls):</li>
+</ul>
+<div class="code">
+<p><span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: blue;">bool</span> HasFlag(<span style="color: #2b91af;">FileSystemRights</span> rights, <span style="color: #2b91af;">FileSystemRights</span> flag)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> (flag &amp; rights) == flag;<br />
+}<br />
+&nbsp;<br />
+<span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: #2b91af;">FileSystemRights</span> AddFlag(<span style="color: #2b91af;">FileSystemRights</span> rights, <span style="color: #2b91af;">FileSystemRights</span> flag)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> rights | flag;<br />
+}<br />
+&nbsp;<br />
+<span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: #2b91af;">FileSystemRights</span> RemoveFlag(<span style="color: #2b91af;">FileSystemRights</span> rights, <span style="color: #2b91af;">FileSystemRights</span> flag)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> rights ^ flag;<br />
+}</p>
+</div>
+
+<h3>Regex</h3>
+<ul>
+<li><a href="http://www.regular-expressions.info/quickstart.html">Regex tutorial site</a></li>
+<li><a href="http://www.addedbytes.com/cheat-sheets/regular-expressions-cheat-sheet/">Regular Expression Cheat Sheet</a></li>
+</ul>
+<table>
+<tr><td>Match "(12,3)"</td>
+<td><span style="color: #2b91af;">Regex</span>.Match(<span style="color: blue;">value</span>,<br /> <span style="color: #a31515;">@"\(([\d]+),([\d]+)\)"</span>)</td>
+<td>
+Escaped "\(", group "()", digit shorthand "\d", repeated one or more "+", literal ",".
+</td></tr>
+<tr><td>Only printable ASCII</td>
+<td><span style="color: #2b91af;">Regex</span>.Replace(<span style="color: blue;">value</span>,<br /> <span style="color: #a31515;">"[^\x20-\x7e]+"</span>, <span style="color: #a31515;">""</span>)</td>
+<td>Unicode space to ~ (x7f is delete)</td></tr>
+<tr><td>Is alphaNumeric with length</td>
+<td><span style="color: #2b91af;">Regex</span>.IsMatch(<span style="color: blue;">value</span>,<br /> <span style="color: #a31515;">"^[\w\-]{8,20}$"</span>)</td>
+<td>Note \w is [A-Za-z0-9_] (includes underscore)</td></tr>
+<tr><td>dd-MM-yyyy HH:mm</td>
+<td><span style="color: #2b91af;">Regex</span>.IsMatch(<span style="color: blue;">value</span>,<br />
+ <span style="color: #a31515;">"^([012]\\d|[3][0-1])[- /.]([0]\\d|[1][0-2])[- /.](19|20)\\d{2} ([01]\\d|[2][0-3])\:([0-5]\\d)$"</span>)</td>
+<td>Using (|) conditionals to limit numbers, and for variable date delimiters. </td></tr>
+</table>
+<p>For html (<a href="http://haacked.com/archive/2005/04/22/Matching_HTML_With_Regex.aspx">Source: Phil Haack</a>):</p>
+<div class="code">
+<p><span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> HtmlTagsViaRegexMatches()</p>
+<p>{</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> html = <span style="color: #a31515;">"&lt;P&gt;&lt;A href=page.html&gt;Page&lt;/A&gt;"</span>;</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Regex</span> regex =</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">Regex</span>(<span style="color: #a31515;">@"&lt;/?\w+((\s+\w+(\s*=\s*(?:"".*?""|'.*?'|[^'""&gt;\s]+))?)+\s*|\s*)/?&gt;"</span>,</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; <span style="color: #2b91af;">RegexOptions</span>.Singleline);</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">MatchCollection</span> matches = regex.Matches(html);</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">foreach</span> (<span style="color: #2b91af;">Match</span> match <span style="color: blue;">in</span> matches)</p>
+<p>&nbsp;&nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//matches &lt;P&gt;, &lt;A href=page.html&gt;, &lt;/A&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Debug</span>.WriteLine(match.Value + <span style="color: #a31515;">" found at "</span> + match.Index);</p>
+<p>&nbsp;&nbsp;&nbsp; }</p>
+<p>}</p>
+<p>&nbsp;</p>
+<p><span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> HtmlTagsViaMatchEvaluator()</p>
+<p>{</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> html = <span style="color: #a31515;">"&lt;P&gt;&lt;A href=Page.html&gt;Page&lt;/A&gt;"</span>;</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Regex</span> rx = <span style="color: blue;">new</span> <span style="color: #2b91af;">Regex</span>(<span style="color: #a31515;">@"&lt;.*?&gt;"</span>); <span style="color: green;">//simple form</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> result = rx.Replace(html, </p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">MatchEvaluator</span>(</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">delegate</span>(<span style="color: #2b91af;">Match</span> m)</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> m.Groups[0].Value.ToLower();</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; ));</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Assert</span>.AreEqual(<span style="color: #a31515;">"&lt;p&gt;&lt;a href=page.html&gt;Page&lt;/a&gt;"</span>, result);</p>
+<p>}</p>
+</div>
+
+<h3>Convert to/from Byte[]</h3>
+<p><span style="color: blue;">var</span> txt = System.Text.<span style="color: #2b91af;">Encoding</span>.UTF8.GetString(bytes);</p>
+<p><span style="color: blue;">var</span> bytes = System.Text.<span style="color: #2b91af;">Encoding</span>.UTF8.GetBytes(mySteing);</p>
+<p>BitConverter can only turn byte arrays to strings, not the other way (it just takes numeric types): <span style="color: blue;">var</span> bytes = <span style="color: #2b91af;">BitConverter</span>.GetBytes(myInt);</p>
+
+<h3>String to lines</h3>
+<div class="code">
+<p><span style="color: blue;">using</span> (<span style="color: blue;">var</span> sr = <span style="color: blue;">new</span> <span style="color: #2b91af;">StringReader</span>(lines))<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> line;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">while</span> ((line = sr.ReadLine()) != <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; ParseLine(line);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+
+<h3>Streams</h3>
+<p>String to stream</p>
+<div class="code">
+<p><span style="color: blue;">using</span> (<span style="color: blue;">var</span> ms = <span style="color: blue;">new</span> <span style="color: #2b91af;">MemoryStream</span>(<span style="color: #2b91af;">Encoding</span>.UTF8.GetBytes(txt)))<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//</span><br />
+}</p>
+</div>
+
+<p>Stream to string</p>
+<div class="code">
+<p><span style="color: blue;">string</span> txt = <span style="color: blue;">null</span>;<br />
+<span style="color: blue;">using</span> (<span style="color: blue;">var</span> reader = <span style="color: blue;">new</span> <span style="color: #2b91af;">StreamReader</span>(stream))<br />
+{<br />
+&nbsp;&nbsp;&nbsp; txt = reader.ReadToEnd();<br />
+}</p>
+</div>
+<p>Serialize entity to xml string (XmlSerializer and XmlTestWriter)</p>
+<div class="code">
+<p><span style="color: blue;">var</span> serializer = <span style="color: blue;">new</span> <span style="color: #2b91af;">XmlSerializer</span>(<span style="color: blue;">typeof</span>(<span style="color: #2b91af;">Product</span>));<br />
+<span style="color: blue;">var</span> output = <span style="color: blue;">new</span> <span style="color: #2b91af;">StringWriter</span>();<br />
+<span style="color: blue;">using</span> (<span style="color: blue;">var</span> writer = <span style="color: blue;">new</span> <span style="color: #2b91af;">XmlTextWriter</span>(output) { Formatting = <span style="color: #2b91af;">Formatting</span>.Indented })<br />
+{<br />
+&nbsp;&nbsp;&nbsp; serializer.Serialize(writer, product);<br />
+}<br />
+<span style="color: blue;">var</span> txt = output.GetStringBuilder().ToString();</p>
+</div>
+
+</div>
+<div class="Footer">
+
+</div></body>
+</html>

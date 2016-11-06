@@ -1,0 +1,129 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>NHibernate mapping</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../index.html">Code &gt;</a></li>
+<li><a href="index.html">NHibernate</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>NHibernate Mapping</h2>
+<p><strong>Add the .hbm.xml files as "Embedded Resource"</strong>.<br />
+See the <a href="sampleentities.html">Sample entities</a> for these mapping documents. See <a href="moremapping.html">more mapping notes</a><br />
+<a href="#fluent">See below</a> for an example of <a href="http://fluentnhibernate.org/">fluent mapping</a> which builds the mapping dynamically, and is refactor-friendly. <br />
+For quick-start database-driven NHibernate, check out my <a href="http://dbschemareader.codeplex.com/">Database schema reader</a> which has a simplistic code generator. It reads the database and will create NHibernate compatible POCO classes as well as either hbm mapping files or fluent nhibernate mappings.</p>
+
+<h3>Category</h3>
+<div class="code">
+<p><span style="color: blue;">&lt;?</span><span style="color: #a31515;">xml</span> <span style="color: red;">version</span><span style="color: blue;">=</span>"<span style="color: blue;">1.0</span>" <span style="color: red;">encoding</span><span style="color: blue;">=</span>"<span style="color: blue;">utf-8</span>"<span style="color: blue;">?&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: #a31515;">hibernate-mapping</span> <span style="color: red;">xmlns</span><span style="color: blue;">=</span>"<span style="color: blue;">urn:nhibernate-mapping-2.2</span>" <span style="color: red;">namespace</span><span style="color: blue;">=</span>"<span style="color: blue;">Northwind</span>" <span style="color: red;">assembly</span><span style="color: blue;">=</span>"<span style="color: blue;">Northwind</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">class</span> <span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Category</span>" <span style="color: red;">table</span><span style="color: blue;">=</span>"<span style="color: blue;">`Categories`</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">id</span> <span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Id</span>" <span style="color: red;">column</span><span style="color: blue;">=</span>"<span style="color: blue;">`CategoryID`</span>" <span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">System.Int32</span>" <span style="color: red;">unsaved-value</span><span style="color: blue;">=</span>"<span style="color: blue;">0</span>" <span style="color: red;">access</span><span style="color: blue;">=</span>"<span style="color: blue;">nosetter.camelcase-underscore</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">generator</span> <span style="color: red;">class</span><span style="color: blue;">=</span>"<span style="color: blue;">native</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">id</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">property</span> <span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">CategoryName</span>" <span style="color: red;">column</span><span style="color: blue;">=</span>"<span style="color: blue;">`CategoryName`</span>" <span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">System.String</span>" <span style="color: red;">length</span><span style="color: blue;">=</span>"<span style="color: blue;">15</span>" <span style="color: red;">not-null</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">property</span> <span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Description</span>" <span style="color: red;">column</span><span style="color: blue;">=</span>"<span style="color: blue;">`Description`</span>" <span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">System.String</span>" <span style="color: red;">length</span><span style="color: blue;">=</span>"<span style="color: blue;">1073741823</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">property</span> <span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Picture</span>" <span style="color: red;">column</span><span style="color: blue;">=</span>"<span style="color: blue;">`Picture`</span>" <span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">System.Byte[]</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">bag</span> <span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">ProductCollection</span>" <span style="color: red;">access</span><span style="color: blue;">=</span>"<span style="color: blue;">nosetter.camelcase-underscore</span>" <span style="color: red;">table</span><span style="color: blue;">=</span>"<span style="color: blue;">`Products`</span>" <span style="color: red;">cascade</span><span style="color: blue;">=</span>"<span style="color: blue;">all-delete-orphan</span>" <span style="color: red;">inverse</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">key</span> <span style="color: red;">column</span><span style="color: blue;">=</span>"<span style="color: blue;">`CategoryId`</span>" <span style="color: red;">foreign-key</span><span style="color: blue;">=</span>"<span style="color: blue;">FK_Products_Categories</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">one-to-many</span> <span style="color: red;">class</span><span style="color: blue;">=</span>"<span style="color: blue;">Product</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">bag</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">class</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">hibernate-mapping</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+
+<h3>Product</h3>
+<div class="code">
+<p><span style="color: blue;">&lt;?</span><span style="color: #a31515;">xml</span> <span style="color: red;">version</span><span style="color: blue;">=</span>"<span style="color: blue;">1.0</span>" <span style="color: red;">encoding</span><span style="color: blue;">=</span>"<span style="color: blue;">utf-8</span>"<span style="color: blue;">?&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: #a31515;">hibernate-mapping</span> <span style="color: red;">xmlns</span><span style="color: blue;">=</span>"<span style="color: blue;">urn:nhibernate-mapping-2.2</span>" <span style="color: red;">namespace</span><span style="color: blue;">=</span>"<span style="color: blue;">Northwind</span>" <span style="color: red;">assembly</span><span style="color: blue;">=</span>"<span style="color: blue;">Northwind</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">class</span> <span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Product</span>" <span style="color: red;">table</span><span style="color: blue;">=</span>"<span style="color: blue;">`Products`</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">id</span> <span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Id</span>" <span style="color: red;">column</span><span style="color: blue;">=</span>"<span style="color: blue;">`ProductID`</span>" <span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">System.Int32</span>" <span style="color: red;">unsaved-value</span><span style="color: blue;">=</span>"<span style="color: blue;">0</span>" <span style="color: red;">access</span><span style="color: blue;">=</span>"<span style="color: blue;">nosetter.camelcase-underscore</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">generator</span> <span style="color: red;">class</span><span style="color: blue;">=</span>"<span style="color: blue;">native</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">id</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">property</span> <span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">ProductName</span>" <span style="color: red;">column</span><span style="color: blue;">=</span>"<span style="color: blue;">`ProductName`</span>" <span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">System.String</span>" <span style="color: red;">length</span><span style="color: blue;">=</span>"<span style="color: blue;">40</span>" <span style="color: red;">not-null</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">many-to-one</span> <span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Supplier</span>" <span style="color: red;">column</span><span style="color: blue;">=</span>"<span style="color: blue;">`SupplierID`</span>" <span style="color: red;">class</span><span style="color: blue;">=</span>"<span style="color: blue;">Supplier</span>" <span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">many-to-one</span> <span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Category</span>" <span style="color: red;">column</span><span style="color: blue;">=</span>"<span style="color: blue;">`CategoryID`</span>" <span style="color: red;">class</span><span style="color: blue;">=</span>"<span style="color: blue;">Category</span>" <span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">property</span> <span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">QuantityPerUnit</span>" <span style="color: red;">column</span><span style="color: blue;">=</span>"<span style="color: blue;">`QuantityPerUnit`</span>" <span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">System.String</span>" <span style="color: red;">length</span><span style="color: blue;">=</span>"<span style="color: blue;">20</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">property</span> <span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">UnitPrice</span>" <span style="color: red;">column</span><span style="color: blue;">=</span>"<span style="color: blue;">`UnitPrice`</span>" <span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">System.Decimal</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">property</span> <span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">UnitsInStock</span>" <span style="color: red;">column</span><span style="color: blue;">=</span>"<span style="color: blue;">`UnitsInStock`</span>" <span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">System.Int16</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">property</span> <span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">UnitsOnOrder</span>" <span style="color: red;">column</span><span style="color: blue;">=</span>"<span style="color: blue;">`UnitsOnOrder`</span>" <span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">System.Int16</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">property</span> <span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">ReorderLevel</span>" <span style="color: red;">column</span><span style="color: blue;">=</span>"<span style="color: blue;">`ReorderLevel`</span>" <span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">System.Int16</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">property</span> <span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Discontinued</span>" <span style="color: red;">column</span><span style="color: blue;">=</span>"<span style="color: blue;">`Discontinued`</span>" <span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">System.Boolean</span>" <span style="color: red;">not-null</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">class</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">hibernate-mapping</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+<h3><a name="fluent">Fluent Mapping</a></h3>
+<div class="code">
+<p><span style="color: blue;">using</span> FluentNHibernate.Mapping;<br/>
+<br/>
+<span style="color: blue;">namespace</span> Northwind.Mapping<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br/>
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> Class mapping to Categories table</span><br/>
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br/>
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">CategoryMapping</span> : <span style="color: #2b91af;">ClassMap</span>&lt;<span style="color: #2b91af;">Category</span>&gt;<br/>
+&nbsp;&nbsp;&nbsp; {<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> Constructor</span><br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> CategoryMapping()<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Table(<span style="color: #a31515;">"Categories"</span>);<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Id(x =&gt; x.CategoryId).Column(<span style="color: #a31515;">"CategoryID"</span>).GeneratedBy.Identity();<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Map(x =&gt; x.CategoryName).Length(15).Not.Nullable();<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Map(x =&gt; x.Description);<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Map(x =&gt; x.Picture);<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//Foreign key to Products (Product)</span><br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; HasMany(x =&gt; x.Products).KeyColumn(<span style="color: #a31515;">"CategoryID"</span>).Inverse().ForeignKeyConstraintName(<span style="color: #a31515;">"FK_Products_Categories"</span>);<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br/>
+&nbsp;&nbsp;&nbsp; }<br/>
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br/>
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> Class mapping to Products table</span><br/>
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br/>
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">ProductMapping</span> : <span style="color: #2b91af;">ClassMap</span>&lt;<span style="color: #2b91af;">Product</span>&gt;<br/>
+&nbsp;&nbsp;&nbsp; {<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> Constructor</span><br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> ProductMapping()<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Table(<span style="color: #a31515;">"Products"</span>);<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Id(x =&gt; x.ProductId).Column(<span style="color: #a31515;">"ProductID"</span>).GeneratedBy.Identity();<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Map(x =&gt; x.ProductName).Length(40).Not.Nullable();<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; References(x =&gt; x.Supplier).Column(<span style="color: #a31515;">"SupplierID"</span>) <span style="color: green;">//.NotFound.Ignore() if required</span><br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; References(x =&gt; x.Category).Column(<span style="color: #a31515;">"CategoryID"</span>);<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Map(x =&gt; x.QuantityPerUnit).Length(20);<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Map(x =&gt; x.UnitPrice);<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Map(x =&gt; x.UnitsInStock);<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Map(x =&gt; x.UnitsOnOrder);<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Map(x =&gt; x.ReorderLevel);<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Map(x =&gt; x.Discontinued).Not.Nullable();<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//Foreign key to Order Details (OrderDetail)</span><br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; HasMany(x =&gt; x.OrderDetails).KeyColumn(<span style="color: #a31515;">"ProductID"</span>).Inverse().ForeignKeyConstraintName(<span style="color: #a31515;">"FK_Order_Details_Products"</span>);<br/>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br/>
+&nbsp;&nbsp;&nbsp; }<br/>
+}</p>
+</div>
+
+
+</div>
+<div class="Footer">
+
+</div></body>
+</html>

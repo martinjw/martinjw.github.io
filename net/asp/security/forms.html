@@ -1,0 +1,345 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Forms Authentication</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspsecurity.html">Asp Security</a></li>
+<li><a href="forms.html">Forms Authentication</a></li>
+<li><a href="wsfederation.html">WS-Federation</a></li>
+<li><a href="wsfederationconfig.html">WS-Federation Config</a></li>
+<li><a href="ssl.html">SSL</a></li>
+<li><a href="owin.html">Owin</a></li>
+<li><a href="oauth.html">OAuth</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>Forms Authentication</h2>
+<p>For .net 4.5+, see <a href="owin.html">Owin</a></p>
+<h3>Web.config</h3>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">authentication</span><span style="color: blue;"> </span><span style="color: red;">mode</span><span style="color: blue;">=</span>"<span style="color: blue;">Forms</span>"<span style="color: blue;">&gt;</span></p>
+<p><span style="color: blue;">&nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">forms</span><span style="color: blue;"> </span><span style="color: red;">loginUrl</span><span style="color: blue;">=</span>"<span style="color: blue;">Login.aspx</span>"<span style="color: blue;">/&gt;</span></p>
+<p><span style="color: blue;">&lt;/</span><span style="color: #a31515;">authentication</span><span style="color: blue;">&gt;</span></p>
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">authorization</span><span style="color: blue;">&gt;</span></p>
+<p><span style="color: blue;">&nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">deny</span><span style="color: blue;"> </span><span style="color: red;">users</span><span style="color: blue;">=</span>"<span style="color: blue;">?</span>"<span style="color: blue;"> /&gt;</span></p>
+<p><span style="color: blue;">&lt;/</span><span style="color: #a31515;">authorization</span><span style="color: blue;">&gt;</span></p>
+</div>
+<p>In MVC, use a global action filter instead of  <span style="color: blue;">&lt;</span><span style="color: #a31515;">authorization</span><span style="color: blue;">&gt;</span></p>
+<div class="alert">
+In MVC, don't do the <span style="color: blue;">&lt;</span><span style="color: #a31515;">location</span><span style="color: blue;">&gt;</span> sections, as it doesn't play well with routing.
+</div>
+
+<h3>ASP MVC</h3>
+<p>In ApplicationStart (App_Start/FilterConfig.cs) add a global Authorize action filter.</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">FilterConfig</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> RegisterGlobalFilters(<span style="color: #2b91af;">GlobalFilterCollection</span> filters)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; filters.Add(<span style="color: blue;">new</span> <span style="color: #2b91af;">HandleErrorAttribute</span>());<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; filters.Add(<span style="color: blue;">new</span> <span style="color: #2b91af;">AuthorizeAttribute</span>());<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+<p>Login page needs AllowAnonymous filters. For fun, this sets a custom cookie with roles.</p>
+<div class="code">
+<p>[<span style="color: #2b91af;">AllowAnonymous</span>]<br />
+<span style="color: blue;">public</span> <span style="color: #2b91af;">ActionResult</span> Login()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> model = <span style="color: blue;">new</span> <span style="color: #2b91af;">LoginModel</span>();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> View(model);<br />
+}<br />
+&nbsp;<br />
+[<span style="color: #2b91af;">AllowAnonymous</span>]<br />
+[<span style="color: #2b91af;">HttpPost</span>]<br />
+<span style="color: blue;">public</span> <span style="color: #2b91af;">ActionResult</span> Login(<span style="color: #2b91af;">LoginModel</span> model, <span style="color: blue;">string</span> returnUrl)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (ModelState.IsValid) <span style="color: green;">//Required, string length etc</span><br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> userStore = <span style="color: blue;">new</span> <span style="color: #2b91af;">UserRepository</span>();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> user = userStore.FindUser(model.UserName, model.Password);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (user != <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//simple</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//FormsAuthentication.SetAuthCookie(user.Name, false);</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//manually set cookies</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; SetAuthCookie(user.Name, user.RolesList.ToArray());<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//redirect to returnUrl</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!<span style="color: blue;">string</span>.IsNullOrEmpty(returnUrl) &amp;&amp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Url.IsLocalUrl(returnUrl) &amp;&amp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; !returnUrl.Equals(<span style="color: #a31515;">"/Error/NotFound"</span>, <span style="color: #2b91af;">StringComparison</span>.OrdinalIgnoreCase))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> Redirect(returnUrl);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> Redirect(<span style="color: #a31515;">"~/"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; ModelState.AddModelError(<span style="color: #a31515;">"UserName"</span>, <span style="color: #a31515;">"User or password not found"</span>);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> View(model);<br />
+}<br />
+&nbsp;<br />
+<span style="color: blue;">private</span> <span style="color: blue;">void</span> SetAuthCookie(<span style="color: blue;">string</span> userName, <span style="color: blue;">string</span>[] roles)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> userData = <span style="color: blue;">string</span>.Join(<span style="color: #a31515;">","</span>, roles); <span style="color: green;">//could JsonConvert.SerializeObject(obj)</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> authTicket = <span style="color: blue;">new</span> <span style="color: #2b91af;">FormsAuthenticationTicket</span>(<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; 1, <span style="color: green;">//version</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; userName,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; <span style="color: #2b91af;">DateTime</span>.Now, <span style="color: green;">//issue date</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; <span style="color: #2b91af;">DateTime</span>.Now.AddMinutes(30), <span style="color: green;">//expiration</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; <span style="color: blue;">false</span>,&nbsp; <span style="color: green;">//isPersistent</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; userData,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; <span style="color: #2b91af;">FormsAuthentication</span>.FormsCookiePath); <span style="color: green;">//cookie path</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> cookie = <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpCookie</span>(<span style="color: #2b91af;">FormsAuthentication</span>.FormsCookieName,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">FormsAuthentication</span>.Encrypt(authTicket));<br />
+&nbsp;&nbsp;&nbsp; Response.Cookies.Add(cookie);<br />
+}</p>
+</div>
+<p>Sign-out is simple</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: #2b91af;">ActionResult</span> SignOut()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">FormsAuthentication</span>.SignOut();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> Redirect(<span style="color: #a31515;">"~/"</span>);<br />
+}</p>
+</div>
+
+<p>To go with the custom cookie, global.asax has the following. NB: AuthenticateRequest to create the principal (we let FormsAuthentication do it by default, PostAuthenticateRequest to add roles)</p>
+<div class="code">
+<p><span style="color: blue;">protected</span> <span style="color: blue;">void</span> Application_PostAuthenticateRequest(<span style="color: #2b91af;">Object</span> sender, <span style="color: #2b91af;">EventArgs</span> e)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> context = <span style="color: #2b91af;">HttpContext</span>.Current;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (context.User == <span style="color: blue;">null</span> || !context.User.Identity.IsAuthenticated)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span>;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> formsIdentity = context.User.Identity <span style="color: blue;">as</span> <span style="color: #2b91af;">FormsIdentity</span>;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (formsIdentity == <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span>;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> id = formsIdentity;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> ticket = id.Ticket;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> userData = ticket.UserData; <span style="color: green;">// Get the stored user-data, in this case, our roles</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> roles = userData.Split(<span style="color: #a31515;">','</span>);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> userPrincipal = <span style="color: blue;">new</span> <span style="color: #2b91af;">GenericPrincipal</span>(formsIdentity, roles);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//set both thread principal and HttpContext user</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Thread</span>.CurrentPrincipal = Context.User = userPrincipal;<br />
+}</p>
+</div>
+<p>Razor view</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: maroon;">div</span> <span style="color: red;">class</span><span style="color: blue;">="navbar-collapse collapse"&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: maroon;">ul</span> <span style="color: red;">class</span><span style="color: blue;">="nav navbar-nav"&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: maroon;">li</span><span style="color: blue;">&gt;</span><span style="background: yellow;">@</span>Html.ActionLink(<span style="color: #a31515;">"Home"</span>, <span style="color: #a31515;">"Index"</span>, <span style="color: #a31515;">"Home"</span>)<span style="color: blue;">&lt;/</span><span style="color: maroon;">li</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: maroon;">li</span><span style="color: blue;">&gt;</span><span style="background: yellow;">@</span>Html.ActionLink(<span style="color: #a31515;">"Secure"</span>, <span style="color: #a31515;">"Secure"</span>, <span style="color: #a31515;">"Home"</span>)<span style="color: blue;">&lt;/</span><span style="color: maroon;">li</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;/</span><span style="color: maroon;">ul</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="background: yellow;">@</span><span style="color: blue;">if</span> (User.Identity.IsAuthenticated)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: maroon;">ul</span> <span style="color: red;">class</span><span style="color: blue;">="nav navbar-nav navbar-right"&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: maroon;">li</span> <span style="color: red;">class</span><span style="color: blue;">="navbar-text"&gt;</span>Logged in as <span style="background: yellow;">@</span>User.Identity.Name<span style="color: blue;">&lt;/</span><span style="color: maroon;">li</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: maroon;">li</span><span style="color: blue;">&gt;</span><span style="background: yellow;">@</span>Html.ActionLink(<span style="color: #a31515;">"Sign out"</span>,<span style="color: #a31515;">"SignOut"</span>,<span style="color: #a31515;">"Account"</span>)<span style="color: blue;">&lt;/</span><span style="color: maroon;">li</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;/</span><span style="color: maroon;">ul</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; }<br />
+<span style="color: blue;">&lt;/</span><span style="color: maroon;">div</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+<h3>WebAPI</h3>
+<p>The MVC [System.Web.Mvc.<span style="color: #2b91af;">Authorize()</span>] attribute doesn't work on WebAPI, which has [System.Web.Http.<span style="color: #2b91af;">Authorize()</span>].</p>
+<div class="code">
+<p><span style="color: blue;">using</span> System;<br />
+<span style="color: blue;">using</span> System.Configuration;<br />
+<span style="color: blue;">using</span> System.Web;<br />
+<span style="color: blue;">using</span> System.Web.Http.Controllers;<br />
+&nbsp;<br />
+<span style="color: blue;">namespace</span> Website<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> Restrict access to MVC controllers to roles specified in AppSettings SecurityRole:Write</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">AttributeUsage</span>(<span style="color: #2b91af;">AttributeTargets</span>.Method, AllowMultiple = <span style="color: blue;">true</span>)]<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">WriteAuthorizeAttribute</span> : System.Web.Mvc.<span style="color: #2b91af;">AuthorizeAttribute</span><br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">protected</span> <span style="color: blue;">override</span> <span style="color: blue;">bool</span> AuthorizeCore(<span style="color: #2b91af;">HttpContextBase</span> httpContext)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> isAuthorized = <span style="color: blue;">base</span>.AuthorizeCore(httpContext);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!isAuthorized)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">false</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> writeRole = <span style="color: #2b91af;">ConfigurationManager</span>.AppSettings[<span style="color: #a31515;">"SecurityRole:Write"</span>];<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!<span style="color: blue;">string</span>.IsNullOrEmpty(writeRole))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> httpContext.User.IsInRole(writeRole);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">true</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> Restrict access to WebAPI controllers to roles specified in AppSettings SecurityRole:Write</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">AttributeUsage</span>(<span style="color: #2b91af;">AttributeTargets</span>.Method, AllowMultiple = <span style="color: blue;">true</span>)]<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">WriteAuthorizeApiAttribute</span> : System.Web.Http.<span style="color: #2b91af;">AuthorizeAttribute</span><br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">protected</span> <span style="color: blue;">override</span> <span style="color: blue;">bool</span> IsAuthorized(<span style="color: #2b91af;">HttpActionContext</span> actionContext)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> isAuthorized = <span style="color: blue;">base</span>.IsAuthorized(actionContext);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!isAuthorized)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">false</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> writeRole = <span style="color: #2b91af;">ConfigurationManager</span>.AppSettings[<span style="color: #a31515;">"SecurityRole:Write"</span>];<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!<span style="color: blue;">string</span>.IsNullOrEmpty(writeRole))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> actionContext.RequestContext.Principal.IsInRole(writeRole);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">true</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+<p>Add global filters onto GlobalConfiguration in WebApiConfig:</p>
+<div class="code">
+<p>config.Filters.Add(<span style="color: blue;">new</span> <span style="color: #2b91af;">AuthorizeAttribute</span> { Roles = "Reader" });</p>
+</div>
+
+<h3>ASP Forms</h3>
+
+<p>In your login page :</p>
+<div class="code">
+<p><span style="color: blue;">protected</span> <span style="color: blue;">void</span> btnLogin_Click(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">EventArgs</span> e)</p>
+<p>{</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> userName = txtUserName.Text.Trim();</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> password = txtPassword.Text.Trim();</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: green;">//if (Membership.ValidateUser(userName, password)) //membership provider</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (ValidateUser(userName, password)) <span style="color: green;">//local validation</span></p>
+<p>&nbsp;&nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//if using redirection</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">FormsAuthentication</span>.RedirectFromLoginPage(userName, <span style="color: blue;">false</span>);</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//otherwise just set cookie</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//FormsAuthentication.SetAuthCookie(userName, false);</span></p>
+<p>&nbsp;&nbsp;&nbsp; }</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">else</span></p>
+<p>&nbsp;&nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Page.Validators.Add(<span style="color: blue;">new</span> <span style="color: #2b91af;">BusinessValidationError</span>(<span style="color: #a31515;">"Invalid UserID and Password"</span>));</p>
+<p>&nbsp;&nbsp;&nbsp; }</p>
+<p>}</p>
+</div>
+
+<p>To implement a custom MembershipProvider see <a href="http://msdn.microsoft.com/en-us/library/6tc47t75.aspx">msdn sample</a> (and <a href="http://msdn.microsoft.com/en-us/library/44w5aswa.aspx">here for web.config to set the membership defaultProvider)</a></p>
+<p>To logout manually (you can also just use the asp:LoginStatus control):</p>
+<div class="code">
+<p><span style="color: #2b91af;">FormsAuthentication</span>.SignOut();</p>
+<p><span style="color: #2b91af;">Response</span>.Redirect(<span style="color: #2b91af;">FormsAuthentication</span>.GetLoginPage(<span style="color: blue;">null</span>));</p>
+<p><span style="color: green;">//if you did NOT specify forms/@cookieless=UseCookies (or are using cookieless) you are automatically redirected</span></p>
+</div>
+
+<h3>Roles</h3>
+<p>To do role management (User.IsInRole(x), authorization/allow/@roles, sitemap roles) you have to manually create a FormsAuthenticationTicket and put it in a cookie (RoleManager creates a separate role cookie). <em>NB: you have about 1k of the 4k cookie size maximum for the role list- otherwise use Cache (you can't use Session, it isn't available early enough).</em></p>
+<div class="code">
+<p><span style="color: blue;">string</span> userRoles = <span style="color: #a31515;">"Admin, PowerUser"</span>; <span style="color: green;">//from database?</span></p>
+<p><span style="color: #2b91af;">FormsAuthenticationTicket</span> ticket = <span style="color: blue;">new</span> <span style="color: #2b91af;">FormsAuthenticationTicket</span>(</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 1,&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; <span style="color: green;">// version</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; userName,&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <span style="color: green;">// user name</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">DateTime</span>.Now,&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <span style="color: green;">// issue time</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">DateTime</span>.Now.AddMinutes(30),<span style="color: green;">// expires</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">false</span>,&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; <span style="color: green;">// persistent</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; userRoles&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <span style="color: green;">// user data</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; );</p>
+<p>&nbsp;</p>
+<p><span style="color: #2b91af;">HttpCookie</span> cookie = <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpCookie</span>(<span style="color: #2b91af;">FormsAuthentication</span>.FormsCookieName, <span style="color: #2b91af;">FormsAuthentication</span>.Encrypt(ticket));</p>
+<p>cookie.Secure = <span style="color: #2b91af;">FormsAuthentication</span>.RequireSSL;</p>
+<p>cookie.Domain = <span style="color: #2b91af;">FormsAuthentication</span>.CookieDomain;</p>
+<p>cookie.HttpOnly = <span style="color: blue;">true</span>; <span style="color: green;">//a little extra security</span></p>
+<p>Response.Cookies.Add(cookie);</p>
+<p>Response.Redirect(<span style="color: #a31515;">"Secure.aspx"</span>);</p>
+</div>
+<p>Now wire this in the global.asax (or use an HttpModule)</p>
+<div class="code">
+<p><span style="color: blue;">void</span> Application_OnAuthenticateRequest(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">EventArgs</span> e)</p>
+<p>{</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">HttpContext</span> c = <span style="color: #2b91af;">HttpContext</span>.Current;</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (c.Request.IsAuthenticated)</p>
+<p>&nbsp;&nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">FormsIdentity</span> id = (<span style="color: #2b91af;">FormsIdentity</span>)c.User.Identity;</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span>[] roles = id.Ticket.UserData.Split(<span style="color: #a31515;">','</span>);</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; System.Security.Principal.<span style="color: #2b91af;">GenericPrincipal</span> p =</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> System.Security.Principal.<span style="color: #2b91af;">GenericPrincipal</span>(c.User.Identity, roles);</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Context.User = System.Threading.<span style="color: #2b91af;">Thread</span>.CurrentPrincipal = p;</p>
+<p>&nbsp;&nbsp;&nbsp; }</p>
+<p>}</p>
+</div>
+
+<h3>Simple Authentication In Web.Config</h3>
+<p>For quick and simple/dirty security, you can put users directly into the web.config. </p>
+<p style="color:red">Nested web.config: You must only set &lt;authentication&gt; on the top level. You can't set it on subfolder web.config or in &lt;location&gt;. You should instead use different &lt;authorization&gt; sections.</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">authentication</span><span style="color: blue;"> </span><span style="color: red;">mode</span><span style="color: blue;">=</span>"<span style="color: blue;">Forms</span>"<span style="color: blue;">&gt;</span></p>
+<p><span style="color: blue;">&nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">forms</span><span style="color: blue;"> </span><span style="color: red;">loginUrl</span><span style="color: blue;">=</span>"<span style="color: blue;">~/Admin/Login.aspx</span>"<span style="color: blue;">&gt;</span></p>
+<p><span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">credentials</span><span style="color: blue;"> </span><span style="color: red;">passwordFormat</span><span style="color: blue;">=</span>"<span style="color: blue;">Clear</span>"<span style="color: blue;">&gt;</span></p>
+<p><span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;</span><span style="color: #a31515;">user</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Martin</span>"<span style="color: blue;"> </span><span style="color: red;">password</span><span style="color: blue;">=</span>"<span style="color: blue;">secret</span>"<span style="color: blue;">/&gt;</span></p>
+<p><span style="color: blue;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;/</span><span style="color: #a31515;">credentials</span><span style="color: blue;">&gt;</span></p>
+<p><span style="color: blue;">&nbsp;&nbsp;&nbsp; &lt;/</span><span style="color: #a31515;">forms</span><span style="color: blue;">&gt;</span></p>
+<p><span style="color: blue;">&lt;/</span><span style="color: #a31515;">authentication</span><span style="color: blue;">&gt;</span></p>
+</div>
+<p>Then just use the login control.</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">asp</span><span style="color: blue;">:</span><span style="color: #a31515;">Login</span> <span style="color: red;">ID</span><span style="color: blue;">="Login1"</span> <span style="color: red;">runat</span><span style="color: blue;">="server"</span> <span style="color: red;">DisplayRememberMe</span><span style="color: blue;">="False"</span> <span style="color: red;">VisibleWhenLoggedIn</span><span style="color: blue;">="False"</span><br />&nbsp;&nbsp;&nbsp; <span style="color: red;">OnAuthenticate</span><span style="color: blue;">="Login1_Authenticate" /&gt;</span></p>
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">script</span> <span style="color: red;">runat</span><span style="color: blue;">="server"&gt;</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">protected</span> <span style="color: blue;">void</span> Login1_Authenticate(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">AuthenticateEventArgs</span> e)</p>
+<p>&nbsp;&nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; e.Authenticated = <span style="color: #2b91af;">FormsAuthentication</span>.Authenticate(Login1.UserName, Login1.Password);</p>
+<p>&nbsp;&nbsp;&nbsp; }</p>
+<p><span style="color: blue;">&lt;/</span><span style="color: #a31515;">script</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+<p>Saving new users into web.config. If you're doing this, you really should be using a database, but hey ho. Also you really should use SHA1 format.</p>
+<div class="code">
+<p><span style="color: blue;">if</span> (!Page.IsValid) <span style="color: blue;">return</span>;</p>
+<p><span style="color: blue;">string</span> userName = Server.HtmlEncode(txtName.Text);</p>
+<p><span style="color: blue;">string</span> pw = Server.HtmlEncode(txtPassword.Text);</p>
+<p><span style="color: #2b91af;">Configuration</span> config = <span style="color: #2b91af;">WebConfigurationManager</span>.OpenWebConfiguration(<span style="color: #a31515;">"~/"</span>);</p>
+<p><span style="color: green;">//also (AuthenticationSection)WebConfigurationManager.GetWebApplicationSection("system.web/authentication") but users is readonly;</span></p>
+<p><span style="color: #2b91af;">AuthenticationSection</span> auth = (<span style="color: #2b91af;">AuthenticationSection</span>)config.SectionGroups[<span style="color: #a31515;">"system.web"</span>].Sections[<span style="color: #a31515;">"authentication"</span>];</p>
+<p><span style="color: blue;">string</span> passwordFormat = auth.Forms.Credentials.PasswordFormat.ToString();</p>
+<p><span style="color: blue;">if</span> (passwordFormat != <span style="color: #a31515;">"Clear"</span>)</p>
+<p>&nbsp;&nbsp;&nbsp; pw = <span style="color: #2b91af;">FormsAuthentication</span>.HashPasswordForStoringInConfigFile(txtPassword.Text, passwordFormat);</p>
+<p>auth.Forms.Credentials.Users.Add(<span style="color: blue;">new</span> <span style="color: #2b91af;">FormsAuthenticationUser</span>(userName, pw));</p>
+<p><span style="color: blue;">try</span></p>
+<p>{</p>
+<p>&nbsp;&nbsp;&nbsp; config.Save();</p>
+<p>&nbsp;&nbsp;&nbsp; Response.Redirect(Request.CurrentExecutionFilePath);<span style="color: green;">// Redirect to self.</span></p>
+<p>}</p>
+<p><span style="color: blue;">catch</span> (<span style="color: #2b91af;">ConfigurationErrorsException</span> ex)</p>
+<p>{</p>
+<p>&nbsp;&nbsp;&nbsp; Label1.Text = <span style="color: #a31515;">"ASP.NET process account (ASPNET or Network Service) must have write permission granted for the Web.config file&lt;br/&gt;"</span>;</p>
+<p>&nbsp;&nbsp;&nbsp; Label1.Text += <span style="color: #a31515;">"Manually copy this xml into your web.config forms/credentials section:&lt;br/&gt;"</span>;</p>
+<p>&nbsp;&nbsp;&nbsp; Label1.Text += <span style="color: blue;">string</span>.Format(<span style="color: #a31515;">"&amp;lt;user name=\"{0}\" password=\"{1}\" /&amp;gt;"</span>, userName, pw);</p>
+<p>}</p>
+</div>
+
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

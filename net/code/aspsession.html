@@ -1,0 +1,114 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP Session</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main</a></li>
+<li><a href="../dotnet.html">.Net</a></li>
+<li><a href="index.html">Code</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>ASP Session</h2>
+<p>Here's two simple functions with generics. The first one allows value types, the second is for objects.</p>
+<div class="code">
+<p><span style="color: blue;">using</span> System;<br />
+<span style="color: blue;">using</span> System.Web;<br />
+&nbsp;<br />
+<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> Strongly typed access to asp session</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+<span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">SessionManager</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> Gets the value or default of an object (eg Cache, Session, ViewState)</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;typeparam name="T"&gt;</span><span style="color: green;">The expected type</span><span style="color: gray;">&lt;/typeparam&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;param name="o"&gt;</span><span style="color: green;">The object</span><span style="color: gray;">&lt;/param&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;returns&gt;&lt;/returns&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">static</span> T GetValueOrDefault&lt;T&gt;(<span style="color: blue;">object</span> o)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (o != <span style="color: blue;">null</span> &amp;&amp; o <span style="color: blue;">is</span> T) <span style="color: blue;">return</span> (T)o; <span style="color: green;">//value if exists</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">default</span>(T); <span style="color: green;">//default</span><br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> Gets the session value or default (generic version- just pass in the key string and specify the type)</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;typeparam name="T"&gt;</span><span style="color: green;">The expected type</span><span style="color: gray;">&lt;/typeparam&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;param name="key"&gt;</span><span style="color: green;">The session key</span><span style="color: gray;">&lt;/param&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;returns&gt;&lt;/returns&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">static</span> T GetSessionValueOrDefault&lt;T&gt;(<span style="color: blue;">string</span> key)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">object</span> o = <span style="color: #2b91af;">HttpContext</span>.Current.Session[key];<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> GetValueOrDefault&lt;T&gt;(o); <span style="color: green;">//default</span><br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> Gets or sets the user birthday (example). Try to keep all session access behind strongly typed properties of SessionManager like this.</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;value&gt;</span><span style="color: green;">The user birthday.</span><span style="color: gray;">&lt;/value&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #2b91af;">DateTime</span> UserBirthday<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">get</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> GetValueOrDefault&lt;<span style="color: #2b91af;">DateTime</span>&gt;(<span style="color: #2b91af;">HttpContext</span>.Current.Session[<span style="color: #a31515;">"UserBirthday"</span>]);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">set</span> { <span style="color: #2b91af;">HttpContext</span>.Current.Session.Add(<span style="color: #a31515;">"UserBirthday"</span>, <span style="color: blue;">value</span>); }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+<h3>Caching Objects</h3>
+<p>This is for caching objects (not value types) in a simple generic pattern.<br />
+This version is .Net 2.0 and is easily changed to 3.5 (Func&lt;T&gt; is already defined, and the delegate becomes shorter).</p>
+<div class="code">
+<p><span style="color: green;">//FOR 2.0 ONLY. in 3.5 this is in System.Core</span></p>
+<p><span style="color: blue;">public</span> <span style="color: blue;">delegate</span> TResult <span style="color: #2b91af;">Func</span>&lt;TResult&gt;();</p>
+<p>&nbsp;</p>
+<p><span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span></p>
+<p><span style="color: gray;">///</span><span style="color: green;"> Generic storage in cache (essentially a wrapper around your data access function)</span></p>
+<p><span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span></p>
+<p><span style="color: blue;">public</span> <span style="color: blue;">static</span> T LoadCache&lt;T&gt;(<span style="color: blue;">string</span> key, <span style="color: #2b91af;">Func</span>&lt;T&gt; func) <span style="color: blue;">where</span> T : <span style="color: blue;">class</span></p>
+<p>{</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Cache</span> Cache = <span style="color: #2b91af;">HttpRuntime</span>.Cache;</p>
+<p>&nbsp;&nbsp;&nbsp; T result = Cache[key] <span style="color: blue;">as</span> T;</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (result == <span style="color: blue;">null</span>)</p>
+<p>&nbsp;&nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; result = func();</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Cache[key] = result;</p>
+<p>&nbsp;&nbsp;&nbsp; }</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> result;</p>
+<p>}</p>
+<p>&nbsp;</p>
+<p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #2b91af;">IList</span>&lt;<span style="color: #2b91af;">Customer</span>&gt; GetCustomers()</p>
+<p>{</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: green;">//3.5</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: green;">//return Load("GetCustomers", () =&gt; DataBroker.GetCustomers());</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: green;">//2.0</span></p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> LoadCache&lt;<span style="color: #2b91af;">IList</span>&lt;<span style="color: #2b91af;">Customer</span>&gt;&gt;(<span style="color: #a31515;">"GetCustomers"</span> + year,</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <span style="color: blue;">delegate</span>()</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: #2b91af;">DataBroker</span>.GetCustomers();</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; });</p>
+<p>}</p>
+</div>
+<p>In practice, pages talk to "cachable data broker" class in AppCode which is a facade over the actual data broker/data access and caches only when useful.</p>
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

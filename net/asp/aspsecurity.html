@@ -1,0 +1,130 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP Security</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="aspsecurity.html">Asp Security</a></li>
+<li><a href="security/forms.html">Forms Authentication</a></li>
+<li><a href="security/wsfederation.html">WS-Federation</a></li>
+<li><a href="security/wsfederationconfig.html">WS-Federation Config</a></li>
+<li><a href="security/ssl.html">SSL</a></li>
+<li><a href="security/owin.html">Owin</a></li>
+<li><a href="security/oauth.html">OAuth</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>ASP Security</h2>
+
+<ul>
+<li>In <a href="aspmvc.html">ASP MVC and WebAPI</a>, use forms or windows authentication with the [<span style="color: #2b91af;">Authorize</span>] action filter.<br/>
+Add it as a global filter (App_Start/FilterConfig.cs) and put a [<span style="color: #2b91af;">AllowAnonymous</span>] on the forms login page<br/>
+Don't use web.config authorization/allow-deny, or location, as it doesn't mix with routing.</li>
+<li>See also: <a href="security/wsfederation.html">WS-Federation (.net 4.5/WIF)</a></li>
+</ul>
+<h3>ASP.Net Security</h3>
+<ol>
+<li>IIS <strong>authentication</strong>: 
+<ul>
+<li>Anonymous access= IUSER_machinename (i.e. same as ASP).</li>
+<li>Windows login- Basic (clear text), Digest (encrypted) and Windows (NTLM)</li>
+<li>IIS 7+ Windows Authentication vs Chrome/FireFox:<ul>
+<li>Authentication-Windows Auth, click Advanced Settings. Turn Extended Protection "Off" (EPA is not supported by Chrome and Firefox)</li>
+<li>Authentication-Windows Auth, click Providers. Select NTLM and "move up" to top of list. Chrome in particular may fail the kerberos, but does not failover to NTLM.</li>
+</ul></li>
+</ul>
+</li>
+<li>IIS passes to ISAPI filter- eg <cite>aspnet_wp.exe</cite> (or <cite>w3wp.exe</cite> on WServer2003).</li>
+<li>If system.web/<strong>identity</strong>/@impersonate='false' (default) 
+<ul>
+<li>No impersonation= run as <strong>ASPNET</strong> (or see machine.config's processModel)</li>
+<li>Impersonation= run as IIS user (IUSER_machine or windows login) or system.web/identity/@userName</li>
+</ul>
+</li>
+<li>Use system.web/authentication/@mode (None, Windows, Forms, Passport). 
+<ul>
+<li>If using Windows, set system.web/identity/@impersonate="true" otherwise it won't work.</li>
+<li>If using forms 
+<ul>
+<li>set system.web/<strong>authorization</strong>/deny/@users="?" otherwise it won't work</li>
+<li>system.web/authentication/forms/@loginUrl</li>
+<li>@timeout- default is 30mins, but it refreshes halfway- so 16mins inactivity may kill it...</li>
+<li>@protection="All" (encrypted + validated) - in webfarms, set machine.config machineKey/@validationKey + @decryptionKey</li>
+<li>In code <code>if (FormsAuthentication.Authenticate(user, pass)) FormsAuthentication.RedirectFromLoginPage(user, isPermaCookie);</code><br />
+(replace first method with database authentication)<br />
+(if loginpage== default.aspx then redirect may be to login page... try .GetRedirectUrl instead)<br />
+(asp.net 2.0 has new Membership class)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Page.User returns an IPrincipal, with IsInRole and Identity (which is an IIdentity, with AuthenticationType, Name- cast as WindowsIdentity for IsAnonymous etc).</li>
+</ol>
+<p><a href="http://support.microsoft.com/kb/317012/EN-US/">Rights needed for ASPNET process (KB)</a></p>
+<table>
+<tr>
+<th>IIS</th>
+<th>web.config mode</th>
+<th>WindowsIdentity</th>
+<th>Page.User</th>
+</tr>
+<tr>
+<td>Anon</td>
+<td>forms</td>
+<td rowspan="2">no impersonate=IUSR_MACHINE<br />
+impersonate= ASPNET</td>
+<td>formId</td>
+</tr>
+<tr>
+<td>Anon</td>
+<td>windows</td>
+<td>""</td>
+</tr>
+<tr>
+<td>Windows</td>
+<td>forms</td>
+<td rowspan="2">no impersonate=ASPNET<br />
+impersonate= domain/user</td>
+<td>formId</td>
+</tr>
+<tr>
+<td>Windows</td>
+<td>windows</td>
+<td>domain/user</td>
+</tr>
+</table>
+<p>NB: HttpContext.Current.User != WindowsIdentity.GetCurrent() (unless windows impersonating)<br />!= COM+ Security Role (ContextUtil.IsCallerInRole() is a different set of roles!</p>
+<ul>
+<li>Page.User 
+	<ul>
+	<li>Empty string if IIS= anonymous + web.config = windows authentication.</li>
+	<li>Otherwise form ID (forms auth) or domain/user (win auth)</li>
+	</ul>
+	</li>
+<li>WindowsIdentity.GetCurrent()
+	<ul>
+	<li>IUSR_MACHINE if impersonate + IIS anonymous only</li>
+	<li>ASPNET or NETWORK SERVICES if anon/impersonate=true OR windows/impersonate=false</li>
+	<li>domain/user if IIS basic/digest/integrated and impersonate=true</li>
+	</ul>
+	</li>
+</ul>
+
+
+</div>
+<div class="Footer">
+
+</div></body>
+</html>

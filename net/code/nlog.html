@@ -1,0 +1,157 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>NLog logging</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main</a></li>
+<li><a href="../dotnet.html">.Net</a></li>
+<li><a href="index.html">Code</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>NLog logging</h2>
+<ul>
+<li><a href="https://github.com/NLog/NLog/wiki">Github Wiki</a></li>
+</ul>
+<h3>Log writing</h3>
+<div class="code">
+<span style="color:#0000ff">class</span> <span style="color:#00008b">Program</span><br />
+{<br />
+&#160;&#160;&#160;&#160;<span style="color:#0000ff">private</span> <span style="color:#0000ff">static</span> <span style="color:#0000ff">readonly</span> <span style="color:#00008b">Logger</span> <span style="color:#800080">Logger</span> = <span style="color:#00008b">LogManager</span>.<span style="color:#008b8b">GetCurrentClassLogger</span>();<br />
+<br />
+&#160;&#160;&#160;&#160;<span style="color:#0000ff">static</span> <span style="color:#0000ff">void</span> <span style="color:#008b8b">Main</span>()<br />
+&#160;&#160;&#160;&#160;{<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">var</span> x = 1;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#800080">Logger</span>.<span style="color:#008b8b">Warn</span>(<span style="color:#a31515">&quot;Danger, Will Robinson!&quot;</span>);<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#800080">Logger</span>.<span style="color:#008b8b">Error</span>(<span style="color:#a31515">&quot;Danger, {0}!&quot;</span>, x);<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">try</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">throw</span> <span style="color:#0000ff">new</span> <span style="color:#00008b">InvalidOperationException</span>(<span style="color:#a31515">&quot;Oops&quot;</span>);<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">catch</span> (<span style="color:#00008b">InvalidOperationException</span> ex)<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#800080">Logger</span>.<span style="color:#008b8b">Error</span>(ex, <span style="color:#a31515">&quot;Exception logged&quot;</span>);<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br />
+&#160;&#160;&#160;&#160;}<br />
+}
+</div>
+
+<h3>Logging Traces</h3>
+<p>Many libraries log to Trace:<br/>
+<span style="color:#00008b">System</span>.<span style="color:#00008b">Diagnostics</span>.<span style="color:#00008b">Trace</span>.<span style="color:#008b8b">TraceWarning</span>(<span style="color:#a31515">&quot;Danger!&quot;</span>);<br />
+It's nice not to take a dependency on logging when people have different preferences.</p>
+<p>NLog includes a trace listener, so just hook it up in web/app.config</p>
+
+<div class="code">
+<span style="color:#0000ff">&lt;</span><span style="color:#a31515">configuration</span><span style="color:#0000ff">&gt;</span><br />
+<span style="color:#0000ff">&#160;&#160;&lt;</span><span style="color:#a31515">system.diagnostics</span><span style="color:#0000ff">&gt;</span><br />
+&#160;&#160;&#160;&#160;<span style="color:#0000ff">&lt;</span><span style="color:#a31515">trace</span><span style="color:#0000ff"> </span><span style="color:#ff0000">autoflush</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">true</span>&quot;<span style="color:#0000ff">&gt;</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">&lt;</span><span style="color:#a31515">listeners</span><span style="color:#0000ff">&gt;</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">&lt;</span><span style="color:#a31515">add</span><span style="color:#0000ff"> </span><span style="color:#ff0000">name</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">MyNLogTraceListener</span>&quot;<span style="color:#0000ff"> </span><span style="color:#ff0000">type</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">NLog.NLogTraceListener, NLog</span>&quot;<span style="color:#0000ff"> /&gt;</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">&lt;/</span><span style="color:#a31515">listeners</span><span style="color:#0000ff">&gt;</span><br />
+&#160;&#160;&#160;&#160;<span style="color:#0000ff">&lt;/</span><span style="color:#a31515">trace</span><span style="color:#0000ff">&gt;</span><br />
+<span style="color:#0000ff">&#160;&#160;&lt;/</span><span style="color:#a31515">system.diagnostics</span><span style="color:#0000ff">&gt;</span><br />
+<span style="color:#0000ff">&lt;/</span><span style="color:#a31515">configuration</span><span style="color:#0000ff">&gt;</span></div>
+<p>The only limitation is the layout ${logger} symbol is just the executing assembly, not the class where logging occurred. Not a great problem, as you may be more specific in your ${message}: <span style="color:#00008b">Trace</span>.<span style="color:#008b8b">TraceInformation</span>(<span style="color:#a31515">&quot;Runner.Run started&quot;</span>)</p>
+
+
+<h3>NLog.config</h3>
+<p>You can configure in the app/web.config but creating a <cite>NLog.config</cite> is the most common strategy. </p>
+<h4>Simple</h4>
+<div class="code">
+<span style="color:#0000ff">&lt;</span><span style="color:#a31515">nlog</span><span style="color:#0000ff"> </span><span style="color:#ff0000">xmlns</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">http://www.nlog-project.org/schemas/NLog.xsd</span>&quot;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#ff0000">xmlns:xsi</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">http://www.w3.org/2001/XMLSchema-instance</span>&quot;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#ff0000">autoReload</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">true</span>&quot;<span style="color:#0000ff">&gt;</span><br />
+<span style="color:#0000ff">&#160;&#160;&lt;</span><span style="color:#a31515">targets</span><span style="color:#0000ff">&gt;</span><br />
+&#160;&#160;&#160;&#160;<span style="color:#0000ff">&lt;</span><span style="color:#a31515">target</span><span style="color:#0000ff"> </span><span style="color:#ff0000">name</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">logfile</span>&quot;<span style="color:#0000ff"> </span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#ff0000">xsi:type</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">File</span>&quot;<span style="color:#0000ff"> </span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#ff0000">fileName</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">../logs/file.txt</span>&quot;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#ff0000">layout</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">${longdate} ${pad:padding=5:inner=${level}} ${logger} ${message} ${exception:format=tostring}</span>&quot;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">/&gt;</span><br />
+<span style="color:#0000ff">&#160;&#160;&lt;/</span><span style="color:#a31515">targets</span><span style="color:#0000ff">&gt;</span><br />
+<span style="color:#0000ff">&#160;&#160;&lt;</span><span style="color:#a31515">rules</span><span style="color:#0000ff">&gt;</span><br />
+&#160;&#160;&#160;&#160;<span style="color:#0000ff">&lt;!--</span><span style="color:#008000"> Minimal level of Warn (not Trace, Debug, Info, just Warn, Error and Fatal)&#160;&#160;to &quot;log&quot;</span><span style="color:#0000ff">--&gt;</span><br />
+&#160;&#160;&#160;&#160;<span style="color:#0000ff">&lt;</span><span style="color:#a31515">logger</span><span style="color:#0000ff"> </span><span style="color:#ff0000">name</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">*</span>&quot;<span style="color:#0000ff"> </span><span style="color:#ff0000">minlevel</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">Warn</span>&quot;<span style="color:#0000ff"> </span><span style="color:#ff0000">writeTo</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">logfile</span>&quot;<span style="color:#0000ff"> /&gt;</span><br />
+<span style="color:#0000ff">&#160;&#160;&lt;/</span><span style="color:#a31515">rules</span><span style="color:#0000ff">&gt;</span><br />
+<span style="color:#0000ff">&lt;/</span><span style="color:#a31515">nlog</span><span style="color:#0000ff">&gt;</span></div>
+<ul>
+<li><span style="color:#ff0000">autoReload</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">true</span>&quot; - changing the file will immediately reload this config </li>
+<li><span style="color:#0000ff">&lt;</span><span style="color:#a31515">logger</span> takes all sources (*) with a minimum level (order: Trace, Debug, Info, Warn, Error, Fatal) and sends them to named logger.</li>
+<li><span style="color:#0000ff">&lt;</span><span style="color:#a31515">target</span> is <span style="color:#ff0000">xsi:type</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">File</span>&quot; (as opposed to console or email etc)</li>
+<li><span style="color:#ff0000">layout</span> contains $() tokens. For date/time, ${longdate} seems best. It's useful to have ${message} AND ${exception:format=tostring} if you log an exception object</li>
+</ul>
+<h3>Multiple rules and targets</h3>
+<div class="code">
+<span style="color:#0000ff">&lt;</span><span style="color:#a31515">nlog</span><span style="color:#0000ff"> </span><span style="color:#ff0000">xmlns</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">http://www.nlog-project.org/schemas/NLog.xsd</span>&quot;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#ff0000">xmlns:xsi</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">http://www.w3.org/2001/XMLSchema-instance</span>&quot;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#ff0000">autoReload</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">true</span>&quot;<span style="color:#0000ff">&gt;</span><br />
+<span style="color:#0000ff">&#160;&#160;&lt;</span><span style="color:#a31515">targets</span><span style="color:#0000ff">&gt;</span><br />
+&#160;&#160;&#160;&#160;<span style="color:#0000ff">&lt;</span><span style="color:#a31515">target</span><span style="color:#0000ff"> </span><span style="color:#ff0000">name</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">console</span>&quot;<span style="color:#0000ff"> </span><span style="color:#ff0000">xsi:type</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">Console</span>&quot;<span style="color:#0000ff"> /&gt;</span><br />
+&#160;&#160;&#160;&#160;<span style="color:#0000ff">&lt;</span><span style="color:#a31515">target</span><span style="color:#0000ff"> </span><span style="color:#ff0000">name</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">testconsolefile</span>&quot;<span style="color:#0000ff"> </span><span style="color:#ff0000">xsi:type</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">File</span>&quot;<span style="color:#0000ff"> </span><span style="color:#ff0000">fileName</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">testconsolefile.txt</span>&quot;<span style="color:#0000ff"> /&gt;</span><br />
+&#160;&#160;&#160;&#160;<span style="color:#0000ff">&lt;</span><span style="color:#a31515">target</span><span style="color:#0000ff"> </span><span style="color:#ff0000">name</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">logfile</span>&quot;<span style="color:#0000ff"> </span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#ff0000">xsi:type</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">File</span>&quot;<span style="color:#0000ff"> </span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#ff0000">fileName</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">../logs/file.txt</span>&quot;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#ff0000">layout</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">${longdate} ${pad:padding=5:inner=${level}} ${logger} ${message} ${exception:format=tostring}</span>&quot;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">/&gt;</span><br />
+<span style="color:#0000ff">&#160;&#160;&lt;/</span><span style="color:#a31515">targets</span><span style="color:#0000ff">&gt;</span><br />
+<span style="color:#0000ff">&#160;&#160;&lt;</span><span style="color:#a31515">rules</span><span style="color:#0000ff">&gt;</span><br />
+&#160;&#160;&#160;&#160;<span style="color:#0000ff">&lt;</span><span style="color:#a31515">logger</span><span style="color:#0000ff"> </span><span style="color:#ff0000">name</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">*</span>&quot;<span style="color:#0000ff"> </span><span style="color:#ff0000">minlevel</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">Warn</span>&quot;<span style="color:#0000ff"> </span><span style="color:#ff0000">writeTo</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">logfile</span>&quot;<span style="color:#0000ff"> /&gt;</span><br />
+&#160;&#160;&#160;&#160;<span style="color:#0000ff">&lt;!--</span><span style="color:#008000"> Log specific component to special log </span><span style="color:#0000ff">--&gt;</span><br />
+&#160;&#160;&#160;&#160;<span style="color:#0000ff">&lt;</span><span style="color:#a31515">logger</span><span style="color:#0000ff"> </span><span style="color:#ff0000">name</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">TestConsole.*</span>&quot;<span style="color:#0000ff"> </span><span style="color:#ff0000">minlevel</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">Debug</span>&quot;<span style="color:#0000ff"> </span><span style="color:#ff0000">writeTo</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">testconsolefile</span>&quot;<span style="color:#0000ff"> /&gt;</span><br />
+<span style="color:#0000ff">&#160;&#160;&lt;/</span><span style="color:#a31515">rules</span><span style="color:#0000ff">&gt;</span><br />
+<span style="color:#0000ff">&lt;/</span><span style="color:#a31515">nlog</span><span style="color:#0000ff">&gt;</span>
+</div>
+
+<h3>Rolling Files</h3>
+
+<div class="code"><span style="color:#0000ff">&lt;</span><span style="color:#a31515">nlog</span><span style="color:#0000ff"> </span><span style="color:#ff0000">xmlns</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">http://www.nlog-project.org/schemas/NLog.xsd</span>&quot;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#ff0000">xmlns:xsi</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">http://www.w3.org/2001/XMLSchema-instance</span>&quot;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#ff0000">autoReload</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">true</span>&quot;<span style="color:#0000ff">&gt;</span><br />
+<span style="color:#0000ff">&#160;&#160;&lt;</span><span style="color:#a31515">targets</span><span style="color:#0000ff"> </span><span style="color:#ff0000">async</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">true</span>&quot;<span style="color:#0000ff">&gt;</span><br />
+&#160;&#160;&#160;&#160;<span style="color:#0000ff">&lt;</span><span style="color:#a31515">target</span><span style="color:#0000ff"> </span><span style="color:#ff0000">name</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">logfile</span>&quot;<span style="color:#0000ff"> </span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#ff0000">xsi:type</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">File</span>&quot;<span style="color:#0000ff"> </span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#ff0000">fileName</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">../logs/file.log</span>&quot;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#ff0000">layout</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">${longdate} ${pad:padding=5:inner=${level}} ${logger} ${message} ${exception:format=tostring}</span>&quot;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#ff0000">archiveFileName</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">../logs/file.{#}.log</span>&quot;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#ff0000">archiveEvery</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">Day</span>&quot;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#ff0000">archiveNumbering</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">Sequence</span>&quot;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#ff0000">archiveDateFormat</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">yyyyMMdd</span>&quot;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#ff0000">maxArchiveFiles</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">14</span>&quot;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">/&gt;</span><br />
+<span style="color:#0000ff">&#160;&#160;&lt;/</span><span style="color:#a31515">targets</span><span style="color:#0000ff">&gt;</span><br />
+<span style="color:#0000ff">&#160;&#160;&lt;</span><span style="color:#a31515">rules</span><span style="color:#0000ff">&gt;</span><br />
+&#160;&#160;&#160;&#160;<span style="color:#0000ff">&lt;</span><span style="color:#a31515">logger</span><span style="color:#0000ff"> </span><span style="color:#ff0000">name</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">*</span>&quot;<span style="color:#0000ff"> </span><span style="color:#ff0000">minlevel</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">Warn</span>&quot;<span style="color:#0000ff"> </span><span style="color:#ff0000">writeTo</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">logfile</span>&quot;<span style="color:#0000ff"> /&gt;</span><br />
+<span style="color:#0000ff">&#160;&#160;&lt;/</span><span style="color:#a31515">rules</span><span style="color:#0000ff">&gt;</span><br />
+<span style="color:#0000ff">&lt;/</span><span style="color:#a31515">nlog</span><span style="color:#0000ff">&gt;</span></div>
+
+
+<ul>
+<li><span style="color:#0000ff">&lt;</span><span style="color:#a31515">targets</span><span style="color:#0000ff"> </span><span style="color:#ff0000">async</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">true</span>&quot;<span style="color:#0000ff">&gt;</span> creates an "AsyncWrapper" implicitly, so log writes are async and buffered.</li>
+<li>Like the log4net's RollingFileAppender<ul>
+<li>By size:- <span style="color:#ff0000">archiveAboveSize</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">1048576</span>&quot; = 1Mb</li>
+<li>By time:- <span style="color:#ff0000">archiveEvery</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">Day</span>&quot;</li>
+<li><span style="color:#ff0000">archiveNumbering</span><span style="color:#0000ff">=</span>&quot;<span style="color:#0000ff">Sequence</span>&quot; or <span style="color:#0000ff">Date</span> or <span style="color:#0000ff">DateAndSequence</span>
+</li>
+<li>Rolling over is slow</li>
+<li><span style="color:#ff0000">maxArchiveFiles</span> is default 9</li>
+</ul></li>
+</ul>
+
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

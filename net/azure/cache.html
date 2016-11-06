@@ -1,0 +1,134 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Azure Cache</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="index.html">Azure &gt;</a></li>
+<li><a href="blob.html">Blob storage</a></li>
+<li><a href="table.html">Table storage</a></li>
+<li><a href="queue.html">Queue storage</a></li>
+<li><a href="cache.html">Cache</a></li>
+<li><a href="servicebus.html">Service Bus</a></li>
+<li><a href="diagnostics.html">Diagnostics</a></li>
+</ul>
+</div>
+<div class="content">
+<p><a href="http://www.windowsazure.com/en-us/develop/net/how-to-guides/cache/">MSDN How to</a>, <a href="http://msdn.microsoft.com/en-us/library/windowsazure/gg278356">MSDN</a></p>
+<p>NB: HttpApplicationState, HttpSessionState, HttpRuntime.Cache and .Net4 MemoryCache work in-process (memory) in Azure (<a href="../asp/aspcache.html">asp caching</a>). You can even use Session with SqlAzure (but why?).</p>
+<p>NB: Windows Azure Shared Caching is different- it's the older paid-for caching. </p>
+<ul>
+<li>You can't use cache with <cite>ExtraSmall</cite> instances</li>
+<li>Co-located: shares VM with worker/web role (e.g. 30% memory) but is distributed across instances.<br/>
+Solution Explorer: Role - Properties - Cache tab.<br/>
+You'll need the storage account credentials for <q>Microsoft.WindowsAzure.Plugins.Caching.ConfigStoreConnectionString</q></li>
+<li>Dedicated role: Add New <cite>Cache Worker Role</cite></li>
+<li>Add the Nuget package <cite>Windows Azure Caching</cite> (Microsoft.WindowsAzure.Caching)</li>
+<li>For ASP sites, you can enable Session state and OutputCaching in web.config.</li>
+</ul>
+
+<h3>Configuration</h3>
+<p>You need to change the web/app.config, specifically the role name here (otherwise the error is <q>ErrorCode&lt;UnspecifiedErrorCode&gt;:SubStatus&lt;ES0001&gt;:The role [cache cluster role name] was not found in the current deployment.</q>)</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">dataCacheClients</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">dataCacheClient</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">default</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">autoDiscover</span><span style="color: blue;"> </span><span style="color: red;">isEnabled</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;"> </span><span style="color: red;">identifier</span><span style="color: blue;">=</span>"<span style="color: blue;background-color:yellow">MyWebRole</span>"<span style="color: blue;"> /&gt;</span></p>
+</div>
+
+
+<h3>DataCache</h3>
+<ul>
+<li>Either: <span style="color: blue;">var</span> dataCache = <span style="color: blue;">new</span> <span style="color: #2b91af;">DataCache</span>(cacheName) (eg "default")</li>
+<li>Or: via <span style="color: blue;">var</span> dataCache = <span style="color: blue;">new</span> <span style="color: #2b91af;">DataCacheFactory</span>().GetCache(cacheName)</li>
+<li>dataCache.Add(key, value) throws a <span style="color: #2b91af;">DataCacheException</span> if it already exists.<br/>
+Use dataCache.Put(key, value) instead.
+</li>
+</ul>
+
+<h3>Named caches</h3>
+<ul>
+<li>Named caches have an expiration policy- one of <cite>Absolute</cite>, <cite>Sliding</cite> or <cite>None</cite> (permanent- time = 0)</li>
+<li>You can override the Time to Live with TimeSpans when dataCache.Add/Put</li>
+</ul>
+
+<h3>Example</h3>
+<div class="code">
+<p><span style="color: blue;">using</span> System;<br />
+<span style="color: blue;">using</span> Microsoft.ApplicationServer.Caching;<br />
+&nbsp;<br />
+<span style="color: blue;">namespace</span> MartinWeb.Cloud<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">CacheCloud</span><br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">readonly</span> <span style="color: blue;">string</span> _cacheName;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> CacheCloud(<span style="color: blue;">string</span> cacheName = <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; _cacheName = cacheName;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: #2b91af;">DataCache</span> FindDataCache()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (<span style="color: blue;">string</span>.IsNullOrEmpty(_cacheName))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">DataCacheFactory</span>().GetDefaultCache();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">DataCache</span>(_cacheName);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> Add(<span style="color: blue;">string</span> key, <span style="color: blue;">object</span> value)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Add(key, value, TimeSpan.FromMinutes(10));<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> Add(<span style="color: blue;">string</span> key, <span style="color: blue;">object</span> value, TimeSpan timeSpan)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> dataCache = FindDataCache();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//for example only- why not just use Put?</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">try</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; dataCache.Add(key, value, timeSpan);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">catch</span> (<span style="color: #2b91af;">DataCacheException</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//already exists, add or replace</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; dataCache.Put(key, value, timeSpan);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> T Get&lt;T&gt;(<span style="color: blue;">string</span> key) <span style="color: blue;">where</span> T : <span style="color: blue;">class</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> dataCache = FindDataCache();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> dataCache.Get(key) <span style="color: blue;">as</span> T;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> TimeSpan RemainingTimeToLive(<span style="color: blue;">string</span> key)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> dataCache = FindDataCache();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> dataCache.GetCacheItem(key).Timeout;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+</div>
+<div class="Footer"><script type="text/javascript">
+//<![CDATA[
+
+
+prettyPrint();
+//]]>
+</script></div>
+</body>
+</html>

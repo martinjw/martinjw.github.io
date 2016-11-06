@@ -1,0 +1,100 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>CCNet.config template</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main</a></li>
+<li><a href="../dotnet.html">.Net</a></li>
+<li><a href="index.html">Code</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>CCNet.config template</h2>
+<p>Uses <a href="nant.html">nant.build script</a> and assumes a C:\Build directory with subfolders Src, Deploy and Nant (containing Nant, of course).</p>
+<div style="font-family:Monospace; font-size: 10pt; background-color: white;">
+<span style="color:Blue">&lt;</span><span style="color:#a31515">cruisecontrol</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">project</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">name</span><span style="color:Blue">&gt;</span><span style="color:Black">comp</span><span style="color:Blue">&lt;/</span><span style="color:#a31515">name</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">workingDirectory</span><span style="color:Blue">&gt;</span><span style="color:Black">c:\Build\Src</span><span style="color:Blue">&lt;/</span><span style="color:#a31515">workingDirectory</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">artifactDirectory</span><span style="color:Blue">&gt;</span><span style="color:Black">c:\Build\Deploy</span><span style="color:Blue">&lt;/</span><span style="color:#a31515">artifactDirectory</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">webURL</span><span style="color:Blue">&gt;</span><span style="color:Black">http://localhost/ccnet/</span><span style="color:Blue">&lt;/</span><span style="color:#a31515">webURL</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;!--</span><span style="color:Green"> allow 20 seconds after last change for non-atomic checkins </span><span style="color:Blue">--&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">modificationDelaySeconds</span><span style="color:Blue">&gt;</span><span style="color:Black">20</span><span style="color:Blue">&lt;/</span><span style="color:#a31515">modificationDelaySeconds</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">publishers</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">xmllogger</span><span style="color:Blue"> </span><span style="color:Red">logDir</span><span style="color:Blue">=</span><span style="color:Black">"</span><span style="color:Blue">C:\Program Files\CruiseControl.NET\server</span><span style="color:Black">"</span><span style="color:Blue">/&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/</span><span style="color:#a31515">publishers</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">sourcecontrol</span><span style="color:Blue"> </span><span style="color:Red">type</span><span style="color:Blue">=</span><span style="color:Black">"</span><span style="color:Blue">filtered</span><span style="color:Black">"</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">sourceControlProvider</span><span style="color:Blue"> </span><span style="color:Red">type</span><span style="color:Blue">=</span><span style="color:Black">"</span><span style="color:Blue">vss</span><span style="color:Black">"</span><span style="color:Blue"> </span><span style="color:Red">autoGetSource</span><span style="color:Blue">=</span><span style="color:Black">"</span><span style="color:Blue">true</span><span style="color:Black">"</span><span style="color:Blue"> </span><span style="color:Red">applyLabel</span><span style="color:Blue">=</span><span style="color:Black">"</span><span style="color:Blue">false</span><span style="color:Black">"</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">executable</span><span style="color:Blue">&gt;</span><span style="color:Black">"C:\Program Files\Microsoft Visual Studio\Common\VSS\win32\ss.exe"
+</span><span style="color:Blue">&lt;/</span><span style="color:#a31515">executable</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">project</span><span style="color:Blue">&gt;</span><span style="color:Black">"$/MyProject"</span><span style="color:Blue">&lt;/</span><span style="color:#a31515">project</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">ssdir</span><span style="color:Blue">&gt;</span><span style="color:Black">"\\sshost\ssdirectory\"</span><span style="color:Blue">&lt;/</span><span style="color:#a31515">ssdir</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">username</span><span style="color:Blue">&gt;</span><span style="color:Black">VSSUserName</span><span style="color:Blue">&lt;/</span><span style="color:#a31515">username</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">password</span><span style="color:Blue">/&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">workingDirectory</span><span style="color:Blue">&gt;</span><span style="color:Black">c:\Build\Src</span><span style="color:Blue">&lt;/</span><span style="color:#a31515">workingDirectory</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/</span><span style="color:#a31515">sourceControlProvider</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">exclusionFilters</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;!--</span><span style="color:Green"> exclude compiled code, javascript, stylesheets and pure html </span><span style="color:Blue">--&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">pathFilter</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">pattern</span><span style="color:Blue">&gt;</span><span style="color:Black">$/**/*.tmp</span><span style="color:Blue">&lt;/</span><span style="color:#a31515">pattern</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/</span><span style="color:#a31515">pathFilter</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">pathFilter</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">pattern</span><span style="color:Blue">&gt;</span><span style="color:Black">$/**/*.dll</span><span style="color:Blue">&lt;/</span><span style="color:#a31515">pattern</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/</span><span style="color:#a31515">pathFilter</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">pathFilter</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">pattern</span><span style="color:Blue">&gt;</span><span style="color:Black">$/**/*.js</span><span style="color:Blue">&lt;/</span><span style="color:#a31515">pattern</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/</span><span style="color:#a31515">pathFilter</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">pathFilter</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">pattern</span><span style="color:Blue">&gt;</span><span style="color:Black">$/**/*.html</span><span style="color:Blue">&lt;/</span><span style="color:#a31515">pattern</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/</span><span style="color:#a31515">pathFilter</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">pathFilter</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">pattern</span><span style="color:Blue">&gt;</span><span style="color:Black">$/**/*.css</span><span style="color:Blue">&lt;/</span><span style="color:#a31515">pattern</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/</span><span style="color:#a31515">pathFilter</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/</span><span style="color:#a31515">exclusionFilters</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/</span><span style="color:#a31515">sourcecontrol</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">build</span><span style="color:Blue"> </span><span style="color:Red">type</span><span style="color:Blue">=</span><span style="color:Black">"</span><span style="color:Blue">nant</span><span style="color:Black">"</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;!--</span><span style="color:Green"> calls the full target in nant.build in C:\Build </span><span style="color:Blue">--&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">executable</span><span style="color:Blue">&gt;</span><span style="color:Black">c:\Build\nant\bin\nant.exe</span><span style="color:Blue">&lt;/</span><span style="color:#a31515">executable</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">baseDirectory</span><span style="color:Blue">&gt;</span><span style="color:Black">c:\Build</span><span style="color:Blue">&lt;/</span><span style="color:#a31515">baseDirectory</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">logger</span><span style="color:Blue">&gt;</span><span style="color:Black">NAnt.Core.XmlLogger</span><span style="color:Blue">&lt;/</span><span style="color:#a31515">logger</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">buildFile</span><span style="color:Blue">&gt;</span><span style="color:Black">nant.build</span><span style="color:Blue">&lt;/</span><span style="color:#a31515">buildFile</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">targetList</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">target</span><span style="color:Blue">&gt;</span><span style="color:Black">full</span><span style="color:Blue">&lt;/</span><span style="color:#a31515">target</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/</span><span style="color:#a31515">targetList</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">buildTimeout</span><span style="color:Blue">&gt;</span><span style="color:Black">300000</span><span style="color:Blue">&lt;/</span><span style="color:#a31515">buildTimeout</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/</span><span style="color:#a31515">build</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">tasks</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">merge</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">files</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">file</span><span style="color:Blue">&gt;</span><span style="color:Black">C:\Build\fxcop*.xml</span><span style="color:Blue">&lt;/</span><span style="color:#a31515">file</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;!--</span><span style="color:Green"> Other files to merge for your build would also be included here </span><span style="color:Blue">--&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/</span><span style="color:#a31515">files</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/</span><span style="color:#a31515">merge</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/</span><span style="color:#a31515">tasks</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">triggers</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;!--</span><span style="color:Green">check every 5 minutes </span><span style="color:Blue">--&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515">intervalTrigger</span><span style="color:Blue"> </span><span style="color:Red">seconds</span><span style="color:Blue">=</span><span style="color:Black">"</span><span style="color:Blue">300</span><span style="color:Black">"</span><span style="color:Blue"> </span><span style="color:Red">buildCondition</span><span style="color:Blue">=</span><span style="color:Black">"</span><span style="color:Blue">IfModificationExists</span><span style="color:Black">"</span><span style="color:Blue">/&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/</span><span style="color:#a31515">triggers</span><span style="color:Blue">&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;/</span><span style="color:#a31515">project</span><span style="color:Blue">&gt;<br />
+&lt;/</span><span style="color:#a31515">cruisecontrol</span><span style="color:Blue">&gt;<br />
+</span>
+</div>
+
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

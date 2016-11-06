@@ -1,0 +1,245 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>.Net WinForms</title>
+<link rel="stylesheet" type="text/css" href="../style.css" />
+<script type="text/javascript" src="../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../index.html">Main &gt;</a></li>
+<li><a href="dotnet.html">.Net</a></li>
+<li><a href="dotnetlinks.html">.Net Links</a></li>
+<li><a href="visualstudio.html">Visual Studio</a></li>
+<li><a href="string.html">Strings</a></li>
+<li><a href="io.html">Data &gt;</a></li>
+<li><a href="wcf/wcf.html">WCF &gt;</a></li>
+<li><a href="dotnetwinform.html">Winforms.Net</a></li>
+<li><a href="wpf/index.html">WPF</a></li>
+<li><a href="propomatic.html">Prop-o-matic</a></li>
+<li><a href="fcl/index.html">Other FCL &gt;</a></li>
+<li><a href="asp/aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="azure/index.html">Azure &gt;</a></li>
+<li><a href="code/index.html">Code &gt;</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>WinForms.Net</h2>
+<p>Scrappy notes because I'm primarily a web developer</p>
+<ul>
+<li>Managed code access to later Windows apis (file dialogs etc): 
+<ul>
+<li><a href="http://code.msdn.microsoft.com/VistaBridge">VistaBridge (Vista)</a></li>
+<li><a href="http://code.msdn.microsoft.com/WindowsAPICodePack">Windows API Code Pack (windows 7)</a></li>
+</ul>
+</li>
+<li><a href="http://www.componentfactory.com/">Krypton controls- free winforms controls</a></li>
+<li>Icons: <ul>
+<li><a href="http://www.famfamfam.com/lab/icons/">FamFamFam icons</a> - nice, free (used in the FF WebDeveloper toolbar, flags used in Wikipedia)</li>
+<li><a href="http://www.pinvoke.com/">PInvoke - free with attribution</a></li>
+</ul></li>
+<li>My <a href="code/forms/sortablebindinglist.html">SortableBindingList&lt;T&gt; (for Windows.Forms)</a></li>
+</ul>
+<h3>Events</h3>
+<p>Note the order: Enter - GotFocus - TextChanged - Leave - Validating - Validated - LostFocus<br />
+TextBox can be ReadOnly (gets focus), !Enabled (no focus).<br />
+Validation levels:</p>
+<ul>
+<li>TextBox properties- simple properties like MaxLength, CharacterCasing, AllowTabs</li>
+<li>Key Events- KeyPress (and for ctl/alt KeyDown/Up) in combo with KeyChar: <br /><code>if (Char.IsDigit(e.KeyChar) == true) e.Handled=false</code><br />
+form1.KeyPreview= true for form-level keys</li>
+<li><strong>Validating</strong> Event- CausesValidation of next control must be true (false for help providers)</li>
+<li>Form level- on a button_Click</li>
+<li>MessageBox.Show or myErrorProvider.SetError(textBox1, "message") (use string.Empty to clear the errorProvider)</li> 
+</ul>
+<h3>Exception Handling</h3>
+<p>You should at least log all unhandled exceptions, and preferably show a MessageBox saying sorry before Application.Exit().<br />
+In Asp.Net it's simple to trap unhandled exceptions in Application_Error in global.asax or in CustomErrors in web.config.<br />
+In Winforms and console apps, you can use the AppDomain.UnhandledException event:</p>
+<div class="code">
+<p><span style="color: #2b91af;">AppDomain</span>.CurrentDomain.UnhandledException +=<br />
+&nbsp;&nbsp;&nbsp; (o, eventArgs) =&gt;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Console</span>.WriteLine(<span style="color: #a31515;">"Application errrored!"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Log</span>.LogException(eventArgs.ExceptionObject <span style="color: blue;">as</span> <span style="color: #2b91af;">Exception</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Environment</span>.Exit(0);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; };</p>
+</div>
+
+<p>In Winforms you also have a <a href="http://msdn.microsoft.com/en-us/library/system.windows.forms.application.threadexception.aspx">Application.ThreadException</a> (check the UnhandledExceptionMode as by default you'll swallow the exception and continue). It only traps exceptions on the main UI thread, so you probably need the AppDomain event too.<br />
+You can use Application.Exit() or Environment.Exit(0) to close (and stop the default .Net unhandled exception dialog).</p>
+<h3>GDI+</h3>
+<p>Is also used with the PrintPage event of the PrintDocument component<br />
+Graphics object is available from a form1.CreateGraphics factory method (anything Control-derived), from PaintEventArgs(or PrintPageEventArgs).Graphics, or the static Graphics.FromImage(img)<br />
+Draw* for lines (with a <strong>Pen</strong>), Fill* for filled shapes (with a <strong>Brush</strong>).<br />
+Pen myPen = new Pen(myBrush)<br />
+Coordinates: Point, Size, Rectangle (a Size with a Point as origin).</p> 
+<p>g.DrawString(str, new Font("Arial", 36, FontStyle.Regular), myPen, 0, 0);<br />
+Dispose all Pens/Brushes/Graphics objects (enclose them in using)<br />
+GraphicsPaths- is for complex shapes- use AddString etc, StartFigure/CloseFigure</p>
+<ul>
+<li>Resize- In form_Resize, call form1.Invalidate() </li>
+<li>Resize- form.ResizeRedraw= true</li>
+</ul>
+<h4>Making thumbnail (best quality)</h4>
+<div class="code">
+<p><span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> ResizeImage(<span style="color: blue;">string</span> origPath, <span style="color: blue;">string</span> smallPath)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: blue;">var</span> orig = <span style="color: #2b91af;">Image</span>.FromFile(origPath))<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">const</span> <span style="color: blue;">int</span> newWidth = 150;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">const</span> <span style="color: blue;">int</span> newHeight = 200;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> small = <span style="color: blue;">new</span> <span style="color: #2b91af;">Bitmap</span>(newWidth, newHeight);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: blue;">var</span> g = <span style="color: #2b91af;">Graphics</span>.FromImage(small))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; g.InterpolationMode = <span style="color: #2b91af;">InterpolationMode</span>.HighQualityBicubic;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; g.FillRectangle(<span style="color: #2b91af;">Brushes</span>.White, 0, 0, newWidth, newHeight);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; g.DrawImage(orig, 0, 0, newWidth, newHeight);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; small.Save(smallPath, <span style="color: #2b91af;">ImageFormat</span>.Jpeg);<br />
+&nbsp;&nbsp;&nbsp; }&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <br />
+}</p>
+</div>
+
+<h4>Compress a jpeg</h4>
+<div class="code">
+<p><span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> CompressImage(<span style="color: blue;">string</span> origPath, <span style="color: blue;">string</span> compressedPath)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: blue;">var</span> orig = <span style="color: #2b91af;">Image</span>.FromFile(origPath))<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//look up jpeg mime type</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">ImageCodecInfo</span> codec = <span style="color: #2b91af;">ImageCodecInfo</span>.GetImageEncoders().First(<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; e =&gt; e.FormatID == <span style="color: #2b91af;">ImageFormat</span>.Jpeg.Guid);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> encoderPars = <span style="color: blue;">new</span> <span style="color: #2b91af;">EncoderParameters</span>();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//quality must be a LONG from 1 to 100 - not an INT</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; encoderPars.Param[0] =<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">EncoderParameter</span>(System.Drawing.Imaging.<span style="color: #2b91af;">Encoder</span>.Quality, 60L);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; orig.Save(compressedPath, codec, encoderPars);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+<h4>Overlaying images</h4>
+<div class="code">
+<p><span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> OverlayImage(<span style="color: blue;">string</span> origPath, <span style="color: blue;">string</span> overlayPath, <span style="color: blue;">string</span> newPath)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: #2b91af;">Image</span> background = <span style="color: #2b91af;">Image</span>.FromFile(origPath))<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: blue;">var</span> g = <span style="color: #2b91af;">Graphics</span>.FromImage(background))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: blue;">var</span> overlay = <span style="color: blue;">new</span> <span style="color: #2b91af;">Bitmap</span>(overlayPath))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; g.DrawImage(overlay, <span style="color: blue;">new</span> <span style="color: #2b91af;">Point</span>(780, 0));<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; background.Save(newPath, <span style="color: #2b91af;">ImageFormat</span>.Jpeg);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+<p>DPI problems: if the image isn't default 96dpi, bitmap.SetResolution(overlay.HorizontalResolution, overlay.VerticalResolution);</p>
+
+<h3>Authoring Controls</h3>
+<ul>
+<li>Inherit from existing control. <br />
+You can override OnPaint (not for TextBox)- assign Region for round buttons etc.<br />
+VS: add reference + Project-Add Inherited Control</li>
+<li>Composite (user) controls inherit from <strong>UserControl</strong>. Use tb.Modifiers = public<br />
+VS:  Project -Add User Control</li>
+<li>Custom controls inherit from <strong>Control</strong><br />
+Override OnPaint (PaintEventArgs.Graphics <br />
+In #ctor, <code>SetStyle(ControlStyles.ResizeRedraw, true)</code> so resizing redraws (or manually Refresh())<br />
+or in _SizeChanged call <code>Invalidate()</code><br />
+VS: New Project =Windows Control Library</li>
+</ul>
+<p>Add toolbox icons- [ToolboxBitmap(typeof(Button))]. Or pass the path, or simply put add YourClassName.bmp as an embedded resource (bmp filename== classname) and it does it magically.<br />
+You can also use LicenseManager.Validate.</p>
+<h3>Help</h3>
+<ul>
+<li>Form and controls have a <strong>HelpRequested</strong> event (when F1 pressed)</li>
+<li>You can show "?" button in the titlebar ("What's This"): form1.<strong>HelpButton</strong>= true AND false for Maximise/Minimise.<br />
+In 2.0, forms have a <strong>HelpButtonClicked</strong> event for this.</li>
+<li>There's a static Help class (with <strong>ShowHelp</strong>(control, "file://c:\myhelp.chm") and ShowHelpIndex()) and a HelpProvider.</li>
+<li>A <strong>HelpProvider</strong> has a HelpNamespace (file or URL). You can just SetHelpString(ctl,str) for tooltip-like ("pop-up") help with no namespace (the What's This titlebar button calls this) or use SetHelpKeyword (ie "topic"= topic.htm).</li>
+<li>There's also an AccessibleName, for accessibility tools (and Tooltips!)</li>
+</ul>
+
+<h3><a name="Settings">Settings</a></h3>
+<p>WinForms 2.0 designer - properties - Application Settings/ PropertyBindings creates the Settings class and binds for you. (<a href="http://msdn2.microsoft.com/en-us/library/0yyxh69h.aspx">msdn</a>)<br />
+For C# (not VB) you need:</p>
+<div class="code">
+<p><span style="color: blue;">private</span> <span style="color: blue;">void</span> Form1_FormClosing(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">FormClosingEventArgs</span> e)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; Properties.<span style="color: #2b91af;">Settings</span>.Default.Save();<br />
+}</p>
+</div>
+
+<h3><a name="TreeViewToolTip">Tooltips on TreeView treenodes</a></h3>
+<p>Option 1: treeview1.ShowNodeToolTips = true and set the treeNode's ToolTipText<br />
+Option 2: Add a Windows.Forms.ToolTip, and handle the treeview's MouseMove event. You can use the treeNode's ToolTipText directly, or cast the Tag. You need to remember the last node or tooltip to avoid unpleasant repeat flashing as the cursor moves.</p>
+<div class="code">
+<p><span style="color: blue;">private</span> <span style="color: blue;">string</span> lastNode; <span style="color: green;">//remember tooltips to avoid flashing</span><br />
+<span style="color: blue;">private</span> <span style="color: blue;">void</span> DatabaseScripterTreeView_MouseMove(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">MouseEventArgs</span> e)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">// Get the node at the current mouse pointer location.</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">TreeNode</span> theNode = GetNodeAt(e.X, e.Y);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">// if mouse not over a node, or it has no tag, no tooltip</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (theNode == <span style="color: blue;">null</span> || <span style="color: blue;">string</span>.IsNullOrEmpty(theNode.ToolTipText))<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; toolTip1.Active = <span style="color: blue;">false</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; lastNode = <span style="color: blue;">null</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span>;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//check still on same node - otherwise fires repeatedly</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (theNode.ToolTipText == lastNode) <span style="color: blue;">return</span>;<br />
+&nbsp;&nbsp;&nbsp; lastNode = theNode.ToolTipText;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//show the tooltip</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> tag = theNode.ToolTipText;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!toolTip1.Active) toolTip1.Active = <span style="color: blue;">true</span>;<br />
+&nbsp;&nbsp;&nbsp; toolTip1.SetToolTip(<span style="color: blue;">this</span>, tag);<br />
+}</p>
+</div>
+
+<h3><a name="CrossThread">CrossThread Pattern</a></h3>
+<p>For the dreaded cross-thread exception. You can either define a delegate or use an Action/ Func (or new MethodInvoker- anonymous delegates don't work).</p>
+<div class="code">
+<p><span style="color: blue;">void</span> Model_Changed(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">EventArgs</span> e)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//model changed by background worker or UI</span><br />
+&nbsp;&nbsp;&nbsp; UpdateUI();<br />
+}<br />
+&nbsp;<br />
+<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> Updates the UI in a threadsafe way</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+<span style="color: blue;">private</span> <span style="color: blue;">void</span> UpdateUI()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (InvokeRequired)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//call myself on the windows thread</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Invoke(<span style="color: blue;">new</span> <span style="color: #2b91af;">Action</span>(UpdateUI));<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">else</span><br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; txtName.Text = <span style="color: #a31515;">"Hello"</span>;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+
+</div>
+<div class="Footer">
+
+</div></body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>WCF Endpoints</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="wcf.html">WCF &gt;</a></li>
+<li><a href="behavior.html">Behavior</a></li>
+<li><a href="clients.html">Clients</a></li>
+<li><a href="contracts.html">Contracts</a></li>
+<li><a href="endpoints.html">Endpoints</a></li>
+<li><a href="faults.html">Faults</a></li>
+<li><a href="logging.html">Logging</a></li>
+<li><a href="routing.html">Routing</a></li>
+<li><a href="security.html">Security</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>WCF Hosts and Endpoints</h2>
+
+<h3>Service Hosts</h3>
+<p>In svc:</p>
+<div class="code">
+<p><span style="background: #ffee62;">&lt;%</span><span style="color: blue;">@</span> <span style="color: #a31515;">ServiceHost</span> <span style="color: red;">Service</span><span style="color: blue;">="Service1"</span> <span style="background: #ffee62;">%&gt;</span></p>
+
+</div>
+<p>In code:</p>
+<div class="code">
+<p><span style="color: green;">//or WebServiceHost for web</span><br />
+<span style="color: blue;">var</span> host = <span style="color: blue;">new</span> <span style="color: #2b91af;">ServiceHost</span>(<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//or pass new MyService() for singleton</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">typeof</span>(<span style="color: #2b91af;">MyService</span>),<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//params or array of base addresses</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">Uri</span>(<span style="color: #a31515;">"http://localhost:8000/"</span>));<br />
+host.AddServiceEndpoint(<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">typeof</span>(<span style="color: #2b91af;">IMyService</span>),<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">WebHttpBinding</span>(),<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//baseAddress + service name = full url.</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//If no base address, can use full address here.</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #a31515;">"MyService"</span>);</p>
+</div>
+
+<p>Hosts</p>
+<ul>
+<li>You can add several base addresses (ServiceHost ctor has a params argument).</li>
+<li>For non-HTTP IIS, make sure the appropriate service is running and use IIS 7's <a href="http://learn.iis.net/page.aspx/114/getting-started-with-appcmdexe/">appcmd</a>: 
+%windir%\system32\inetsrv\appcmd.exe set app "x/service" /enabledProtocols:http,net.tcp</li>
+<li>For MSMQ, create a queue named  MyServiceHost/service.svc : the endpoint has address="net.msmq://localhost/private/MyServiceHost/service.svc" binding="netMsmqBinding"</li>
+<li>In a hosted environment (IIS, WAS), a ServiceHost is configured automatically. To customize, replace the <a href="http://msdn.microsoft.com/en-us/library/aa702697.aspx">ServiceHostFactory</a> to return your own dynamically configured ServiceHost: <span style="background: #ffee62;">&lt;%</span><span style="color: blue;">@</span> <span style="color: #a31515;">ServiceHost</span> <span style="color: red;">Factory</span><span style="color: blue;">="DerivedFactory"</span></li>
+<li>You can create an IIS service without an svc file. In web.config, add system.serviceModel/serviceHostingEnvironment/<a href="http://msdn.microsoft.com/en-us/library/ee816902.aspx">serviceActivations</a>.</li>
+</ul>
+
+<h3>Endpoints</h3>
+<ul>
+<li>You can have multiple endpoints for one host (either different bindings to the same contract or different contracts with the same binding - don't new NetTcpBinding() in each )</li>
+<li>Routing- in .net 4 use <a href="routing.html">WCF routing</a>. For .net 3:<ul>
+<li><a href="http://msdn.microsoft.com/en-us/library/system.servicemodel.description.clientviabehavior.aspx">ClientViaBehavior</a> is an intermediate route- the client uses the clientVia physical address, but the "To:" address is the logical address.</li>
+<li>WS-Addressing (routing): <span style="color: blue;">var</span> addressHeader = <span style="color: #2b91af;">AddressHeader</span>.CreateAddressHeader(<span style="color: #a31515;">"name"</span>, <span style="color: #a31515;">"http://ns.org"</span>, valueobject);</li></ul></li>
+
+</ul>
+
+
+<h4>Metadata</h4>
+<ul>
+<li>Metadata support ?wsdl : <span style="color: blue;">&lt;</span><span style="color: #a31515;">endpoint</span><span style="color: blue;"> </span><span style="color: red;">address</span><span style="color: blue;">=</span>"<span style="color: blue;">mex</span>"<span style="color: blue;"> </span><span style="color: red;">binding</span><span style="color: blue;">=</span>"<span style="color: blue;">mexHttpBinding</span>"<span style="color: blue;"> </span><span style="color: red;">contract</span><span style="color: blue;">=</span>"<span style="color: blue;">IMetadataExchange</span>"<span style="color: blue;"> /&gt;</span>
+
+</li>
+<li>HTTP GET: Service behavior: <span style="color: blue;">&lt;</span><span style="color: #a31515;">serviceMetadata</span> <span style="color: red;">httpGetEnabled</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;"> /&gt;</span></li>
+</ul>
+
+ 
+</div>
+<div class="Footer"><script type="text/javascript">
+//<![CDATA[
+
+
+prettyPrint();
+//]]>
+</script></div>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Nuget/MsBuild</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main</a></li>
+<li><a href="../dotnet.html">.Net</a></li>
+<li><a href="index.html">Code</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>Nuget/MsBuild</h2>
+<p>A simple cmd file to build a project (or solution) into a nuget structure. MsBuild is used to build the project in release configuration and put it directly into the package lib/netX folder.</p>
+<pre class="code">
+echo off
+Set VersionDefault=1.0.0.0
+echo.
+echo ** Nuget Pack using version = %VersionDefault% ** 
+set /p Version=Version number [%VersionDefault%] 
+if "%Version%" == "" set Version=%VersionDefault%
+echo ver=[%Version%]
+
+:: nuget pack
+nuget Update -self
+
+%systemroot%\Microsoft.Net\Framework\v4.0.30319\MSBuild.exe ..\MyPackage\MyPackage.csproj /p:Configuration=Release /p:OutputPath=..\Nuget\MyPackage\lib\net20
+
+nuget pack MyPackage\MyPackage.nuspec -Version %Version%
+
+pause
+:end
+</pre>
+
+
+
+<p>Folder structure:</p>
+<ul>
+<li><em>Nuget</em><ul>
+<li>Nuget.exe</li>
+<li>pack.cmd (see below)</li>
+<li>*.nupkg files</li>
+<li><em>MyPackage</em><ul>
+<li>MyPackage.nuspec</li>
+<li>Readme.txt</li>
+<li><em>content</em><ul>
+<li>Web.config.transform</li>
+</ul></li>
+<li><em>lib</em><ul>
+<li><em>net20</em><ul><li>*.dll here</li></ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul>
+
+<h2>Build with devenv</h2>
+<p>Deployment projects need VS2010. Create a x.VS2010.sln with those vdproj projects, and use a script like this (so you never need to actually launch VS2010).</p>
+<pre class="code">
+@echo "Building with VS2010"
+
+"C:\Program Files (x86)\Microsoft Visual Studio 10.0\Common7\IDE\devenv.com" "C:\Dev\z\z.2010.sln" /rebuild Release /project "z.Setup\z.Setup.vdproj" /projectconfig Release
+
+@echo "Copying the MSIs to somewhere useful"
+copy "C:\Dev\z\z.Setup\Release\z.Setup.msi" "C:\Dev\latest_Releases\z.Setup.msi"
+
+@pause
+</pre>
+
+<h2>Build a solution</h2>
+<p>Create a nuspec for the project(s) in the solution- as nuget pack calls the csproj, tokens like $Version$ are automatically filled from the dll</p>
+<pre class="code">
+nuget.exe update -self
+nuget.exe restore MySolution.sln
+%systemroot%\Microsoft.Net\Framework\v4.0.30319\MSBuild.exe MySolution.sln /t:Build /p:Configuration=Release
+nuget.exe pack Lib\Lib.csproj -OutputDirectory Packages -Prop Configuration=Release
+</pre>
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

@@ -1,0 +1,234 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>OAuth2</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+<style>
+.url {color:navy;text-decoration:underline;font-size:small;}
+</style>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspsecurity.html">Asp Security</a></li>
+<li><a href="forms.html">Forms Authentication</a></li>
+<li><a href="wsfederation.html">WS-Federation</a></li>
+<li><a href="wsfederationconfig.html">WS-Federation Config</a></li>
+<li><a href="ssl.html">SSL</a></li>
+<li><a href="owin.html">Owin</a></li>
+<li><a href="oauth.html">OAuth</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>OAuth 2</h2>
+<p>OAuth 2 is supported using <a href="owin.html">Owin</a> middleware, so you have to use Owin.</p>
+<ul>
+<li><a href="oauthserver.html">Creating an OAuth Server</a></li>
+</ul>
+<h3>Roles</h3>
+<ul>
+<li><strong>Resource owner</strong> - the end user</li>
+<li><strong>Client</strong> - an application making requests on behalf of the resource owner. Maybe a browser, server or smartphone app. </li>
+<li><strong>Resource server</strong> - the application/ API (it hosts protected resources)</li>
+<li><strong>Authorization server</strong> - the server issuing access tokens (Facebook, Google...).</li>
+</ul>
+<p>In <a href="wsfederation.html">WS-Federation</a> terms, Authorization server is an STS/Identity Provider (IdentityServer v3 and ADFS v4 support both OAuth2 and Ws-fed). The Relying Party/Service Provider role is split into two: client (uses data) and resource server (provides data). </p>
+<h4>Tokens</h4>
+<p>Access tokens are like cookies in traditional forms authentication:</p>
+<ul>
+<li>There are passed in the HTTP header Authentication: Bearer xxxx </li>
+<li>The format is a base64 encoded JWT (json web token). It's not encrypted or signed- you must use SSL</li>
+<li>You can refresh them: <em>grant_type=refresh_token</em>. Which can update the information.</li>
+</ul>
+
+<div class="alert">
+You should normally request scopes when explicitly needed, not all in advance. The authorization API should include a "include_granted_scopes=true" to roll up previously granted scopes.
+</div>
+
+<h3>Flows</h3>
+<p><a href="https://developers.google.com/accounts/docs/OAuth2">Google's OAuth documentation</a></p>
+<p>The most common interactions are <em>implicit/ token</em> (javascript in the browser) and <em>code</em> (server page gets code and does a server-to-server post for the token). The latter never exposes the token, so it's more secure.</p>
+<p>Generally you have to register the client with the auth server (so it knows where to redirect, or at least validate your redirect_uri).</p>
+<h4>Implicit Flow (Browsers/Apps)</h4>
+<ul>
+<li><strong>Implicit / client-side</strong> (response_type=<em>token</em>): browser-based redirect to auth server, which logs in/shows consent screen.<br/>
+<ul>
+<li>&#8594; <span class="url">https://server/auth?client_id=1&amp;response_type=<em>token</em><br/>
+The query-string has a <em>client_id</em> and may have a <em>redirect_uri</em> and <em>scope</em> (e.g. read, update...).</li>
+<li>&#8592; <span class="url">https://client/callback#token=xxx</span><br />
+The consent screen redirects back with the token in the url hash: location.hash.substr(1)</li>
+<li>Best practice is to do another ajax call to validate the token (which returns json with the audience, which must match your client)</li>
+<li>Then send ajax calls for data with http header "Authorization: Bearer xxx"</li>
+</ul>
+</li>
+</ul>
+<h4>Authorization Code Flow (Server-side)</h4>
+<ul>
+<li><strong>Authorization Code</strong> (response_type=<em>code</em>): for server-side authentication. 
+<ul>
+<li>&#8594; <span class="url">https://server/auth?response_type=<strong>code</strong>&amp;client_id=x</span><br />
+User redirected to auth server login page. When they log in/consent...</li>
+<li>&#8592; <span class="url">https://client/?code=xxx</span><br />
+The auth server redirects with a ?code=xxx to the client.</li>
+<li>&#8594; POST <span class="url">https://server/grant_type=<strong>authorization_code</strong>&amp;code=xxx&amp;<br/>
+    client_id=CLIENT_ID&amp;client_secret=CLIENT_SECRET</span><br />
+The client POSTs to a token endpoint with <em>grant_type=authorization_code</em><br />
+(this is a "back channel" call from the server, the user can never see your client secret or the access token)</li>
+<li>&#8592; { "access_token":"hm4s8..." }<br />
+The auth server replies with the access_token in json.</li>
+</ul>
+</li></ul>
+<h4>Password (Secure servers only)</h4>
+<ul>
+<li><strong>Password</strong> (also "response owner password credential flow") (grant_type=password): send username and password to authorization server (via Basic Auth or form-encoded), get token. This is a replacement to HTTP Basic Authentication.  </li>
+</ul>
+<h4>Client Credential (application-level access)</h4>
+<ul>
+<li>&#8594; <span class="url">POST https://server/?grant_type=client_credentials&amp;client_id=CLIENT_ID&amp;client_secret=CLIENT_SECRET</span><br />
+Intended for app access (get list of users etc)</li>
+</ul>
+
+
+<h3>OpenID Connect</h3>
+<p>OpenID Connect is an authentication protocol built on top of OAuth2. OpenID identity providers (IdP) include 3rd parties like Google and Microsoft, plus your own with IdentityServer or ADFS 4.</p>
+<ul>
+<li>install-package <strong>Microsoft.Owin.Security.Cookies</strong></li>
+<li>install-package <strong>Microsoft.Owin.Security.OpenIdConnect</strong></li>
+</ul>
+<p>In Startup do the following:</p>
+<ul>
+<li>Add <span style="color:darkcyan;">UseCookieAuthentication</span> (first!)</li>
+<li>Add <span style="color:darkcyan;">UseOpenIdConnectAuthentication</span></li>
+<li>Add the IdP url ("Authority") and the Client's ID and RedirectUri</li>
+<li>In Scope, add the claims you'll need (otherwise you just get openid claims).</li>
+<li>In Notifications, the <span style="color:purple;">SecurityTokenValidated</span> event allows for claims transformation (standardise the claim names e.g. Ws-fed like Uris or short names).</li>
+</ul>
+
+<div class="code">
+<span style="color:green;">//always&nbsp;do&nbsp;cookie&nbsp;middleware&nbsp;first</span><br />
+&nbsp;app.<span style="color:darkcyan;">UseCookieAuthentication</span>(<span style="color:blue;">new</span>&nbsp;<span style="color:darkblue;">CookieAuthenticationOptions</span><br />
+&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:purple;">AuthenticationType</span>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Cookies&quot;</span>,<br />
+&nbsp;});<br />
+ <br />
+&nbsp;app.<span style="color:darkcyan;">UseOpenIdConnectAuthentication</span>(<span style="color:blue;">new</span>&nbsp;<span style="color:darkblue;">OpenIdConnectAuthenticationOptions</span><br />
+&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:purple;">Authority</span>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;https://localhost:44324/core&quot;</span>,&nbsp;<span style="color:green;">//IdP Url,</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:purple;">ClientId</span>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;tst-infrabel.be&quot;</span>,&nbsp;<span style="color:green;">//OpenID&nbsp;server&nbsp;must&nbsp;have&nbsp;this&nbsp;client</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:purple;">Scope</span>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;openid&nbsp;profile&nbsp;roles&quot;</span>,&nbsp;<span style="color:green;">//what&nbsp;roles&nbsp;I&nbsp;want&nbsp;(default&nbsp;is&nbsp;openid)</span><br />
+ <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:purple;">RedirectUri</span>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;https://localhost:44348/&quot;</span>,&nbsp;<span style="color:green;">//start&nbsp;page&nbsp;for&nbsp;this&nbsp;application</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:purple;">ResponseType</span>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;code&nbsp;id_token&nbsp;token&quot;</span>,<br />
+ <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:purple;">SignInAsAuthenticationType</span>&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Cookies&quot;</span>,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:purple;">Notifications</span>&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:darkblue;">OpenIdConnectAuthenticationNotifications</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:purple;">AuthenticationFailed</span>&nbsp;=&nbsp;context&nbsp;=&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//logging&nbsp;errors</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:darkblue;">Console</span>.<span style="color:darkcyan;">WriteLine</span>(context.<span style="color:purple;">Exception</span>);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">return</span>&nbsp;<span style="color:darkblue;">Task</span>.<span style="color:darkcyan;">FromResult</span>(0);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;},<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//claims&nbsp;transformation</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:purple;">SecurityTokenValidated</span>&nbsp;=&nbsp;notification&nbsp;=&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;id&nbsp;=&nbsp;notification.<span style="color:purple;">AuthenticationTicket</span>.<span style="color:purple;">Identity</span>;<br />
+ <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;create&nbsp;new&nbsp;identity&nbsp;and&nbsp;set&nbsp;name&nbsp;and&nbsp;role&nbsp;claim&nbsp;type</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;nid&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:darkblue;">ClaimsIdentity</span>(id.<span style="color:purple;">AuthenticationType</span>);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//copy&nbsp;the&nbsp;claims&nbsp;in</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nid.<span style="color:darkcyan;">AddClaim</span>(id.<span style="color:darkcyan;">FindFirst</span>(<span style="color:darkblue;">ClaimTypes</span>.<span style="font-weight:bold;color:purple;">Name</span>));<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nid.<span style="color:darkcyan;">AddClaims</span>(id.<span style="color:darkcyan;">FindAll</span>(<span style="color:darkblue;">ClaimTypes</span>.<span style="font-weight:bold;color:purple;">Role</span>));<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;add&nbsp;new&nbsp;claim</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nid.<span style="color:darkcyan;">AddClaim</span>(<span style="color:blue;">new</span>&nbsp;<span style="color:darkblue;">Claim</span>(<span style="color:#a31515;">&quot;LogonTime&quot;</span>,&nbsp;<span style="color:darkblue;">DateTime</span>.<span style="color:purple;">UtcNow</span>.<span style="color:darkcyan;">ToString</span>(<span style="color:#a31515;">&quot;u&quot;</span>)));<br />
+ <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;notification.<span style="color:purple;">AuthenticationTicket</span>&nbsp;=<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:darkblue;">AuthenticationTicket</span>(nid,&nbsp;notification.<span style="color:purple;">AuthenticationTicket</span>.<span style="color:purple;">Properties</span>);<br />
+ <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">return</span>&nbsp;<span style="color:darkblue;">Task</span>.<span style="color:darkcyan;">FromResult</span>(0);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+&nbsp;});
+</div>
+
+
+<p>The client must use SSL. If you don't (e.g. local development), the client will enter an infinite redirect loop back to the IdP (you can also have this if the client URL doesn't end in "/").<br />
+In app.<span style="color:darkcyan;">UseCookieAuthentication</span>(<span style="color:blue;">new</span>&nbsp;<span style="color:darkblue;">CookieAuthenticationOptions</span>
+ add:<br />
+<span style="color:purple;">CookieSecure</span>&nbsp;=&nbsp;<span style="color:darkblue;">CookieSecureOption</span>.<span style="font-weight:bold;color:purple;">Never</span><br />
+Obviously don't leave this is production- use the [<span style="color:darkblue;">RequireHttps</span>]
+ attribute.</p>
+
+<h4>SignOut</h4>
+<p>Use <span style="color:purple;">Request</span>.<span style="color:darkcyan;">GetOwinContext</span>().<span style="color:purple;">Authentication</span>.<span style="color:darkcyan;">SignOut</span>();</p>
+
+<h3>Client</h3>
+<p>A simple console client</p>
+<div class="code">
+<p><span style="color: blue;">static</span> <span style="color: blue;">void</span> Main(<span style="color: blue;">string</span>[] args)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> token = GetToken().Result;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Console</span>.WriteLine(token);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> data = CallService(token).Result;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Console</span>.WriteLine(data);<br />
+}<br />
+&nbsp;<br />
+<span style="color: blue;">private</span> <span style="color: blue;">async</span> <span style="color: blue;">static</span> <span style="color: #2b91af;">Task</span>&lt;<span style="color: blue;">string</span>&gt; GetToken()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: blue;">var</span> client = <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpClient</span>())<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> post =<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">Dictionary</span>&lt;<span style="color: blue;">string</span>, <span style="color: blue;">string</span>&gt;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<span style="color: #a31515;">"grant_type"</span>, <span style="color: #a31515;">"password"</span>},<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<span style="color: #a31515;">"username"</span>, <span style="color: #a31515;">"alice"</span>},<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<span style="color: #a31515;">"password"</span>, <span style="color: #a31515;">"secret"</span>},<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//client</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<span style="color: #a31515;">"client_id"</span>, <span style="color: #a31515;">"1"</span>},<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<span style="color: #a31515;">"client_secret"</span>, <span style="color: #a31515;">"secret"</span>},<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; };<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> response = <span style="color: blue;">await</span> client.PostAsync(<span style="color: #a31515;">"http://localhost:4746/token"</span>,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">FormUrlEncodedContent</span>(post));<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (response.IsSuccessStatusCode)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> content = <span style="color: blue;">await</span> response.Content.ReadAsStringAsync();<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> json = <span style="color: #2b91af;">JObject</span>.Parse(content);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> json[<span style="color: #a31515;">"access_token"</span>].ToString();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">throw</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">InvalidOperationException</span>(response.ReasonPhrase);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}<br />
+&nbsp;<br />
+<span style="color: blue;">private</span> <span style="color: blue;">async</span> <span style="color: blue;">static</span> <span style="color: #2b91af;">Task</span>&lt;<span style="color: blue;">string</span>&gt; CallService(<span style="color: blue;">string</span> token)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: blue;">var</span> client = <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpClient</span>())<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; client.DefaultRequestHeaders.Authorization =<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">AuthenticationHeaderValue</span>(<span style="color: #a31515;">"Bearer"</span>, token);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">await</span> client.GetStringAsync(<span style="color: #a31515;">"http://localhost:4746/api/data"</span>);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+
+
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

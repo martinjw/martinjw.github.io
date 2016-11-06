@@ -1,0 +1,139 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Linq2Sql</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="io.html">Data &gt;</a></li>
+<li><a href="old.html">Old ORMs  &gt;</a></li>
+<li><a href="linq2sql.html">Linq2Sql</a></li>
+<li><a href="ef/efedmx.html">EF data/model first</a></li>
+<li><a href="wcfds.html">WCF Data Services</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Linq2Sql</h2>
+<h3>Links</h3>
+<ul>
+<li><a href="http://msdn.microsoft.com/en-us/library/bb386976.aspx">MSDN</a></li>
+</ul>
+<h3>Limitations</h3>
+<p>SqlServer + SqlServerCe3.5 only. Generally simple single-table mapping, but you can do use an InheritanceMappingAttribute.</p>
+<p>It's simple, and Microsoft steers you to <a href="ef/ef.html">Entity Framework</a>, but as a simple ORM it's good enough as long as you Sql-Profile what you're doing. I used it in integration tests when I want to check what the "real" data access layer did to the database.</p>
+<h3>Mapping</h3>
+<p>The dbml designer/SqlMetal uses DataAnnotations by default- but you can also use XML.</p>
+<p>Entities (and the datacontext) can use a BaseClass. Individual properties (eg binary blobs) can be "DelayLoaded" (i.e. lazy loaded).</p>
+<h3>Selecting</h3>
+<p>Selecting with Linq is easy (where, groupby, select projections, paging with skip/take)</p>
+<h4>Joins</h4>
+<ul>
+<li>You can use "join" when there is no explicit assocation</li>
+</ul>
+<div class="code">
+<p><span style="color: green;">//eager fetching</span><br />
+<span style="color: blue;">var</span> dlo = <span style="color: blue;">new</span> <span style="color: #2b91af;">DataLoadOptions</span>();<br />
+dlo.LoadWith&lt;<span style="color: #2b91af;">Products</span>&gt;(p =&gt; p.Categories);<br />
+context.LoadOptions = dlo;</p>
+</div>
+<p>(there's also a DataLoadOptions.AssociateWith to filter subsets of associations)</p>
+<h3>Updates</h3>
+<p>Generated entities implement INotifyPropertyChanging/Changed for tracking.</p>
+<div class="code">
+<p><span style="color: blue;">var</span> transport = <span style="color: blue;">new</span> <span style="color: #2b91af;">Category</span> {CategoryName = <span style="color: #a31515;">"Transport"</span>};<br />
+context.Categories.InsertOnSubmit(transport);<br />
+context.SubmitChanges();<br />
+�<br />
+transport.Description = <span style="color: #a31515;">"All about transport"</span>;<br />
+context.SubmitChanges();<br />
+�<br />
+context.Categories.DeleteOnSubmit(transport);<br />
+context.SubmitChanges();</p>
+</div>
+<h4>Concurrency</h4>
+<p>It uses optimistic concurrency by default (unless the table has a timestamp column - mark it as IsVersion). In designer, set the ColumnAttribute UpdateCheck enum to Always (default), Never or WhenChanged.</p>
+<div class="code">
+<p><span style="color: blue;">try</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//ConflictMode.FailOnFirstConflict or</span><br />
+&nbsp;&nbsp;&nbsp; context.SubmitChanges(<span style="color: #2b91af;">ConflictMode</span>.ContinueOnConflict);<br />
+}<br />
+<span style="color: blue;">catch</span> (<span style="color: #2b91af;">ChangeConflictException</span>)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">foreach</span> (<span style="color: blue;">var</span> conflict <span style="color: blue;">in</span> context.ChangeConflicts)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//RefreshMode.KeepChanges || RefreshMode.KeepCurrentValues</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; conflict.Resolve(<span style="color: #2b91af;">RefreshMode</span>.OverwriteCurrentValues);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+<h4>Disconnected entities</h4>
+<p>Beware of optimistic concurrency (generally best to use timestamp or set each column to [Column(UpdateCheck.Never)])</p>
+<div class="code">
+<p><span style="color: blue;">var</span> original = context.Categories.Where(x =&gt; x.CategoryID == 1).Single();<br />
+<span style="color: #2b91af;">Category</span> clone;<br />
+<span style="color: green;">//pretend this is going over a webservice</span><br />
+<span style="color: blue;">using</span> (<span style="color: blue;">var</span> ms = <span style="color: blue;">new</span> <span style="color: #2b91af;">MemoryStream</span>())<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//ensure SerializationMode=Unidirectional</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> dcs = <span style="color: blue;">new</span> <span style="color: #2b91af;">DataContractSerializer</span>(<span style="color: blue;">typeof</span>(<span style="color: #2b91af;">Category</span>));<br />
+&nbsp;&nbsp;&nbsp; dcs.WriteObject(ms, original);<br />
+&nbsp;&nbsp;&nbsp; ms.Seek(0, <span style="color: #2b91af;">SeekOrigin</span>.Begin);<br />
+&nbsp;&nbsp;&nbsp; clone = (<span style="color: #2b91af;">Category</span>)dcs.ReadObject(ms);<br />
+}<br />
+clone.Description = <span style="color: #a31515;">"Chocolate products"</span>;<br />
+�<br />
+<span style="color: green;">//Optimistic concurrency with timestamps</span><br />
+<span style="color: green;">//context.Categories.Attach(clone, true /* mark modified */);</span><br />
+<span style="color: green;">//otherwise</span><br />
+<span style="color: blue;">using</span> (<span style="color: blue;">var</span> context2 = <span style="color: blue;">new</span> <span style="color: #2b91af;">NorthwindDataContext</span>())<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//we need another context or DuplicateKeyException</span><br />
+&nbsp;&nbsp;&nbsp; context2.Categories.Attach(clone, original);<br />
+&nbsp;&nbsp;&nbsp; context2.SubmitChanges();<br />
+}</p>
+</div>
+<h4>Logging</h4>
+<div class="code">
+<p><span style="color: blue;">var</span> sw = <span style="color: blue;">new</span> <span style="color: #2b91af;">StringWriter</span>();<br />
+context.Log = sw;<br />
+�<br />
+context.SubmitChanges();<br />
+�<br />
+<span style="color: #2b91af;">Debug</span>.WriteLine(sw.GetStringBuilder().ToString());</p>
+</div>
+<h3>Serialization</h3>
+<p>Default none, or "unidirectional" (only parent primary key side for foreign keys -uses DataContract serialization)</p>
+<h3>Mixing in ADO</h3>
+<ul>
+<li>ADO: The XDataContext class has a (DbConnection) ctor to use an open connection.</li>
+<li>Use TransactionScope using blocks as normal.</li>
+</ul>
+<div class="code">
+<p><span style="color: green;">//easy mapping</span><br />
+<span style="color: blue;">var</span> category1 = context.ExecuteQuery&lt;<span style="color: #2b91af;">Category</span>&gt;(<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//NB {0} for parameters, not @x</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #a31515;">"SELECT CategoryId, CategoryName FROM Categories WHERE CategoryId={0}"</span>,<br />
+&nbsp;&nbsp;&nbsp; 1).Single();<br />
+<span style="color: green;">//also context.ExecuteCommand("sql", "parameters");</span></p>
+</div>
+</div>
+<div class="Footer"><script type="text/javascript">
+//<![CDATA[
+
+
+prettyPrint();
+//]]>
+</script></div>
+</body>
+</html>

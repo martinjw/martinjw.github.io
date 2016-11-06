@@ -1,0 +1,190 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP WebAPI Client</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="../aspmvc.html">Asp MVC</a></li>
+<li><a href="mvccontrollers.html">MVC Controllers</a></li>
+<li><a href="mvcactions.html">MVC Actions</a></li>
+<li><a href="../asprouting.html">Asp Routing</a></li>
+<li><a href="../aspmvcview.html">Asp MVC Views</a></li>
+<li><a href="htmlhelpers.html">HTML Helpers</a></li>
+<li><a href="bundles.html">Bundling</a></li>
+<li><a href="errors.html">MVC Errors</a></li>
+<li><a href="mvcvalidation.html">MVC Validation</a></li>
+<li><a href="simplepaging.html">Simple Paging</a></li>
+<li><a href="webapi.html">WebApi</a></li>
+<li><a href="webapiformat.html">WebApi Formatting</a></li>
+<li><a href="webapiclient.html">WebApi HttpClient</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>WebAPI HttpClient</h2>
+
+<p>Microsoft.AspNet.WebApi.Client package</p>
+<h3>Pattern</h3>
+
+<div class="code">
+<p><span style="color: blue;">using</span> (<span style="color: blue;">var</span> client = <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpClient</span>())<br />
+{<br />
+&nbsp;&nbsp;&nbsp; client.BaseAddress = <span style="color: blue;">new</span> <span style="color: #2b91af;">Uri</span>(idsJson);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">// Add an Accept header for JSON format.</span><br />
+&nbsp;&nbsp;&nbsp; client.DefaultRequestHeaders.Accept.Add(<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">MediaTypeWithQualityHeaderValue</span>(<span style="color: #a31515;">"application/json"</span>));<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: blue;">var</span> response = client.PutAsJsonAsync(<span style="color: #a31515;">"api/messages/"</span>, message).Result)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (response.IsSuccessStatusCode)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> result = response.Content.ReadAsAsync&lt;<span style="color: #2b91af;">OperationResult</span>&gt;().Result;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> result;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">throw</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">InvalidOperationException</span>(<span style="color: #a31515;">"Error: "</span> + response.StatusCode + <span style="color: #a31515;">": "</span> + response.ReasonPhrase);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+<h3>Configuration</h3>
+<p>Configure the client (for authentication etc) </p>
+<div class="code">
+<p><span style="color: blue;">var</span> handler = <span style="color: blue;">new</span> <span style="color: #2b91af;">WebRequestHandler</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; AutomaticDecompression = <span style="color: #2b91af;">DecompressionMethods</span>.Deflate | <span style="color: #2b91af;">DecompressionMethods</span>.GZip<br />
+};<br />
+<span style="color: blue;">var</span> c = <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpClient</span>(handler);</p>
+</div>
+
+<p>You have to drop to lower level than "PostAsJsonAsync" for some config</p>
+<div class="code">
+<p><span style="color: blue;">var</span> jsonMediaTypeFormatter = <span style="color: blue;">new</span> <span style="color: #2b91af;">JsonMediaTypeFormatter</span>();<br />
+jsonMediaTypeFormatter.SerializerSettings.Converters.Add(<span style="color: blue;">new</span> <span style="color: #2b91af;">StringEnumConverter</span>());<br />
+<span style="color: blue;">var</span> response = client.PutAsync(<span style="color: #a31515;">"api/message/"</span>, message,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; jsonMediaTypeFormatter, <span style="color: #2b91af;">CancellationToken</span>.None).Result;</p>
+</div>
+
+
+<p>Json.Net can be configured globally:</p>
+<div class="code">
+<p><span style="color: #2b91af;">JsonConvert</span>.DefaultSettings = () =&gt; <span style="color: blue;">new</span> <span style="color: #2b91af;">JsonSerializerSettings</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; Converters = { <span style="color: blue;">new</span> <span style="color: #2b91af;">StringEnumConverter</span>() }<br />
+};</p>
+</div>
+
+<h3>Authentication</h3>
+<p>Windows credentials.</p>
+<div class="code">
+<p><span style="color: blue;">var</span> handler = <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpClientHandler</span> { UseDefaultCredentials = <span style="color: blue;">true</span> };<br />
+&nbsp;<br />
+<span style="color: blue;">using</span> (<span style="color: blue;">var</span> client = <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpClient</span>(handler))<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> response = client.GetAsync(<span style="color: #a31515;">"http://localhost:2893/api/product/1"</span>).Result;<br />
+&nbsp;&nbsp;&nbsp; response.EnsureSuccessStatusCode();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> product = response.Content.ReadAsAsync&lt;<span style="color: #2b91af;">Product</span>&gt;().Result;<br />
+}</p>
+</div>
+<p>Basic authentication</p>
+<div class="code">
+<p><span style="color: blue;">var</span> clientHandler = <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpClientHandler</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Credentials =<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> System.Net.<span style="color: #2b91af;">NetworkCredential</span>(userName, password)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; };<br />
+<span style="color: blue;">using</span> (<span style="color: blue;">var</span> client = <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpClient</span>(clientHandler))<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> response = client.GetAsync(<span style="color: #a31515;">"http://localhost:2893/api/other/1"</span>).Result;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (response.IsSuccessStatusCode)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> result = response.Content.ReadAsStringAsync();<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+
+<h3>Testing</h3>
+<p>For testing, use an in-memory HttpServer, and the HttpClient must be constructed with the server.</p>
+<div class="code">
+<p><span style="color: blue;">var</span> config = <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpConfiguration</span>();<br />
+config.Routes.MapHttpRoute(<span style="color: #a31515;">"Default"</span>, <span style="color: #a31515;">"api/{controller}/{id}"</span>);<br />
+<span style="color: blue;">var</span> testingHandler = <span style="color: blue;">new</span> <span style="color: #2b91af;">TestDelegatingHandler</span>&lt;<span style="color: #2b91af;">OperationResult</span>&gt;(httpResponseMessageFunc);<br />
+<span style="color: blue;">var</span> server = <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpServer</span>(config, testingHandler);<br />
+<span style="color: blue;">var</span> client = <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpClient</span>(server);</p>
+</div>
+<p>Here's the delegating handler:</p>
+<div class="code">
+<p><span style="color: blue;">internal</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">TestDelegatingHandler</span>&lt;T&gt; : <span style="color: #2b91af;">DelegatingHandler</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">readonly</span> <span style="color: #2b91af;">Func</span>&lt;<span style="color: #2b91af;">HttpRequestMessage</span>, <span style="color: #2b91af;">HttpResponseMessage</span>&gt; _httpResponseMessageFunc;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> Simple: new TestDelegatingHandler&amp;lt;Result&amp;gt;(new Result())</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> TestDelegatingHandler(T value)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; : <span style="color: blue;">this</span>(<span style="color: #2b91af;">HttpStatusCode</span>.OK, value)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> new TestDelegatingHandler&amp;lt;Result&amp;gt;(HttpStatusCode.BadRequest, new Result())</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> TestDelegatingHandler(<span style="color: #2b91af;">HttpStatusCode</span> statusCode, T value)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; _httpResponseMessageFunc = request =&gt; request.CreateResponse(statusCode, value);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> new TestDelegatingHandler&amp;lt;Result&amp;gt;(request =&amp;gt; request.CreateResponse(HttpStatusCode.Created, new Result(true)))</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> TestDelegatingHandler(<span style="color: #2b91af;">Func</span>&lt;<span style="color: #2b91af;">HttpRequestMessage</span>, <span style="color: #2b91af;">HttpResponseMessage</span>&gt; httpResponseMessageFunc)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; _httpResponseMessageFunc = httpResponseMessageFunc;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">protected</span> <span style="color: blue;">override</span> <span style="color: #2b91af;">Task</span>&lt;<span style="color: #2b91af;">HttpResponseMessage</span>&gt; SendAsync(<span style="color: #2b91af;">HttpRequestMessage</span> request, <span style="color: #2b91af;">CancellationToken</span> cancellationToken)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: #2b91af;">Task</span>.Factory.StartNew(() =&gt; _httpResponseMessageFunc(request));<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+<p>Build it simply or with a func:</p>
+<div class="code">
+<p><span style="color: blue;">var</span> t1 = <span style="color: blue;">new</span> <span style="color: #2b91af;">TestDelegatingHandler</span>&lt;<span style="color: #2b91af;">Result</span>&gt;(<span style="color: blue;">new</span> <span style="color: #2b91af;">Result</span>(<span style="color: blue;">true</span>));<br />
+<span style="color: blue;">var</span> t2 = <span style="color: blue;">new</span> <span style="color: #2b91af;">TestDelegatingHandler</span>&lt;<span style="color: #2b91af;">Result</span>&gt;(request =&gt; request.CreateResponse(<span style="color: #2b91af;">HttpStatusCode</span>.Created, <span style="color: blue;">new</span> <span style="color: #2b91af;">Result</span>(<span style="color: blue;">true</span>)));<br />
+&nbsp;</p>
+</div>
+
+<h4>Self-hosted test</h4>
+<div class="code">
+<p><span style="color: blue;">var</span> config = <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpSelfHostConfiguration</span>(<span style="color: #a31515;">"http://localhost:9090/"</span>);<br />
+&nbsp;<br />
+config.Routes.MapHttpRoute(<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #a31515;">"API Default"</span>, <span style="color: #a31515;">"api/{controller}/{id}"</span>,<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> { id = <span style="color: #2b91af;">RouteParameter</span>.Optional });<br />
+&nbsp;<br />
+<span style="color: blue;">using</span> (<span style="color: blue;">var</span> server = <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpSelfHostServer</span>(config))<br />
+{<br />
+&nbsp;&nbsp;&nbsp; server.OpenAsync().Wait();<br />
+&nbsp;&nbsp;&nbsp; RunClient();<br />
+}</p>
+</div>
+<ul>
+<li>You need to create ApiControllers in the same project.</li>
+<li>You need Visual Studio to Run As Admin so you can use the localhost port.</li>
+</ul>
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

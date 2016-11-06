@@ -1,0 +1,142 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>WCF Faults</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="wcf.html">WCF &gt;</a></li>
+<li><a href="behavior.html">Behavior</a></li>
+<li><a href="clients.html">Clients</a></li>
+<li><a href="contracts.html">Contracts</a></li>
+<li><a href="endpoints.html">Endpoints</a></li>
+<li><a href="faults.html">Faults</a></li>
+<li><a href="logging.html">Logging</a></li>
+<li><a href="routing.html">Routing</a></li>
+<li><a href="security.html">Security</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>WCF Faults</h2>
+
+<p>See <a href="http://msdn.microsoft.com/en-us/library/cc949036.aspx">MSDN P&amp;P Exception Management</a>, <a href="http://msdn.microsoft.com/en-us/library/ms733721.aspx">MSDN Specifying and Handling Faults in Contracts and Services</a></p>
+<h3>FaultContract / FaultException</h3>
+
+<ul>
+<li>Add a [<span style="color: #2b91af;">FaultContract</span>(<span style="color: blue;">typeof</span>(<span style="color: #2b91af;">DivideByZeroException</span>))] for types of faults that may be raised</li>
+
+<li>Throw a untyped FaultException or <br />
+<span style="color: blue;">throw</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">FaultException</span>&lt;<span style="color: #2b91af;">DivideByZeroException</span>&gt;(<span style="color: blue;">new</span> <span style="color: #2b91af;">DivideByZeroException</span>());
+<ul>
+<li>If you throw a faultException the service doesn't enter a faulted state</li>
+<li>you can also <span style="color: blue;">throw</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">FaultException</span>&lt;<span style="color: blue;">string</span>&gt;(<span style="color: #a31515;">"Opps"</span>);</li>
+
+</ul></li>
+</ul>
+<h3>Client Exception Handling</h3>
+
+<div class="alert">You can't use <code>using</code> blocks with clients. Either use the above or write a partial class for the client with an explicit Dispose implementation (see below).</div>
+
+
+<p>A WCF client can use faultException.Detail for a typed faultException.<br />
+Or: subscribe the client Faulted event.<br />
+Then rebuild the client (new Client())<br />
+client.Abort() as your client may throw on Close/Dispose when it is faulted</p>
+<div class="code">
+<p><span style="color: green;">//don't do using for ClientBase</span><br />
+<span style="color: blue;">var</span> client = <span style="color: blue;">new</span> <span style="color: #2b91af;">CalculatorClient</span>();<br />
+<span style="color: blue;">try</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> result = client.Add(1, 10);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//close can throw exceptions!</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//and will if(client.State == CommunicationState.Faulted)</span><br />
+&nbsp;&nbsp;&nbsp; client.Close();<br />
+&nbsp;&nbsp;&nbsp; total = result.Total;<br />
+}<br />
+<span style="color: green;">//catch typed exceptions</span><br />
+<span style="color: blue;">catch</span> (<span style="color: #2b91af;">FaultException</span>&lt;<span style="color: #2b91af;">DivideByZeroException</span>&gt; exception)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> inner = exception.Detail;<br />
+&nbsp;&nbsp;&nbsp; client.Abort();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">throw</span> inner;<br />
+}<br />
+<span style="color: green;">//catch untyped exception</span><br />
+<span style="color: blue;">catch</span> (<span style="color: #2b91af;">FaultException</span>)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; client.Abort();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">throw</span>;<br />
+}<br />
+<span style="color: green;">//catch any other general error</span><br />
+<span style="color: blue;">catch</span> (<span style="color: #2b91af;">CommunicationException</span>)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; client.Abort();<br />
+}<br />
+<span style="color: green;">//catch a timeout (slow connection)</span><br />
+<span style="color: blue;">catch</span> (<span style="color: #2b91af;">TimeoutException</span>)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; client.Abort();<br />
+}</p>
+</div>
+
+<h4>Safe disposable client</h4>
+<p>Do a partial class. See also: <a href="http://stackoverflow.com/questions/573872/what-is-the-best-workaround-for-the-wcf-client-using-block-issue">Stack Overflow</a></p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">partial</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">Client</span> : <span style="color: #2b91af;">IDisposable</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">void</span> <span style="color: #2b91af;">IDisposable</span>.Dispose()<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (State == <span style="color: #2b91af;">CommunicationState</span>.Faulted)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Abort();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">else</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Close();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+
+<h3>Normal exceptions</h3>
+<p>IncludeExceptionDetailInFaults="True". Actually it returns a FaultException(typeof(ExceptionDetail)) but does not use a wsdl FaultContract</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">behaviors</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">serviceBehaviors</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">behavior</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">ServiceBehavior</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">serviceDebug</span><span style="color: blue;"> </span><span style="color: red;">includeExceptionDetailInFaults</span><span style="color: blue;">=</span>"<span style="color: blue;">true</span>"<span style="color: blue;"> /&gt;</span></p>
+</div>
+<p>ServiceContract code:</p>
+<div class="code">
+<p><span style="color: blue;">#if</span> DEBUG<br />
+&nbsp;&nbsp;&nbsp; [<span style="color: #2b91af;">ServiceBehavior</span>(IncludeExceptionDetailInFaults = <span style="color: blue;">true</span>)]<br />
+<span style="color: blue;">#endif</span></p>
+</div>
+
+<h3>Logging and handling exceptions:</h3>
+<ul>
+<li>Implement <a href="http://msdn.microsoft.com/en-us/library/system.servicemodel.dispatcher.ierrorhandler.aspx">IErrorHandler</a> to log (HandleError) and/or wrap (ProvideError) exceptions </li>
+
+<li>Subscribe to serviceHost.Faulted event.</li>
+</ul>
+ 
+</div>
+<div class="Footer"><script type="text/javascript">
+//<![CDATA[
+
+
+prettyPrint();
+//]]>
+</script></div>
+</body>
+</html>

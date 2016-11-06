@@ -1,0 +1,234 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>WPF</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main</a></li>
+<li><a href="../dotnet.html">.Net</a></li>
+<li><a href="index.html">WPF</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>WPF</h2>
+
+<p>Introductory material is on <a href="https://msdn.microsoft.com/en-us/library/vstudio/ms754130.aspx">MSDN</a></p>
+<h3>Resources</h3>
+<p>You can reference .net <em>static</em> classes by adding the xaml namespace (eg xmlns:local="clr-namespace:WpfApplication1") and using {x:Static ...}.<br />
+Binding to changing properties like SystemColors and other dependency properties requires {DynamicResouce {x:Static MyKey }}. Ugh.</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">TextBlock</span><span style="color: red;"> Text</span><span style="color: blue;">="{</span><span style="color: #a31515;">x</span><span style="color: blue;">:</span><span style="color: #a31515;">Static</span><span style="color: red;"> local</span><span style="color: blue;">:</span><span style="color: red;">StaticSettings</span><span style="color: blue;">.ConnectionString}"/&gt;</span></p>
+</div>
+
+<p>A <strong>StaticResource</strong> is a dictionary with an x:Key. They can be defined anywhere up the hierarchy to Application, as long as they are before the reference. In code, you can use <strong>TryFindResource("x")</strong>.<br />
+NB: a <strong>DynamicResource</strong> can redefine the dictionary item.</p>
+
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">UserControl.Resources</span><span style="color: blue;">&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">SolidColorBrush</span><span style="color: red;"> x</span><span style="color: blue;">:</span><span style="color: red;">Key</span><span style="color: blue;">="StandardBackground"</span><span style="color: red;"> Color</span><span style="color: blue;">="AliceBlue"/&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">UserControl.Resources</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: #a31515;">StackPanel</span><span style="color: blue;">&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">Button</span><span style="color: red;"> x</span><span style="color: blue;">:</span><span style="color: red;">Name</span><span style="color: blue;">="theButton"</span><span style="color: red;"> Content</span><span style="color: blue;">="Click Me"</span><span style="color: red;"> Background</span><span style="color: blue;">="{</span><span style="color: #a31515;">StaticResource</span><span style="color: red;"> StandardBackground</span><span style="color: blue;">}"</span> <span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">StackPanel</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+<h4>ResourceDictionary</h4>
+<p>You can (and often should) move resources into one or <strong>ResourceDictionary</strong> xaml files. You then have to reference them- if you have several sources, in a MergedDictionary. It's ugly.</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">UserControl.Resources</span><span style="color: blue;">&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">ResourceDictionary</span><span style="color: blue;">&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">ResourceDictionary.MergedDictionaries</span><span style="color: blue;">&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: green;">&lt;!-- you can merge in external dictionaries --&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">ResourceDictionary</span><span style="color: red;"> Source</span><span style="color: blue;">="Dictionary1.xaml" /&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: green;">&lt;!-- and add local resources --&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">ResourceDictionary</span><span style="color: blue;">&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">SolidColorBrush</span><span style="color: red;"> x</span><span style="color: blue;">:</span><span style="color: red;">Key</span><span style="color: blue;">="StandardBackground"</span><span style="color: red;"> Color</span><span style="color: blue;">="AliceBlue"/&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;/</span><span style="color: #a31515;">ResourceDictionary</span><span style="color: blue;">&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;/</span><span style="color: #a31515;">ResourceDictionary.MergedDictionaries</span><span style="color: blue;">&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;/</span><span style="color: #a31515;">ResourceDictionary</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">UserControl.Resources</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+<h4>Style</h4>
+<p>You can also add a <strong>Style</strong> with <strong>Setter</strong>s (probably with a TargetType). Controls reference it through Style="{StaticResource StyleName}" (if there is no x:Key it applies to all controls of that type).</p>
+
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">UserControl.Resources</span><span style="color: blue;">&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">Style</span><span style="color: red;"> x</span><span style="color: blue;">:</span><span style="color: red;">Key</span><span style="color: blue;">="StandardButton"</span><span style="color: red;"> TargetType</span><span style="color: blue;">="Button"&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">Setter</span><span style="color: red;"> Property</span><span style="color: blue;">="Background"</span><span style="color: red;"> Value</span><span style="color: blue;">="AliceBlue"/&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;/</span><span style="color: #a31515;">Style</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">UserControl.Resources</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: #a31515;">StackPanel</span><span style="color: blue;">&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">Button</span><span style="color: red;"> x</span><span style="color: blue;">:</span><span style="color: red;">Name</span><span style="color: blue;">="theButton"</span><span style="color: red;"> Content</span><span style="color: blue;">="Click Me"</span><span style="color: red;"> Style</span><span style="color: blue;">="{</span><span style="color: #a31515;">StaticResource</span><span style="color: red;"> StandardButton</span><span style="color: blue;">}"</span> <span style="color: blue;"> /&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">TextBlock</span><span style="color: red;"> Text</span><span style="color: blue;">="{</span><span style="color: #a31515;">x</span><span style="color: blue;">:</span><span style="color: #a31515;">Static</span><span style="color: red;"> local</span><span style="color: blue;">:</span><span style="color: red;">StaticSettings</span><span style="color: blue;">.ConnectionString}"</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">StackPanel</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+<p>Styles can be BasedOn previous styles: <span style="color: red;">BasedOn</span><span style="color: blue;">="{</span><span style="color: #a31515;">StaticResource</span><span style="color: red;"> StandardButton</span><span style="color: blue;">}"</span></p>
+
+
+<h3>Binding</h3>
+<p><a href="http://msdn.microsoft.com/en-us/library/ms752347.aspx">MSDN</a><br />
+Simple binding between WPF elements with ElementName:</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">TextBox</span><span style="color: red;"> Name</span><span style="color: blue;">="textBox1"&gt;</span><span style="color: #a31515;">Hello</span><span style="color: blue;">&lt;/</span><span style="color: #a31515;">TextBox</span><span style="color: blue;">&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">Label</span><span style="color: red;"> Name</span><span style="color: blue;">="label1"</span><span style="color: red;"> Content</span><span style="color: blue;">="{</span><span style="color: #a31515;">Binding</span><span style="color: red;"> ElementName</span><span style="color: blue;">=textBox1,</span><span style="color: red;"> Path</span><span style="color: blue;">=Text}" /&gt;</span></p>
+</div>
+
+<p>Otherwise use Source, or set the DataContext on the element or container.<br />
+Controls that display collections (like ListBox) have an ItemSource (bind to collection object) and a DisplayMemberPath (property to display).</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">UserControl</span><span style="color: red;"> x</span><span style="color: blue;">:</span><span style="color: red;">Class</span><span style="color: blue;">="WpfApplication1.UserControl3"</span><br />
+&nbsp;&nbsp; <span style="color: red;"> xmlns</span><span style="color: blue;">="http://schemas.microsoft.com/winfx/2006/xaml/presentation"</span><br />
+&nbsp;&nbsp; <span style="color: red;"> xmlns</span><span style="color: blue;">:</span><span style="color: red;">x</span><span style="color: blue;">="http://schemas.microsoft.com/winfx/2006/xaml"</span> <br />
+&nbsp;&nbsp; <span style="color: red;"> xmlns</span><span style="color: blue;">:</span><span style="color: red;">WpfApplication1</span><span style="color: blue;">="clr-namespace:WpfApplication1"&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">Grid</span><span style="color: blue;">&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">Grid.Resources</span><span style="color: blue;">&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">ObjectDataProvider</span><span style="color: red;"> x</span><span style="color: blue;">:</span><span style="color: red;">Key</span><span style="color: blue;">="odpKey"</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <span style="color: red;"> ObjectType</span><span style="color: blue;">="{</span><span style="color: #a31515;">x</span><span style="color: blue;">:</span><span style="color: #a31515;">Type</span><span style="color: red;"> WpfApplication1</span><span style="color: blue;">:</span><span style="color: red;">DataLoader</span><span style="color: blue;">}"</span> <br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: red;">&nbsp;&nbsp;&nbsp; MethodName</span><span style="color: blue;">="GetUsers"/&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;/</span><span style="color: #a31515;">Grid.Resources</span><span style="color: blue;">&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">ListView</span><span style="color: red;"> ItemsSource</span><span style="color: blue;">="{</span><span style="color: #a31515;">Binding</span><span style="color: red;"> Source</span><span style="color: blue;">={</span><span style="color: #a31515;">StaticResource</span><span style="color: red;"> odpKey</span><span style="color: blue;">}}"</span><span style="color: red;"> DisplayMemberPath</span><span style="color: blue;">="Name"</span> <span style="color: blue;"> /&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;/</span><span style="color: #a31515;">Grid</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">UserControl</span><span style="color: blue;">&gt;</span></p>
+</div>
+<div>
+
+<h4>DataTemplate</h4>
+<p>Use a DataTemplate to display a richer view of the items (in control.Content or itemcontrol.ItemTemplate).<br />
+DataTemplates can be resources, and can have a DataType.</p>
+<p style="margin: 0 5em;font-size:x-small">Formatting: Binding has a <em>StringFormat={}{0} items, </em> (you have to use the {} escaping at the start) - it only works on controls with string Text<br />
+Content controls have ContentStringFormat, list controls have ItemStringFormat.<br />
+For more complex conversions, implement IValueConverter, hook it up as a resource, and add <em>, Converter={StaticResource myConverter</em></p>
+</div>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">ListView</span><span style="color: red;"> ItemsSource</span><span style="color: blue;">="{</span><span style="color: #a31515;">Binding</span><span style="color: red;"> Source</span><span style="color: blue;">={</span><span style="color: #a31515;">StaticResource</span><span style="color: red;"> odpKey</span><span style="color: blue;">}}"&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">ListView.ItemTemplate</span><span style="color: blue;">&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">DataTemplate</span><span style="color: blue;">&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">WrapPanel</span><span style="color: blue;">&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">TextBlock</span><span style="color: red;"> Text</span><span style="color: blue;">="{</span><span style="color: #a31515;">Binding</span><span style="color: red;"> Path</span><span style="color: blue;">=Name}"</span><span style="color: red;"> MinWidth</span><span style="color: blue;">="60" /&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">TextBlock</span><span style="color: red;"> Text</span><span style="color: blue;">="{</span><span style="color: #a31515;">Binding</span><span style="color: red;"> Path</span><span style="color: blue;">=Birthday,</span><span style="color: red;"> StringFormat</span><span style="color: blue;">='dd</span>/<span style="color: blue;">MM</span>/<span style="color: blue;">yyyy'}" /&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;/</span><span style="color: #a31515;">WrapPanel</span><span style="color: blue;">&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;/</span><span style="color: #a31515;">DataTemplate</span><span style="color: blue;">&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;/</span><span style="color: #a31515;">ListView.ItemTemplate</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">ListView</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+<h4>Debugging binding</h4>
+<p>You can debug individual bindings (from 3.5) by referencing  xmlns:diagnostics="clr-namespace:System.Diagnostics;assembly=WindowsBase" and appending ", diagnostics:PresentationTraceSources.TraceLevel=High" to the path.</p>
+
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">UserControl</span><span style="color: red;"> x</span><span style="color: blue;">:</span><span style="color: red;">Class</span><span style="color: blue;">="WpfApplication1.UserControl4"</span><br />
+&nbsp;&nbsp; <span style="color: red;"> xmlns</span><span style="color: blue;">="http://schemas.microsoft.com/winfx/2006/xaml/presentation"</span><br />
+&nbsp;&nbsp; <span style="color: red;"> xmlns</span><span style="color: blue;">:</span><span style="color: red;">x</span><span style="color: blue;">="http://schemas.microsoft.com/winfx/2006/xaml"</span><br />
+&nbsp;&nbsp; <span style="color: red;"> xmlns</span><span style="color: blue;">:</span><span style="color: red;">local</span><span style="color: blue;">="clr-namespace:WpfApplication1"</span><br />
+&nbsp;&nbsp; <span style="color: red;"> xmlns</span><span style="color: blue;">:</span><span style="color: red;">diagnostics</span><span style="color: blue;">="clr-namespace:System.Diagnostics;assembly=WindowsBase"&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">Grid</span><span style="color: blue;">&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">Grid.Resources</span><span style="color: blue;">&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">local</span><span style="color: blue;">:</span><span style="color: #a31515;">DataSettings</span><span style="color: red;"> x</span><span style="color: blue;">:</span><span style="color: red;">Key</span><span style="color: blue;">="myDataSource" /&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;/</span><span style="color: #a31515;">Grid.Resources</span><span style="color: blue;">&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">TextBlock</span><span style="color: red;"> Text</span><span style="color: blue;">="{</span><span style="color: #a31515;">Binding</span><span style="color: red;"> Source</span><span style="color: blue;">={</span><span style="color: #a31515;">StaticResource</span><span style="color: red;"> myDataSource</span><span style="color: blue;">},</span><span style="color: red;"> Path</span><span style="color: blue;">=ConnectionString,</span><span style="color: red;"> diagnostics</span><span style="color: blue;">:</span><span style="color: red;">PresentationTraceSources</span><span style="color: blue;">.TraceLevel=High}"/&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;/</span><span style="color: #a31515;">Grid</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">UserControl</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+<h4>Master-detail item controls</h4>
+<p>Master-details can be tied if the controls bind to the same collection and item controls have IsSynchronizedWithCurrentItem=true</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">ListView</span><span style="color: red;"> ItemsSource</span><span style="color: blue;">="{</span><span style="color: #a31515;">Binding</span><span style="color: red;"> Source</span><span style="color: blue;">={</span><span style="color: #a31515;">StaticResource</span><span style="color: red;"> odpKey</span><span style="color: blue;">}}"</span> <br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <span style="color: red;"> IsSynchronizedWithCurrentItem</span><span style="color: blue;">="True"&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">ListView.ItemTemplate</span><span style="color: blue;">&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">DataTemplate</span><span style="color: blue;">&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">WrapPanel</span><span style="color: blue;">&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">TextBlock</span><span style="color: red;"> Text</span><span style="color: blue;">="{</span><span style="color: #a31515;">Binding</span><span style="color: red;"> Path</span><span style="color: blue;">=Name}"</span><span style="color: red;"> MinWidth</span><span style="color: blue;">="60" /&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;/</span><span style="color: #a31515;">WrapPanel</span><span style="color: blue;">&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;/</span><span style="color: #a31515;">DataTemplate</span><span style="color: blue;">&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;/</span><span style="color: #a31515;">ListView.ItemTemplate</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">ListView</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: #a31515;">Label</span><span style="color: red;"> Content</span><span style="color: blue;">="{</span><span style="color: #a31515;">Binding</span><span style="color: red;"> Source</span><span style="color: blue;">={</span><span style="color: #a31515;">StaticResource</span><span style="color: red;"> odpKey</span><span style="color: blue;">},</span><span style="color: red;"> Path</span><span style="color: blue;">=Description}" /&gt;</span></p>
+</div>
+
+
+<h3>Commands</h3>
+<p>Rather than do a Winforms like event...</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">Button</span><span style="color: red;"> Content</span><span style="color: blue;">="Click Me"</span><span style="color: red;"> Click</span><span style="color: blue;">="Button_Click" /&gt;</span></p>
+</div>
+<div class="code">
+<p><span style="color: blue;">private</span> <span style="color: blue;">void</span> Button_Click(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">RoutedEventArgs</span> e)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> d = <span style="color: blue;">new</span> <span style="color: #2b91af;">OpenFileDialog</span>();<br />
+&nbsp;&nbsp;&nbsp; d.ShowDialog();<br />
+}</p>
+</div>
+<p>Controls like button have a Command property (and commands can also have gestures/keys attached).<br />
+If it's not a built in command (ApplicationCommands.Paste), a command needs a handler method (think event, like above), which is linked to the command by a commandBinding.<br />
+CommandBindings bubble up - the control checks it's bindings for a handler, then works up to Window to find a binding that gives it a handler. If there is no binding - the control is disabled.</p>
+<ul>
+<li>Custom commands are static classes with a static Routed[UI]Command getter, which is what the control "Command=" points to.</li>
+<li>Remember to add the xmlns:local="clr:namespace:..." to the command class namespace</li>
+<li>The Execute command handler has a (object sender, ExecutedRoutedEventArgs e) signature. Set e.IsHandled = true to stop bubbling.</li>
+<li>Optionally add the CanExecute command handler.</li>
+<li>Add the command binding to the control or a container that hooks the command to the handler.</li>
+</ul>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">MyCommands</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <strong><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #2b91af;">RoutedCommand</span> Hello = <span style="color: blue;">new</span> <span style="color: #2b91af;">RoutedCommand</span>(<span style="color: #a31515;">"Hello"</span>, <span style="color: blue;">typeof</span>(<span style="color: #2b91af;">MyCommands</span>));</strong><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> HelloExecuted(<span style="color: blue;">object</span> sender, <span style="color: #2b91af;">ExecutedRoutedEventArgs</span> e)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">MessageBox</span>.Show(<span style="color: #a31515;">"Hello!"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; e.Handled = <span style="color: blue;">true</span>; <span style="color: green;">//stop bubbling</span><br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">UserControl</span><span style="color: red;"> x</span><span style="color: blue;">:</span><span style="color: red;">Class</span><span style="color: blue;">="WpfApplication1.UserControl2"</span><br />
+&nbsp;&nbsp; <span style="color: red;"> xmlns</span><span style="color: blue;">="http://schemas.microsoft.com/winfx/2006/xaml/presentation"</span><br />
+&nbsp;&nbsp; <span style="color: red;"> xmlns</span><span style="color: blue;">:</span><span style="color: red;">x</span><span style="color: blue;">="http://schemas.microsoft.com/winfx/2006/xaml"</span><br />
+&nbsp;&nbsp; <strong><span style="color: red;"> xmlns</span><span style="color: blue;">:</span><span style="color: red;">Commands</span><span style="color: blue;">="clr-namespace:WpfApplication1.Commands"&gt;</span></strong><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">UserControl.CommandBindings</span><span style="color: blue;">&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: green;">&lt;!-- command points to Executed/ CanExecute methods.</span><br />
+<span style="color: green;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; built-in commands (ApplicationCommands.Help) don't</span><br />
+<span style="color: green;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; need x:Static binding--&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">CommandBinding</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <span style="color: red;"> Command</span><span style="color: blue;">="{</span><span style="color: #a31515;">x</span><span style="color: blue;">:</span><span style="color: #a31515;">Static</span><span style="color: red;"> Commands</span><span style="color: blue;">:</span><span style="color: red;">MyCommands</span><span style="color: blue;">.Hello}"</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <span style="color: red;"> Executed</span><span style="color: blue;">="HelloExecuted" /&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;/</span><span style="color: #a31515;">UserControl.CommandBindings</span><span style="color: blue;">&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">StackPanel</span><span style="color: blue;">&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: green;">&lt;!-- assign command --&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;</span><span style="color: #a31515;">Button</span><span style="color: red;"> Content</span><span style="color: blue;">="Click Me"</span> <br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <span style="color: red;"> Command</span><span style="color: blue;">="Commands:MyCommands.Hello" /&gt;</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; </span><span style="color: blue;">&lt;/</span><span style="color: #a31515;">StackPanel</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">UserControl</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+
+
+</div>
+<div class="Footer">
+<script type="text/javascript">
+//<![CDATA[
+google_ad_client = "pub-3488108917656271";
+/* 728x90, created 2/5/08 */
+google_ad_slot = "5526810132";
+google_ad_width = 728;
+google_ad_height = 90;
+//]]>
+</script> <script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+</div>
+</body>
+</html>

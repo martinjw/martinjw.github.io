@@ -1,0 +1,127 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Visual Studio</title>
+<link rel="stylesheet" type="text/css" href="../style.css" />
+<script type="text/javascript" src="../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../index.html">Main &gt;</a></li>
+<li><a href="dotnet.html">.Net</a></li>
+<li><a href="dotnetlinks.html">.Net Links</a></li>
+<li><a href="visualstudio.html">Visual Studio</a></li>
+<li><a href="string.html">Strings</a></li>
+<li><a href="io.html">Data &gt;</a></li>
+<li><a href="wcf/wcf.html">WCF &gt;</a></li>
+<li><a href="dotnetwinform.html">Winforms.Net</a></li>
+<li><a href="wpf/index.html">WPF</a></li>
+<li><a href="propomatic.html">Prop-o-matic</a></li>
+<li><a href="fcl/index.html">Other FCL &gt;</a></li>
+<li><a href="asp/aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="azure/index.html">Azure &gt;</a></li>
+<li><a href="code/index.html">Code &gt;</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Visual Studio</h2>
+
+<h3>MsBuild</h3>
+<ul>
+<li>v4: %systemroot%\Microsoft.Net\Framework\v4.0.30319\MSBuild.exe</li>
+<li>v4.6: %PROGRAMFILES(X86)%\MSBuild\14.0\Bin\MsBuild.exe</li>
+</ul>
+<p>Example command line build:</p>
+<p>"%PROGRAMFILES(X86)%\MSBuild\14.0\Bin\MSBuild.exe" ..\MyProject.csproj /p:Configuration=Release /p:OutputPath=..\MyPackage\lib\net20</p>
+
+<h3>Visual Studio Keys</h3>
+<p>When resharper isn't available... (you should at least use CodeRush Xpress!)</p>
+<table>
+<tr><td>F12</td>
+<td>Goto Definition</td></tr>
+<tr><td>Ctl I</td>
+<td>Incremental search. Ctl I Ctl I uses the last search pattern.</td></tr>
+<tr><td>Ctl - (minus)</td>
+<td>Go back</td></tr>
+<tr><td>Ctl-K Ctl-D</td>
+<td>Reformat</td></tr>
+<tr><td>Ctl arrow</td>
+<td>Left/right moves by word</td></tr>
+<tr><td>Ctl ] (on a brace)</td>
+<td>Move to matching (or next) brace</td></tr>
+<tr><td>Control-Dot</td>
+<td>Resolve usings (also on right-click). if there are no Resharper hints!</td></tr>
+</table>
+<p>MRU tabs hack <a href="http://blogs.msdn.com/saraford/archive/2008/10/09/did-you-know-you-can-keep-recently-used-files-from-falling-off-the-file-tab-channel-331.aspx">from here</a>: under HKEY_CURRENT_USER\Software\Microsoft\VisualStudio\9.0 key, create a DWORD UseMRUDocOrdering = 1</p>
+
+<h3>FXCop Code Analysis errors</h3>
+<p>Code Analysis dies (and even breaks the build) when binding redirects are not honoured.</p>
+<p>Change C:\Program Files (x86)\Microsoft Visual Studio 11.0\Team Tools\Static Analysis Tools\FxCop\FxCopCmd.exe.config (as applicable for VS version)</p>
+<p>In appSettings, change AssemblyReferenceResolveMode from <strong>StrongName</strong> to <strong>StrongNameIgnoringVersion</strong></p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><span style="color: red;">key</span><span style="color: blue;">=</span>"<span style="color: blue;">AssemblyReferenceResolveMode</span>"<span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">StrongNameIgnoringVersion</span>"<span style="color: blue;"> /&gt;</span></p>
+</div>
+
+<h3>IIS Express</h3>
+
+<p>You may need to alter the IIS overrides (error "This configuration section cannot be used at this path. This happens when the section is locked at a parent level.", in full IIS this is "Feature Delegation"). The IIS config is located...</p>
+<ul>
+<li>VS2013: C:\Users\Name\Documents\IISExpress\config\applicationhost.config</li>
+<li>VS2015: $(solutionDir)\.vs\config\applicationhost.config</li>
+</ul>
+
+
+<h3>VS2012</h3>
+<div class="alert">
+Stop VS2012's SHOUTING menus:<br/>
+HKEY_CURRENT_USER\Software\Microsoft\VisualStudio\11.0\General\SuppressUppercaseConversion<br/>
+REG_DWORD value: 1
+</div>
+
+<h3>NHibernate Mappings</h3>
+<p>In <code>C:\Program Files\NHibernate\src</code> extract the zip then goto <code>C:\Program Files\NHibernate\src\src\NHibernate</code><br />
+Copy <code>nhibernate-mapping.xsd</code> and <code>nhibernate-configuration.xsd</code><br />
+to <code>C:\Program Files\Microsoft Visual Studio 8\Xml\Schemas</code> (Vs2005)<br />
+or <code>C:\Program Files\Microsoft Visual Studio 9.0\Xml\Schemas</code> (Vs2008)</p>
+
+
+
+<h3>Linked (shared) source</h3>
+<p>Easiest is to hack the proj file (File/@Link ). In VS= Add Existing Item/Open+Link File.
+</p>
+
+<!--
+<h3>VB vs C#</h3>
+<p><code>int[] i = new int[10];</code> produces an array from i[0]-i[9] (i.Length=10) <br />
+<code>Dim myIntegers(10) As Integer</code> produces an array from i[0]-i[10] (i.Length=11) </p>
+<p>VB has default properties: <code>Public Default Property Item(I As Integer) As String</code><br />
+C# has indexers: <code>public int this[int index]</code></p>
+-->
+
+<h3>Configuration/ binding</h3>
+<ul>
+<li>configuration/startup/supportedRuntime to limit .Net versions (in .Net 1.0 requiredRuntime)</li>
+<li>assemblyBinding/dependentAssembly/assemblyIdentity and bindingRedirect if same publicKey and different version numbers (oldversion can be * wildcard)</li>
+<li>(Development machine.config only) runtime/developmentMode/@developerInstallation="true" tells .Net to use a "DEVPATH" environmental variable to specific paths.</li>
+</ul>
+
+<h3>Assemblies</h3>
+<ul>
+<li>Move a class to another dll but allow dependencies to still see it: <a href="http://msdn2.microsoft.com/en-us/library/system.runtime.compilerservices.typeforwardedtoattribute.aspx">TypeForwardTo</a> </li>
+</ul>
+
+<h3>Exceptions</h3>
+<ul>
+<li>Exception.Data is an untyped IDictionary to pass, um, data. Don't try to put it in the Message string.</li>
+</ul>
+</div>
+<div class="Footer">
+
+</div></body>
+</html>

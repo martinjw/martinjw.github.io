@@ -1,0 +1,256 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>.Net Collections</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="dotnetcollections.html">Collections</a></li>
+<li><a href="events.html">Events</a></li>
+<li><a href="globaldotnet.html">Globalization</a></li>
+<li><a href="reflection.html">Reflection</a></li>
+<li><a href="dotnetsecurity.html">Security</a></li>
+<li><a href="claims.html">Claims Security</a></li>
+<li><a href="dotnetsecurity_crypto.html">Crypto+ signing</a></li>
+<li><a href="serialization.html">Serialization</a></li>
+<li><a href="dotnetthreads.html">Threading</a></li>
+<li><a href="async.html">Async</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>.Net Collections</h2>
+<h3>Interfaces</h3>
+<h4>The collection/list interfaces</h4>
+<ul>
+<li><a href="http://msdn2.microsoft.com/en-us/library/system.collections.ienumerable.aspx">IEnumerable</a> (and IEnumerable&lt;T&gt;) Allows you to "foreach".
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: #2b91af;">IEnumerable</span> GetEnumerator()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">foreach</span> (<span style="color: #2b91af;">ItemObject</span> itemObject <span style="color: blue;">in</span> _list)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">yield return</span> itemObject;<br />
+}</p>
+</div>
+In .net 1 you have to create a IEnumerator class (normally nested) with Current/MoveNext. In .net 2 generics you still need the nongeneric version.
+</li>
+<li>ICollection inherits IEnumerable and adds Count and ability to lock SyncRoot</li>
+<li>IList inherits ICollection and adds Add/Remove/Clear/Insert/Contains + IsFixedSize/IsReadOnly if needed</li>
+<li>IDictionary inherits ICollection and is the name/value version of IList</li>
+</ul>
+<h4>The functional interfaces</h4>
+<ul>
+<li><a href="http://msdn2.microsoft.com/en-us/library/system.collections.icomparer.aspx">IComparer</a> - for sorting</li>
+<li>IEnumerator - used for IEnumerable (but you can skip it with yield return)</li>
+</ul>
+
+<h3>Collections</h3>
+<p>Implement IList and/or IDictionary. For dictionaries (name/values):</p>
+<ul>
+<li>foreach <cite>DictionaryEntry</cite> (in Generic versions, <cite>NameValuePair</cite>/ <cite>KeyValuePair</cite>)</li>
+<li>Access by [index] as well as [key]: SortedList and OrderedDictionary (latter isn't sorted!)</li>
+<li>By size: Hashtable (big), ListDictionary (small), HybridDictionary (both)</li>
+<li>For strings, Hashtable and SortedList are case sensitive (Specialized.StringDictionary is insensitive). Use Specialized.CollectionsUtil.CreateCaseInsensitiveHashtable() or SortedList()<br />
+NB: collections ctors can take StringComparer.InvarientCulture</li>
+<li>Specialized.StringDictionary and BaseDictionary for 1.1; now easier with generics</li>
+<li>Specialized.NameValueCollection is like StringDictionary but has multiple keys (only thru .Add, not [indexer]- .Add("key1","a");.Add("key1","b"); adds two values. [indexer] returns CSV of all keys)</li>
+<li>Generic dictionaries are simpler = Dictionary&lt;T, V&gt; (most things) and <a href="http://msdn2.microsoft.com/en-us/library/ms132319.aspx">SortedList&lt;T, V&gt;</a>. <ul><li>SortedList and SortedDictionary are almost identical: the list one is more memory efficient and faster to initially load; dictionary is faster to insert/remove</li></ul></li>
+</ul>
+<p>Implementing interfaces</p>
+<ul>
+<li>Sort: Implement IComparable (GetComparer static method, CompareTo instance method) and IComparer (which calls CompareTo on the instances, normally a nested class). Can pass in a generic delegate (a typed sort method can be passed in that matches the generic signature)</li>
+<li>See my <a href="../code/genericcomparer.html">GenericComparer&lt;T&gt;</a> using reflection</li>
+<li>Duplicate objects- override .GetHashCode to return the unique property, AND override object.Equals
+Or create an IEqualityComparer (which also has .GetHashCode and .Equals). You can't just hash all the properties, because if you change one, it's a "different" object.</li>
+<li>BitArray is an array of booleans (doesn't dynamically resize- but you can reset .Length)</li>
+<li>Specialized.BitVector32 is a structure to hide binary maths with a single Int32.
+<div class="code">
+<p><span style="color: green;">//1: lots of booleans. Use masks.</span><br />
+<span style="color: #2b91af;">BitVector32</span> vector = <span style="color: blue;">new</span> <span style="color: #2b91af;">BitVector32</span>(0);<span style="color: green;">// All bit flags set to FALSE.</span><br />
+<span style="color: blue;">int</span> mask1 = <span style="color: #2b91af;">BitVector32</span>.CreateMask();<br />
+<span style="color: blue;">int</span> mask2 = <span style="color: #2b91af;">BitVector32</span>.CreateMask(mask1);<br />
+vector[mask2] = <span style="color: blue;">true</span>; <span style="color: green;">//masks allow you to flip booleans by indexer</span></p>
+</div>
+<p>You can also pack numbers into a single Int32.</p>
+<div class="code">
+<p><span style="color: green;">//2: Pack numbers using CreateSection</span><br />
+<span style="color: #2b91af;">BitVector32</span> packedVector = <span style="color: blue;">new</span> <span style="color: #2b91af;">BitVector32</span>();<br />
+<span style="color: #2b91af;">BitVector32</span>.<span style="color: #2b91af;">Section</span> sec1 = <span style="color: #2b91af;">BitVector32</span>.CreateSection(20);<br />
+<span style="color: #2b91af;">BitVector32</span>.<span style="color: #2b91af;">Section</span> sec2 = <span style="color: #2b91af;">BitVector32</span>.CreateSection(300, sec1);<br />
+packedVector[sec1] = 6; <span style="color: green;">//you have 2+ numbers stored in one 32bit int</span><br />
+packedVector[sec2] = 199;</p>
+</div>
+</li>
+</ul>
+<h3>Custom Collections</h3>
+<ul>
+<li>Inherit from <a href="http://msdn2.microsoft.com/en-us/library/ms132397.aspx">Collection&lt;T&gt;</a> and override InsertItem/SetItem and ClearItem. (Non generic use CollectionBase - <a href="../code/typedcollection.html">my version</a>)</li>
+</ul>
+
+<h3>Thread Safe</h3>
+<p>You can get a synchronised wrapper around a Stack: <code>Stack mySyncdStack = Stack.Synchronized( myStack )</code> but for derived classes <code>lock(myCollection.SyncRoot)</code></p>
+
+<h3>Lists with Delegates</h3>
+<p>Very useful functional programming. </p>
+<table>
+<tr>
+<td>List.Find(Predicate&lt;T&gt;)<br />
+List.FindAll(Predicate&lt;T&gt;)</td>
+<td>items.Find(<br />delegate(DatedItem d) {<br />return (d.Id == key);<br /> });</td>
+</tr>
+<tr>
+<td>List.Sort(Comparison&lt;T&gt;)</td>
+<td>items.Sort(<br />delegate(DatedItem p1, DatedItem p2)
+                {<br /> return p1.Name.CompareTo(p2.Name);<br /> });</td>
+</tr>
+<tr>
+<td>List.ConvertAll&lt;TOut&gt;(Comparison&lt;T, TOut&gt;)</td>
+<td>items.ConvertAll&lt;Object&gt;(<br />delegate(DatedItem p1)
+                {<br /> return (Object)p1;<br /> });</td>
+</tr>
+</table>
+
+<h3>Sorting</h3>
+<p>See <a href="../code/forms/sortablebindinglist.html">SortableBindingList&lt;T&gt; (for Windows.Forms)</a></p>
+<p>Copying to an array to sort with a delegate (here, sorting ListItems in asp DropDownList)</p>
+<div class="code">
+<p><span style="color: blue;">private</span> <span style="color: blue;">void</span> SortListControl(<span style="color: #2b91af;">ListControl</span> ddl)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">ListItemCollection</span> c = ddl.Items;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">ListItem</span>[] items = <span style="color: blue;">new</span> <span style="color: #2b91af;">ListItem</span>[c.Count];<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; c.CopyTo(items, 0);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Array</span>.Sort(items, <span style="color: blue;">delegate</span>(<span style="color: #2b91af;">ListItem</span> a, <span style="color: #2b91af;">ListItem</span> b)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; <span style="color: blue;">return</span> a.Text.CompareTo(b.Text);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; });<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; ddl.Items.Clear();<br />
+&nbsp;&nbsp;&nbsp; ddl.Items.AddRange(items);<br />
+}</p>
+</div>
+<p>Sorting with nullable properties has a slighly more involved delegate</p>
+<div class="code">
+<p><span style="color: blue;">private</span> <span style="color: blue;">void</span> SortList()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//DeatedObject.Date is a nullable date</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">List</span>&lt;<span style="color: #2b91af;">DatedObject</span>&gt; olist = <span style="color: blue;">new</span> <span style="color: #2b91af;">List</span>&lt;<span style="color: #2b91af;">DatedObject</span>&gt;();<br />
+&nbsp;&nbsp;&nbsp; olist.Add(<span style="color: blue;">new</span> <span style="color: #2b91af;">DatedObject</span>(<span style="color: #2b91af;">DateTime</span>.Now.AddDays(1)));<br />
+&nbsp;&nbsp;&nbsp; olist.Add(<span style="color: blue;">new</span> <span style="color: #2b91af;">DatedObject</span>(<span style="color: #2b91af;">DateTime</span>.Now));<br />
+&nbsp;&nbsp;&nbsp; olist.Add(<span style="color: blue;">new</span> <span style="color: #2b91af;">DatedObject</span>()); <span style="color: green;">//null date</span><br />
+&nbsp;&nbsp;&nbsp; olist.Sort(CompareDatedObjects); <span style="color: green;">//IList does not have a Sort</span><br />
+&nbsp;&nbsp;&nbsp; comboBox1.DataSource = olist;<br />
+&nbsp;&nbsp;&nbsp; comboBox1.DisplayMember = <span style="color: #a31515;">"Date"</span>;<br />
+}<br />
+&nbsp;<br />
+<span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: blue;">int</span> CompareDatedObjects(<span style="color: #2b91af;">DatedObject</span> x, <span style="color: #2b91af;">DatedObject</span> y)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (x.Date == <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> (y.Date == <span style="color: blue;">null</span>) ? 0 : -1; <span style="color: green;">//If x is null and y is not null, y is greater.</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">else</span> <span style="color: green;">// If x is not null...</span><br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (y.Date == <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> 1; <span style="color: green;">// y is null so x is greater.</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">else</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> x.Date.Value.CompareTo(y.Date); <span style="color: green;">// both non-null, compare the properties</span><br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+<h3>Nongeneric to generic ILists</h3>
+<p>When using an older style library in .net 2</p>
+<div class="code">
+<p><span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> Converts nongeneric list to generic list.</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> Just a generic way of doing foreach (string s in untypedList) genericList.Add(s);</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;typeparam name="T"&gt;</span><span style="color: green;">The type. </span><br />
+<span style="color: gray;">///</span><span style="color: green;"> If any in the list aren't the type, throws an exception</span><span style="color: gray;">&lt;/typeparam&gt;</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;param name="list"&gt;</span><span style="color: green;">The untyped list.</span><span style="color: gray;">&lt;/param&gt;</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;returns&gt;</span><span style="color: green;">A generic list</span><span style="color: gray;">&lt;/returns&gt;</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;example&gt;&lt;code&gt;</span><span style="color: green;">IList&amp;lt;string&amp;gt; typedList = ConvertToGenericList&amp;lt;string&amp;gt;(untypedList);</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/code&gt;&lt;/example&gt;</span><br />
+<span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;exception cref="InvalidCastException"/&gt;</span><br />
+<span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: #2b91af;">List</span>&lt;T&gt; ConvertToGenericList&lt;T&gt;(<span style="color: #2b91af;">ICollection</span> list)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//copy it into a concrete ArrayList</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">ArrayList</span> untypedList = <span style="color: blue;">new</span> <span style="color: #2b91af;">ArrayList</span>(list);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//then create the generic list from the arrayList's ToArray </span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//with funky typeof/as [] casting</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">List</span>&lt;T&gt;(untypedList.ToArray(<span style="color: blue;">typeof</span> (T)) <span style="color: blue;">as</span> T[]);<br />
+}</p>
+</div>
+
+<h3>Linq</h3>
+<div class="code">
+<p><span style="color: green;">//simple join</span><br />
+<span style="color: blue;">var</span> simpleJoin = <span style="color: blue;">from</span> category <span style="color: blue;">in</span> categories<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//joins use "equals" not "=="</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">join</span> product <span style="color: blue;">in</span> products <span style="color: blue;">on</span> category.Id <span style="color: blue;">equals</span> product.CategoryId<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">orderby</span> category.Id<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">select</span> <span style="color: blue;">new</span> { category.CategoryName, product.ProductName };<br />
+&nbsp;<br />
+<span style="color: green;">//group join (hierarchical outer join)</span><br />
+<span style="color: blue;">var</span> groupJoin = <span style="color: blue;">from</span> category <span style="color: blue;">in</span> categories<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <span style="color: blue;">join</span> product <span style="color: blue;">in</span> products <span style="color: blue;">on</span> category.Id <span style="color: blue;">equals</span> product.Id <br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//"into"</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">into</span> productsForCategory<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <span style="color: blue;">select</span> <span style="color: blue;">new</span> { category.Id, Products = productsForCategory };<br />
+&nbsp;<br />
+<span style="color: green;">//groupby - products by category</span><br />
+<span style="color: blue;">var</span> groups = <span style="color: blue;">from</span> product <span style="color: blue;">in</span> products<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <span style="color: blue;">group</span> product <span style="color: blue;">by</span> product.CategoryId;</p>
+</div>
+<h4>Duplicates</h4>
+<div class="code">
+<p><span style="color: green;">//find duplicates</span><br />
+<span style="color: blue;">var</span> dupes = <span style="color: blue;">from</span> category <span style="color: blue;">in</span> categories<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">group</span> category <span style="color: blue;">by</span> category.Id<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">into</span> categoryGroup<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">where</span> categoryGroup.Count() &gt; 1<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">select</span> categoryGroup.Key;<br />
+<span style="color: blue;">var</span> noDupes = categories.Distinct(); <span style="color: green;">//if you have IEqualityComparer</span><br />
+<span style="color: green;">//or without a comparer</span><br />
+<span style="color: blue;">var</span> noDupes2 = <span style="color: blue;">from</span> category <span style="color: blue;">in</span> categories<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <span style="color: green;">//join to a distinct list of ids</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <span style="color: blue;">join</span> id <span style="color: blue;">in</span> categories.Select(x =&gt; x.Id).Distinct()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">on</span> category.Id <span style="color: blue;">equals</span> id<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <span style="color: blue;">select</span> category;<br />
+<span style="color: blue;">var</span> noDupes3 = <span style="color: blue;">from</span> category <span style="color: blue;">in</span> categories<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <span style="color: green;">//group them and just get the first</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <span style="color: blue;">group</span> category <span style="color: blue;">by</span> category.Id <span style="color: blue;">into</span> categoryGroup<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <span style="color: blue;">select</span> categoryGroup.First();</p>
+</div>
+<h4>Set operations</h4>
+<div class="code">
+<p><span style="color: blue;">var</span> inBoth = list1.Intersect(list2);<br />
+Log(<span style="color: #a31515;">"In both"</span>, inBoth);<br />
+&nbsp;<br />
+<span style="color: blue;">var</span> inList1Only = list1.Except(list2);<br />
+Log(<span style="color: #a31515;">"Only in list 1"</span>, inList1Only);<br />
+&nbsp;<br />
+<span style="color: blue;">var</span> union = list1.Union(list2); <span style="color: green;">//compare list1.Concat(list2)</span><br />
+Log(<span style="color: #a31515;">"Both lists merged"</span>, union);<br />
+&nbsp;<br />
+<span style="color: green;">//.net 4 merge</span><br />
+<span style="color: blue;">var</span> zip = list1.Zip(list2, (a, b) =&gt; a + <span style="color: #a31515;">" "</span> + b);<br />
+Log(<span style="color: #a31515;">"Zipped together"</span>, zip);<br />
+&nbsp;<br />
+<span style="color: blue;">bool</span> isInSameOrder = list1.SequenceEqual(list2);</p>
+</div>
+
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

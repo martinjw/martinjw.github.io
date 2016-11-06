@@ -1,0 +1,316 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP MVC Errors</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="../aspmvc.html">Asp MVC</a></li>
+<li><a href="mvccontrollers.html">MVC Controllers</a></li>
+<li><a href="mvcactions.html">MVC Actions</a></li>
+<li><a href="../asprouting.html">Asp Routing</a></li>
+<li><a href="../aspmvcview.html">Asp MVC Views</a></li>
+<li><a href="htmlhelpers.html">HTML Helpers</a></li>
+<li><a href="bundles.html">Bundling</a></li>
+<li><a href="errors.html">MVC Errors</a></li>
+<li><a href="mvcvalidation.html">MVC Validation</a></li>
+<li><a href="simplepaging.html">Simple Paging</a></li>
+<li><a href="webapi.html">WebApi</a></li>
+<li><a href="webapiformat.html">WebApi Formatting</a></li>
+<li><a href="webapiclient.html">WebApi HttpClient</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>ASP Errors (handling exceptions)</h2>
+<p>NB: not data validation! For WebAPI it's a little different- <a href="#webapi">see below</a></p>
+<h3>Raising errors</h3>
+<p>You can return "RESTful" HTTP status codes:</p>
+<div class="code">
+<p><span style="color: green;">//404</span><br />
+<span style="color: blue;">if</span> (category &gt; 0)<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> HttpNotFound(<span style="color: #a31515;">"No such category"</span>); <span style="color: green;">//new HttpNotFoundResult()</span><br />
+&nbsp;<br />
+<span style="color: green;">//400</span><br />
+<span style="color: blue;">if</span> (category == -1)<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpStatusCodeResult</span>(System.Net.<span style="color: #2b91af;">HttpStatusCode</span>.BadRequest,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #a31515;">"Logical error."</span>);<br />
+&nbsp;<br />
+<span style="color: green;">//401, when AuthorizeAttribute is not enough</span><br />
+<span style="color: blue;">if</span> (User.Identity.IsAuthenticated &amp;&amp; !User.IsInRole(<span style="color: #a31515;">"Admin"</span>))<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpUnauthorizedResult</span>(<span style="color: #a31515;">"Unauthorized"</span>);<br />
+&nbsp;<br />
+<span style="color: green;">//500</span><br />
+<span style="color: blue;">if</span> (category == -2)<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">throw</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpException</span>(<span style="color: #a31515;">"Generic error"</span>);<br />
+<span style="color: blue;">if</span> (category == -3)<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">throw</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">InvalidOperationException</span>(<span style="color: #a31515;">"Generic error"</span>); <span style="color: green;">//also gets wrapped in HttpException</span></p>
+</div>
+
+<h3>Catching errors</h3>
+<p>The stack (from closest to exception upwards)</p>
+<ul>
+<li>Controller.OnException. Rarely used.</li>
+<li>[HandleError]. Normally needs logging action filter as well, and just having the Shared/Error.cshtml is limiting.</li>
+<li>global.asax Application_Error. Good idea, if you don't do HandleError with logging filter.</li>
+<li>web.config customErrors. Required.</li>
+<li>web.config httpErrors (IIS). Normally required.</li>
+</ul>
+
+<h3>HandleError</h3>
+<p>By default, App_Start/FilterConfig will add a global [<span style="color: #2b91af;">HandleError</span>] attribute.</p>
+<p>You can also add other HandleError attributes on controllers or actions, for specific errors and using specific views (set Order to control precedence - high order = high priority).</p>
+<div class="code">
+<p>[<span style="color: #2b91af;">HandleError</span>(ExceptionType = <span style="color: blue;">typeof</span>(<span style="color: #2b91af;">InvalidOperationException</span>))]</p>
+</div>
+<p>HandleError detects normal exceptions (not 404s) and redirects to a view Error.cshtml, either in the same controller or /Shared.</p>
+<p>NB: system.web/customErrors[mode="On"] must be set, otherwise it ignores exceptions (and shows the YSOD, which in debug is what you want)</p>
+<p>The default templated Error.cshtml is full html, but you can use _Layout and use a HandleErrorInfo model.</p>
+<div class="code">
+<p><span style="background: yellow;">@model </span>System.Web.Mvc.<span style="color: #2b91af;">HandleErrorInfo</span><br />
+&nbsp;<br />
+<span style="background: yellow;">@{</span><br />
+&nbsp;&nbsp;&nbsp; ViewBag.Title = <span style="color: #a31515;">"Test"</span>;<br />
+<span style="background: yellow;">}</span><br />
+&nbsp;<br />
+<span style="color: blue;">&lt;</span><span style="color: maroon;">h1</span><span style="color: blue;">&gt;</span>Error Handled<span style="color: blue;">&lt;/</span><span style="color: maroon;">h1</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: maroon;">p</span><span style="color: blue;">&gt;</span>Controller=<span style="background: yellow;">@</span>Model.ControllerName action=<span style="background: yellow;">@</span>Model.ActionName exception=<span style="background: yellow;">@</span>Model.Exception.Message<span style="color: blue;">&lt;/</span><span style="color: maroon;">p</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+<p>A view with no controller is awkward. You can't log errors (you shouldn't do logic in the view). You may prefer to not use a global HandleError and use web.config customErrors or global.asax Application_Error instead.</p>
+
+<p>You can add a new logging filter in App_Start/FilterConfig <em>before</em> the HandleError</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> RegisterGlobalFilters(<span style="color: #2b91af;">GlobalFilterCollection</span> filters)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; filters.Add(<span style="color: blue;">new</span> <span style="color: #2b91af;">ErrorLoggerFilter</span>());<br />
+&nbsp;&nbsp;&nbsp; filters.Add(<span style="color: blue;">new</span> <span style="color: #2b91af;">HandleErrorAttribute</span>());<br />
+}</p>
+</div>
+
+<p>The Error logging filter looks like this. Substitute the logging framework of your choice.</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">ErrorLoggerFilter</span> : <span style="color: #2b91af;">IExceptionFilter</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">void</span> OnException(<span style="color: #2b91af;">ExceptionContext</span> filterContext)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; System.Diagnostics.<span style="color: #2b91af;">Trace</span>.TraceError(<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #a31515;">"LogFilter: "</span> + filterContext.Exception);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//if using ELMAH</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (filterContext.ExceptionHandled)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Elmah.<span style="color: #2b91af;">ErrorSignal</span>.FromCurrentContext().Raise(filterContext.Exception);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+<h3>Routing 404s</h3>
+
+<p>"Catch-all" routes (with asterisk prefix) don't work well. This has to be after the default "controller/action/id" route, but any url of the form x/y or /y/z never hits the catch all (you will trap 1/2/3/4)</p>
+<div class="code">
+<p>routes.MapRoute(<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #a31515;">"404"</span>,<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #a31515;">"{*url}"</span>,<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> { controller = <span style="color: #a31515;">"Error"</span>, action = <span style="color: #a31515;">"NotFound"</span> }<br />
+);</p>
+</div>
+<p>As this is basically useless, it's better to just use customErrors, below</p>
+
+<h3>web.config customErrors</h3>
+<p>The traditional ASP config: system.web/customErrors[mode="On"]. By default this does a 302.</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">system.web</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">customErrors</span><span style="color: blue;"> </span><span style="color: red;">mode</span><span style="color: blue;">=</span>"<span style="color: blue;">On</span>"<span style="color: blue;"> </span><span style="color: red;">defaultRedirect</span><span style="color: blue;">=</span>"<span style="color: blue;">/Error/</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">error</span><span style="color: blue;"> </span><span style="color: red;">statusCode</span><span style="color: blue;">=</span>"<span style="color: blue;">404</span>"<span style="color: blue;"> </span><span style="color: red;">redirect</span><span style="color: blue;">=</span>"<span style="color: blue;">/Error/NotFound</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">customErrors</span><span style="color: blue;">&gt;</span></p>
+</div>
+<p>redirectMode="ResponseRewrite" cannot redirect to a route, only to a physical html or aspx file. </p>
+<p>[HandleError] intercepts most errors before this (but not 404s). Unlike [HandleError] you redirect to a controller, but the exception isn't passed on so you can't log it (use a logging exception filter or global.asax Application_Error).</p>
+
+<h3>httpErrors</h3>
+<p>This is only used by IIS7. customErrors will trap errors first, and httpErrors catches higher level IIS level exceptions like 404s on .html files.</p>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">system.webServer</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">httpErrors</span><span style="color: blue;"> </span><span style="color: red;">errorMode</span><span style="color: blue;">=</span>"<span style="color: blue;">Custom</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;!--</span><span style="color: green;"> catch all non-ASP 404s (.jpg, .html) </span><span style="color: blue;">--&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">remove</span><span style="color: blue;"> </span><span style="color: red;">statusCode</span><span style="color: blue;">=</span>"<span style="color: blue;">404</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">error</span><span style="color: blue;"> </span><span style="color: red;">statusCode</span><span style="color: blue;">=</span>"<span style="color: blue;">404</span>"<span style="color: blue;"> </span><span style="color: red;">path</span><span style="color: blue;">=</span>"<span style="color: blue;">/Error/NotFound</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">httpErrors</span><span style="color: blue;">&gt;</span></p>
+</div>
+<div class="alert">
+customErrors mode should still be set to On
+</div>
+<h3>Error controller</h3>
+<p>You simply set the HTTP status code and <a href="http://msdn.microsoft.com/en-us/library/system.web.httpresponse.tryskipiiscustomerrors.aspx">Response.TrySkipIisCustomErrors</a> to true. But you don't have access to the original exception (you arrive at the controller from a 302 redirect).</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">ErrorController</span> : <span style="color: #2b91af;">Controller</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">// GET: /Error/</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: #2b91af;">ActionResult</span> Index()<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Response.StatusCode = (<span style="color: blue;">int</span>)System.Net.<span style="color: #2b91af;">HttpStatusCode</span>.InternalServerError; <span style="color: green;">//500</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Response.TrySkipIisCustomErrors = <span style="color: blue;">true</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> View();<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">// GET: /Error/NotFound</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: #2b91af;">ActionResult</span> NotFound()<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Response.StatusCode = (<span style="color: blue;">int</span>)System.Net.<span style="color: #2b91af;">HttpStatusCode</span>.NotFound; <span style="color: green;">//404</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Response.TrySkipIisCustomErrors = <span style="color: blue;">true</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> View();<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+<h3>Global.asax Application_Error</h3>
+<p>The "classic" asp.net solution is still preferable to HandleError. It fires before customErrors. If you don't call Server.ClearError the customErrors takes over. It is not fired if there is a [HandleError] attribute. If you are not logging exceptions through an action filter, you can reliably log here.</p>
+<div class="code">
+<p><span style="color: blue;">protected</span> <span style="color: blue;">void</span> Application_Error()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> exception = Server.GetLastError();<br />
+&nbsp;&nbsp;&nbsp; Response.Clear();<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//customErrors=On/RemoteOnly+nonLocal</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (!<span style="color: #2b91af;">HttpContext</span>.Current.IsCustomErrorEnabled)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span>; <span style="color: green;">//wants to see YSOD</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//log it if necessary</span><br />
+&nbsp;&nbsp;&nbsp; System.Diagnostics.<span style="color: #2b91af;">Trace</span>.TraceError(exception.ToString());<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//is this a specific error?</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> httpException = exception <span style="color: blue;">as</span> <span style="color: #2b91af;">HttpException</span>;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> action = <span style="color: blue;">null</span>;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (httpException != <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> code = httpException.GetHttpCode();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (code == 404)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; action = <span style="color: #a31515;">"NotFound"</span>;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; Server.ClearError(); <span style="color: green;">//make sure customErrors doesn't take over</span><br />
+&nbsp;&nbsp;&nbsp; Response.TrySkipIisCustomErrors = <span style="color: blue;">true</span>; <span style="color: green;">//don't let IIS7 take over</span><br />
+&nbsp;&nbsp;&nbsp; Response.Redirect(<span style="color: #2b91af;">String</span>.Format(<span style="color: #a31515;">"~/Error/</span><span style="color: #3cb371;">{0}</span><span style="color: #a31515;">"</span>, action));<br />
+}</p>
+</div>
+
+<h3><a name="webapi">WebAPI</a></h3>
+<p>global.asax Application_Error is <em>NOT</em> fired, but it does obey customErrors mode for whether an exception is returned in Json/xml.</p>
+<p><a href="http://www.asp.net/web-api/overview/web-api-routing-and-actions/exception-handling">www.asp.net overview</a></p>
+<p>From 2014, webapi has ErrorLogger and ExceptionHandler base classes which can be inherited and applied for true global logging and handling.</p>
+<div class="code">
+<p><span style="color: blue;">if</span> (id == 1)<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">throw</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpResponseException</span>(<span style="color: #2b91af;">HttpStatusCode</span>.NotFound);<br />
+<span style="color: blue;">if</span> (id == 2)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> responce = <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpResponseMessage</span>(<span style="color: #2b91af;">HttpStatusCode</span>.NotFound);<br />
+&nbsp;&nbsp;&nbsp; responce.ReasonPhrase = <span style="color: #a31515;">"Item not found"</span>; <span style="color: green;">//HTTP level</span><br />
+&nbsp;&nbsp;&nbsp; responce.Content = <span style="color: blue;">new</span> <span style="color: #2b91af;">StringContent</span>(<span style="color: #a31515;">"No item with id 2"</span>); <span style="color: green;">//message</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">throw</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpResponseException</span>(responce);<br />
+}</p>
+</div>
+<h4>HttpResponseMessage methods</h4>
+<div class="code">
+<p><span style="color: blue;">if</span> (id == 0) <span style="color: green;">//createResponse</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> Request.CreateResponse(<span style="color: #2b91af;">HttpStatusCode</span>.NotFound, <span style="color: #a31515;">"Cannot find id"</span>);<br />
+<span style="color: blue;">if</span> (id == 1) <span style="color: green;">//using HttpError</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> Request.CreateResponse(<span style="color: #2b91af;">HttpStatusCode</span>.BadRequest, <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpError</span>(<span style="color: #a31515;">"Bad input"</span>));<br />
+<span style="color: blue;">if</span> (id == 2) <span style="color: green;">//createErrorResponse</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> Request.CreateErrorResponse(<span style="color: #2b91af;">HttpStatusCode</span>.BadRequest, <span style="color: #a31515;">"Bad input"</span>);<br />
+<span style="color: blue;">if</span> (!ModelState.IsValid) <span style="color: green;">//modelstate</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> Request.CreateErrorResponse(<span style="color: #2b91af;">HttpStatusCode</span>.BadRequest, ModelState);</p>
+</div>
+
+<p>The standard json error response is { Message: x }</p>
+
+<h3>WebAPI filters</h3>
+<div class="alert">[HandleError] doesn't work on webapi!</div>
+<p>You can use a limited equivalent by implementing the abstract ExceptionFilterAttribute. It is limited as it only traps raw .net exceptions, and ignores HttpResponseExceptions (which prior to WebApi 2.1 can't be logged...)</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">HandleExceptionAttribute</span> : System.Web.Http.Filters.<span style="color: #2b91af;">ExceptionFilterAttribute</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//MVC's [HandleError] doesn't work (it returns a view)</span><br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">override</span> <span style="color: blue;">void</span> OnException(System.Web.Http.Filters.<span style="color: #2b91af;">HttpActionExecutedContext</span> actionExecutedContext)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//log it</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Trace</span>.TraceError(actionExecutedContext.Exception.ToString());<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//handle it</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; actionExecutedContext.Response = <span style="color: blue;">new</span> <span style="color: #2b91af;">HttpResponseMessage</span>(<span style="color: #2b91af;">HttpStatusCode</span>.InternalServerError);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+<p>Then apply the attribute on action or controller:</p>
+<div class="code">
+<p>[<span style="color: #2b91af;">HandleExceptionAttribute</span>]<br />
+<span style="color: blue;">public</span> <span style="color: blue;">int</span> Post(<span style="color: #2b91af;">Order</span> order)</p>
+</div>
+<p>Or into GlobalConfiguration filters in App_Start (NB: not MVC action filters!!)</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">WebApiConfig</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> Register(<span style="color: #2b91af;">HttpConfiguration</span> config)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">// Web API configuration and services</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; config.Filters.Add(<span style="color: blue;">new</span> <span style="color: #2b91af;">HandleExceptionAttribute</span>());</p>
+</div>
+
+<h3>WebAPI 2.1 Loggers and Handlers</h3>
+<p>Global logging and handling is only available from WebApi 2.1 (January 2014+)</p>
+<div class="code">
+<p><span style="color: green;">// There can be multiple exception loggers (by default there are 0)</span><br />
+config.Services.Add(<span style="color: blue;">typeof</span>(System.Web.Http.ExceptionHandling.<span style="color: #2b91af;">IExceptionLogger</span>),<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">MyExceptionLogger</span>());<br />
+&nbsp;<br />
+<span style="color: green;">// There must be exactly 1 exception handler. (There is a default one that may be replaced.)</span><br />
+config.Services.Replace(<span style="color: blue;">typeof</span>(System.Web.Http.ExceptionHandling.<span style="color: #2b91af;">IExceptionHandler</span>),<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">MyExceptionHandler</span>());</p>
+</div>
+<p>Implementations:</p>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">MyExceptionLogger</span> : System.Web.Http.ExceptionHandling.<span style="color: #2b91af;">ExceptionLogger</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">override</span> <span style="color: blue;">void</span> Log(System.Web.Http.ExceptionHandling.<span style="color: #2b91af;">ExceptionLoggerContext</span> context)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Trace</span>.TraceError(<span style="color: #a31515;">"Method {0} url {1} exception {2}"</span>,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; context.Request.Method,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; context.Request.RequestUri,<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; context.Exception);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}<br />
+&nbsp;<br />
+<span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">MyExceptionHandler</span> : System.Web.Http.ExceptionHandling.<span style="color: #2b91af;">ExceptionHandler</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">override</span> <span style="color: blue;">void</span> Handle(System.Web.Http.ExceptionHandling.<span style="color: #2b91af;">ExceptionHandlerContext</span> context)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//return an IHttpActionResult</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; context.Result = <span style="color: blue;">new</span> <span style="color: #2b91af;">InternalServerErrorResult</span>(context.Request);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+
+<h3>Async Disconnect Errors (.net 4.5)</h3>
+<p>In .net 4.5 you can use async Task actions. Because they are async, disconnects trigger the standard escalation policy to terminate the process. Opps. Put this in Global.asax Application_Start:</p>
+<div class="code">
+<p><span style="color: green;">//log and swallow the async disconnect errors "The remote host closed the connection. The error code is 0x80070057."</span><br />
+<span style="color: #2b91af;">TaskScheduler</span>.UnobservedTaskException += (sender, e) =&gt;<br />
+{<br />
+&nbsp;&nbsp;&nbsp; e.SetObserved();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Trace</span>.TraceError(e.Exception.ToString());<br />
+};</p>
+</div>
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

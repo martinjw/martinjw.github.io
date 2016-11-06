@@ -1,0 +1,91 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>WCF Data Services</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="../io.html">Data &gt;</a></li>
+<li><a href="old.html">Old ORMs  &gt;</a></li>
+<li><a href="linq2sql.html">Linq2Sql</a></li>
+<li><a href="efedmx.html">EF data/model first</a></li>
+<li><a href="wcfds.html">WCF Data Services</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>WCF Data Services</h2>
+<div class="alert">
+For .net 4.5, this is replaced by <a href="http://www.asp.net/web-api/overview/odata-support-in-aspnet-web-api/odata-v4/create-an-odata-v4-endpoint">Microsoft.AspNet.Odata</a> which uses ODataController (based on WebApi ApiController).
+</div>
+
+<h3>About</h3>
+<p>Formerly "Astoria" and "ADO.Net Data Services", this is the .Net ODATA implementation - ODATA being RESTful HTTP/JSON/ATOM xml access to databases.</p>
+
+<h3>OData</h3>
+<p>HTTP verbs: GET is get, POST is insert, PUT is update, MERGE is partial update, DELETE is delete</p>
+<p>NB: PUT,MERGE and DELETE may be blocked by proxies/firewalls, so add the <cite>X-HTTP-Method</cite> header can be added to a POST request</p>
+<ul>
+<li>Use http://localhost/wcfds.svc<strong>/$metadata</strong> to get metadata (like ?wsdl)</li>
+<li>http://localhost/wcfds.svc/customers<strong>('ALFKI')</strong><br />get by primary key</li>
+<li>http://localhost/wcfds.svc/customers/<strong>$count</strong></li>
+<li>http://localhost/wcfds.svc/customers?<strong>$orderby=Price desc</strong></li>
+<li>http://localhost/wcfds.svc/customers?<strong>$skip=20&amp;$top=5</strong></li>
+<li>http://localhost/wcfds.svc/customers?<strong>$filter= Name eq 'Bill' and Price gt 10</strong></li>
+<li>http://localhost/wcfds.svc/customers?<strong>$filter= startswith(name, 'B') and year(Date) gt 2011 and round(Price) = 5</strong></li>
+<li>http://localhost/wcfds.svc/customers?<strong>$expand=Orders/Order_Details</strong><br />Eager loading</li>
+</ul>
+
+<h3>Server code</h3>
+<p>Reference System.Data.Services.Client.dll. The VS2010 item template for the endpoint is "WCF Data Service". The svc code behind is a DataService&lt;T&gt; with a static InitializeService() method which should expose a IQueryable&lt;T&gt; getter. </p>
+<p>DataService&lt;T&gt; can be an <a href="ef/ef.html">Entity Framework</a> ObjectContext, which exposes the ObjectSets (tables).</p>
+<p>For custom classes that are exposed, add a [DataServiceKeyAttribute(pk)] to the class to denote the primary key (for http://localhost/wcfds.svc/custom('ALFKI') gets). For POCOs, add [DataContract(IsReference=true)] so properties are serialized as objects, not values (i.e. product.Category refers to a Category object).</p>
+<h4>Security</h4>
+<p>You can secure with the standard IIS/web.config settings including Windows, asp.net forms etc.</p>
+<p>In the client library, you can set context.Credentials = new NetworkCredential(username, password) or use the context.SendingRequest event to set request headers such as Authorization.</p>
+<p>In server InitializeService, <a href="http://msdn.microsoft.com/en-us/library/ee358710.aspx">configure SetEntitySetAccessRules</a></p>
+
+<h4>Service Operations</h4>
+<p>In InitializeService, config.SetServiceOperationAccessRule("*", ServiceOperationRights.All); as applicable/</p>
+<p>Expose sprocs as service operations: [WebGet]/[WebInvoke] methods- input parameters must be primitives, return must be primitive or IEnumerables/IQueryable.</p>
+
+<h3>Client</h3>
+<p>Adding a service reference to an ODATA service creates a proxy derived from <a href="http://msdn.microsoft.com/en-us/library/system.data.services.client.dataservicecontext.aspx">DataServiceContext</a> which looks like a normal <a href="ef/ef.html">EF ObjectContext</a>. (<a href="http://msdn.microsoft.com/en-us/library/gg602811.aspx">MSDN concepts</a>)</p>
+<ul>
+<li>context.SaveChanges(SaveChangesOption.Batch) will batch changes (also: ContinueOnError, ReplaceOnUpdate)<br />
+Catch DataServiceQueryException, DataServiceRequestException</li>
+<li>It uses ATOM - to use JSON, use a WebClient with client.Headers["Accept"] = "application/json"</li>
+<li>In a partial class, add [QueryInterceptor("Customers")]public Expression... OnQueryCustomers()</li>
+<li>[ChangeInterceptor("Customers")] can also be used for validation (or subscribe to regular EntityChanging event)</li>
+</ul>
+<p>For data-binding, wrap the objectsets in <a href="http://msdn.microsoft.com/en-us/library/ee474331.aspx">DataServiceCollection</a> which extends ObservableCollection.</p>
+
+<h4>Queries</h4>
+<ul>
+<li>The entity collections (ObjectSets in EF) are DataServiceQuery&lt;T&gt; but otherwise it's mostly normal IQueryable</li>
+<li>Eager load (ODATA $expand) with context.Orders.Expand("Order_Details")</li>
+<li>Explicit load (lazy load) with context.LoadProperty(order, "Order_Details")</li>
+<li>Explicitly executing the query returns a QueryOperationResponse.<br />
+When <a href="http://msdn.microsoft.com/en-us/library/ee358711.aspx">paging</a>, this has a GetContinuation property which includes the url of the next page<br />
+NB: you must iterate the query result to use the continuation</li>
+</ul>
+
+</div>
+<div class="Footer"><script type="text/javascript">
+//<![CDATA[
+
+
+prettyPrint();
+//]]>
+</script></div>
+</body>
+</html>

@@ -1,0 +1,213 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP WebAPI Formatting</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="../aspmvc.html">Asp MVC</a></li>
+<li><a href="mvccontrollers.html">MVC Controllers</a></li>
+<li><a href="mvcactions.html">MVC Actions</a></li>
+<li><a href="../asprouting.html">Asp Routing</a></li>
+<li><a href="../aspmvcview.html">Asp MVC Views</a></li>
+<li><a href="htmlhelpers.html">HTML Helpers</a></li>
+<li><a href="bundles.html">Bundling</a></li>
+<li><a href="errors.html">MVC Errors</a></li>
+<li><a href="mvcvalidation.html">MVC Validation</a></li>
+<li><a href="simplepaging.html">Simple Paging</a></li>
+<li><a href="webapi.html">WebApi</a></li>
+<li><a href="webapiformat.html">WebApi Formatting</a></li>
+<li><a href="webapiclient.html">WebApi HttpClient</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>WebAPI Formatting</h2>
+<h3>Json formatting</h3>
+<p>See <a href="http://james.newtonking.com/json/help/index.html">Json.net</a>.</p>
+<ul>
+<li>[JsonIgnore] to ignore properties</li>
+<li>Use [DataContract]/[DataMember] for opt-in model</li>
+<li>Translate .net conventional PascalCasing to javascript-friendly camelCasing:
+<div class="code">
+<p><span style="color: #2b91af;">GlobalConfiguration</span>.Configuration.Formatters.JsonFormatter.SerializerSettings.ContractResolver =<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> Newtonsoft.Json.Serialization.<span style="color: #2b91af;">CamelCasePropertyNamesContractResolver</span>();</p>
+</div>
+</li>
+</ul>
+<p>Full error stack in your json:</p>
+<div class="code">
+<p><span style="color: blue;">#if</span> DEBUG<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">GlobalConfiguration</span>.Configuration.IncludeErrorDetailPolicy = <span style="color: #2b91af;">IncludeErrorDetailPolicy</span>.LocalOnly;<br />
+<span style="color: blue;">#endif</span></p>
+</div>
+
+<h3>Circular references</h3>
+<p>If an object has reference properties (Order.Product) by default you'll get repeated nested objects. If there's a back-reference, you get a Newtonsoft.Json.JsonSerializationException: "Self referencing loop detected for property 'x' with type 'z'". To create proper json references ("$id" properties), use:</p>
+<div class="code">
+<p><span style="color: #2b91af;">GlobalConfiguration</span>.Configuration.Formatters.JsonFormatter.SerializerSettings.PreserveReferencesHandling =<br />
+&nbsp;&nbsp;&nbsp; Newtonsoft.Json.<span style="color: #2b91af;">PreserveReferencesHandling</span>.All;</p>
+</div>
+<p>For xml [DataContract(IsReference=true)]</p>
+
+<h3>Content Negotiation</h3>
+<ul>
+<li>HttpConfiguration (GlobalConfiguration.Configuration) has<ul>
+<li>Services.GetContentNegotiator(): an <strong>IContentNegotiator</strong> (normally DefaultContentNegotiator)</li>
+<li><strong>Formatters</strong>: list of MediaTypeFormatters (or derived BufferedMediaTypeFormatters) which<ul>
+<li>CamWrite/CanRead</li>
+<li><strong>SupportedMediaTypes</strong>: list of mime types that are matched to Request Accept header (eg application/json)</li>
+<li><strong>MediaTypeMappings</strong>: list of mappers. By default the mime type is read from the Request <strong>Accept</strong> or the <strong>Content-Type</strong> HTTP headers.<br/>
+If you add mappers, they intercept it. Built-in mappers are RequestHeader, QueryString ("?format=json") and UrlPathExtension (".json")</li>
+</ul></li>
+</ul></li>
+</ul>
+<p>Using a urlPathExtension- add this to the routes: (NB- {id}.{ext} will make IIS look for a physical file and 404)</p>
+<div class="code">
+<p>config.Routes.MapHttpRoute(<br />
+&nbsp;&nbsp;&nbsp; name: <span style="color: #a31515;">"DefaultApi With Extensions"</span>,<br />
+&nbsp;&nbsp;&nbsp; routeTemplate: <span style="color: #a31515;">"api/{controller}.{ext}/{id}"</span>,<br />
+&nbsp;&nbsp;&nbsp; defaults: <span style="color: blue;">new</span> { id = <span style="color: #2b91af;">RouteParameter</span>.Optional }<br />
+);<br />
+&nbsp;<br />
+config.Routes.MapHttpRoute(<br />
+&nbsp;&nbsp;&nbsp; name: <span style="color: #a31515;">"DefaultApi"</span>,<br />
+&nbsp;&nbsp;&nbsp; routeTemplate: <span style="color: #a31515;">"api/{controller}/{id}"</span>,<br />
+&nbsp;&nbsp;&nbsp; defaults: <span style="color: blue;">new</span> { id = <span style="color: #2b91af;">RouteParameter</span>.Optional }<br />
+);</p>
+</div>
+<p>And in Application_Start/ WebApiConfig.Register:</p>
+<div class="code">
+<p><span style="color: green;">// GET /Category.json/1 returns json (*requires route with {ext})</span><br />
+<span style="color: #2b91af;">GlobalConfiguration</span>.Configuration.Formatters.JsonFormatter.MediaTypeMappings.Add(<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> System.Net.Http.Formatting.<span style="color: #2b91af;">UriPathExtensionMapping</span>(<span style="color: #a31515;">"json"</span>, <span style="color: #a31515;">"application/json"</span>)<br />
+);<br />
+<span style="color: green;">// GET /Category/1?format=json returns json</span><br />
+<span style="color: #2b91af;">GlobalConfiguration</span>.Configuration.Formatters.JsonFormatter.MediaTypeMappings.Add(<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> System.Net.Http.Formatting.<span style="color: #2b91af;">QueryStringMapping</span>(<span style="color: #a31515;">"format"</span>, <span style="color: #a31515;">"json"</span>, <span style="color: #a31515;">"application/json"</span>)<br />
+);</p>
+</div>
+<p>A simple CSV formatter (does not recurse reference properties):</p>
+<div class="code">
+<p>&nbsp;<br />
+<span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">CsvFormatter</span> : System.Net.Http.Formatting.<span style="color: #2b91af;">BufferedMediaTypeFormatter</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> CsvFormatter()<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; SupportedMediaTypes.Add(<span style="color: blue;">new</span> System.Net.Http.Headers.<span style="color: #2b91af;">MediaTypeHeaderValue</span>(<span style="color: #a31515;">"text/csv"</span>));<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;code&gt;</span><span style="color: green;">GlobalConfiguration.Configuration.Formatters.Add(new CsvFormatter(new QueryStringMapping("format", "csv", "text/csv")));</span><span style="color: gray;">&lt;/code&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: gray;">///</span><span style="color: green;"> </span><span style="color: gray;">&lt;/summary&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> CsvFormatter(System.Net.Http.Formatting.<span style="color: #2b91af;">MediaTypeMapping</span> mediaTypeMapping)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; : <span style="color: blue;">this</span>()<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; MediaTypeMappings.Add(mediaTypeMapping);<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">override</span> <span style="color: blue;">bool</span> CanReadType(<span style="color: #2b91af;">Type</span> type)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">false</span>; <span style="color: green;">//writer, not reader</span><br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">override</span> <span style="color: blue;">bool</span> CanWriteType(<span style="color: #2b91af;">Type</span> type)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: blue;">true</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//specific generic type</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//if (type == typeof(T))</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//{</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//&nbsp;&nbsp;&nbsp; return true;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//}</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//else</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//{</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//&nbsp;&nbsp;&nbsp; var enumerableType = typeof(IEnumerable&lt;T&gt;);</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//&nbsp;&nbsp;&nbsp; return enumerableType.IsAssignableFrom(type);</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//}</span><br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">override</span> <span style="color: blue;">void</span> WriteToStream(<span style="color: #2b91af;">Type</span> type, <span style="color: blue;">object</span> value, <span style="color: #2b91af;">Stream</span> writeStream, <span style="color: #2b91af;">HttpContent</span> content)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: blue;">var</span> writer = <span style="color: blue;">new</span> <span style="color: #2b91af;">StreamWriter</span>(writeStream))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//simple type</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (value <span style="color: blue;">is</span> <span style="color: blue;">string</span> || value.GetType().IsValueType)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; WriteItem(value, writer);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">else</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//enumerable</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> items = value <span style="color: blue;">as</span> <span style="color: #2b91af;">IEnumerable</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (items != <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">foreach</span> (<span style="color: blue;">var</span> item <span style="color: blue;">in</span> items)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; WriteItem(item, writer);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">else</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//single item</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> item = value;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; WriteItem(item, writer);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; writeStream.Close();<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">void</span> WriteItem(<span style="color: #2b91af;">Object</span> obj, <span style="color: #2b91af;">TextWriter</span> writer)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> type = obj.GetType();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (type.IsValueType || type == <span style="color: blue;">typeof</span>(<span style="color: blue;">string</span>))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; writer.WriteLine(Escape(obj));<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (_properties == <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; _properties = type.GetProperties();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">foreach</span> (<span style="color: blue;">var</span> propertyInfo <span style="color: blue;">in</span> _properties)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> propertyValue = Escape(propertyInfo.GetValue(obj));<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; writer.Write(propertyValue + <span style="color: #a31515;">","</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; writer.WriteLine();<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">static</span> <span style="color: blue;">readonly</span> <span style="color: blue;">char</span>[] SpecialChars = { <span style="color: #a31515;">','</span>, <span style="color: #a31515;">'\n'</span>, <span style="color: #a31515;">'\r'</span>, <span style="color: #a31515;">'"'</span> };<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: #2b91af;">PropertyInfo</span>[] _properties;<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">string</span> Escape(<span style="color: blue;">object</span> o)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (o == <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: #a31515;">""</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (o <span style="color: blue;">is</span> <span style="color: #2b91af;">DateTime</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> date = (<span style="color: #2b91af;">DateTime</span>)o;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> date.ToString(<span style="color: #a31515;">"O"</span>); <span style="color: green;">//ISO 8601</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> field = o.ToString();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (field.IndexOfAny(SpecialChars) != -1)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> <span style="color: #2b91af;">String</span>.Format(<span style="color: #a31515;">"\"</span><span style="color: #3cb371;">{0}</span><span style="color: #a31515;">\""</span>, field.Replace(<span style="color: #a31515;">"\""</span>, <span style="color: #a31515;">"\"\""</span>));<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> field;<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

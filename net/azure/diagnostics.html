@@ -1,0 +1,272 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Azure Diagnostics</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="index.html">Azure &gt;</a></li>
+<li><a href="blob.html">Blob storage</a></li>
+<li><a href="table.html">Table storage</a></li>
+<li><a href="queue.html">Queue storage</a></li>
+<li><a href="cache.html">Cache</a></li>
+<li><a href="servicebus.html">Service Bus</a></li>
+<li><a href="diagnostics.html">Diagnostics</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Azure Diagnostics</h2>
+<p>See <a href="http://msdn.microsoft.com/en-us/library/windowsazure/hh180875.aspx">MSDN</a>, <a href="http://weblogs.asp.net/scottgu/archive/2013/04/30/announcing-the-release-of-windows-azure-sdk-2-0-for-net.aspx">ScottGu sdk 2.0</a>. NB SDK 2.0 makes this easier.</p>
+<h2>Instrument the code</h2>
+<p>Write lots of Trace.TraceEror. For instance, in MVC's Views/Shared/Error.cshtml (destination of [HandleError])</p>
+<div class="code">
+<p><span style="background: yellow;">@model </span>System.Web.Mvc.<span style="color: #2b91af;">HandleErrorInfo</span><br />
+&nbsp;<br />
+<span style="background: yellow;">@{</span><br />
+&nbsp;&nbsp;&nbsp; ViewBag.Title = <span style="color: #a31515;">"Error"</span>;<br />
+<span style="background: yellow;">}</span><br />
+&nbsp;<br />
+<span style="color: blue;">&lt;</span><span style="color: maroon;">hgroup</span> <span style="color: red;">class</span><span style="color: blue;">="title"&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: maroon;">h1</span> <span style="color: red;">class</span><span style="color: blue;">="error"&gt;</span>Error.<span style="color: blue;">&lt;/</span><span style="color: maroon;">h1</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: maroon;">h2</span> <span style="color: red;">class</span><span style="color: blue;">="error"&gt;</span>An error occurred while processing your request.<span style="color: blue;">&lt;/</span><span style="color: maroon;">h2</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: maroon;">hgroup</span><span style="color: blue;">&gt;</span><br />
+&nbsp;<br />
+<span style="background: yellow;">@{</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> sb = <span style="color: blue;">new</span> System.Text.<span style="color: #2b91af;">StringBuilder</span>();<br />
+&nbsp;&nbsp;&nbsp; sb.AppendLine(Request.RawUrl + <span style="color: #a31515;">" "</span> + Request.UserAgent);<br />
+&nbsp;&nbsp;&nbsp; sb.AppendLine(Model.ControllerName + <span style="color: #a31515;">"."</span> + Model.ActionName);<br />
+&nbsp;&nbsp;&nbsp; sb.AppendLine(Model.Exception.ToString());<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> s = sb.ToString();<br />
+&nbsp;&nbsp;&nbsp; System.Diagnostics.<span style="color: #2b91af;">Trace</span>.TraceError(s);<br />
+<span style="background: yellow;">}</span></p>
+</div>
+
+<h2>ServiceDefinition.csdef</h2>
+<p>Must have Imports/Import[@moduleName="Diagnostics"]</p>
+<div class="code">
+<p><span style="color: blue;">&lt;?</span><span style="color: #a31515;">xml</span><span style="color: blue;"> </span><span style="color: red;">version</span><span style="color: blue;">=</span>"<span style="color: blue;">1.0</span>"<span style="color: blue;"> </span><span style="color: red;">encoding</span><span style="color: blue;">=</span>"<span style="color: blue;">utf-8</span>"<span style="color: blue;">&nbsp;&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: #a31515;">ServiceDefinition</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Cloud</span>"<span style="color: blue;"> </span><span style="color: red;">xmlns</span><span style="color: blue;">=</span>"<span style="color: blue;">http://schemas.microsoft.com/ServiceHosting/2008/10/ServiceDefinition</span>"<span style="color: blue;"> </span><span style="color: red;">schemaVersion</span><span style="color: blue;">=</span>"<span style="color: blue;">2012-10.1.8</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">WebRole</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">MartinWeb</span>"<span style="color: blue;"> </span><span style="color: red;">vmsize</span><span style="color: blue;">=</span>"<span style="color: blue;">Small</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Sites</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Site</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Web</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Bindings</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Binding</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Endpoint1</span>"<span style="color: blue;"> </span><span style="color: red;">endpointName</span><span style="color: blue;">=</span>"<span style="color: blue;">Endpoint1</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">Bindings</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">Site</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">Sites</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Endpoints</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">InputEndpoint</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Endpoint1</span>"<span style="color: blue;"> </span><span style="color: red;">protocol</span><span style="color: blue;">=</span>"<span style="color: blue;">http</span>"<span style="color: blue;"> </span><span style="color: red;">port</span><span style="color: blue;">=</span>"<span style="color: blue;">80</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">Endpoints</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Imports</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Import</span><span style="color: blue;"> </span><span style="color: red;">moduleName</span><span style="color: blue;">=</span>"<span style="color: blue;">Diagnostics</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">Imports</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">WebRole</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">ServiceDefinition</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+<h3>ServiceConfiguration.Cloud.csfg</h3>
+<p>Link <cite>Microsoft.WindowsAzure.Plugins.Diagnostics.ConnectionString</cite> to your storage account</p>
+<div class="code">
+<p><span style="color: blue;">&lt;?</span><span style="color: #a31515;">xml</span><span style="color: blue;"> </span><span style="color: red;">version</span><span style="color: blue;">=</span>"<span style="color: blue;">1.0</span>"<span style="color: blue;"> </span><span style="color: red;">encoding</span><span style="color: blue;">=</span>"<span style="color: blue;">utf-8</span>"<span style="color: blue;">&nbsp;&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: #a31515;">ServiceConfiguration</span><span style="color: blue;"> </span><span style="color: red;">serviceName</span><span style="color: blue;">=</span>"<span style="color: blue;">Cloud</span>"<span style="color: blue;"> </span><span style="color: red;">xmlns</span><span style="color: blue;">=</span>"<span style="color: blue;">http://schemas.microsoft.com/ServiceHosting/2008/10/ServiceConfiguration</span>"<span style="color: blue;"> </span><span style="color: red;">osFamily</span><span style="color: blue;">=</span>"<span style="color: blue;">3</span>"<span style="color: blue;"> </span><span style="color: red;">osVersion</span><span style="color: blue;">=</span>"<span style="color: blue;">*</span>"<span style="color: blue;"> </span><span style="color: red;">schemaVersion</span><span style="color: blue;">=</span>"<span style="color: blue;">2012-10.1.8</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">Role</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">MartinWeb</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Instances</span><span style="color: blue;"> </span><span style="color: red;">count</span><span style="color: blue;">=</span>"<span style="color: blue;">1</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">ConfigurationSettings</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Setting</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Microsoft.WindowsAzure.Plugins.Diagnostics.ConnectionString</span>"<span style="color: blue;"> </span><span style="color: red;">value</span><span style="color: blue;">=</span>"<span style="color: blue;">DefaultEndpointsProtocol=https;AccountName=mystorage;AccountKey=zzz</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">ConfigurationSettings</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">Certificates</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">Certificates</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">Role</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">ServiceConfiguration</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+<h3>Configure</h3>
+<p>Use WebRole.OnStart or just add a <a href="http://msdn.microsoft.com/en-us/library/windowsazure/hh411551.aspx">diagnostics.wadcfg</a> to the web project with <q>Copy to Output Directory: Copy always</q>. In SDK 2.0 the Role's Configuration tab has an "Enable Diagnostics" checkbox which writes this file out. </p>
+<div class="alert">
+Important: the configuration is stored as blobs in wad-control-container, so if it exists delete the blob first
+</div>
+<div class="code">
+<p><span style="color: blue;">&lt;</span><span style="color: #a31515;">DiagnosticMonitorConfiguration</span><span style="color: blue;"> </span><span style="color: red;">xmlns</span><span style="color: blue;">=</span>"<span style="color: blue;">http://schemas.microsoft.com/ServiceHosting/2010/10/DiagnosticsConfiguration</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; </span><span style="color: red;">configurationChangePollInterval</span><span style="color: blue;">=</span>"<span style="color: blue;">PT1M</span>"<br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; </span><span style="color: red;">overallQuotaInMB</span><span style="color: blue;">=</span>"<span style="color: blue;">4096</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&lt;</span><span style="color: #a31515;">Logs</span><span style="color: blue;"> </span><span style="color: red;">bufferQuotaInMB</span><span style="color: blue;">=</span>"<span style="color: blue;">1024</span>"<br />
+<span style="color: blue;">&nbsp;&nbsp;  </span><span style="color: red;">scheduledTransferLogLevelFilter</span><span style="color: blue;">=</span>"<span style="color: blue;">Verbose</span>"<br />
+<span style="color: blue;">&nbsp;&nbsp;  </span><span style="color: red;">scheduledTransferPeriod</span><span style="color: blue;">=</span>"<span style="color: blue;">PT1M</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp;&lt;</span><span style="color: #a31515;">WindowsEventLog</span><span style="color: blue;"> </span><span style="color: red;">bufferQuotaInMB</span><span style="color: blue;">=</span>"<span style="color: blue;">512</span>"<br />
+<span style="color: blue;">&nbsp;&nbsp;  </span><span style="color: red;">scheduledTransferLogLevelFilter</span><span style="color: blue;">=</span>"<span style="color: blue;">Warning</span>"<br />
+<span style="color: blue;">&nbsp;&nbsp;  </span><span style="color: red;">scheduledTransferPeriod</span><span style="color: blue;">=</span>"<span style="color: blue;">PT1M</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&lt;</span><span style="color: #a31515;">DataSource</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">System!*</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp;&nbsp;&lt;</span><span style="color: #a31515;">DataSource</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">Application!*</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp;&lt;/</span><span style="color: #a31515;">WindowsEventLog</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">DiagnosticMonitorConfiguration</span><span style="color: blue;">&gt;</span></p>
+</div>
+<ul>
+<li>The useful diagnostics are:<ul>
+<li><cite>Logs</cite> (tracing, writes to Azure Table Storage <strong>WADLogsTable</strong>)</li>
+<li><cite>WindowsEventLog</cite> (event log, writes to <strong>WADWindowsEventLogsTable</strong>)</li>
+</ul></li>
+<li>Minimum lag is 1 minute (<q>P1M</q>)</li>
+<li>Levels are Verbose (5), Information (4), Warning (3), Error (2), Critical (1) - use with <code>Trace.TraceError("message")</code>.</li>
+<li>You can set a maximum MB, after which old rows are purged.</li>
+</ul>
+
+<h3>Add the trace listener</h3>
+<p>If you don't use the emulator in Development, and/or use websites for TST/ACC instead of WebRoles, you can just use Web.Release.config with xdt. NB: check the version number if the SDK has changed!</p>
+<div class="code">
+<p><span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">system.diagnostics</span><span style="color: blue;"> </span><span style="color: red;">xdt:Transform</span><span style="color: blue;">=</span>"<span style="color: blue;">Insert</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">trace</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">listeners</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &lt;</span><span style="color: #a31515;">add</span><span style="color: blue;"> </span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span style="color: red;">type</span><span style="color: blue;">=</span>"<span style="color: blue;">Microsoft.WindowsAzure.Diagnostics.DiagnosticMonitorTraceListener, Microsoft.WindowsAzure.Diagnostics, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35</span>"<br />
+<span style="color: blue;">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">AzureDiagnostics</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">add</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">listeners</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;/</span><span style="color: #a31515;">trace</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">system.diagnostics</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+<h3>Reading the logs</h3>
+<p>You can read the WADLogsTable table in VS2012 Server Explorer or third party tools- but I haven't seen a good and clear report page yet. A developer report page is easy to do.</p>
+<h4>WadLog Table Entity</h4>
+<div class="code">
+<p><span style="color: blue;">using</span> System;<br />
+<span style="color: blue;">using</span> Microsoft.WindowsAzure.Storage.Table;<br />
+&nbsp;<br />
+<span style="color: blue;">namespace</span> MartinWeb.Cloud<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">WadLog</span> : <span style="color: #2b91af;">TableEntity</span><br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> WadLog()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; EventTickCount = DateTime.UtcNow.Ticks;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; PartitionKey = <span style="color: #a31515;">"0"</span> + EventTickCount;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//DeploymentId(Guid)___Role___RoleInstance1___0000000001652031489___WADLogsLocalQuery</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; RowKey = <span style="color: blue;">string</span>.Format(<span style="color: #a31515;">"</span><span style="color: #3cb371;">{0}</span><span style="color: #a31515;">___Role___RoleInstance1___</span><span style="color: #3cb371;">{1:20}</span><span style="color: #a31515;">___WADLogsLocalQuery"</span>, Guid.NewGuid(), EventTickCount);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">long</span> EventTickCount { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">string</span> DeploymentId { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">string</span> Role { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">string</span> RoleInstance { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">int</span> Level { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">int</span> EventId { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">int</span> Pid { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">int</span> Tid { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">string</span> Message { <span style="color: blue;">get</span>; <span style="color: blue;">set</span>; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> DateTime EventDateTime<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">get</span> { <span style="color: blue;">return</span> <span style="color: blue;">new</span> DateTime(EventTickCount); }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+<h4>WadLogReader</h4>
+<div class="code">
+<p><span style="color: blue;">using</span> System;<br />
+<span style="color: blue;">using</span> System.Collections.Generic;<br />
+<span style="color: blue;">using</span> Microsoft.WindowsAzure;<br />
+<span style="color: blue;">using</span> Microsoft.WindowsAzure.Storage;<br />
+<span style="color: blue;">using</span> Microsoft.WindowsAzure.Storage.Table;<br />
+&nbsp;<br />
+<span style="color: blue;">namespace</span> MartinWeb.Cloud<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: blue;">class</span> <span style="color: #2b91af;">WadLogReader</span><br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">readonly</span> <span style="color: blue;">string</span> _connectionString;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> WadLogReader()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; _connectionString = <br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">CloudConfigurationManager</span>.GetSetting(<span style="color: #a31515;">"Microsoft.WindowsAzure.Plugins.Diagnostics.ConnectionString"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: #2b91af;">CloudTable</span> FindTable()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> storageAccount = <span style="color: #2b91af;">CloudStorageAccount</span>.Parse(_connectionString);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> tableClient = storageAccount.CreateCloudTableClient();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> table = tableClient.GetTableReference(<span style="color: #a31515;">"WADLogsTable"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; table.CreateIfNotExists();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> table;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">public</span> <span style="color: #2b91af;">IEnumerable</span>&lt;<span style="color: #2b91af;">WadLog</span>&gt; Query(DateTime start, DateTime? end = <span style="color: blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> partitionStart = start.Ticks.ToString(<span style="color: #a31515;">"D19"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> table = FindTable();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> filter =<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">TableQuery</span>.GenerateFilterCondition(<span style="color: #a31515;">"PartitionKey"</span>, <span style="color: #2b91af;">QueryComparisons</span>.GreaterThanOrEqual, partitionStart);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (end.HasValue)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> partitionEnd = end.Value.Ticks.ToString(<span style="color: #a31515;">"D19"</span>);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> to =<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">TableQuery</span>.GenerateFilterCondition(<span style="color: #a31515;">"PartitionKey"</span>, <span style="color: #2b91af;">QueryComparisons</span>.LessThanOrEqual, partitionEnd);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; filter = <span style="color: #2b91af;">TableQuery</span>.CombineFilters(filter, <span style="color: #2b91af;">TableOperators</span>.And, to);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> query = <span style="color: blue;">new</span> <span style="color: #2b91af;">TableQuery</span>&lt;<span style="color: #2b91af;">WadLog</span>&gt;()<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .Where(filter);<br />
+&nbsp;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> table.ExecuteQuery(query);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+<h4>Controller Action</h4>
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: #2b91af;">ActionResult</span> Index()<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> logs = <span style="color: blue;">new</span> <span style="color: #2b91af;">WadLogReader</span>();<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> now = DateTime.UtcNow;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> result = logs.Query(now.Date.AddDays(-5));<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> View(result);<br />
+}</p>
+</div>
+
+<h4>View</h4>
+<div class="code">
+<p><span style="background: yellow;">@model </span><span style="color: #2b91af;">IEnumerable</span>&lt;MartinWeb.Cloud.<span style="color: #2b91af;">WadLog</span>&gt;<br />
+<span style="background: yellow;">@{</span><br />
+&nbsp;&nbsp;&nbsp; ViewBag.Title = <span style="color: #a31515;">"Index"</span>;<br />
+<span style="background: yellow;">}</span><br />
+&nbsp;<br />
+<span style="color: blue;">&lt;</span><span style="color: maroon;">h2</span><span style="color: blue;">&gt;</span>Trace logs<span style="color: blue;">&lt;/</span><span style="color: maroon;">h2</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: maroon;">table</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: maroon;">thead</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: maroon;">tr</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: maroon;">th</span><span style="color: blue;">&gt;</span>Occurred<span style="color: blue;">&lt;/</span><span style="color: maroon;">th</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: maroon;">th</span><span style="color: blue;">&gt;</span>Level<span style="color: blue;">&lt;/</span><span style="color: maroon;">th</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: maroon;">th</span><span style="color: blue;">&gt;</span>Message<span style="color: blue;">&lt;/</span><span style="color: maroon;">th</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;/</span><span style="color: maroon;">tr</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;/</span><span style="color: maroon;">thead</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; <span style="background: yellow;">@</span><span style="color: blue;">foreach</span> (<span style="color: blue;">var</span> log <span style="color: blue;">in</span> Model)<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: maroon;">tr</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: maroon;">td</span><span style="color: blue;">&gt;</span><span style="background: yellow;">@</span>log.EventDateTime.ToString(<span style="color: #a31515;">"dd/MM/yyyy HH:mm"</span>)<span style="color: blue;">&lt;/</span><span style="color: maroon;">td</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: maroon;">td</span><span style="color: blue;">&gt;</span><span style="background: yellow;">@</span>log.Level<span style="color: blue;">&lt;/</span><span style="color: maroon;">td</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;</span><span style="color: maroon;">td</span><span style="color: blue;">&gt;&lt;</span><span style="color: maroon;">pre</span> <span style="color: red;">style</span><span style="color: blue;">="</span><span style="color: red;">max-width</span>:<span style="color: blue;">400px</span>;<span style="color: red;">white-space</span>: <span style="color: blue;">pre-wrap"&gt;</span><span style="background: yellow;">@</span>log.Message<span style="color: blue;">&lt;/</span><span style="color: maroon;">pre</span><span style="color: blue;">&gt;&lt;/</span><span style="color: maroon;">td</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">&lt;/</span><span style="color: maroon;">tr</span><span style="color: blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp; }<br />
+<span style="color: blue;">&lt;/</span><span style="color: maroon;">table</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+
+</div>
+<div class="Footer"><script type="text/javascript">
+//<![CDATA[
+
+
+
+//]]>
+</script></div>
+</body>
+</html>

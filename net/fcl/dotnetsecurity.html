@@ -1,0 +1,233 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>.Net Security</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main &gt;</a></li>
+<li><a href="../dotnet.html">.Net &gt;</a></li>
+<li><a href="dotnetcollections.html">Collections</a></li>
+<li><a href="events.html">Events</a></li>
+<li><a href="globaldotnet.html">Globalization</a></li>
+<li><a href="reflection.html">Reflection</a></li>
+<li><a href="dotnetsecurity.html">Security</a></li>
+<li><a href="claims.html">Claims Security</a></li>
+<li><a href="dotnetsecurity_crypto.html">Crypto+ signing</a></li>
+<li><a href="serialization.html">Serialization</a></li>
+<li><a href="dotnetthreads.html">Threading</a></li>
+<li><a href="async.html">Async</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>.Net Security</h2>
+
+<h3>Validate Input</h3>
+<ul>
+<li>ASP:<ul>
+<li>Page validateRequest (1.1+) or do it manually (it's not a friendly message)</li> 
+<li>ASP.Net validators (required for non-nulls, compare for datatype and cross field, range for min-max).</li>
+<li>Santize (HttpUtility.HtmlEncode/ MapPath, string.Replace)<br />
+allowCrossAppMapping flag: Request.MapPath(input, Request.ApplicationPath, false) </li>
+<li>Manual checks- esp length and Int.max (unless you use regex). Reuse the validation summary: make a class <a href="../code/code_businessvalidation.html">based on IValidator which takes the ErrorMessage and sets IsValid=false</a> and add it to Page.Validators.</li>
+</ul></li>
+<li>Always parameterize sql parameters; beware constructing sql from strings (can be done in sprocs too...)</li>
+<li>SQL Server permissions- create db roles for specific tables/ops; in MixedMode create special users.</li>
+<li>Error Messages- details (stack etc) should go to email/ event log (NB: trust=Medium has no access to event log)</li>
+</ul>
+
+<h3>Role Based Security</h3>
+<ul>
+<li><a href="http://msdn.microsoft.com/en-us/library/52kd59t0.aspx">msdn on RBS</a></li>
+</ul>
+<p><strong>IIdentity</strong> contains the user name; <strong>IPrincipal</strong> contains identity and roles (IsInRole). Normally it's WindowsIdentity, but can be GenericIdentity or your custom class.</p>
+<div class="code">
+<p><span style="color: green;">//Set the policy to WindowsPrincipal (because the default is UnauthenticatedPrincipal).</span><br />
+<span style="color: #2b91af;">AppDomain</span>.CurrentDomain.SetPrincipalPolicy(<span style="color: #2b91af;">PrincipalPolicy</span>.WindowsPrincipal);<br />
+&nbsp;<br />
+<span style="color: blue;">if</span> (useMethod == 1) <span style="color: green;">//Either get the user -&gt; IPrincipal</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">WindowsIdentity</span> myIdentity = <span style="color: #2b91af;">WindowsIdentity</span>.GetCurrent(); <span style="color: green;">//use GetCurrent static method</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">WindowsPrincipal</span> myPrincipal = <span style="color: blue;">new</span> <span style="color: #2b91af;">WindowsPrincipal</span>(myIdentity); <span style="color: green;">//then get the principal from the Id</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Console</span>.WriteLine(myIdentity.Name + <span style="color: #a31515;">" "</span> + myPrincipal.IsInRole(<span style="color: #a31515;">@"domain\Users"</span>));<br />
+}<br />
+<span style="color: blue;">else</span> <span style="color: green;">//or get the Principal from the thread directly (containing the IIdentity).</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">// Gets a reference to the current WindowsPrincipal (cast from IPrincipal)</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">WindowsPrincipal</span> myPrincipal2 = (<span style="color: #2b91af;">WindowsPrincipal</span>)System.Threading.<span style="color: #2b91af;">Thread</span>.CurrentPrincipal;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">// Gets the WindowsIdentity of the current principal</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">WindowsIdentity</span> myIdentity2 = (<span style="color: #2b91af;">WindowsIdentity</span>)myPrincipal2.Identity;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Console</span>.WriteLine(myIdentity2.Name + <span style="color: #a31515;">" "</span> + myPrincipal2.IsInRole(<span style="color: #2b91af;">WindowsBuiltInRole</span>.Administrator));<br />
+}</p>
+</div>
+
+<ul><li>Check manually<ul>
+<li><code>if(myPrincipal.IsInRole(WindowsBuiltInRole.Administrator)</code> //(NB: different o/s have different groups so trap errors)</li>
+<li><code>if(myPrincipal.IsInRole(@"Domain\Group")</code> //domain groups - or System.Environment.MachineName or .UserDomainName + "\Group"</li></ul></li>
+<li>Demand with <strong>PrincipalPermission</strong> (SetPrincipalPolicy, use try/catch SecurityException)<ul>
+<li>Declarative<br /><code>[PrincipalPermission(SecurityAction.Demand, Name="Homer", Role=@"BUILTIN\Administrators")] <br />public void HomerOnlyMethod()</code></li>
+<li>Imperative<br /><code>PrincipalPermission perm= new PrincipalPermission(null, "@"BUILTIN\Administrators"); //(name, role)- use either or both<br />
+perm.Demand();</code></li>
+</ul>
+</li>
+</ul>
+<p>Using strings for role names ("BUILTIN\\Administrators") is dangerous as different Windows locales have different names. There's a short WindowsBuiltInRole enum, and the WellKnownSidType is extensive.</p>
+<div class="code">
+<p><span style="color: blue;">var</span> wi = <span style="color: #2b91af;">WindowsIdentity</span>.GetCurrent();<br />
+<span style="color: blue;">var</span> wp = <span style="color: blue;">new</span> <span style="color: #2b91af;">WindowsPrincipal</span>(wi);<br />
+<span style="color: green;">//NB: UAC makes this always false!</span><br />
+<span style="color: blue;">var</span> isAdmin = wp.IsInRole(<span style="color: #2b91af;">WindowsBuiltInRole</span>.Administrator);<br />
+<span style="color: blue;">var</span> si = <span style="color: blue;">new</span> <span style="color: #2b91af;">SecurityIdentifier</span>(<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">WellKnownSidType</span>.BuiltinAdministratorsSid,<br />
+&nbsp;&nbsp;&nbsp; wi.User.AccountDomainSid); <span style="color: green;">//with the domain</span><br />
+<span style="color: blue;">var</span> isAdminViaSi = wp.IsInRole(si);<br />
+<span style="color: green;">//show string names of all groups, instead of SIDs</span><br />
+<span style="color: blue;">foreach</span> (<span style="color: blue;">var</span> g <span style="color: blue;">in</span> wi.Groups.Translate(<span style="color: blue;">typeof</span>(<span style="color: #2b91af;">NTAccount</span>)))<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Console</span>.WriteLine(g); <span style="color: green;">//group names</span><br />
+}</p>
+</div>
+
+
+<h3>Code Access Security</h3>
+<ul>
+<li><a href="http://msdn2.microsoft.com/en-us/library/930b76w0.aspx">msdn on CAS</a></li>
+</ul>
+<p>CAS is based on the <q>evidence</q>- from the assembly (strong name, publisher signature) and from the host (app path, url, site). The assembly is then assigned to a <cite>code group</cite> (machine level being like IE security zones) which have a <cite>permission set</cite>.</p>
+<h4>Enterprise/Machine/User Level</h4>
+<p>The permissions (FileIO, EventLog, Registry etc) are organised into default permission sets (Internet, Nothing - can't run-, Everything...). Assemblies are put into Code Groups (MyComputer, Trusted, Internet...) which have a permission set.</p>
+<p>.Net config msc to view the declarative permissions an assembly demands, and create a new code group/permission set to elevate the permissions (command line <cite>caspol</cite> to change).</p>
+<p>Machine/user level admins can change the enterprise level permissions- unless you use LevelFinal attribute. Cf Exclusive attribute (=only use this permission, ignore everything else- dangerous!).</p>
+<p>Eg <a href="http://support.microsoft.com/kb/320268/">KB to caspol a network share so it's full trust (eg aspx virtual directory)</a></p>
+<p>NB: MyComputerZone= <strong>FullTrust</strong> == no CAS (!= <strong>Everything</strong> == CAS but can do everything)</p>
+<h4>Assembly Level</h4>
+<ul>
+<li>SecurityAction.<strong>RequestMinimum</strong> - required (only one to throw exception if fails)</li>
+<li>SecurityAction.<strong>RequestOptional</strong> - required and refuse everything else</li>
+<li>SecurityAction.<strong>RequestRefuse</strong> - explicitly refuse specific permissions</li>
+</ul>
+<p>NB: SecurityAction.RequestOptional runs even when fails... add combos of different requests if rqd (eg RequestOptimal for a directory, Refuse a subdirectory)</p>
+<pre>[assembly: FileIOPermission(SecurityAction.RequestOptional, Read=@"C:\temp\")]</pre>
+<p>Using both RequestOptimal and RequestRefuse - the Optimal refuses everything else anyway, so refuse should only refuse more specific actions in the set allowed by optimal.</p>
+<p>To enable debugging add [assembly: UIPermission(SecurityAction.RequestMinimum, Unrestricted= true)] (needed by debugger!!)</p>
+<h4>Method-Level CAS</h4>
+<p>
+NB: The SecurityActions for assemblies are RequestMinimum/Optional/Refuse. Classes and methods have Demand/Assert/Deny etc.
+</p>
+
+<ul>
+<li><strong>Demand</strong> and <strong>LinkDemand</strong> look at callers permissions only (not this assembly)- generally FCL only. <strong>InheritanceDemand</strong> is for assemblies inheriting from your class.
+<div class="code">
+<p>[<span style="color: #2b91af;">FileIOPermission</span>(<span style="color: #2b91af;">SecurityAction</span>.Demand, Write = <span style="color: #a31515;">@"C:\temp\"</span>)]</p>
+<p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> SaveTemp()</p>
+<p>{</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">try</span></p>
+<p>&nbsp;&nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//imperative - can trap the error AND dynamically create paths/urls</span></p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">FileIOPermission</span> fp =</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> <span style="color: #2b91af;">FileIOPermission</span>(<span style="color: #2b91af;">FileIOPermissionAccess</span>.Write, <span style="color: #a31515;">@"C:\temp\"</span>);</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; fp.Demand();</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//save file</span></p>
+<p>&nbsp;&nbsp;&nbsp; }</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">catch</span> (System.Security.<span style="color: #2b91af;">SecurityException</span> ex)</p>
+<p>&nbsp;&nbsp;&nbsp; {</p>
+<p>&nbsp;&nbsp;&nbsp; }</p>
+<p>}</p>
+</div>
+
+</li>
+<li><strong>PermitOnly</strong> and <strong>Deny</strong> == assembly level RequestOptional and Refuse.<br />
+There are revert methods after use
+<div class="code">
+<p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">void</span> UseEventLog()</p>
+<p>{</p>
+<p>&nbsp;&nbsp;&nbsp; EventLogPermission errorPerms =</p>
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">new</span> EventLogPermission(<span style="color: #2b91af;">PermissionState</span>.Unrestricted);</p>
+<p>&nbsp;&nbsp;&nbsp; errorPerms.PermitOnly();</p>
+<p>&nbsp;&nbsp;&nbsp; <span style="color: green;">// Call event log </span></p>
+<p>&nbsp;&nbsp;&nbsp; CodeAccessPermission.RevertPermitOnly();</p>
+<p>}</p>
+</div>
+
+</li>
+<li><strong>Assert</strong> to elevate privileges for a particular sandboxed method.<br />
+Stops checking stack - so faster. NB if you call another assembly it gets the elevated privileges (unless you RevertAssert - use try/finally)</li>
+</ul>
+
+<p>NB: .Assert overrides other permissions in the stack; .Demand requires all callers in the stack have the permission.<br />
+Untrusted- Trusted (Assert) - Trusted (Demand) = works<br />
+Untrusted- Trusted (Demand) = fails</p>
+<p>Partial-trust can't call strong names unless explicitly allows with APTCA</p>
+<pre>
+[assembly:AllowPartiallyTrustedCallers]
+</pre>
+<p>You can Assert only once in a method- so for multiple permissions, create <code>new PermissionSet()</code></p>
+
+<h4>AppDomain security</h4>
+<p>Creating a custom domain and execute an assembly in it with custom evidence. (You can increase permissions, so must have SecurityPermission.ControlEvidence). See <a href="../code/reflection/createdomain.html">Create domain example</a>.</p>
+<div class="code">
+<p><span style="color: green;">//using System.Security;</span></p>
+<p><span style="color: green;">//using System.Security.Policy;</span></p>
+<p><span style="color: green;">//create object array</span></p>
+<p><span style="color: blue;">object</span>[] hostEvidence = { <span style="color: blue;">new</span> <span style="color: #2b91af;">Zone</span>(<span style="color: #2b91af;">SecurityZone</span>.Internet) };</p>
+<p><span style="color: green;">//put the array into a new evidence object</span></p>
+<p><span style="color: #2b91af;">Evidence</span> internetEvidence = <span style="color: blue;">new</span> <span style="color: #2b91af;">Evidence</span>(hostEvidence, <span style="color: blue;">null</span>);</p>
+<p><span style="color: green;">//or - Evidence fakeEvidence = new Evidence(); //create empty evidence</span></p>
+<p><span style="color: green;">// fakeEvidence.AddHost(new Site("www.microsoft.com")); //assign each evidence</span></p>
+<p><span style="color: green;">//you can put the evidence into the Domain ctor or assembly</span></p>
+<p><span style="color: #2b91af;">AppDomain</span> myDomain = <span style="color: #2b91af;">AppDomain</span>.CreateDomain(<span style="color: #a31515;">"MyDomain"</span>);</p>
+<p>myDomain.ExecuteAssembly(<span style="color: #a31515;">@"C:\SpecialAssembly.exe"</span>, internetEvidence);</p>
+</div>
+
+<p>You can create a custom security policy too.</p>
+<ul>
+<li>Create <strong>MembershipConditions</strong> to match the evidence (eg ApplicationDirectoryMembershipCondition )</li>
+<li>Create a <strong>PermissionSet</strong></li>
+<li>Create a <strong>PolicyStatement</strong> from the PermissionSet</li>
+<li>Create a <strong>CodeGroup</strong> with the PolicyStatement (System.Security.Policy.UnionCodeGroup can have nested codegroups or FileCodeGroup with only FileIOPermission, or NetCodeGroup with WebPermission)</li>
+<li>Create a <strong>PolicyLevel</strong>  = PolicyLevel.CreateAppDomainLevel();<br />
+Assign CodeGroup to it: safePolicyLevel.RootCodeGroup = safeCodeGroup;<br />
+Then: myDomain.SetAppDomainPolicy(safePolicyLevel);
+</li>
+</ul>
+<p>You can also create your own evidence (and MembershipCondition) and permissions.</p>
+<h3>COM+ Roles (Serviced components)</h3>
+<ul>
+<li>You MUST add <cite>[assembly: ApplicationAccessControl(true)]</cite> to enable it</li>
+<li>Disable on a class basis with <cite>[ComponentAccessControl(false)]</cite>.</li>
+<li>Automatically add roles- [assembly: SecurityRole("Manager")]</li>
+<li>Verify role on class or method: [SecurityRole("Manager")] public class X</li>
+<li>Programmatic: if (SecurityCallContext.CurrentCall.IsCallerInRole("Manager")) {}</li>
+<li>Programmatic: check if using security: if(SecurityCallContext.CurrentCall.IsSecurityEnabled) {}</li>
+</ul>
+
+
+<h3>ACLs</h3>
+<p>You can control Windows file system access control lists (from .net 2+)</p>
+<ul>
+<li>DACL (discretionary access control list) is the type that restricts access</li>
+<li>SACL (system acl) audits access. The auditing tab on properties/Security/Advanced</li>
+<li>Effective permissions: Users have the union of user and group privileges- but deny access overrides grants, so one group that denies access will take priority</li>
+<li><ul>
+<li>Windows Explorer Security tab (Folder Options, uncheck Use Simple File Sharing-  can't in Windows XP Home )</li>
+<li>Cmd line- Calcs, XCalcs</li>
+<li>.Net 2 only: <a href="http://msdn2.microsoft.com/en-us/library/ms229742.aspx">System.Security.AccessControl</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

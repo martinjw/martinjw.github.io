@@ -1,0 +1,91 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>ASP.Net Core Configuration Settings</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="core.html">DotNet Core</a></li>
+<li><a href="mvc.html">MVC</a></li>
+<li><a href="project.html">Core Project</a></li>
+<li><a href="startup.html">Startup</a></li>
+<li><a href="config.html">Config Settings</a></li>
+<li><a href="iis.html">IIS</a></li>
+<li><a href="controllers.html">Controllers</a></li>
+<li><a href="views.html">Views</a></li>
+<li><a href="di.html">Dependency Injection</a></li>
+<li><a href="security.html">Security</a></li>
+<li><a href="logging.html">Logging</a></li>
+<li><a href="localization.html">Localization</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>ASP.Net Core Configuration Settings</h2>
+
+<ul>
+<li><a href="https://docs.asp.net/en/latest/fundamentals/configuration.html">docs.asp.net</a></li>
+</ul>
+<p>Web.config no longer exists, so connection strings and other settings must be stored in other files- json or xml or environmental variables.</p>
+<h3>ConfigurationBuilder</h3>
+<p>This is normally done in the Startup constructor. ConfigurationBuilder creates an IConfiguration object, a bag containing all your settings.</p>
+<div class="code">
+<p><span style="color:blue;">public</span>&nbsp;IConfiguration&nbsp;<span style="color:purple;">_configuration</span>;<br/>
+ <br/>
+<span style="color:blue;">public</span>&nbsp;Startup()<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;builder&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;ConfigurationBuilder()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.AddJsonFile(<span style="color:#a31515;">&quot;Settings.json&quot;</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//later&nbsp;settings&nbsp;override&nbsp;earlier&nbsp;ones</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.AddEnvironmentalVariables();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;config&nbsp;=&nbsp;builder.Build();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//you&nbsp;can&nbsp;set&nbsp;things&nbsp;manually&nbsp;too</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;config.Set(<span style="color:#a31515;">&quot;key&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;value&quot;</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;_configuration&nbsp;=&nbsp;config;<br/>
+}</p>
+</div>
+
+<p>Json files are loaded into sections, delimited by ":" (rather than ".").</p>
+<h3>Environmental settings</h3>
+<p>In the Startup ctor, take IHostingEnvironment to get the current environment name (env.EnvironmentName, "Development" or "Production")</p>
+<div class="code">
+<p><span style="color:blue;">var</span>&nbsp;builder&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;ConfigurationBuilder()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.AddJsonFile(<span style="color:#a31515;">$&quot;appsettings.</span>{env.EnvironmentName}<span style="color:#a31515;">.json&quot;</span>);</p>
+</div>
+
+
+<h3>IOptions</h3>
+<p>You don't want to load the entire configuration into every class that just requires specific keys. The Options pattern breaks the config into small sections, with a simple poco class. This is registered with the DI (as services.Configure).</p>
+<p>You can load "sections" in Startup.ConfigureServices with Configuration.GetSection("a:b") (this looks like the old xml config).</p>
+<div class="code">
+<p><span style="color:blue;">public</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:darkcyan;">ConfigureServices</span>(<span style="color:darkblue;">IServiceCollection</span>&nbsp;services)<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//load&nbsp;the&nbsp;configuration&nbsp;into&nbsp;a&nbsp;poco</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;services.<span style="color:darkcyan;">Configure</span>&lt;<span style="color:darkblue;">MySettings</span>&gt;(<span style="color:darkblue;">Configuration</span>.<span style="color:darkcyan;">GetSection</span>(<span style="color:#a31515;">&quot;a:b&quot;</span>));<br/>
+}</p>
+</div>
+
+<p>The <a href="di.html">dependency injection</a> can then load an IOptions&lt;MySettings&gt; into anything (IOptions is in Microsoft.Extensions.OptionsModel). </p>
+<div class="code">
+<p><span style="color:blue;">public</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:darkcyan;">Service</span>(<span style="color:darkblue;">IOptions</span>&lt;<span style="color:darkblue;">MySettings</span>&gt;&nbsp;settings)<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;mysettings&nbsp;=&nbsp;settings.<span style="color:purple;">Value</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//do&nbsp;something&nbsp;with&nbsp;it</span><br/>
+}</p>
+</div>
+
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

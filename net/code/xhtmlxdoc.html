@@ -1,0 +1,258 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Read XHTML into XDocument</title>
+<link rel="stylesheet" type="text/css" href="../../style.css" />
+<script type="text/javascript" src="../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../index.html">Main</a></li>
+<li><a href="../dotnet.html">.Net</a></li>
+<li><a href="index.html">Code</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>Read XHTML into XDocument</h2>
+<p>HTML can be well-formed xml (XHTML 1.0, XHTML 1.1 and HTML5 as XHTML), but xml parsers don't understand the HTML named entities (such as &amp;nbsp;). This is a class for reading well-formed XHTML - with or without a DOCTYPE - into a .net XDocument, as well as saving it, preserving the named entities.</p>
+<p>See also <a href="xhtmldoc.html">reading XHTML into XmlDocument</a>.</p>
+<ul>
+<li>Read in html string with static <span style="color:#0000ff">var</span> doc = <span style="color:#00008b">HtmlDocument</span>.<span style="color:#008b8b">ParseHtml</span>(html)</li>
+<li>Use standard XDocument selects/updates, with the namespace (doc.<span style="color:#800080">XHtml</span> or for namespace manager doc.<span style="color:#800080">Ns</span> with "html:" prefix, as applicable)</li>
+<li>Get the html with doc.<span style="color:#008b8b">WriteHtml</span>() which automatically handles &amp;amp;, &amp;gt;, &amp;lt;, &amp;quot;, &amp;nbsp;.</li>
+<li>If you want all HTML entities expanded as entities, use static html = <span style="color:#00008b">HtmlDocument</span>.<span style="color:#008b8b">EntitizeHtml</span>(html)</li>
+<li>If it's not well formed HTML, use <a href="https://www.nuget.org/packages/HtmlAgilityPack">Html Agility Pack</a> instead</li>
+</ul>
+<h3>Example use</h3>
+<div class="code">
+<div><span style="color:#008000">//read the text</span><br />
+<span style="color:#0000ff">var</span> html = <span style="color:#00008b">File</span>.<span style="color:#008b8b">ReadAllText</span>(path);<br />
+<br />
+<span style="color:#008000">//parse it into an XDocument</span><br />
+<span style="color:#0000ff">var</span> doc = <span style="color:#00008b">HtmlDocument</span>.<span style="color:#008b8b">ParseHtml</span>(html);<br />
+<br />
+<span style="color:#008000">//always use the namespace (in HtmlDocument.XHtml)</span><br />
+<span style="color:#0000ff">var</span> inputs = doc.<span style="color:#008b8b">Descendants</span>(doc.<span style="color:#800080">XHtml</span> <span style="color:#008b8b">+</span> <span style="color:#a31515">&quot;input&quot;</span>).<span style="color:#008b8b">First</span>();<br />
+inputs.<span style="color:#008b8b">SetAttributeValue</span>(<span style="color:#a31515">&quot;autocomplete&quot;</span>,<span style="color:#a31515">&quot;off&quot;</span>); <span style="color:#008000">//change it</span><br />
+<br />
+<span style="color:#008000">//use XPath with a namespace manager (html)</span><br />
+<span style="color:#0000ff">var</span> footer = doc.<span style="color:#008b8b">XPathSelectElement</span>(<span style="color:#a31515">&quot;//html:footer&quot;</span>, doc.<span style="color:#800080">Ns</span>);<br />
+<span style="color:#0000ff">if</span> (footer != <span style="color:#0000ff">null</span>)<br />
+{<br />
+&#160;&#160;&#160;&#160;footer.<span style="color:#008b8b">SetValue</span>(<span style="color:#a31515">&quot;&#92;</span><span style="color:#ff007f">xA9</span><span style="color:#a31515"> MyCompany&quot;</span>); <span style="color:#008000">//&amp;copy;</span><br />
+}<br />
+<br />
+<span style="color:#008000">//get the updated html string</span><br />
+html = doc.<span style="color:#008b8b">WriteHtml</span>();<br />
+<span style="color:#008000">//fix other named entities (if required- not needed for &amp;gt;,&amp;lt;,&amp;quot,&amp;nbsp;)</span><br />
+html = <span style="color:#00008b">HtmlDocument</span>.<span style="color:#008b8b">EntitizeHtml</span>(html);<br />
+<span style="color:#008000">//save it</span><br />
+<span style="color:#00008b">File</span>.<span style="color:#008b8b">WriteAllText</span>(path, html);</div>
+</div>
+
+<h3>Code</h3>
+
+<div class="code">
+<div><span style="color:#0000ff">using</span> <span style="color:#00008b">System</span>;<br />
+<span style="color:#0000ff">using</span> <span style="color:#00008b">System</span>.<span style="color:#00008b">Collections</span>.<span style="color:#00008b">Generic</span>;<br />
+<span style="color:#0000ff">using</span> <span style="color:#00008b">System</span>.<span style="color:#00008b">Globalization</span>;<br />
+<span style="color:#0000ff">using</span> <span style="color:#00008b">System</span>.<span style="color:#00008b">IO</span>;<br />
+<span style="color:#0000ff">using</span> <span style="color:#00008b">System</span>.<span style="color:#00008b">Xml</span>;<br />
+<span style="color:#0000ff">using</span> <span style="color:#00008b">System</span>.<span style="color:#00008b">Xml</span>.<span style="color:#00008b">Linq</span>;<br />
+<br />
+<span style="color:#0000ff">namespace</span> <span style="color:#00008b">Library</span><br />
+{<br />
+&#160;&#160;&#160;&#160;<span style="color:#808080">///</span><span style="color:#008000"> </span><span style="color:#808080">&lt;summary&gt;</span><span style="color:#008000">An HTML page as a XDocument. Use </span><span style="color:#808080">&lt;see cref=&quot;ParseHtml&quot;/&gt;</span><span style="color:#008000"> to load html, </span><span style="color:#808080">&lt;see cref=&quot;WriteHtml&quot;/&gt;</span><span style="color:#008000"> to write</span><span style="color:#808080">&lt;/summary&gt;</span><br />
+&#160;&#160;&#160;&#160;<span style="color:#0000ff">public</span> <span style="color:#0000ff">class</span> <span style="color:#00008b">HtmlDocument</span> : <span style="color:#00008b">XDocument</span><br />
+&#160;&#160;&#160;&#160;{<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#808080">///</span><span style="color:#008000"> </span><span style="color:#808080">&lt;summary&gt;</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#808080">///</span><span style="color:#008000"> Initializes a new instance of the </span><span style="color:#808080">&lt;see cref=&quot;HtmlDocument&quot;/&gt;</span><span style="color:#008000"> class.</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#808080">///</span><span style="color:#008000"> </span><span style="color:#808080">&lt;/summary&gt;</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#808080">///</span><span style="color:#008000"> </span><span style="color:#808080">&lt;param name=&quot;other&quot;&gt;</span><span style="color:#008000">The </span><span style="color:#808080">&lt;see cref=&quot;T:System.Xml.Linq.XDocument&quot; /&gt;</span><span style="color:#008000"> object that will be copied.</span><span style="color:#808080">&lt;/param&gt;</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">public</span> <span style="color:#00008b">HtmlDocument</span>(<span style="color:#00008b">XDocument</span> other)<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;: <span style="color:#00008b">base</span>(other)<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br />
+<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#808080">///</span><span style="color:#008000"> </span><span style="color:#808080">&lt;summary&gt;</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#808080">///</span><span style="color:#008000"> The namespace. Also select elements with this name (eg doc.XHtml + &quot;body&quot;)</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#808080">///</span><span style="color:#008000"> </span><span style="color:#808080">&lt;/summary&gt;</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">public</span> <span style="color:#00008b">XNamespace</span> <span style="color:#800080">XHtml</span> { <span style="color:#008b8b">get</span>; <span style="color:#008b8b">set</span>; }<br />
+<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#808080">///</span><span style="color:#008000"> </span><span style="color:#808080">&lt;summary&gt;</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#808080">///</span><span style="color:#008000"> Namespace manager used for XPath queries</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#808080">///</span><span style="color:#008000"> </span><span style="color:#808080">&lt;/summary&gt;</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">public</span> <span style="color:#00008b">XmlNamespaceManager</span> <span style="color:#800080">Ns</span> { <span style="color:#008b8b">get</span>; <span style="color:#0000ff">internal</span> <span style="color:#008b8b">set</span>; }<br />
+<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#808080">///</span><span style="color:#008000"> </span><span style="color:#808080">&lt;summary&gt;</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#808080">///</span><span style="color:#008000"> Convert a string of html into an XDocument. HTML must be well-formed xml, but could have any common Doctype including Html5 (or no DocType)</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#808080">///</span><span style="color:#008000"> </span><span style="color:#808080">&lt;/summary&gt;</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#808080">///</span><span style="color:#008000"> </span><span style="color:#808080">&lt;param name=&quot;html&quot;&gt;&lt;/param&gt;</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#808080">///</span><span style="color:#008000"> </span><span style="color:#808080">&lt;returns&gt;&lt;/returns&gt;</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">public</span> <span style="color:#0000ff">static</span> <span style="color:#00008b">HtmlDocument</span> <span style="color:#008b8b">ParseHtml</span>(<span style="color:#0000ff">string</span> html)<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;html = <span style="color:#008b8b">SanitizeHtml</span>(html);<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">using</span> (<span style="color:#0000ff">var</span> reader = <span style="color:#00008b">XmlReader</span>.<span style="color:#008b8b">Create</span>(<span style="color:#0000ff">new</span> <span style="color:#00008b">StringReader</span>(html.<span style="color:#008b8b">Trim</span>()), <span style="color:#800080">XmlReaderSettings</span>))<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">var</span> xDocument = <span style="color:#008b8b">Load</span>(reader, <span style="color:#00008b">LoadOptions</span>.<span style="color:#800080">PreserveWhitespace</span>);<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">var</span> doc = <span style="color:#0000ff">new</span> <span style="color:#00008b">HtmlDocument</span>(xDocument);<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">if</span> (doc.<span style="color:#800080">Root</span> != <span style="color:#0000ff">null</span>)<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#008000">//get the xmlns (maybe absent or not official html)</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">var</span> ns = doc.<span style="color:#800080">Root</span>.<span style="color:#800080">Name</span>.<span style="color:#800080">Namespace</span>;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;doc.<span style="color:#800080">XHtml</span> = ns;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">if</span> (reader.<span style="color:#800080">NameTable</span> != <span style="color:#0000ff">null</span>)<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;doc.<span style="color:#800080">Ns</span> = <span style="color:#0000ff">new</span> <span style="color:#00008b">XmlNamespaceManager</span>(reader.<span style="color:#800080">NameTable</span>);<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;doc.<span style="color:#800080">Ns</span>.<span style="color:#008b8b">AddNamespace</span>(<span style="color:#a31515">&quot;html&quot;</span>, doc.<span style="color:#800080">XHtml</span>.<span style="color:#008b8b">ToString</span>());<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br />
+<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#008000">//InternalSubset is an empty string and should be null (other dtd has &quot;[]&quot; at the end)</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">if</span> (doc.<span style="color:#800080">DocumentType</span> != <span style="color:#0000ff">null</span> &amp;&amp; <span style="color:#0000ff">string</span>.<span style="color:#008b8b">IsNullOrEmpty</span>(doc.<span style="color:#800080">DocumentType</span>.<span style="color:#800080">InternalSubset</span>))<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;doc.<span style="color:#800080">DocumentType</span>.<span style="color:#800080">InternalSubset</span> = <span style="color:#0000ff">null</span>;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br />
+<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">return</span> doc;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br />
+<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">static</span> <span style="color:#0000ff">string</span> <span style="color:#008b8b">SanitizeHtml</span>(<span style="color:#0000ff">string</span> html)<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">if</span> (<span style="color:#0000ff">string</span>.<span style="color:#008b8b">IsNullOrEmpty</span>(html)) <span style="color:#0000ff">throw</span> <span style="color:#0000ff">new</span> <span style="color:#00008b">ArgumentNullException</span>(<span style="color:#a31515">&quot;html&quot;</span>);<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;html = html.<span style="color:#008b8b">Trim</span>();<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#008000">//look for a DocType</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">var</span> start = html.<span style="color:#008b8b">IndexOf</span>(<span style="color:#a31515">&quot;&lt;!DOCTYPE&quot;</span>, <span style="color:#00008b">StringComparison</span>.<span style="color:#800080">OrdinalIgnoreCase</span>);<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#008000">//1. There is no DocType - add XHtml 1 Transitional</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">if</span> (start == -1)<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#008000">//assume no &lt;?xml version=&quot;&quot;1.0&quot;&quot;?&gt;</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">return</span> <span style="color:#a31515">@&quot;&lt;!DOCTYPE html PUBLIC </span><span style="color:#ff007f">&quot;&quot;</span><span style="color:#a31515">-//W3C//DTD XHTML 1.0 Transitional//EN</span><span style="color:#ff007f">&quot;&quot;</span><span style="color:#a31515"> </span><span style="color:#ff007f">&quot;&quot;</span><span style="color:#a31515">http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd</span><span style="color:#ff007f">&quot;&quot;</span><span style="color:#a31515">&gt;</span><br />
+<span style="color:#a31515">&lt;!-- HtmlDocument-NoDOCTYPE --&gt;</span><br />
+<span style="color:#a31515">&quot;</span> + html;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#008000">//2. There is an Html5 DocType - swap it for XHtml 1 Transitional</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">var</span> end = html.<span style="color:#008b8b">IndexOf</span>(<span style="color:#a31515">&quot;&gt;&quot;</span>, start, <span style="color:#00008b">StringComparison</span>.<span style="color:#800080">OrdinalIgnoreCase</span>);<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">if</span> (end - start &lt;= <span style="color:#a31515">&quot;&lt;!DOCTYPE html&gt;&quot;</span>.<span style="color:#800080">Length</span>)<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">return</span> <span style="color:#a31515">@&quot;&lt;!DOCTYPE html PUBLIC </span><span style="color:#ff007f">&quot;&quot;</span><span style="color:#a31515">-//W3C//DTD XHTML 1.0 Transitional//EN</span><span style="color:#ff007f">&quot;&quot;</span><span style="color:#a31515"> </span><span style="color:#ff007f">&quot;&quot;</span><span style="color:#a31515">http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd</span><span style="color:#ff007f">&quot;&quot;</span><span style="color:#a31515">&gt;</span><br />
+<span style="color:#a31515">&lt;!-- HtmlDocument-DOCTYPE html --&gt;</span><br />
+<span style="color:#a31515">&quot;</span> + html.<span style="color:#008b8b">Substring</span>(end + 1);<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#008000">//3. There is an other Html5 DocType - assume it&#39;s ok.</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">return</span> html;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br />
+<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#808080">///</span><span style="color:#008000"> </span><span style="color:#808080">&lt;summary&gt;</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#808080">///</span><span style="color:#008000"> Writes the HTML. Only xml named entities plus nbsp are explicitly written.</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#808080">///</span><span style="color:#008000"> </span><span style="color:#808080">&lt;/summary&gt;</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#808080">///</span><span style="color:#008000"> </span><span style="color:#808080">&lt;returns&gt;&lt;/returns&gt;</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">public</span> <span style="color:#0000ff">string</span> <span style="color:#008b8b">WriteHtml</span>()<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">var</span> html = <span style="color:#008b8b">ToString</span>();<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#008000">//does it have our marker comment?</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">var</span> startMarker = html.<span style="color:#008b8b">IndexOf</span>(<span style="color:#a31515">&quot;&lt;!-- HtmlDocument-&quot;</span>, <span style="color:#00008b">StringComparison</span>.<span style="color:#800080">OrdinalIgnoreCase</span>);<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">if</span> (startMarker != -1)<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">var</span> endMarker = html.<span style="color:#008b8b">IndexOf</span>(<span style="color:#a31515">&quot;&gt;&quot;</span>, startMarker, <span style="color:#00008b">StringComparison</span>.<span style="color:#800080">OrdinalIgnoreCase</span>) + 1;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">var</span> marker = html.<span style="color:#008b8b">Substring</span>(startMarker, endMarker - startMarker);<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#008000">//remove the temporary DTD and marker comment</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;html = html.<span style="color:#008b8b">Substring</span>(endMarker).<span style="color:#008b8b">Trim</span>();<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">if</span> (<span style="color:#0000ff">string</span>.<span style="color:#008b8b">Equals</span>(marker, <span style="color:#a31515">&quot;&lt;!-- HtmlDocument-DOCTYPE html --&gt;&quot;</span>, <span style="color:#00008b">StringComparison</span>.<span style="color:#800080">OrdinalIgnoreCase</span>))<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#008000">//reinsert the html5 doctype</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;html = <span style="color:#a31515">&quot;&lt;!DOCTYPE html&gt;&#92;</span><span style="color:#ff007f">r&#92;</span><span style="color:#ff66b2">n</span><span style="color:#a31515">&quot;</span> + html;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">else</span> <span style="color:#0000ff">if</span> (<span style="color:#0000ff">string</span>.<span style="color:#008b8b">Equals</span>(marker, <span style="color:#a31515">&quot;&lt;!-- HtmlDocument-NoDOCTYPE --&gt;&quot;</span>, <span style="color:#00008b">StringComparison</span>.<span style="color:#800080">OrdinalIgnoreCase</span>))<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#008000">//no doctype</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#008000">//for non-breaking space only, show the named entity.</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;html = html.<span style="color:#008b8b">Replace</span>(<span style="color:#a31515">&quot;&#92;</span><span style="color:#ff007f">xA0</span><span style="color:#a31515">&quot;</span>, <span style="color:#a31515">&quot;&amp;nbsp;&quot;</span>);<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#008000">//for other entities, use EntitizeHtml method</span><br />
+<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">return</span> html;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br />
+<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#808080">///</span><span style="color:#008000"> </span><span style="color:#808080">&lt;summary&gt;</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#808080">///</span><span style="color:#008000"> Replaces resolved characters with the corresponding html named entity</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#808080">///</span><span style="color:#008000"> </span><span style="color:#808080">&lt;/summary&gt;</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">public</span> <span style="color:#0000ff">static</span> <span style="color:#0000ff">string</span> <span style="color:#008b8b">EntitizeHtml</span>(<span style="color:#0000ff">string</span> html)<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">if</span> (<span style="color:#0000ff">string</span>.<span style="color:#008b8b">IsNullOrEmpty</span>(html)) <span style="color:#0000ff">throw</span> <span style="color:#0000ff">new</span> <span style="color:#00008b">ArgumentNullException</span>(<span style="color:#a31515">&quot;html&quot;</span>);<br />
+<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">var</span> entities = <span style="color:#008b8b">LoadHtmlEntities</span>();<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">foreach</span> (<span style="color:#0000ff">var</span> keyPair <span style="color:#0000ff">in</span> entities)<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">var</span> ch = (<span style="color:#0000ff">char</span>)keyPair.<span style="color:#800080">Key</span>;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;html = html.<span style="color:#008b8b">Replace</span>(ch.<span style="color:#008b8b">ToString</span>(), <span style="color:#a31515">&quot;&amp;&quot;</span> + keyPair.<span style="color:#800080">Value</span> + <span style="color:#a31515">&quot;;&quot;</span>);<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">return</span> html;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br />
+<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">static</span> <span style="color:#00008b">Dictionary</span>&lt;<span style="color:#0000ff">int</span>, <span style="color:#0000ff">string</span>&gt; <span style="color:#008b8b">LoadHtmlEntities</span>()<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">var</span> entities = <span style="color:#0000ff">new</span> <span style="color:#00008b">Dictionary</span>&lt;<span style="color:#0000ff">int</span>, <span style="color:#0000ff">string</span>&gt;();<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">using</span> (<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">var</span> stream =<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#00008b">System</span>.<span style="color:#00008b">Reflection</span>.<span style="color:#00008b">Assembly</span>.<span style="color:#008b8b">GetExecutingAssembly</span>()<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;.<span style="color:#008b8b">GetManifestResourceStream</span>(<span style="color:#a31515">&quot;Library.ParseXHtml.xhtml-entities.ent&quot;</span>))<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">if</span> (stream == <span style="color:#0000ff">null</span>) <span style="color:#0000ff">return</span> entities;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">using</span> (<span style="color:#0000ff">var</span> sr = <span style="color:#0000ff">new</span> <span style="color:#00008b">StreamReader</span>(stream))<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">string</span> line;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">while</span> ((line = sr.<span style="color:#008b8b">ReadLine</span>()) != <span style="color:#0000ff">null</span>)<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">if</span> (!line.<span style="color:#008b8b">StartsWith</span>(<span style="color:#a31515">&quot;&lt;!ENTITY&quot;</span>, <span style="color:#00008b">StringComparison</span>.<span style="color:#800080">OrdinalIgnoreCase</span>)) <span style="color:#0000ff">continue</span>;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">var</span> q1 = line.<span style="color:#008b8b">IndexOf</span>(<span style="color:#a31515">&quot;&#92;</span><span style="color:#ff007f">&quot;</span><span style="color:#a31515">&amp;#&quot;</span>, <span style="color:#00008b">StringComparison</span>.<span style="color:#800080">Ordinal</span>);<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">var</span> q2 = line.<span style="color:#008b8b">IndexOf</span>(<span style="color:#a31515">&quot;;&#92;</span><span style="color:#ff007f">&quot;</span><span style="color:#a31515">&quot;</span>, <span style="color:#00008b">StringComparison</span>.<span style="color:#800080">Ordinal</span>);<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">if</span> (q1 == -1 || q2 == -1) <span style="color:#0000ff">continue</span>;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">var</span> ent = line.<span style="color:#008b8b">Substring</span>(9, q1 - 11).<span style="color:#008b8b">Trim</span>();<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">if</span> (ent == <span style="color:#a31515">&quot;quot&quot;</span> || ent == <span style="color:#a31515">&quot;gt&quot;</span> || ent == <span style="color:#a31515">&quot;lt&quot;</span> || ent == <span style="color:#a31515">&quot;amp&quot;</span> || ent == <span style="color:#a31515">&quot;apos&quot;</span>)<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">continue</span>; <span style="color:#008000">//done automatically by the XmlWriter in ToString</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">var</span> v = line.<span style="color:#008b8b">Substring</span>(q1 + 3, q2 - q1 - 3);<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">var</span> key = <span style="color:#0000ff">int</span>.<span style="color:#008b8b">Parse</span>(v, <span style="color:#00008b">CultureInfo</span>.<span style="color:#800080">InvariantCulture</span>);<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;entities.<span style="color:#008b8b">Add</span>(key, ent);<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">return</span> entities;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br />
+<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">static</span> <span style="color:#00008b">XmlReaderSettings</span> <span style="color:#800080">XmlReaderSettings</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#008b8b">get</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">var</span> readerSettings = <span style="color:#0000ff">new</span> <span style="color:#00008b">XmlReaderSettings</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#800080">DtdProcessing</span> = <span style="color:#00008b">DtdProcessing</span>.<span style="color:#800080">Parse</span>,<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#800080">XmlResolver</span> = <span style="color:#0000ff">new</span> <span style="color:#00008b">HtmlResolver</span>(),<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#008000">//.net 4 includes the full XHtml 1.0 DTD</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#008000">//XmlResolver = new XmlPreloadedResolver(XmlKnownDtds.Xhtml10),</span><br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;};<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span style="color:#0000ff">return</span> readerSettings;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br />
+&#160;&#160;&#160;&#160;}<br />
+}</div>
+</div>
+
+
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

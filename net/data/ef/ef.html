@@ -1,0 +1,46 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Entity Framework</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../io.html">Data &gt;</a></li>
+<li><a href="../old.html">Old ORMs</a></li>
+<li><a href="ef.html">Entity Framework</a></li>
+<li><a href="efcodefirst.html">EF v6 Code First</a></li>
+<li><a href="efcore1.html">EF Core v1</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Entity Framework</h2>
+<ul>
+<li>EF v1 was released in 2008, and everybody hated it</li>
+<li>EF v4 (there was no v2 or v3) was released in 2010 (now old, deprecated). See <a href="efedmx.html">EF data/model first</a>, the original EF 4 database/model first approach, with edmx designer and "Entity SQL"</li>
+<li>EF v4.1 was released in 2011 and included <a href="efcodefirst.html">Code First</a>.<br />
+EF v6 was released in 2013.</li>
+<li><a href="efcore1.html">EF Core v1</a> (originally "EF v7") was released in 2016 (NB: EF v6 was still supported and recommended for most scenarios)</li>
+<li><a href="../../code/nhibernate/index.html">NHibernate</a> is the other big ORM. It's more mature than EF Code First, but the legacy is confusing (multiple ways of  mapping, old HQL/Criteria style queries)</li>
+<li><a href="https://github.com/StackExchange/dapper-dot-net">Dapper</a> is a minimal ADO wrapper ("micro-ORM" without the R). For optimized SQL, but you can do native SQL anyway within EF and NHibernate.</li>
+<li>There are intermediates between heavy ORMs like EF/NHib and raw ADO/Dapper, like PetaPoco and SimpleData. There are also older mappers like Castle ActiveRecord.</li>
+</ul>
+<ul>
+<li>IMHO for most purposes, EF Code First is the easiest to get up and running, and then refine and upgrade</li>
+<li>NHibernate is still better for more complex requirements and scaling</li>
+<li>For optimized low-level stuff, just use Dapper/ADO</li>
+</ul>
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

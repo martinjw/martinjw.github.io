@@ -1,0 +1,149 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>NHibernate SQL</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../index.html">Code &gt;</a></li>
+<li><a href="index.html">NHibernate</a></li>
+</ul>
+
+</div>
+<div class="content">
+<h2>NHibernate SQL</h2>
+<p>Using the NHibernate abstraction is generally best, but sometimes it's easier (or just more familiar) using raw SQL. </p>
+
+<h3>Using normal ADO</h3>
+<p>If you have a stored procedure or a particular sql you need to run, you don't have to stay in NHibernate. NHibernate's ISession exposes the IDbConnection. The only thing to check is enlisting in ambient transactions.</p>
+<div class="code">
+<p><span style="color: blue;">using</span> (<span style="color: #2b91af;">IDbCommand</span> cmd = Session.Connection.CreateCommand())<br />
+{<br />
+&nbsp;&nbsp;&nbsp; cmd.CommandType = <span style="color: #2b91af;">CommandType</span>.StoredProcedure;<br />
+&nbsp;&nbsp;&nbsp; cmd.CommandText = <span style="color: #a31515;">"Ten Most Expensive Products"</span>;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//IDbDataParameter parameter = cmd.CreateParameter();</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//parameter.ParameterName = "Product";</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//parameter.Value = "10";</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: green;">//cmd.Parameters.Add(parameter);</span><br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (Session.Transaction != <span style="color: blue;">null</span> &amp;&amp; Session.Transaction.IsActive)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Session.Transaction.Enlist(cmd);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">using</span> (<span style="color: #2b91af;">IDataReader</span> rdr = cmd.ExecuteReader())<br />
+&nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">while</span> (rdr.Read())<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> product = rdr[0].ToString();<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">decimal</span> cost = rdr.GetDecimal(1);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//do sonething with them</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+&nbsp;&nbsp;&nbsp; }<br />
+}</p>
+</div>
+
+<h3>ISession.CreateSQLQuery</h3>
+<p>The SqlQuery is an IQuery just like HQL (note the parameters have the ":" prefix).</p>
+<div class="code">
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//products more expensive than average for category</span><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> sql = <span style="color: #a31515;">@"SELECT ProductName, UnitPrice</span><br />
+<span style="color: #a31515;">FROM Products</span><br />
+<span style="color: #a31515;">WHERE UnitPrice &gt; </span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; (SELECT AVG(UnitPrice) FROM Products</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; WHERE CategoryID = :category)</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; AND</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp;&nbsp; CategoryID = :category</span><br />
+<span style="color: #a31515;">ORDER BY Products.UnitPrice DESC"</span>;<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">IQuery</span> sqlQuery = session.CreateSQLQuery(sql)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .SetInt32(<span style="color: #a31515;">"category"</span>, category.Id);<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> list = sqlQuery.List(); <span style="color: green;">//or if simple scalar query.UniqueResult&lt;int&gt;();</span></p>
+</div>
+
+<p>You can also cast the result directly into one of your mapped entities with <cite>AddEntity</cite>(sadly not unmapped entities unless you can use a ResultTransformer -see below). All the sql output columns must be mapped to the entity properties (you can't miss any out- no lazy loaded properties).<br />
+Annotate the sql with {aliases in curly brackets}- <br />
+<code>SELECT ProductID AS {p.Id}, ProductName AS {p.ProductName} ... FROM Products {p}</code>. <br />
+{p.*} is a shortcut to mapping all properties (the sql contains the column names, not *). </p>
+
+<div class="code">
+<p>&nbsp;&nbsp;&nbsp; <span style="color: blue;">string</span> sql = <span style="color: #a31515;">@"SELECT {p.*}</span><br />
+<span style="color: #a31515;">FROM Products {p}</span><br />
+<span style="color: #a31515;">WHERE UnitPrice &gt; </span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; (SELECT AVG(UnitPrice) FROM Products</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; WHERE CategoryID = :category)</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp; AND</span><br />
+<span style="color: #a31515;">&nbsp;&nbsp;&nbsp;&nbsp; CategoryID = :category</span><br />
+<span style="color: #a31515;">ORDER BY {p.UnitPrice} DESC"</span>;<br />
+&nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">IQuery</span> query = session.CreateSQLQuery(sql)<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .AddEntity(<span style="color: #a31515;">"p"</span>, <span style="color: blue;">typeof</span>(<span style="color: #2b91af;">Product</span>))<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .SetEntity(<span style="color: #a31515;">"category"</span>, category);<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> list2 = query.List&lt;<span style="color: #2b91af;">Product</span>&gt;();</p>
+</div>
+
+
+<h3>Named Queries</h3>
+<p>These have the same rules as above, but are written into xml mapping files, and prepared and cached when the session factory is built.</p>
+
+<div class="code">
+<p><span style="color: blue;">var</span> listOfProducts = session.GetNamedQuery(<span style="color: #a31515;">"ProductsMoreExpensiveThanAverageByCategory"</span>)<br />
+&nbsp;&nbsp;&nbsp; .SetEntity(<span style="color: #a31515;">"category"</span>, category)<br />
+&nbsp;&nbsp;&nbsp; .List&lt;<span style="color: #2b91af;">Product</span>&gt;();</p>
+</div>
+
+<p>The mapping file. The CDATA is optional but allows the &gt; sign. Within the &lt;return&gt; you can add explicit mapping like this: &lt;return-property column="ProductID" name="Id"/&gt;</p>
+
+<div class="code">
+<p><span style="color: blue;">&lt;?</span><span style="color: #a31515;">xml</span><span style="color: blue;"> </span><span style="color: red;">version</span><span style="color: blue;">=</span>"<span style="color: blue;">1.0</span>"<span style="color: blue;"> </span><span style="color: red;">encoding</span><span style="color: blue;">=</span>"<span style="color: blue;">utf-8</span>"<span style="color: blue;"> ?&gt;</span><br />
+<span style="color: blue;">&lt;</span><span style="color: #a31515;">hibernate-mapping</span><span style="color: blue;"> </span><span style="color: red;">xmlns</span><span style="color: blue;">=</span>"<span style="color: blue;">urn:nhibernate-mapping-2.2</span>"<span style="color: blue;"> </span><span style="color: red;">namespace</span><span style="color: blue;">=</span>"<span style="color: blue;">Northwind</span>"<span style="color: blue;"> </span><span style="color: red;">assembly</span><span style="color: blue;">=</span>"<span style="color: blue;">Northwind</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;</span><span style="color: #a31515;">sql-query</span><span style="color: blue;"> </span><span style="color: red;">name</span><span style="color: blue;">=</span>"<span style="color: blue;">ProductsMoreExpensiveThanAverageByCategory</span>"<span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;</span><span style="color: #a31515;">return</span><span style="color: blue;"> </span><span style="color: red;">class</span><span style="color: blue;">=</span>"<span style="color: blue;">Product</span>"<span style="color: blue;"> </span><span style="color: red;">alias</span><span style="color: blue;">=</span>"<span style="color: blue;">p</span>"<span style="color: blue;"> /&gt;</span><br />
+<span style="color: blue;">&nbsp; &nbsp; &lt;![CDATA[</span><br />
+<span style="color: gray;">&nbsp; &nbsp; SELECT {p.*}</span><br />
+<span style="color: gray;">&nbsp; &nbsp; FROM Products {p}</span><br />
+<span style="color: gray;">&nbsp; &nbsp; WHERE UnitPrice &gt;</span><br />
+<span style="color: gray;">&nbsp; &nbsp; (SELECT AVG(UnitPrice) FROM Products</span><br />
+<span style="color: gray;">&nbsp; &nbsp; WHERE CategoryID = :category)</span><br />
+<span style="color: gray;">&nbsp; &nbsp; AND</span><br />
+<span style="color: gray;">&nbsp; &nbsp; CategoryID = :category</span><br />
+<span style="color: gray;">&nbsp; &nbsp; ORDER BY {p.UnitPrice} DESC</span><br />
+<span style="color: gray;">&nbsp; &nbsp; </span><span style="color: blue;">]]&gt;</span><br />
+<span style="color: blue;">&nbsp; &lt;/</span><span style="color: #a31515;">sql-query</span><span style="color: blue;">&gt;</span><br />
+<span style="color: blue;">&lt;/</span><span style="color: #a31515;">hibernate-mapping</span><span style="color: blue;">&gt;</span></p>
+</div>
+
+<h3>Stored Procedures</h3>
+<p>They can be called in the same way (named queries or CreateSqlQuery)</p>
+<div class="code">
+<p><span style="color: blue;">string</span> sql = <span style="color: #a31515;">@"exec CustOrdersOrders :customerId"</span>;<br />
+<span style="color: #2b91af;">IQuery</span> query = session.CreateSQLQuery(sql)<br />
+&nbsp;&nbsp;&nbsp; .SetString(<span style="color: #a31515;">"customerId"</span>, <span style="color: #a31515;">"ALFKI"</span>);</p>
+</div>
+<p>If they return column names identical to a mapped entity you could use AddEntity (perhaps specifying prefixes). More likely you'll have to map it manually:</p>
+<div class="code">
+<p><span style="color: blue;">var</span> list = query.List();<br />
+<span style="color: blue;">foreach</span> (<span style="color: blue;">object</span>[] item <span style="color: blue;">in</span> list)<br />
+{<br />
+&nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> order = <span style="color: blue;">new</span> Northwind.<span style="color: #2b91af;">Order</span>();<br />
+&nbsp;&nbsp;&nbsp; order.Id = (<span style="color: blue;">int</span>)item[0];<br />
+&nbsp;&nbsp;&nbsp; order.OrderDate = (<span style="color: #2b91af;">DateTime</span>)item[1];<br />
+}</p>
+</div>
+<p>There is a built-in mapper for non-mapped entities, if your column names match the properties (case sensitive, and you can't leave any out).</p>
+<div class="code">
+<p>query = query.SetResultTransformer(<span style="color: #2b91af;">Transformers</span>.AliasToBean&lt;<span style="color: #2b91af;">OrderDto</span>&gt;());<br />
+<span style="color: blue;">var</span> list2 = query.List&lt;<span style="color: #2b91af;">OrderDto</span>&gt;();</p>
+</div>
+<p>With named queries, you must specify a mapped class, and the stored procedure must return all the properties (although you can remap the names with return-property).</p>
+
+
+</div>
+<div class="Footer">
+
+</div></body>
+</html>
