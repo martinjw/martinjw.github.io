@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>.Net 4.0 Caching - not just for Asp</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>.Net 4.0 Caching - not just for Asp</h2>
+<p>Published Friday 08 July 2011</p><article>
+A brief recap of ASP.Net cache:<br />
+<br />
+<pre style="font-family:Consolas;font-size:13;color:black;background:white;"><span style="color:green;">//in&nbsp;MVC&nbsp;use&nbsp;HttpRuntime.Cache&nbsp;or&nbsp;HttpContext.Cache</span>
+<span style="color:green;">//in&nbsp;webforms&nbsp;Application&nbsp;is&nbsp;the&nbsp;original&nbsp;cache&nbsp;without&nbsp;expiration&nbsp;rules</span>
+<span style="color:blue;">var</span>&nbsp;category&nbsp;=&nbsp;<span style="color:#2b91af;">HttpRuntime</span>.Cache[<span style="color:#a31515;">"Category"</span>]&nbsp;<span style="color:blue;">as</span>&nbsp;<span style="color:#2b91af;">CategoryModel</span>;
+<span style="color:blue;">if</span>&nbsp;(category&nbsp;==&nbsp;<span style="color:blue;">null</span>)
+{
+&nbsp;&nbsp;&nbsp;&nbsp; category&nbsp;=&nbsp;_dataAccess.Find(1);
+&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:#2b91af;">HttpRuntime</span>.Cache[<span style="color:#a31515;">"Category"</span>]&nbsp;=&nbsp;category;
+&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:green;">//&nbsp;...or...</span>
+&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:green;">//monitor&nbsp;some&nbsp;files&nbsp;and/or&nbsp;other&nbsp;cache&nbsp;items</span>
+&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:blue;">var</span>&nbsp;cd&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">CacheDependency</span>(<span style="color:blue;">new</span>[]&nbsp;{&nbsp;<span style="color:#a31515;">@"C:\triggerFolder\"</span>&nbsp;},&nbsp;<span style="color:blue;">new</span>[]&nbsp;{&nbsp;<span style="color:#a31515;">"OtherCacheItem"</span>&nbsp;});
+&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:#2b91af;">HttpRuntime</span>.Cache.Insert(<span style="color:#a31515;">"Category1"</span>,&nbsp;category,&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; cd,&nbsp;<span style="color:green;">//dependencies&nbsp;or&nbsp;null</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:#2b91af;">DateTime</span>.Now.AddMinutes(5),&nbsp;<span style="color:green;">//absolute&nbsp;expiration&nbsp;(or&nbsp;Cache.NoAbsoluteExporation)</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:#2b91af;">Cache</span>.NoSlidingExpiration&nbsp;<span style="color:green;">//sliding&nbsp;expiration&nbsp;(timespan)</span>
+&nbsp;&nbsp;&nbsp;&nbsp; );
+}</pre>Mocking this in tests (especially for MVC) is a bit ugly (.Net 3.5sp1 has System.Web.Abstractions including HttpContextBase, but caching isn't included)<br />
+<br />
+Now in .Net 4 we can reference <a href="http://msdn.microsoft.com/en-us/library/dd985642.aspx">System.Runtime.Caching</a>.dll. And the really nice thing is this will run outside Asp.Net.<br />
+<pre style="font-family:Consolas;font-size:13;color:black;background:white;"><span style="color:green;">//get&nbsp;the&nbsp;static&nbsp;"default"&nbsp;cache.&nbsp;You&nbsp;can&nbsp;have&nbsp;multiple&nbsp;named&nbsp;caches.</span>
+<span style="color:#2b91af;">ObjectCache</span>&nbsp;cache&nbsp;=&nbsp;<span style="color:#2b91af;">MemoryCache</span>.Default;
+<span style="color:green;">//you&nbsp;can't&nbsp;store&nbsp;null&nbsp;in&nbsp;the&nbsp;cache</span>
+<span style="color:blue;">var</span>&nbsp;category&nbsp;=&nbsp;cache[<span style="color:#a31515;">"Category"</span>]&nbsp;<span style="color:blue;">as</span>&nbsp;<span style="color:#2b91af;">CategoryModel</span>;
+<span style="color:blue;">if</span>&nbsp;(category&nbsp;==&nbsp;<span style="color:blue;">null</span>)
+{
+&nbsp;&nbsp;&nbsp;&nbsp;category&nbsp;=&nbsp;_dataAccess.Find(1);
+&nbsp;&nbsp;&nbsp;&nbsp;cache[<span style="color:#a31515;">"Category"</span>]&nbsp;=&nbsp;category;
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;...or...</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;policy&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">CacheItemPolicy</span>();
+&nbsp;&nbsp;&nbsp;&nbsp;policy.AbsoluteExpiration&nbsp;=&nbsp;<span style="color:#2b91af;">DateTime</span>.Now.AddMinutes(5);
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//monitor&nbsp;some&nbsp;files&nbsp;and/or&nbsp;other&nbsp;cache&nbsp;items</span>
+&nbsp;&nbsp;&nbsp;&nbsp;policy.ChangeMonitors.Add(
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">HostFileChangeMonitor</span>(<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">List</span>&lt;<span style="color:blue;">string</span>&gt;&nbsp;{&nbsp;<span style="color:#a31515;">@"C:\triggerFolder\"</span>})
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;);
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//synchronize&nbsp;with&nbsp;another&nbsp;cache&nbsp;item</span>
+&nbsp;&nbsp;&nbsp;&nbsp;policy.ChangeMonitors.Add(
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cache.CreateCacheEntryChangeMonitor(<span style="color:blue;">new</span>&nbsp;[]&nbsp;{&nbsp;<span style="color:#a31515;">"OtherCacheItem"</span>})
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;);
+&nbsp;&nbsp;&nbsp;&nbsp;cache.Add(<span style="color:#a31515;">"Category1"</span>,&nbsp;category,&nbsp;policy);
+}
+</pre>For simple caching (no change monitors) you don't even need mocking in your tests - in fact, you can test your caching with a real cache. You can move caching down into your library classes that may be called from web pages, tests, WPF apps and consoles.<br />
+<br />
+<br />
+<br />
+
+<p></p>
+</article>
+<ul class="seeAlso">
+<li><a href="../../../2010/04/02/CovarianceAndContravarianceIn Net4In2Minutes.html">covariance and contravariance in .net 4 in 2 minutes</a> (02 Apr 2010)</li>
+<li><a href="../../../2010/06/06/SmartPasteIn2010.html">Smart Paste in 2010</a> (06 Jun 2010)</li>
+<li><a href="../../../2010/11/01/DatabaseSchemaReader.html">Database Schema Reader</a> (01 Nov 2010)</li>
+<li><a href="../../../2011/04/07/PublishAndTransformInMsbuildScript.html">Publish and Transform in MSBuild script</a> (07 Apr 2011)</li>
+<li><a href="../../../2011/04/09/DatabaseSchemaReaderNowWithExtraSqlite.html">Database Schema Reader now with extra SQLite</a> (09 Apr 2011)</li>
+<li><a href="../../../2011/05/02/IldasmAndIlasmToSignAnUnsignedAssembly.html">ildasm and ilasm to sign an unsigned assembly</a> (02 May 2011)</li>
+<li><a href="../../../2011/12/10/MCPDWebDeveloper Net4.html">MCPD Web Developer .Net 4</a> (10 Dec 2011)</li>
+<li><a href="../../../2012/02/05/EFCodeFirstManyToManyMapping.html">EF Code First Many to Many Mapping</a> (05 Feb 2012)</li>
+<li><a href="../../../2012/02/14/EFCodeFirstTracing-LoggingTheSQL.html">EF Code First tracing - logging the SQL</a> (14 Feb 2012)</li>
+<li><a href="../../../2012/02/22/EFCodeFirst-ReferencesVsValidation.html">EF Code First - references vs validation</a> (22 Feb 2012)</li>
+<li><a href="../../../2013/05/31/WebapiUpdated30May2013.html">WebAPI updated 30 May 2013</a> (31 May 2013)</li>
+<li><a href="../../../2013/08/08/TheJSONRequestWasTooLargeToBeDeserialized .html">The JSON request was too large to be deserialized.</a> (08 Aug 2013)</li>
+<li><a href="../../../2014/03/07/FormsAuthenticationWithClaims.html">Forms Authentication with claims</a> (07 Mar 2014)</li>
+<li><a href="../../../2014/07/23/ NetVersioning.html">.Net Versioning</a> (23 Jul 2014)</li>
+</ul>
+<p>Previously: <a href="../../../2011/06/10/T4Preprocessing.html">T4 preprocessing</a> (10 Jun 2011)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

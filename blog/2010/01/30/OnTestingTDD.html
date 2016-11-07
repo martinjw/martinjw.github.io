@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>On Testing/TDD</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>On Testing/TDD</h2>
+<p>Published Saturday 30 January 2010</p><article>
+
+<p>I spent some time working in quite agile, test-focussed environment, but lately I've been in organisations that like the idea of testing, but don't really practice it.</p>
+<p>Trying to use testing helps both in proving something works, and because it makes you structure your code so it can be tested (more modular code, reduce coupling) which makes it easier to understand and maintain.</p>
+<p>&quot;Pure&quot; test-driven development is a big step, and the existing code base may make it very difficult. So start small, pick the battle fronts where you can win, refactor, organise your tests. Use integration tests but focussed and well structured.</p>
+  <h3>Tests vs time</h3>
+<p>The standard argument is &quot;Writing tests takes lots of time so only do it if you have time at the end&quot;.<br />
+Initially it takes time, but unless your code is bugless first time, the iterations of manual testing/ fixing may take more time. So it's (time to code automated test) vs (time to manual test). The latter can add up over the lifetime of the software, and the major win of automated tests is finding regressions. Assess the cost-benefit, it's doesn't have to be 100% coverage full TDD vs nothing.</p>
+<p>&quot;You have to F5 and manually use your application anyway&quot;.<br />
+True, but automated tests can cover all the permutations you don't do in manual tests.</p>  <h3>TDD vs Visual Studio</h3>
+<p>Autocomplete make test-before-code difficult. The consume first mode in Visual Studio 2010 looks like it will help. Up until now, the closest to real TDD that I've done involved stubbing the classes and methods before writing the tests.</p>
+
+<p>TDD is more than testing of course. It's supposed to force you to design simple loosely coupled components. It certainly makes you focus on your API.</p>
+  <h3>Tests vs refactoring</h3>
+<p>Refactoring tools (Resharper, CodeRush) mitigate some of this, but most major refactoring will have a big impact on a large bank of tests. So yes, many of your tests may be thrown away and you start again. The solution to to keep the tests well structured and named (yes, easier said than done).</p>
+  <h3>Unit tests structure and readability</h3>
+<p>Things I've found helpful:</p>  <ul>   <li>the test project and it's subject should look identical: one test class per class. If the test class is too big, it's a good indication that the class is doing too much, but you can split up the test class with partial classes.</li>    <li>TDD guides suggest you don't test private methods, and so far this has worked well for me. I don't use the MSTest private accessors, although very rarely I will write a little reflection code to set a private field rather than use the public property. Internal methods and InternalsVisibleTo are very useful.</li>    <li>Internally in the test method, the &quot;arrange / act / assert&quot; comments split things up. </li>    <li>Underline-delimited words in test method names are more readable than Pascal case. </li>    <li>Test methods have to be readable, not elegant code : avoid simple refactorings (extract method) that hide what's going on, use lots of cut'n'paste code.</li> </ul>
+<p>   <br />
+</p>  <h3>Unit tests vs Integration tests</h3>
+<p>Developers often have the idea that they should only do unit tests, and integration tests are a really bad thing. Of course you can and should refactor to use interfaces with DI / mocks so code can be unit tested without dependencies.</p>
+
+<p>But data access and UI (at least non MVC flavours) are by definition mostly integrations and not easily testable. If you can test them with integration tests, you often have the most interesting and useful tests (unless you love manual testing). All those individual classes are pretty dumb and unit testing doesn't reveal as much.</p>
+<p>Integration tests tend to be much longer and more complicated- there's almost always setup/ class or testInitialize and teardown / cleanup. But structure it well and after the writing the initial setup and first test, other tests just follow the same pattern and become very easy.</p>
+<p>Integration tests tips</p>  <ul>   <li>     <div align="left">Break it down into small tests. The temptation is to do an end-to-end test (login-navigate-create record-find record-edit record-delete record-logoff). To start, one test = one operation/ form/ page (at most). For UI, you probably have to start with launch app/ login, but stop there- other tests can then call the login and carry on. If you change the login, one test changes and the others will be unchanged.&#160; </div>   </li>    <li>     <div align="left">Database tests: A local SqlExpress database file is a neat testing target in the test project, if you can keep it up to date. </div>   </li>    <li>     <div align="left">Database tests: You can wrap tests in transactions that are not committed (and thus rolled back) </div>   </li>    <li>     <div align="left">Database tests: Linq2Sql is helpful to verify your data access is doing the right thing. </div>   </li>    <li>     <div align="left">Web UI tests: for asp.Net you should use Watin (a framework to run IE - and now Firefox- from tests). You really can write the test, then code the webpage, in true TDD fashion (I did!). Visual Studio 2010 coded UI tests work similarly, with a nice recorder- not just IE, but Firefox, winforms, and WPF (Chrome/Safari/IE6 aren't supported, and amazingly Silverlight isn't either). Telerik has a similar web-test UI studio (IE, FF, Safari and Silverlight), but it isn't cheap. </div>   </li>    <li>     <div align="left">File IO: In MSTest this is fairly easy in the deployment directories, which are temporary directories created each test run (under solution-level folder Test Results). By default, deployment is enabled (see in LocalTestRun.testrunconfig). Environment.CurrentDirectory (and TestContext.TestDeploymentDir) have the full path. Test assembly contents with Copy to Output Directory = Always copy do not get copied (only the dlls) so add the attribute [DeploymentItem(&quot;Data.xml&quot;)]</div>   </li> </ul>
+</article>
+<p>Previously: <a href="../../../2009/12/13/TFS2010-Workspaces,TeamProjects.html">TFS 2010- workspaces, team projects</a> (13 Dec 2009)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

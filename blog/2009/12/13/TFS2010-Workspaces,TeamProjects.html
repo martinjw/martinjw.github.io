@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>TFS 2010- workspaces, team projects</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>TFS 2010- workspaces, team projects</h2>
+<p>Published Sunday 13 December 2009</p><article>
+
+<p>Team Foundation Server 2005/2008 didn't make much sense for small teams. TFS 2010 Basic allows you to have a simple, quick source control and issue ("work item") tracking for individuals. It should at least see the end of SourceSafe. Whether it will draw back those who have already jumped to subversion remains to be seen.</p>
+
+<p>Creating workspaces and team projects is not something I'll do very often, so I'll record the steps here.</p>
+<p>Download VS2010 and TFS 2010 from <a href="http://msdn.microsoft.com/en-us/vstudio/dd582936.aspx" target="_blank">Microsoft</a> and install. The TFS configuration wizard kicks in after the install, and is pretty simple.</p>  
+<h2>Connect to TFS.</h2>
+<p><a href="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/connecttotfs.jpg"><img title="connect to tfs" style="border-top-width: 0px; display: inline; border-left-width: 0px; border-bottom-width: 0px; margin-left: 0px; margin-right: 0px; border-right-width: 0px" height="151" alt="connect to tfs" src="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/connecttotfs_thumb.jpg" width="244" border="0" /></a> Spot two ways to do it in this screenshot.</p>
+<p>Select TFS server - click "Servers" button</p>
+<p><a href="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/selecttfsserver.png"><img title="select tfs server" style="border-top-width: 0px; display: inline; border-left-width: 0px; border-bottom-width: 0px; border-right-width: 0px" height="180" alt="select tfs server" src="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/selecttfsserver_thumb.png" width="244" border="0" /></a></p>
+
+<p>The servers list will be empty at first so click "Add" button</p>
+<p><a href="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/selecttfsserver2.png"><img title="select tfs server 2" style="border-top-width: 0px; display: inline; border-left-width: 0px; border-bottom-width: 0px; border-right-width: 0px" height="146" alt="select tfs server 2" src="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/selecttfsserver2_thumb.png" width="244" border="0" /></a></p>
+
+<p>Fill in the server name.</p>
+<p><a href="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/selecttfsserver3.png"><img title="select tfs server 3" style="border-top-width: 0px; display: inline; border-left-width: 0px; border-bottom-width: 0px; border-right-width: 0px" height="137" alt="select tfs server 3" src="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/selecttfsserver3_thumb.png" width="244" border="0" /></a></p>
+
+<p>Now the project collection is shown (always DefaultCollection with basic). Click "Connect"</p>
+<p><a href="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/selecttfsserver4.png"><img title="select tfs server 4" style="border-top-width: 0px; display: inline; border-left-width: 0px; border-bottom-width: 0px; border-right-width: 0px" height="180" alt="select tfs server 4" src="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/selecttfsserver4_thumb.png" width="244" border="0" /></a></p>
+
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p></p>  
+<h2>Workspaces</h2>
+<p>You need to set up a workspace - the local path on your computer (in VSS this would be your "working directory").</p>
+<p>In VS2010, File-Source Control - Workspaces.</p>
+<p><a href="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/filesourcecontrolworkspaces.png"><img title="file-source control-workspaces" style="border-top-width: 0px; display: inline; border-left-width: 0px; border-bottom-width: 0px; border-right-width: 0px" height="153" alt="file-source control-workspaces" src="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/filesourcecontrolworkspaces_thumb.png" width="244" border="0" /></a></p>
+
+<p>It's empty to start. Typically you only have one per TFS server. Click "Add"</p>
+<p><a href="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/tfsworkspaces.png"><img title="tfs workspaces" style="border-top-width: 0px; display: inline; border-left-width: 0px; border-bottom-width: 0px; border-right-width: 0px" height="174" alt="tfs workspaces" src="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/tfsworkspaces_thumb.png" width="244" border="0" /></a></p>
+
+<p>Map the server folder ("$/") to your local folder (here, C:\Dev)</p>
+<p><a href="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/tfsworkspaces2.png"><img title="tfs workspaces 2" style="border-top-width: 0px; display: inline; border-left-width: 0px; border-bottom-width: 0px; border-right-width: 0px" height="189" alt="tfs workspaces 2" src="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/tfsworkspaces2_thumb.png" width="244" border="0" /></a>&#160;</p>
+  
+<h2>New Team Project</h2>
+<p>Each TFS contains a number of collections (these root collections are new in 2010), Each collection contains a number of team projects. The team project is typically an application, comprising one or more solutions plus work items and documents. <a href="http://www.codeplex.com/wikipage?ProjectName=BranchingGuidance&amp;title=Guidance%20for%20Structuring%20Team%20Projects" target="_blank">More information here (Codeplex guidance)</a></p>
+<p>You can start a team project from the VS2010 File-New-Team Project or the team explorer.</p>
+<p><a href="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/newteamproject.png"><img title="new team project" style="border-top-width: 0px; display: inline; border-left-width: 0px; border-bottom-width: 0px; border-right-width: 0px" height="244" alt="new team project" src="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/newteamproject_thumb.png" width="199" border="0" /></a></p>
+
+<p>It's a simple wizard. Name it, pick the type (you may have a Scrum template), Next, Next, Next.</p>
+<p><a href="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/newteamproject2.png"><img title="new team project 2" style="border-top-width: 0px; display: inline; border-left-width: 0px; border-bottom-width: 0px; border-right-width: 0px" height="189" alt="new team project 2" src="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/newteamproject2_thumb.png" width="244" border="0" /></a>&#160;<a href="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/newteamproject3.png"><img title="new team project 3" style="border-top-width: 0px; display: inline; border-left-width: 0px; border-bottom-width: 0px; border-right-width: 0px" height="189" alt="new team project 3" src="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/newteamproject3_thumb.png" width="244" border="0" /></a> <a href="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/newteamproject4.png"><img title="new team project 4" style="border-top-width: 0px; display: inline; border-left-width: 0px; border-bottom-width: 0px; border-right-width: 0px" height="189" alt="new team project 4" src="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/newteamproject4_thumb.png" width="244" border="0" /></a> <a href="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/newteamproject5.png"><img title="new team project 5" style="border-top-width: 0px; display: inline; border-left-width: 0px; border-bottom-width: 0px; border-right-width: 0px" height="189" alt="new team project 5" src="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/newteamproject5_thumb.png" width="244" border="0" /></a></p>
+
+<p></p>
+<p></p>
+<p></p>
+<p></p>
+<p><a href="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/newteamproject6.png"><img title="new team project 6" style="border-top-width: 0px; display: inline; border-left-width: 0px; border-bottom-width: 0px; border-right-width: 0px" height="189" alt="new team project 6" src="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/newteamproject6_thumb.png" width="244" border="0" /></a></p>
+
+<p>Your source control is now empty. Don't just put a solution in there. Add New Folder, and use this to put your first code in. I'm calling it Trunk, but TFS people seem to call it "Main".</p>
+
+<p><a href="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/newsourcecontrolfolder.png"><img title="new source control folder" style="border-top-width: 0px; display: inline; border-left-width: 0px; border-bottom-width: 0px; border-right-width: 0px" height="107" alt="new source control folder" src="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/newsourcecontrolfolder_thumb.png" width="244" border="0" /></a></p>
+
+<p>I created a Visual Studio solution within my workspace\project\trunk folder. I add it to source control.</p>
+<p><a href="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/addsolutiontosourcecontrol.png"><img title="add solution to source control" style="border-top-width: 0px; display: inline; border-left-width: 0px; border-bottom-width: 0px; border-right-width: 0px" height="201" alt="add solution to source control" src="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/addsolutiontosourcecontrol_thumb.png" width="244" border="0" /></a></p>
+
+<p>And check in (pending changes window)</p>
+<p><a href="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/pendingchanges.png"><img title="pending changes" style="border-top-width: 0px; display: inline; border-left-width: 0px; border-bottom-width: 0px; border-right-width: 0px" height="120" alt="pending changes" src="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/pendingchanges_thumb.png" width="244" border="0" /></a></p>
+
+<p>Why a subfolder called "Trunk" (or "main")? So I can create a branch.</p>
+
+<p>I also create a "Branches" folder under the team project, and branch to a subfolder of that. Here I'm creating a branch for a new version (v4).</p>
+<p><a href="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/branching.png"><img title="branching" style="border-top-width: 0px; display: inline; border-left-width: 0px; border-bottom-width: 0px; border-right-width: 0px" height="117" alt="branching" src="http://www.martinwilley.com/blog/content/binary/TFS2010workspacesteamprojects_F888/branching_thumb.png" width="244" border="0" /></a></p>
+<p><a href="http://www.codeplex.com/BranchingGuidance" target="_blank">There's detailed guidance on TFS branching on Codeplex.</a></p>
+</article>
+<p>Previously: <a href="../../../2009/12/12/ScottguLineup.html">ScottGu Lineup</a> (12 Dec 2009)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

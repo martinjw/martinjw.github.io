@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>SqlServer Upserts</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>SqlServer Upserts</h2>
+<p>Published Wednesday 12 February 2014</p><article>
+
+
+<p>Sometimes you want to save a record, but it may be an existing record (UPDATE) 
+or a new one (INSERT). The pattern is sometimes called an “upsert” 
+(update/insert).</p>
+
+<p>You could try to do this the standard way you would via an ORM (SELECT to see 
+if it exists, if it does, UPDATE, else INSERT). But if other users are updating 
+at the same time, you will see concurrency errors or deadlocks.</p>
+
+
+<p>First, let’s look at simpler SQL that is vulnerable to concurrency errors, 
+than two ways of doing it safely.</p>
+<h3>Simple (not concurrent-safe!!)</h3>
+
+<p>UPDATE then check @@ROWCOUNT and INSERT if necessary. Only use this when the 
+same record will not be created by two sources.</p>
+
+<p><font face="Consolas">DECLARE @CategoryName NVARCHAR(15) = 'Dairy'; <br />
+DECLARE 
+@Description NVARCHAR(MAX) = 'Milk, cheese and yoghurts'; <br />
+DECLARE @Id int = 
+null;</font></p>
+
+<p><font face="Consolas">UPDATE [Categories] <br />
+&nbsp;&nbsp;&nbsp; SET [Description] = 
+@Description, <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; @Id = [CategoryID] <br />
+&nbsp;&nbsp;&nbsp; WHERE [CategoryName] = 
+@CategoryName;</font></p>
+
+<p><font face="Consolas">IF @@ROWCOUNT = 0 <br />
+&nbsp;&nbsp;&nbsp; INSERT INTO [Categories] 
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ([CategoryName] <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ,[Description]) 
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; VALUES <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (@CategoryName <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+,@Description); <br />
+--if id is not set in UPDATE, then grab scope identity 
+<br />
+SET @Id = ISNULL(@Id, CAST(SCOPE_IDENTITY() AS int)); <br />
+--select it out 
+<br />
+SELECT @Id AS Id;</font></p>
+
+<p>This example grabs the affected Id too (whether identity insert or 
+update).</p>
+<h3>Concurrent-safe</h3>
+
+<p>A more conventional IF NOT EXISTS... INSERT - ELSE - UPDATE. The lock hints 
+protect for concurrency. The UPDLOCK and SERIALIZABLE hints are as suggested in 
+<a href="http://samsaffron.com/blog/archive/2007/04/04/14.aspx" target="_blank">this Sam Saffron blog post from 2007</a></p>
+
+<p><font face="Consolas">IF NOT EXISTS( <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SELECT * FROM [Categories] 
+WITH ( UPDLOCK, SERIALIZABLE ) <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; WHERE [CategoryName] = @CategoryName 
+) <br />
+&nbsp;&nbsp;&nbsp; BEGIN <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; INSERT INTO [Categories] <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+([CategoryName] <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ,[Description]) <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; VALUES 
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (@CategoryName <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ,@Description);&nbsp;&nbsp;&nbsp; 
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SET @Id = CAST(SCOPE_IDENTITY() AS int); <br />
+&nbsp;&nbsp;&nbsp; END <br />
+ELSE 
+<br />
+&nbsp;&nbsp;&nbsp; BEGIN <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; UPDATE [Categories] <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SET [Description] 
+= @Description, <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; @Id = [CategoryID] <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; WHERE 
+[CategoryName] = @CategoryName; <br />
+&nbsp;&nbsp;&nbsp; END</font></p>
+
+<p><font face="Consolas">SELECT @Id AS Id;</font></p>
+<h3>MERGE</h3>
+
+<p>Much the same as before, using the MERGE command. MERGE by itself is not 
+concurrent-safe; you <strong>must</strong> still use lock hints.</p>
+
+<p><font face="Consolas">MERGE INTO [Categories] WITH&nbsp; ( UPDLOCK, SERIALIZABLE ) 
+AS target <br />
+&nbsp;&nbsp;&nbsp; --if/where part <br />
+&nbsp;&nbsp;&nbsp; USING <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (SELECT 
+@CategoryName, @Description ) AS source <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ([CategoryName], 
+[Description]) <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ON (target.CategoryName = source.CategoryName) 
+<br />
+&nbsp;&nbsp;&nbsp; --found, so update <br />
+&nbsp;&nbsp;&nbsp; WHEN MATCHED THEN <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; UPDATE SET 
+[Description] = @Description, <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; @Id = [CategoryID] <br />
+&nbsp;&nbsp;&nbsp; 
+--not found, so insert <br />
+&nbsp;&nbsp;&nbsp; WHEN NOT MATCHED THEN <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; INSERT 
+([CategoryName] <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ,[Description]) <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; VALUES 
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (@CategoryName <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+,@Description);</font></p>
+
+<p><font face="Consolas">SET @Id = ISNULL(@Id, CAST(SCOPE_IDENTITY() AS 
+int));</font></p>
+
+<p><font face="Consolas">SELECT @Id AS Id;</font></p>
+<h3>Other Databases</h3>
+
+<p>MySQL has <a href="http://dev.mysql.com/doc/refman/5.7/en/insert-on-duplicate.html" target="_blank">INSERT … ON DUPLICATE KEY UPDATE …</a> and <a href="https://dev.mysql.com/doc/refman/5.7/en/innodb-locking-reads.html" target="_blank">SELECT … FOR UPDATE</a>.</p>
+
+<p>Oracle has <a href="http://docs.oracle.com/cd/E11882_01/appdev.112/e25519/static.htm#LNPLS515" target="_blank">SELECT FOR UPDATE cursors</a></p>
+<p></p>
+</article>
+<p>Previously: <a href="../../../2013/08/08/TheJSONRequestWasTooLargeToBeDeserialized .html">The JSON request was too large to be deserialized.</a> (08 Aug 2013)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

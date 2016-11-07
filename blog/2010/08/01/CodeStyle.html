@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Code style</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Code style</h2>
+<p>Published Sunday 01 August 2010</p><article>
+
+<p>I was looking at the mess of another programmer's code and realised how much we have individual code styles.</p>
+<p>Actually his code wasn't a mess. I turn on code wrapping, he didn't. His nested lambda expressions were suddenly all over the place on my screen, but looked tidy on a wide scrolled screen. I would have introduced more line breaks, splitting parameters onto different lines, but creating more vertical scrolling.</p>
+<p>Most colleagues don't write unit tests. That's changing. I've been writing unit tests since .net 1. While I still see people exercising their code by writing console projects or winforms, I've always written unit tests. It's a primitive sort of TDD, at least the part about creating the API in a test. My code is generally old style Asserts against classes and methods, having used vintage NUnit and now MsTest. Lately I try to break up the test into arrange/act/assert sections, and sometimes the BDD language of "Given"/"When"/"Then". Recently company style is to use a custom BDD-type framework on MsTest, but I think the underscores in naming are just plain ugly (the Ruby RSpec style with quoted strings is much nicer and more natural).</p>
+
+<p>I mostly use manual mocks, and whenever I've tried to use a mocking framework I've ripped it out after a while- if you have to write a manual mock it simplifies your API, and that seems neater to me. Recently I've been using Moq for stitching together some components that need use services, and it makes quite heavyweight tests (mostly because we're not allowed to use a DI framework).</p>
+<p>Resharper, and more recently CodeRush, are hugely influential in code style- getting the right margin to go green is pretty satisfying, even for very minor things like deleting unused "using" statements. When Resharper 3 suggested using "var" instead of explicit types, I followed them, even though many developers dislike it intensely. The majority opinion seems to be to use "var" with constructors ("var x = new Entity()") but to specify the type returned from methods ("Entity x = Create();"). For the last 2 years or so (when I moved to CodeRush), my code has mostly followed the latter style. When quickly sketching together code, I use var, because I'll be changing methods to use interfaces or base classes, and you don't even have to do rename refactoring.</p>
+<p>Resharper has got quite good at suggesting variable names, and usually I take the suggestions. Otherwise some of my variable names can be short - I'm particularly like to use "x" in Linq expressions because brevity makes them much easier to read (as long as methods are short enough):</p>
+<p>var result = list.Where(x =&gt; x.IsValid); //simple variable names work fine in short methods &amp; linq</p>
+
+<p>ICommonCustomerEntity commonCustomerEntity = commonCustomerEntityCollection.Where(commonCustomerEntity =&gt; commonCustomerEntity.IsValid); //ugh</p>
+<p>One thing that is characteristic of my code are chunks of specs/user stories (or emails/ work items/ bug reports as applicable) pasted in as internal comments. It doesn't always stay there after I've finished, but it's the first thing I do before coding. It can be nice to see the business logic text immediately above the code (much better than in a Word document, TFS or some task management tracker). It's particularly useful to quote emails when tracking the changing business requirements as you go through acceptance.</p>
+
+</article>
+<p>Previously: <a href="../../../2010/06/06/SmartPasteIn2010.html">Smart Paste in 2010</a> (06 Jun 2010)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

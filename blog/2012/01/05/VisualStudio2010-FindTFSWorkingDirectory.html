@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Visual Studio 2010 - find TFS working directory</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Visual Studio 2010 - find TFS working directory</h2>
+<p>Published Thursday 05 January 2012</p><article>
+<pre style="font-family:Consolas;color:black;background:white;"><span style="color:green;"></span> 
+<span style="color:green;">//find&nbsp;the&nbsp;working&nbsp;folder&nbsp;for&nbsp;each&nbsp;TFS</span>
+<span style="color:blue;">var</span>&nbsp;projectCollections&nbsp;=&nbsp;<span style="color:#2b91af;">RegisteredTfsConnections</span>.GetProjectCollections();
+ 
+<span style="color:blue;">foreach</span>&nbsp;(<span style="color:blue;">var</span>&nbsp;registeredProjectCollection&nbsp;<span style="color:blue;">in</span>&nbsp;projectCollections)
+{
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Console</span>.WriteLine(<span style="color:#a31515;">"Project&nbsp;collection:&nbsp;</span><span style="color:mediumseagreen;">{0}</span><span style="color:#a31515;">&nbsp;</span><span style="color:mediumseagreen;">{1}</span><span style="color:#a31515;">"</span>, <br />
+registeredProjectCollection.Name, <br />
+registeredProjectCollection.Uri.AbsoluteUri);
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;projectCollection&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">TfsTeamProjectCollectionFactory</span>.GetTeamProjectCollection(registeredProjectCollection);
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;versionControl&nbsp;=&nbsp;projectCollection.GetService&lt;<span style="color:#2b91af;">VersionControlServer</span>&gt;();
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;get&nbsp;workspace</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;workspace&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;versionControl.QueryWorkspaces(<span style="color:blue;">null</span>,
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;System.Threading.<span style="color:#2b91af;">Thread</span>.CurrentPrincipal.Identity.Name,
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Environment</span>.MachineName)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.FirstOrDefault(x&nbsp;=&gt;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x.Folders.Length&nbsp;&gt;&nbsp;0&nbsp;&amp;&amp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//if&nbsp;there&nbsp;is&nbsp;a&nbsp;Work&nbsp;Item&nbsp;Manager,&nbsp;we&nbsp;don't&nbsp;care</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x.Name&nbsp;!=&nbsp;<span style="color:#a31515;">"WIM&nbsp;("</span>&nbsp;+&nbsp;<span style="color:#2b91af;">Environment</span>.MachineName&nbsp;+&nbsp;<span style="color:#a31515;">")"</span>);
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>(workspace&nbsp;==&nbsp;<span style="color:blue;">null</span>)&nbsp;<span style="color:blue;">continue</span>;&nbsp;<span style="color:green;">//no&nbsp;workspace&nbsp;for&nbsp;this&nbsp;server</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//there's&nbsp;normally&nbsp;only&nbsp;one</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">WorkingFolder</span>&nbsp;folder&nbsp;=&nbsp;workspace.Folders.First();
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Console</span>.WriteLine(<span style="color:#a31515;">"Working&nbsp;folder&nbsp;</span><span style="color:mediumseagreen;">{0}</span><span style="color:#a31515;">"</span>,&nbsp;folder.LocalItem);
+}<br />
+<br />
+<span style="color:green;">//old&nbsp;VS&nbsp;2008&nbsp;way</span>
+<span style="color:green;">//using&nbsp;(TeamFoundationServer&nbsp;tfsServer&nbsp;=&nbsp;new&nbsp;TeamFoundationServer(tfsServerName))</span>
+<span style="color:green;">//{</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;//&nbsp;Get&nbsp;a&nbsp;reference&nbsp;to&nbsp;version&nbsp;control</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;VersionControlServer&nbsp;versionControl&nbsp;=</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(VersionControlServer)&nbsp;tfsServer.GetService(typeof&nbsp;(VersionControlServer));</span>
+<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;//....</span>
+<span style="color:green;">//}</span>
+<br />
+</pre>
+</article>
+<ul class="seeAlso">
+<li><a href="../../../2010/09/20/FindingAllTFSUsers.html">Finding all TFS users</a> (20 Sep 2010)</li>
+<li><a href="../../../2012/11/30/TF31003Windows8VsTeamFoundationService.html">TF31003: Windows 8 vs Team Foundation Service</a> (30 Nov 2012)</li>
+<li><a href="../../../2014/07/23/ NetVersioning.html">.Net Versioning</a> (23 Jul 2014)</li>
+</ul>
+<ul class="seeAlso">
+<li><a href="../../../2009/11/30/VisualStudio2010Downloads.html">Visual Studio 2010 downloads</a> (30 Nov 2009)</li>
+<li><a href="../../../2009/12/04/VisualStudio2010IntellisenseConsumeFirst.html">Visual Studio 2010 intellisense "consume first"</a> (04 Dec 2009)</li>
+<li><a href="../../../2010/02/13/VisualStudio2010ReleaseCandidate.html">Visual Studio 2010 Release Candidate</a> (13 Feb 2010)</li>
+<li><a href="../../../2010/03/31/MicrosoftTechdaysRoundup.html">Microsoft TechDays roundup</a> (31 Mar 2010)</li>
+<li><a href="../../../2010/04/22/VisualStudio2010Editions.html">Visual Studio 2010 editions</a> (22 Apr 2010)</li>
+<li><a href="../../../2010/05/04/VisualStudioNavigation.html">Visual Studio navigation</a> (04 May 2010)</li>
+<li><a href="../../../2010/06/06/SmartPasteIn2010.html">Smart Paste in 2010</a> (06 Jun 2010)</li>
+<li><a href="../../../2010/11/01/DatabaseSchemaReader.html">Database Schema Reader</a> (01 Nov 2010)</li>
+<li><a href="../../../2011/04/07/PublishAndTransformInMsbuildScript.html">Publish and Transform in MSBuild script</a> (07 Apr 2011)</li>
+<li><a href="../../../2011/06/10/T4Preprocessing.html">T4 preprocessing</a> (10 Jun 2011)</li>
+</ul>
+<p>Previously: <a href="../../../2011/12/10/MCPDWebDeveloper Net4.html">MCPD Web Developer .Net 4</a> (10 Dec 2011)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

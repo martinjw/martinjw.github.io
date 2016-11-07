@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Database Schema Reader with more SqlServerCE 4.0 love</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Database Schema Reader with more SqlServerCE 4.0 love</h2>
+<p>Published Monday 25 April 2011</p><article>
+
+<p>Shortly after the last release of <a href="http://dbschemareader.codeplex.com/" target="_blank">Database Schema Reader</a>, here's another release.</p>
+<p><a href="http://martinwilley.com/blog/2011/04/09/DatabaseSchemaReaderNowWithExtraSQLite.html" target="_blank">Last time</a> I added a CopyToSQLite tool, which reads (almost) any database and creates a SQLite clone. I also added experimental support for SQLServer CE 4.0, but it had some big limitations.</p>
+
+<p>So the obvious next step was to fix some of those limitations, and that's what this release focuses on. Unfortunately CopyToSQLite.exe is now a little misnamed. <img style="border-bottom-style: none; border-left-style: none; border-top-style: none; border-right-style: none" class="wlEmoticon wlEmoticon-winkingsmile" alt="Winking smile" src="http://www.martinwilley.com/blog/content/binary/Database-Schema-Reader-with-more-.0-love_9CD7/wlEmoticon-winkingsmile.png"></p>
+<p>I added a little bit of conversion code so VARCHAR(MAX) found in the origin database gets converted to NTEXT (and VARBINARY to IMAGE). The reading of SQLServer CE 4 databases got improved too (capturing the&nbsp; foreign and unique keys and identity columns).</p>
+<p>SQLServer allows an integer column to be marked as "Identity" so it will be auto-generated (the equivalent in Oracle is to create a sequence and an insert trigger). But you can't include the identity column when you insert a row. So, when cloning data, SQLServer also allows identity-inserts with SET IDENTITY_INSERT [MyTable] ON/OFF. When you've done that, you should reset the identity seed with DBCC CHECKIDENT.</p>
+<p>But in SQLServer CE 4, there is no DBCC CHECKIDENT. You have to do an ALTER TABLE [MyTable] ALTER COLUMN [IdentityColumn] IDENTITY (999,1) (where 999 is the new max(IdentityColumn)). It's another of those little gotchas between SQLServer and SQLServer CE.</p>
+<p>SQLServer CE 4 has some great new paging syntax:</p>
+<p>SELECT Id, Name FROM MyTable<br />
+ORDER BY Name <br />
+OFFSET 10 ROWS<br />
+FETCH NEXT 5 ROWS ONLY</p>
+<p>It's similar to the LIMIT/OFFSET syntax in MySQL and SQLite, but (reasonably enough) must follow an ORDER BY. Rather than offset/skipping a number of rows, I'd like to specify just page number and page size - or another formula. The <a href="http://msdn.microsoft.com/en-us/library/ms188385%28v=sql.110%29.aspx#Offset" target="_blank">SQLServer 2011/Denali documentation</a> shows the offset/fetch syntax for a start row/end row expression:</p>
+<p>SELECT DepartmentID, Name, GroupName   <br />
+FROM HumanResources.Department<br />
+ORDER BY DepartmentID ASC <br />
+OFFSET @StartingRowNumber - 1 ROWS <br />
+FETCH NEXT @EndingRowNumber - @StartingRowNumber + 1 ROWS ONLY</p>
+<p>But that doesn't work in SQLServer CE 4. You can use parameters, or constants, or expressions with constants, but apparently not expressions with constants and parameters. Oh well, it's still much better than horrible OVER subqueries.<br />
+</p>
+<p>Overall, the "CopyToSQLite" to SQLServer CE 4 seems to work well. Using easily deployable file databases like SQLServer CE and SQLite is simple and powerful.</p>
+
+</article>
+<ul class="seeAlso">
+<li><a href="../../../2011/02/14/DatabaseSchemaReader.html">Database Schema Reader</a> (14 Feb 2011)</li>
+<li><a href="../../../2015/03/29/GithubAndAppveyor.html">Github and Appveyor</a> (29 Mar 2015)</li>
+</ul>
+<ul class="seeAlso">
+<li><a href="../../../2010/11/01/DatabaseSchemaReader.html">Database Schema Reader</a> (01 Nov 2010)</li>
+</ul>
+<p>Previously: <a href="../../../2011/04/09/DatabaseSchemaReaderNowWithExtraSqlite.html">Database Schema Reader now with extra SQLite</a> (09 Apr 2011)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

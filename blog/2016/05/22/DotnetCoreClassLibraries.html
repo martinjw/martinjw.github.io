@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>DotNet Core class libraries</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>DotNet Core class libraries</h2>
+<p>Published Sunday 22 May 2016</p><article>
+
+<h2>Executables vs class libraries</h2>
+<p>In classic .net, class libraries had an "output type" of "class library" in the property pages (and .csproj) and the extension ".dll". Executable libraries have output types of "Console application" or "Windows application" and the extension ".exe". Asp.net projects are special, actually class libraries launched by IIS.</p>
+<p>In dotnet Core, the project.json specifies executables (that have a "static void Main" - including asp.net Core projects) with this section in project.json:</p>
+<p>&quot;buildOptions&quot;: {<br />
+&#160;&#160;&#160; &quot;emitEntryPoint&quot;: true <br />
+},</p>
+<p>The other key difference is the dependencies and frameworks. Libraries can refer to the "netstandard" abstract APIs (dependency "NETStandard.Library"). Executables need a runnable framework - "netcoreapp" (dependency "Microsoft.NETCore.App").</p>
+<p>So a minimal library project has a project.json like this:   <br />
+{<br />
+&#160; &quot;version&quot;: &quot;1.0.0-*&quot;,<br />
+&#160; &quot;dependencies&quot;: {<br />
+&#160;&#160;&#160; &quot;NETStandard.Library&quot;: &quot;1.5.0-rc2-24027&quot;<br />
+&#160; },<br />
+&#160; &quot;frameworks&quot;: {<br />
+&#160;&#160;&#160; &quot;netstandard1.5&quot;: {<br />
+&#160;&#160;&#160;&#160;&#160; &quot;imports&quot;: &quot;dnxcore50&quot;<br />
+&#160;&#160;&#160; }<br />
+&#160; }<br />
+}</p>
+
+<p>&#160;</p>
+<p>A minimal executable project has a project.json like this:</p>
+<p>{   <br />
+&#160; &quot;version&quot;: &quot;1.0.0-*&quot;,<br />
+&#160; &quot;buildOptions&quot;: { &quot;emitEntryPoint&quot;: true },<br />
+&#160; &quot;dependencies&quot;: {<br />
+&#160;&#160;&#160; &quot;Microsoft.NETCore.App&quot;: {<br />
+&#160;&#160;&#160;&#160;&#160; &quot;type&quot;: &quot;platform&quot;,<br />
+&#160;&#160;&#160;&#160;&#160; &quot;version&quot;: &quot;1.0.0-rc2-3002702&quot;<br />
+&#160;&#160;&#160; }<br />
+&#160; },<br />
+&#160; &quot;frameworks&quot;: {<br />
+&#160;&#160;&#160; &quot;netcoreapp1.0&quot;: {<br />
+&#160;&#160;&#160;&#160;&#160; &quot;imports&quot;: &quot;dnxcore50&quot;<br />
+&#160;&#160;&#160; }<br />
+&#160; }<br />
+}</p>
+
+<p>&#160;</p>  
+<h2>Referencing projects in a solution</h2>
+<p>Almost all real-world .net solutions are not single projects- they contain multiple linked projects. A console or asp website will depend on one or more class libraries, containing the business logic or interfaces to databases or webservices. At the very least, there should also be one or more test projects containing the unit tests.</p>
+<p>In classic .net, the .csproj project files had a special type of project reference between projects in a solution. In dotnet Core RC2, the project.json file lists all dependencies as nuget packages. When you add a project reference is Visual Studio (using the "Preview 1" tooling released with RC2), it appears just like a nuget reference. You must manually add a special qualifier to indicate a project reference.</p>
+<p>&quot;dependencies&quot;: {<br />
+&#160;&#160;&#160; &quot;CoreLib&quot;: { <br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160; &quot;version&quot;: &quot;*&quot;, <br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160; &quot;target&quot;: &quot;project&quot; <br />
+&#160;&#160;&#160; } <br />
+}, <br />
+The "target" is by default "package", but here we make it "project". The "version" can be a wildcard (in a solution we're not worried by semver breaking changes).</p>
+<p>You can build with Visual Studio and the "dotnet" command line- but in Visual Studio any cross-project references persistently have red lines and no intellisense. The tooling - at least as of "RC2/Preview 1", with and without Resharper - simply doesn't recognize cross-project references.</p>  
+<h2>Netstandard</h2>
+<p>The "netstandard" framework means a class library is portable across common APIs - from dotnet Core ("netcoreapp") to the full .net framework, .net 4.6 ("net46").</p>
+
+<p>As at RC2, a Core asp.net project uses "netcoreapp1.0", which is a superset of "netstandard1.5". It can also consume libraries that use "netstandard1.0", "netstandard1.1" up to 1.5.</p>
+<p>Libraries should generally specify lower (less restrictive) netstandards. Don't lazily specify 1.5 when you can run in 1.0, and be used by a wider range of consumers.</p>
+<p>netstandard1.0-1.2 do not include the [assembly: Guid("")] attribute in AssemblyInfo.cs. It's used for COM, so most libraries that are only used by .net can safely remove it.</p>  
+<h2>Multi- targeting</h2>
+<p>You can explicitly add other targets apart from "netstandard". It doesn't make a lot of sense for "net46", which is netstandard, but you can specify "net45", "net40", "net35" or even "net20".</p>
+<p>Let's take some traditional ADO:</p>
+<p>using System;   <br />
+using System.Data.Common;</p>
+<p>namespace CoreLib   <br />
+{<br />
+&#160;&#160;&#160; public static class AdoLib<br />
+&#160;&#160;&#160; {<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160; public static void ExecuteDbReader(DbConnection connection)<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160; {<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; connection.Open();</p>
+<p>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; using (var cmd = connection.CreateCommand())   <br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; {<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; cmd.CommandText = &quot;SELECT * FROM Products&quot;;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; using (var dr = cmd.ExecuteReader())<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; {<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; while (dr.Read())<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; {<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; Console.WriteLine(dr[&quot;ProductName&quot;].ToString());<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br />
+&#160;&#160;&#160; }<br />
+}</p>
+<p>For dotnet core, the dependencies will be NetStandard.Library, System.Console and System.Data.Common.</p>
+<p>But if these are in the top level "dependencies" section, they aren't compatible with the "net" frameworks. Those libraries aren't in nuget packages, they are in GAC assemblies as part of the .net framework library.</p>
+<p>The dotnet Core dependencies can be moved under the framework for "netstandard". For the "net" frameworks, we can specify GAC references (which may not correspond exactly to the nuget packages) within frameworkAssemblies. This is what the project.json looks like:</p>
+<p>{   <br />
+&#160;&#160;&#160; &quot;version&quot;: &quot;1.0.0-*&quot;,</p>
+<p>&#160;&#160;&#160; &quot;dependencies&quot;: {   <br />
+&#160;&#160;&#160; },</p>
+<p>&#160;&#160;&#160; &quot;frameworks&quot;: {   <br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160; &quot;netstandard1.1&quot;: {<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &quot;imports&quot;: &quot;dnxcore50&quot;,<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &quot;dependencies&quot;: {<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &quot;NETStandard.Library&quot;: &quot;1.5.0-rc2-24027&quot;,<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &quot;System.Console&quot;: &quot;4.0.0-rc2-24027&quot;,<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &quot;System.Data.Common&quot;: &quot;4.0.1-rc2-24027&quot;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160; },<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160; &quot;net45&quot;: {<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &quot;frameworkAssemblies&quot;: {<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &quot;System.Data&quot;: &quot;4.0.0.0&quot;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160; },<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160; &quot;net40&quot;: {<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &quot;frameworkAssemblies&quot;: {<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &quot;System.Data&quot;: &quot;4.0.0.0&quot;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160; },<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160; &quot;net20&quot;: {<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &quot;frameworkAssemblies&quot;: {<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &quot;System.Data&quot;: &quot;2.0.0.0&quot;<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br />
+&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br />
+&#160;&#160;&#160; }<br />
+}</p>
+<p>Now "dotnet publish" will generate a package that supports net2.0 to to dotnet core.</p>
+<p>In practice, dotnet core APIs aren't exactly the same- for instance there are no DataTables. Most real life code will probably require conditional code, wrapped in compiler directories. Automatically we now get compiler symbols for each framework when it's built- "net20" and so on. You can also add your own, via &quot;compilationOptions&quot;: { &quot;define&quot;: [&quot;CLASSICNET&quot;] }</p>
+</article>
+<p>Previously: <a href="../../../2016/05/18/UpdatingAClassLibraryToDotnetCoreRC2.html">Updating a class library to dotnet Core RC2</a> (18 May 2016)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

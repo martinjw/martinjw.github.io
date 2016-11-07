@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Asp.Net Core- Not Ready Yet</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Asp.Net Core- Not Ready Yet</h2>
+<p>Published Monday 08 February 2016</p><article>
+
+<p>Note: this is written in February 2016. If you read this in summer 2016 or later, it's ancient history, just ignore.</p>
+
+<p>There's a lot of buzz about the new Asp.Net Core (previously Asp.Net 5) - blog posts, <a href="https://docs.asp.net/en/latest/">articles</a> and tweets from enthusiastic developers.</p>
+<p>It's nice to see Microsoft being open, and to be able to see the <a href="https://github.com/aspnet/Mvc/pulls">git pull requests</a>. RC1 is out and it has a &quot;Go Live&quot; license- Microsoft says you start using it in production.</p>
+<p>Don't use this in production. Don't start your next project with it. You probably don't want to spend too much time playing with it for a few months. It's not ready. It's still changing.</p>
+<p>As of start February 2016, the blogs and the official docs still refer to &quot;dnx&quot; and &quot;dnu&quot;, which will be as dead as the old &quot;k&quot; stuff from a year ago. Want to try the new &quot;dotnet.exe&quot;? All you can do is a &quot;hello world&quot; console with this: <a href="http://dotnet.github.io/getting-started/">http://dotnet.github.io/getting-started/</a>. The promise is great- this will integrate with the .net native efforts, which for now is vapourware. You can't use it with asp.net core yet, even if you take the unstable RC2 packages- the work hasn't been done (check those pull requests). The best information about it was at the NDC conference (<a href="https://vimeo.com/153212604">video now available</a>).</p>
+<p>There's a lot of changes in MVC APIs between RC1 and the unstable RC2 stuff - and there's more changes coming. There's little or no documentation about it yet outside of the github issues and raw pull requests.</p>
+
+<p>Even the project.json structure will be changing. The tooling packages that got lumped in with runtime references in &quot;dependencies&quot; may be separated into &quot;tools&quot;, and there may be other changes. The &quot;dnx451&quot; and &quot;dnxcore50&quot; targets are being renamed (I think to &quot;net&quot; and &quot;netstandardapp&quot;). There's some discussion about this (see the video), but as yet nothing is committed to github, let alone documented.</p>
+<p>The visual studio tooling is still incomplete and weak. The only testing framework is XUnit (still via a MS fork I think). We've known for some time that Entity Framework Core (was EF7) won't be fully ready even at release (the big one: no lazy loading; <a href="https://github.com/aspnet/EntityFramework/wiki/Roadmap#critical-orm-features">&quot;the lack of these features will make EF6.x a better option&quot;</a>). The ADO GetSchema side (needed for any other ORM) has only just started to get a design.</p>
+
+<p>RC1 is nowhere near being what we'd normally call a &quot;release candidate&quot;. RC2 might be feature complete- but there's still a lot of churn going on. RC2 was planned for end February 2016 (with RTM end March), but the dates have recently changed to &quot;TBD&quot;.</p>
+
+<p>Unless you're working on a popular nuget library, I don't think it's worth investing much time playing with or learning Asp.Net Core just yet. After we get a stable RC2 we can play with the new toys. For &quot;real work&quot;, ignore any more "Go Live" licenses - wait until the RTM. I suspect it may be sensible to wait until v1.1 until shifting fully into the new framework.</p>
+
+<p>The multi-targeting (windows/max/linux) is a nice new feature, but no-one is going to ditch all their windows servers. Some of us remember similar things being said about Silverlight, and a few people jumped for that too. My inclination is to dump the restricted &quot;dot net core&quot; experience and run it on full .net 4.6 framework so we can use EF 6, existing libraries and ADO providers, but still benefit from xproj and the new asp stack. Fortunately that's a nice "transitional" story.</p>
+
+<p>Don't get me wrong - this is a positive direction for .net, with lots of very welcome changes. But it's a huge change which is still ongoing. The new open source Microsoft, coupled with some clumsy marketing, means we're looking at something not fully cooked. If you're enthusiastic about the new changes, save yourself some frustration and wait a few more months.</p>
+</article>
+<p>Previously: <a href="../../../2016/01/26/VisualStudio2015Update1Woes.html">Visual Studio 2015 Update 1 woes</a> (26 Jan 2016)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

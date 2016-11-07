@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Database Schema Reader with codegen</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Database Schema Reader with codegen</h2>
+<p>Published Wednesday 26 January 2011</p><article>
+
+<p>I've updated the <a href="http://dbschemareader.codeplex.com/" target="_blank">Database Schema Reader</a> CodePlex project with <em>basic</em> code generation.</p>
+<p>The original code (vintage 2005) did all sorts of things like generating ADO data access classes and, over I added NHibernate mapping, Castle ActiveRecord, and Enterprise Library validation block attributes. It's old code (that is, ugly and horrible), so I stole bits of code and made it just do something a lot simpler.</p>
+<p>Now it reads the table schema and turns them into simple POCO classes that are NHibernate compatible (virtual properties, override Equals and GetHashCode, composite keys are made into Key classes). There's also (simplistic) NHibernate mapping. And finally it has .Net 3.5's DataAnnotations for validation.</p>
+<p>For quick and simple data-driven code, it's an okay starting point. It is <em>just</em> a starting point- not a data driven solution. There is a UI, but it's the most basic one I could design - it's certainly not anything like the Linq2Sql or EF designers (there are NHibernate mapping designers out there). But once you've got started in NHibernate you'll prefer to continue in code-first mode anyway.</p>
+<p>If your database is a mess (I've seen a few with no primary keys .) it won't be much help!</p>
+</article>
+<p>Previously: <a href="../../../2010/11/13/TechedEurope2010WrapUp.html">TechEd Europe 2010 wrap up</a> (13 Nov 2010)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

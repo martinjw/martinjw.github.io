@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>EF Code First - Add a DTO</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>EF Code First - Add a DTO</h2>
+<p>Published Wednesday 21 March 2012</p><article>
+EF Code First has a neat method to merge in the values of a DTO into an mapped entity.<br />
+<br />
+context.Entry(entity).CurrentValues.SetValues(dataTransferObject);<br />
+<br />
+The DTO will generally have a primary key property, and you can use that to determine if it is a new record or a modification. Here's a method that does that:<br />
+ <span style="color: blue;">public</span> <span style="color: blue;">static</span> T Merge&lt;T&gt;(<span style="color: blue;">this</span> <span style="color: #2b91af;">DbContext</span> context, <span style="color: blue;">object</span> dataTransferObject)<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <span style="color: blue;">where</span> T : <span style="color: blue;">class</span><br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (context == <span style="color: blue;">null</span>) <span style="color: blue;">throw</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">ArgumentNullException</span>(<span style="color: #a31515;">"context"</span>);<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (dataTransferObject == <span style="color: blue;">null</span>) <span style="color: blue;">throw</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">ArgumentNullException</span>(<span style="color: #a31515;">"dataTransferObject"</span>);<br />
+
+&nbsp;<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> property = FindPrimaryKeyProperty&lt;T&gt;(context);<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//find the id property of the dto</span><br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> idProperty = dataTransferObject.GetType().GetProperty(property.Name);<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (idProperty == <span style="color: blue;">null</span>)<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">throw</span> <span style="color: blue;">new</span> <span style="color: #2b91af;">InvalidOperationException</span>(<span style="color: #a31515;">"Cannot find an id on the dataTransferObject"</span>);<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> id = idProperty.GetValue(dataTransferObject, <span style="color: blue;">null</span>);<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//has the id been set (existing item) or not (transient)?</span><br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> propertyType = property.PropertyType;<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> transientValue = propertyType.IsValueType ?<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: #2b91af;">Activator</span>.CreateInstance(propertyType) : <span style="color: blue;">null</span>;<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> isTransient = Equals(id, transientValue);<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; T entity;<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (isTransient)<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//it's transient, just create a dummy</span><br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; entity = CreateEntity&lt;T&gt;(id, property);<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//if DatabaseGeneratedOption(DatabaseGeneratedOption.None) and no id, this errors</span><br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; context.Set&lt;T&gt;().Attach(entity);<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">else</span><br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//try to load from identity map or database</span><br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; entity = context.Set&lt;T&gt;().Find(id);<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">if</span> (entity == <span style="color: blue;">null</span>)<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//could not find entity, assume assigned primary key</span><br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; entity = CreateEntity&lt;T&gt;(id, property);<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; context.Set&lt;T&gt;().Add(entity);<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//copy the values from DTO onto the entry</span><br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; context.Entry(entity).CurrentValues.SetValues(dataTransferObject);<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> entity;<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+
+&nbsp;<br />
+
+&nbsp;<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">static</span> <span style="color: #2b91af;">PropertyInfo</span> FindPrimaryKeyProperty&lt;T&gt;(<span style="color: #2b91af;">IObjectContextAdapter</span> context)<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">where</span> T : <span style="color: blue;">class</span><br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//find the primary key</span><br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> objectContext = context.ObjectContext;<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//this will error if it's not a mapped entity</span><br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> objectSet = objectContext.CreateObjectSet&lt;T&gt;();<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> elementType = objectSet.EntitySet.ElementType;<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> pk = elementType.KeyMembers.First();<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//look it up on the entity</span><br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> propertyInfo = <span style="color: blue;">typeof</span>(T).GetProperty(pk.Name);<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> propertyInfo;<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+
+&nbsp;<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">private</span> <span style="color: blue;">static</span> T CreateEntity&lt;T&gt;(<span style="color: blue;">object</span> id, <span style="color: #2b91af;">PropertyInfo</span> property)<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">where</span> T : <span style="color: blue;">class</span><br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; {<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">// consider IoC here</span><br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">var</span> entity = (T)<span style="color: #2b91af;">Activator</span>.CreateInstance(<span style="color: blue;">typeof</span>(T));<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: green;">//set the value of the primary key (may error if wrong type)</span><br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; property.SetValue(entity, id, <span style="color: blue;">null</span>);<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color: blue;">return</span> entity;<br />
+
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; }<br />
+
+<p></p>
+</article>
+<ul class="seeAlso">
+<li><a href="../../../2012/02/05/EFCodeFirstManyToManyMapping.html">EF Code First Many to Many Mapping</a> (05 Feb 2012)</li>
+<li><a href="../../../2012/02/14/EFCodeFirstTracing-LoggingTheSQL.html">EF Code First tracing - logging the SQL</a> (14 Feb 2012)</li>
+<li><a href="../../../2012/02/16/EFCodeFirst-NavigationPropertyCounts.html">EF Code First - navigation property counts</a> (16 Feb 2012)</li>
+<li><a href="../../../2012/02/17/EFCodeFirst-NavigationCollectionPaging.html">EF Code First - navigation collection paging</a> (17 Feb 2012)</li>
+<li><a href="../../../2012/02/22/EFCodeFirst-ReferencesVsValidation.html">EF Code First - references vs validation</a> (22 Feb 2012)</li>
+<li><a href="../../../2012/03/17/EFCodeFirst-UpdatingChangedValuesOnly.html">EF Code First - Updating changed values only</a> (17 Mar 2012)</li>
+<li><a href="../../../2012/03/18/EFCodeFirst-UsingDummyReferences.html">EF Code First - Using dummy references</a> (18 Mar 2012)</li>
+<li><a href="../../../2012/03/19/EFCodeFirst-GenericallySettingEntityReferencesToUnchangedStatus.html">EF Code First -  Generically setting entity references to unchanged status</a> (19 Mar 2012)</li>
+</ul>
+<p>Previously: <a href="../../../2012/03/20/EFCodeFirst-IsEntityTransient.html">EF Code First - is entity transient?</a> (20 Mar 2012)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

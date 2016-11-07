@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>EF Code First - Using dummy references</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>EF Code First - Using dummy references</h2>
+<p>Published Sunday 18 March 2012</p><article>
+You’re adding a new record, which has a reference to an existing object.<br />
+<br />
+<span style="font-family:Consolas;color:#000000;">var johnCarter = new </span><span style="font-family:Consolas;color:#2b91af;">Movie</span><span style="font-family:Consolas;color:#000000;">() { Title = </span><span style="font-family:Consolas;color:#a31515;">"John Carter"</span><span style="font-family:Consolas;color:#000000;"> };<br />
+johnCarter.Director = new </span><span style="font-family:Consolas;color:#2b91af;">Director</span><span style="font-family:Consolas;color:#000000;"> { Id = andrewStantonId };<br />
+context.Movies.Add(johnCarter);<br />
+context.SaveChanges();</span>
+<p>SaveChanges()
+ will save the new Movie- but it also saves a new Director record (which
+ gets a new Id, even though you set it manually). When you add an entity
+ to a DbSet, the entire object graph is marked as “Added”.</p>
+<p>You
+ could do a Find to load the Director record from the database, but it 
+is a pointless database access that you don’t need. It just needs to 
+save the Movie record with a known directorId.</p>
+
+<p>In
+ NHibernate you can use session.Load&lt;Director&gt;(andrewStantonId) 
+which will create an empty proxy object without hitting the database. 
+Only if you use one of the proxy properties (like director.Name) will it
+ hit the database to load the record. EF Code First doesn’t have this 
+feature.</p>
+<p>One way round it to add a foreign key Id property to the Movie record:</p>
+<p><span style="font-family:Consolas;color:#000000;"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public virtual </span><span style="font-family:Consolas;color:#2b91af;">Director</span><span style="font-family:Consolas;color:#000000;"> Director { get; set; }<br />
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public int? DirectorId { get; set; }</span></p>
+<p>You
+ can then set the DirectorId directly. The two properties are not kept 
+in step automatically, so setting the DirectorId doesn’t cause Director 
+to load from the database. Foreign key Id properties are convenient, but your object model is “denormalized”.</p>
+<p>The alternative is to mark the dummy record as unchanged. There are two ways.</p>
+<p>One is to set the context.Entry state for the dummy reference AFTER the new record has been added.</p>
+<p><span style="font-family:Consolas;color:#000000;">var johnCarter = new </span><span style="font-family:Consolas;color:#2b91af;">Movie</span><span style="font-family:Consolas;color:#000000;">() { Title = </span><span style="font-family:Consolas;color:#a31515;">"John Carter"</span><span style="font-family:Consolas;color:#000000;"> };<br />
+johnCarter.DirectorId = andrewStantonId;<br />
+context.Movies.Add(johnCarter);<br />
+//after it's added, change the status of the reference<br />
+context.Entry(johnCarter.Director).State = </span><span style="font-family:Consolas;color:#2b91af;">EntityState</span><span style="font-family:Consolas;color:#000000;">.Unchanged;<br />
+context.SaveChanges();</span></p>
+<p>The second way is to create the dummy reference by Attaching it.</p>
+<p><span style="font-family:Consolas;color:#000000;">//attach the dummy director record<br />
+var andrewStanton = new </span><span style="font-family:Consolas;color:#2b91af;">Director</span><span style="font-family:Consolas;color:#000000;"> { Id = andrewStantonId};<br />
+context.Directors.Attach(andrewStanton);<br />
+//now we have an "unchanged" director record to attach<br />
+var johnCarter = new </span><span style="font-family:Consolas;color:#2b91af;">Movie</span><span style="font-family:Consolas;color:#000000;">() { Title = </span><span style="font-family:Consolas;color:#a31515;">"John Carter"</span><span style="font-family:Consolas;color:#000000;"> };<br />
+johnCarter.Director = andrewStanton;<br />
+context.Movies.Add(johnCarter);<br />
+context.SaveChanges();</span></p>
+<p></p>
+</article>
+<ul class="seeAlso">
+<li><a href="../../../2012/02/05/EFCodeFirstManyToManyMapping.html">EF Code First Many to Many Mapping</a> (05 Feb 2012)</li>
+<li><a href="../../../2012/02/14/EFCodeFirstTracing-LoggingTheSQL.html">EF Code First tracing - logging the SQL</a> (14 Feb 2012)</li>
+<li><a href="../../../2012/02/16/EFCodeFirst-NavigationPropertyCounts.html">EF Code First - navigation property counts</a> (16 Feb 2012)</li>
+<li><a href="../../../2012/02/17/EFCodeFirst-NavigationCollectionPaging.html">EF Code First - navigation collection paging</a> (17 Feb 2012)</li>
+<li><a href="../../../2012/02/22/EFCodeFirst-ReferencesVsValidation.html">EF Code First - references vs validation</a> (22 Feb 2012)</li>
+<li><a href="../../../2012/03/19/EFCodeFirst-GenericallySettingEntityReferencesToUnchangedStatus.html">EF Code First -  Generically setting entity references to unchanged status</a> (19 Mar 2012)</li>
+<li><a href="../../../2012/03/20/EFCodeFirst-IsEntityTransient.html">EF Code First - is entity transient?</a> (20 Mar 2012)</li>
+<li><a href="../../../2012/03/21/EFCodeFirst-AddADTO.html">EF Code First - Add a DTO</a> (21 Mar 2012)</li>
+</ul>
+<p>Previously: <a href="../../../2012/03/17/EFCodeFirst-UpdatingChangedValuesOnly.html">EF Code First - Updating changed values only</a> (17 Mar 2012)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

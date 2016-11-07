@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>EF Code First - navigation collection paging</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>EF Code First - navigation collection paging</h2>
+<p>Published Friday 17 February 2012</p><article>
+There is a risk of unbounded result sets when using navigation collections.<br />
+<br />
+If you try to do paging (Skip/Take) on a navigation collection, you actually load all the related entities and then page in memory. Opps.<br />
+<pre style="font-family:Consolas;font-size:13;color:black;background:white;"><span style="color:green;">//unbounded&nbsp;result&nbsp;set&nbsp;-&nbsp;there&nbsp;could&nbsp;be&nbsp;1000s!</span>
+<span style="color:blue;">var</span>&nbsp;products&nbsp;=&nbsp;category.Products
+&nbsp;&nbsp;&nbsp;&nbsp;.OrderBy(p&nbsp;=&gt;&nbsp;p.ProductName)&nbsp;<span style="color:green;">//you&nbsp;have&nbsp;to&nbsp;order</span>
+&nbsp;&nbsp;&nbsp;&nbsp;.Skip((page&nbsp;-&nbsp;1)&nbsp;*&nbsp;pageSize)
+&nbsp;&nbsp;&nbsp;&nbsp;.Take(pageSize);</pre>You have the same issue with a simple .Count, as <a href="http://martinwilley.com/blog/2012/02/16/EFCodeFirstNavigationPropertyCounts.html">shown in my last post</a>.<br />
+<br />
+The solutions are the same. You can use a filter directly on the products DbSet.<br />
+<pre style="font-family:Consolas;font-size:13;color:black;background:white;"><span style="color:blue;">var</span>&nbsp;pagedProductsByCategory&nbsp;=&nbsp;context.Products
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//have&nbsp;to&nbsp;specify&nbsp;primary&nbsp;keys&nbsp;here-&nbsp;can't&nbsp;match&nbsp;on&nbsp;"category"</span>
+&nbsp;&nbsp;&nbsp;&nbsp;.Where(p&nbsp;=&gt;&nbsp;p.Category.CategoryId&nbsp;==&nbsp;category.CategoryId)
+&nbsp;&nbsp;&nbsp;&nbsp;.OrderBy(p&nbsp;=&gt;&nbsp;p.ProductName)&nbsp;<span style="color:green;">//you&nbsp;have&nbsp;to&nbsp;order</span>
+&nbsp;&nbsp;&nbsp;&nbsp;.Skip((page&nbsp;-&nbsp;1)&nbsp;*&nbsp;pageSize)
+&nbsp;&nbsp;&nbsp;&nbsp;.Take(pageSize);</pre>Or you can use the context.Entry(x).Collection(y).Query(). This is the equivalent of an <a href="http://www.martinwilley.com/net/code/nhibernate/advanced.html">NHibernate CreateFilter</a>.<br />
+<pre style="font-family:Consolas;font-size:13;color:black;background:white;"><span style="color:blue;">var</span>&nbsp;pagedProducts&nbsp;=&nbsp;context.Entry(category)
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//from&nbsp;the&nbsp;DbEntityEntry,&nbsp;get&nbsp;the&nbsp;navigation&nbsp;property</span>
+&nbsp;&nbsp;&nbsp;&nbsp;.Collection(x&nbsp;=&gt;&nbsp;x.Products)
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//turn&nbsp;it&nbsp;into&nbsp;a&nbsp;query</span>
+&nbsp;&nbsp;&nbsp;&nbsp;.Query()
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//page</span>
+&nbsp;&nbsp;&nbsp;&nbsp;.OrderBy(p&nbsp;=&gt;&nbsp;p.ProductName)&nbsp;<span style="color:green;">//you&nbsp;have&nbsp;to&nbsp;order</span>
+&nbsp;&nbsp;&nbsp;&nbsp;.Skip((page&nbsp;-&nbsp;1)&nbsp;*&nbsp;pageSize)
+&nbsp;&nbsp;&nbsp;&nbsp;.Take(pageSize);</pre>To remove temptation, you might want to remove the collection navigation property. In this case, category has no Products collection (the many end of the foreign key), but Product has a Category property (the 0.1 end of the foreign key). <br />
+<br />
+You can specify the mapping in an EntityTypeConfiguration&lt;Product&gt; class map. Because the many end isn't defined, you use an empty .WithMany().<br />
+<pre style="font-family:Consolas;font-size:13;color:black;background:white;">HasOptional(x&nbsp;=&gt;&nbsp;x.Category)
+&nbsp;&nbsp;&nbsp;&nbsp;.WithMany()&nbsp;<span style="color:green;">//.WithMany(c&nbsp;=&gt;&nbsp;c.Products)</span>
+&nbsp;&nbsp;&nbsp;&nbsp;.Map(m&nbsp;=&gt;&nbsp;m.MapKey(<span style="color:#a31515;">"CategoryID"</span>));</pre><br />
+Remember you can (and should) be profiling your generated SQL, for instance with the EFTracingProvder <a href="http://martinwilley.com/blog/2012/02/14/EFCodeFirstTracingLoggingTheSQL.html">as shown here</a>.<br />
+<br />
+<br />
+<br />
+<br />
+
+<p></p>
+</article>
+<ul class="seeAlso">
+<li><a href="../../../2012/02/05/EFCodeFirstManyToManyMapping.html">EF Code First Many to Many Mapping</a> (05 Feb 2012)</li>
+<li><a href="../../../2012/02/14/EFCodeFirstTracing-LoggingTheSQL.html">EF Code First tracing - logging the SQL</a> (14 Feb 2012)</li>
+<li><a href="../../../2012/02/22/EFCodeFirst-ReferencesVsValidation.html">EF Code First - references vs validation</a> (22 Feb 2012)</li>
+<li><a href="../../../2012/03/17/EFCodeFirst-UpdatingChangedValuesOnly.html">EF Code First - Updating changed values only</a> (17 Mar 2012)</li>
+<li><a href="../../../2012/03/18/EFCodeFirst-UsingDummyReferences.html">EF Code First - Using dummy references</a> (18 Mar 2012)</li>
+<li><a href="../../../2012/03/19/EFCodeFirst-GenericallySettingEntityReferencesToUnchangedStatus.html">EF Code First -  Generically setting entity references to unchanged status</a> (19 Mar 2012)</li>
+<li><a href="../../../2012/03/20/EFCodeFirst-IsEntityTransient.html">EF Code First - is entity transient?</a> (20 Mar 2012)</li>
+<li><a href="../../../2012/03/21/EFCodeFirst-AddADTO.html">EF Code First - Add a DTO</a> (21 Mar 2012)</li>
+</ul>
+<p>Previously: <a href="../../../2012/02/16/EFCodeFirst-NavigationPropertyCounts.html">EF Code First - navigation property counts</a> (16 Feb 2012)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

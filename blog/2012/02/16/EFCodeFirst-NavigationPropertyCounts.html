@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>EF Code First - navigation property counts</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>EF Code First - navigation property counts</h2>
+<p>Published Thursday 16 February 2012</p><article>
+Watch out for unbounded result sets when using navigation properties.<br />
+<br />
+<pre style="font-family:Consolas;font-size:13;color:black;background:white;"><span style="color:blue;">using</span>&nbsp;(<span style="color:blue;">var</span>&nbsp;context&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">NorthwindContext</span>(<span style="color:#a31515;"></span>)))
+{
+&nbsp;&nbsp;&nbsp; <span style="color:blue;">var</span>&nbsp;category&nbsp;=&nbsp;context.Categories.Find(1);&nbsp;<span style="color:green;">//Beverages</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Console</span>.WriteLine(category.Products.Count);<br />
+}<br />
+</pre>
+
+<p>This loads ALL the products for the category, and then counts them.</p>
+<p>Fine for a small result set, not so good if you have 1000s of products per category.</p>
+<p>Simple solution: use a filter on products.</p><pre style="font-family: Consolas; font-size: 13px; color: black; background: none repeat scroll 0% 0% white;"><span style="color:#2b91af;">Console</span>.WriteLine(context.Products
+&nbsp;&nbsp;&nbsp;&nbsp;.Count(p&nbsp;=&gt;&nbsp;p.Category.CategoryId&nbsp;==&nbsp;category.CategoryId));<br />
+</pre>
+<p>This generates SQL in the form "SELECT COUNT(*) FROM Products WHERE CategoryID = @p"</p>
+<p>Alternative solution: use context.Entry with .Query()</p><pre style="font-family:Consolas;font-size:13;color:black;background:white;"><span style="color:#2b91af;">Console</span>.WriteLine(context.Entry(category)
+&nbsp;&nbsp;&nbsp;&nbsp;.Collection(x&nbsp;=&gt;&nbsp;x.Products)
+&nbsp;&nbsp;&nbsp;&nbsp;.Query()
+&nbsp;&nbsp;&nbsp;&nbsp;.Count());</pre><pre style="font-family:Consolas;font-size:13;color:black;background:white;"></pre>
+</article>
+<ul class="seeAlso">
+<li><a href="../../../2012/02/05/EFCodeFirstManyToManyMapping.html">EF Code First Many to Many Mapping</a> (05 Feb 2012)</li>
+<li><a href="../../../2012/02/17/EFCodeFirst-NavigationCollectionPaging.html">EF Code First - navigation collection paging</a> (17 Feb 2012)</li>
+<li><a href="../../../2012/02/22/EFCodeFirst-ReferencesVsValidation.html">EF Code First - references vs validation</a> (22 Feb 2012)</li>
+<li><a href="../../../2012/03/17/EFCodeFirst-UpdatingChangedValuesOnly.html">EF Code First - Updating changed values only</a> (17 Mar 2012)</li>
+<li><a href="../../../2012/03/18/EFCodeFirst-UsingDummyReferences.html">EF Code First - Using dummy references</a> (18 Mar 2012)</li>
+<li><a href="../../../2012/03/19/EFCodeFirst-GenericallySettingEntityReferencesToUnchangedStatus.html">EF Code First -  Generically setting entity references to unchanged status</a> (19 Mar 2012)</li>
+<li><a href="../../../2012/03/20/EFCodeFirst-IsEntityTransient.html">EF Code First - is entity transient?</a> (20 Mar 2012)</li>
+<li><a href="../../../2012/03/21/EFCodeFirst-AddADTO.html">EF Code First - Add a DTO</a> (21 Mar 2012)</li>
+</ul>
+<p>Previously: <a href="../../../2012/02/14/EFCodeFirstTracing-LoggingTheSQL.html">EF Code First tracing - logging the SQL</a> (14 Feb 2012)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

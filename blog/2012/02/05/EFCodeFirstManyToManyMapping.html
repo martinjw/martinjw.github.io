@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>EF Code First Many to Many Mapping</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>EF Code First Many to Many Mapping</h2>
+<p>Published Sunday 05 February 2012</p><article>
+
+<p>I wanted to use a many-to-many relationship using Entity Framework Code First (v4.1/4.2).</p>
+<p>Using pure code first such as this:</p>  <pre class="csharpcode"><span class="kwrd">using</span> (var context = <span class="kwrd">new</span> MyContext())
+{
+    var employee = <span class="kwrd">new</span> Employee { FirstName = <span class="str">&quot;Homer&quot;</span>, LastName = <span class="str">&quot;Simpson&quot;</span> };
+    var territory = <span class="kwrd">new</span> Territory { TerritoryDescription = <span class="str">&quot;Springfield&quot;</span> };
+    employee.Territories.Add(territory);
+    context.Employees.Add(employee);
+
+    context.SaveChanges();
+}</pre>
+<style type="text/css">
+
+
+.csharpcode, .csharpcode pre
+{
+	font-size: small;
+	color: black;
+	font-family: consolas, "Courier New", courier, monospace;
+	background-color: #ffffff;
+	/*white-space: pre;*/
+}
+.csharpcode pre { margin: 0em; }
+.csharpcode .rem { color: #008000; }
+.csharpcode .kwrd { color: #0000ff; }
+.csharpcode .str { color: #006080; }
+.csharpcode .op { color: #0000c0; }
+.csharpcode .preproc { color: #cc6633; }
+.csharpcode .asp { background-color: #ffff00; }
+.csharpcode .html { color: #800000; }
+.csharpcode .attr { color: #ff0000; }
+.csharpcode .alt 
+{
+	background-color: #f4f4f4;
+	width: 100%;
+	margin: 0em;
+}
+.csharpcode .lnum { color: #606060; }</style>
+
+
+<p>results in a nice association table</p>
+
+
+<p><a href="http://www.martinwilley.com/blog/content/binary/EF-Code-First-Many-to-Many-Mapping_107AD/image.png"><img style="background-image: none; border-right-width: 0px; margin: 0px; padding-left: 0px; padding-right: 0px; display: inline; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; padding-top: 0px" title="image" border="0" alt="image" src="http://www.martinwilley.com/blog/content/binary/EF-Code-First-Many-to-Many-Mapping_107AD/image_thumb.png" width="244" height="180" /></a></p>
+
+
+<p>How do you map existing database tables? Like Northwind's customer to customer demographic table relationship:</p>
+
+
+<p><a href="http://www.martinwilley.com/blog/content/binary/EF-Code-First-Many-to-Many-Mapping_107AD/image_3.png"><img style="background-image: none; border-right-width: 0px; margin: 0px; padding-left: 0px; padding-right: 0px; display: inline; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; padding-top: 0px" title="image" border="0" alt="image" src="http://www.martinwilley.com/blog/content/binary/EF-Code-First-Many-to-Many-Mapping_107AD/image_thumb_3.png" width="244" height="213" /></a></p>
+
+
+<p>This is the code I want to write:</p>
+
+<pre class="csharpcode"><span class="kwrd">using</span> (var context = <span class="kwrd">new</span> MyContext(<span class="str">&quot;name=Northwind&quot;</span>))
+{
+
+    var demo = <span class="kwrd">new</span> CustomerDemographic();
+    demo.CustomerTypeID = <span class="str">&quot;BERLIN&quot;</span>;
+    demo.CustomerDesc = <span class="str">&quot;Berliner&quot;</span>;
+    context.CustomerDemographics.Add(demo);
+    <span class="rem">//link it to a customer by either end</span>
+    var alfki = context.Customers.Find(<span class="str">&quot;ALFKI&quot;</span>);
+    alfki.CustomerDemographics.Add(demo);
+
+    context.SaveChanges();
+}</pre>
+<style type="text/css">
+
+.csharpcode, .csharpcode pre
+{
+	font-size: small;
+	color: black;
+	font-family: consolas, "Courier New", courier, monospace;
+	background-color: #ffffff;
+	/*white-space: pre;*/
+}
+.csharpcode pre { margin: 0em; }
+.csharpcode .rem { color: #008000; }
+.csharpcode .kwrd { color: #0000ff; }
+.csharpcode .str { color: #006080; }
+.csharpcode .op { color: #0000c0; }
+.csharpcode .preproc { color: #cc6633; }
+.csharpcode .asp { background-color: #ffff00; }
+.csharpcode .html { color: #800000; }
+.csharpcode .attr { color: #ff0000; }
+.csharpcode .alt 
+{
+	background-color: #f4f4f4;
+	width: 100%;
+	margin: 0em;
+}
+.csharpcode .lnum { color: #606060; }</style>
+
+
+<p>We have to override DbContext's OnModelCreating and add some mapping. For CodeFirst, you map both sides of the relationship, so you can either put the mapping on Customer or CustomerDemographic - or even both if the mappings agree. A normal foreign key relationship is mapped with ".HasMany|HasOptional|HasRequired" followed by a ".WithMany|WithOptional|WithRequired".</p>
+
+
+
+<p>So, from the CustomerDemographic entity, a many to many is just .HasMany(x=&gt;x.Customers).WithMany(z=&gt;z.CustomerDemographics).</p>
+
+
+<p>In addition, we don't have standard names for our association table so we add a .Map element to specify the table and the left and right key columns.</p>
+
+
+
+<p>Note the primary key of CustomerDemographics isn't the 'tableName'+"Id" convention that Code First will expect. So I have to define the key for that. As we have that end of the configuration, we'll define the mapping there.</p>
+
+
+<p>Here's the code.</p>
+
+<pre class="csharpcode">modelBuilder.Entity&lt;CustomerDemographic&gt;()
+    <span class="rem">//the key isn't standard so specify it</span>
+    .HasKey(x =&gt; x.CustomerTypeID)
+    <span class="rem">//define both sides of the relationship - HasMany.WithMany</span>
+    .HasMany(x =&gt; x.Customers)
+    .WithMany(z =&gt; z.CustomerDemographics)
+    <span class="rem">//specify mapping information</span>
+    .Map(map =&gt;
+    {
+        <span class="rem">//the association table name</span>
+        map.ToTable(<span class="str">&quot;CustomerCustomerDemo&quot;</span>);
+        <span class="rem">//the left side (fk to CustomerDemographic, the entity we're defining)</span>
+        map.MapLeftKey(<span class="str">&quot;CustomerTypeID&quot;</span>);
+        <span class="rem">//the right side (fk to Customers, the other side)</span>
+        map.MapRightKey(<span class="str">&quot;CustomerID&quot;</span>);
+    }
+);</pre>
+<style type="text/css">
+
+.csharpcode, .csharpcode pre
+{
+	font-size: small;
+	color: black;
+	font-family: consolas, "Courier New", courier, monospace;
+	background-color: #ffffff;
+	/*white-space: pre;*/
+}
+.csharpcode pre { margin: 0em; }
+.csharpcode .rem { color: #008000; }
+.csharpcode .kwrd { color: #0000ff; }
+.csharpcode .str { color: #006080; }
+.csharpcode .op { color: #0000c0; }
+.csharpcode .preproc { color: #cc6633; }
+.csharpcode .asp { background-color: #ffff00; }
+.csharpcode .html { color: #800000; }
+.csharpcode .attr { color: #ff0000; }
+.csharpcode .alt 
+{
+	background-color: #f4f4f4;
+	width: 100%;
+	margin: 0em;
+}
+.csharpcode .lnum { color: #606060; }</style>
+
+
+<p>If we mapped from the Customer entity, the HasMany and WithMany properties are different, and the mapped left and right keys swap round.</p>
+
+
+<p>Here's the full DbContext for my mini-Northwind mapping:</p>
+
+<pre class="csharpcode"><span class="kwrd">class</span> MyContext : DbContext
+{
+    <span class="kwrd">public</span> MyContext(<span class="kwrd">string</span> connectionName)
+        : <span class="kwrd">base</span>(connectionName)
+    {
+    }
+
+    <span class="kwrd">public</span> DbSet&lt;Employee&gt; Employees { get; set; }
+    <span class="kwrd">public</span> DbSet&lt;Territory&gt; Territories { get; set; }
+
+    <span class="kwrd">public</span> DbSet&lt;Customer&gt; Customers { get; set; }
+    <span class="kwrd">public</span> DbSet&lt;CustomerDemographic&gt; CustomerDemographics { get; set; }
+
+    <span class="kwrd">protected</span> <span class="kwrd">override</span> <span class="kwrd">void</span> OnModelCreating(DbModelBuilder modelBuilder)
+    {
+        <span class="rem">//Database.SetInitializer(new DropCreateDatabaseIfModelChanges&lt;MyContext&gt;());</span>
+        Database.SetInitializer&lt;MyContext&gt;(<span class="kwrd">null</span>);
+        modelBuilder.Conventions.Remove&lt;System.Data.Entity.Infrastructure.IncludeMetadataConvention&gt;();
+
+        modelBuilder.Entity&lt;CustomerDemographic&gt;()
+            <span class="rem">//the key isn't standard so specify it</span>
+            .HasKey(x =&gt; x.CustomerTypeID)
+            <span class="rem">//define both sides of the relationship - HasMany.WithMany</span>
+            .HasMany(x =&gt; x.Customers)
+            .WithMany(z =&gt; z.CustomerDemographics)
+            <span class="rem">//specify mapping information</span>
+            .Map(map =&gt;
+            {
+                <span class="rem">//the association table name</span>
+                map.ToTable(<span class="str">&quot;CustomerCustomerDemo&quot;</span>);
+                <span class="rem">//the left side (fk to CustomerDemographic, the entity we're defining)</span>
+                map.MapLeftKey(<span class="str">&quot;CustomerTypeID&quot;</span>);
+                <span class="rem">//the right side (fk to Customers, the other side)</span>
+                map.MapRightKey(<span class="str">&quot;CustomerID&quot;</span>);
+            }
+        );
+    }
+}</pre>
+<style type="text/css">
+
+.csharpcode, .csharpcode pre
+{
+	font-size: small;
+	color: black;
+	font-family: consolas, "Courier New", courier, monospace;
+	background-color: #ffffff;
+	/*white-space: pre;*/
+}
+.csharpcode pre { margin: 0em; }
+.csharpcode .rem { color: #008000; }
+.csharpcode .kwrd { color: #0000ff; }
+.csharpcode .str { color: #006080; }
+.csharpcode .op { color: #0000c0; }
+.csharpcode .preproc { color: #cc6633; }
+.csharpcode .asp { background-color: #ffff00; }
+.csharpcode .html { color: #800000; }
+.csharpcode .attr { color: #ff0000; }
+.csharpcode .alt 
+{
+	background-color: #f4f4f4;
+	width: 100%;
+	margin: 0em;
+}
+.csharpcode .lnum { color: #606060; }</style>
+</article>
+<ul class="seeAlso">
+<li><a href="../../../2012/02/16/EFCodeFirst-NavigationPropertyCounts.html">EF Code First - navigation property counts</a> (16 Feb 2012)</li>
+<li><a href="../../../2012/02/17/EFCodeFirst-NavigationCollectionPaging.html">EF Code First - navigation collection paging</a> (17 Feb 2012)</li>
+<li><a href="../../../2012/03/17/EFCodeFirst-UpdatingChangedValuesOnly.html">EF Code First - Updating changed values only</a> (17 Mar 2012)</li>
+<li><a href="../../../2012/03/18/EFCodeFirst-UsingDummyReferences.html">EF Code First - Using dummy references</a> (18 Mar 2012)</li>
+<li><a href="../../../2012/03/19/EFCodeFirst-GenericallySettingEntityReferencesToUnchangedStatus.html">EF Code First -  Generically setting entity references to unchanged status</a> (19 Mar 2012)</li>
+<li><a href="../../../2012/03/20/EFCodeFirst-IsEntityTransient.html">EF Code First - is entity transient?</a> (20 Mar 2012)</li>
+<li><a href="../../../2012/03/21/EFCodeFirst-AddADTO.html">EF Code First - Add a DTO</a> (21 Mar 2012)</li>
+</ul>
+<ul class="seeAlso">
+<li><a href="../../../2010/04/02/CovarianceAndContravarianceIn Net4In2Minutes.html">covariance and contravariance in .net 4 in 2 minutes</a> (02 Apr 2010)</li>
+<li><a href="../../../2010/06/06/SmartPasteIn2010.html">Smart Paste in 2010</a> (06 Jun 2010)</li>
+<li><a href="../../../2010/11/01/DatabaseSchemaReader.html">Database Schema Reader</a> (01 Nov 2010)</li>
+<li><a href="../../../2011/04/07/PublishAndTransformInMsbuildScript.html">Publish and Transform in MSBuild script</a> (07 Apr 2011)</li>
+<li><a href="../../../2011/04/09/DatabaseSchemaReaderNowWithExtraSqlite.html">Database Schema Reader now with extra SQLite</a> (09 Apr 2011)</li>
+<li><a href="../../../2011/05/02/IldasmAndIlasmToSignAnUnsignedAssembly.html">ildasm and ilasm to sign an unsigned assembly</a> (02 May 2011)</li>
+<li><a href="../../../2011/06/10/T4Preprocessing.html">T4 preprocessing</a> (10 Jun 2011)</li>
+<li><a href="../../../2011/07/08/ Net4 0Caching-NotJustForAsp.html">.Net 4.0 Caching - not just for Asp</a> (08 Jul 2011)</li>
+<li><a href="../../../2011/12/10/MCPDWebDeveloper Net4.html">MCPD Web Developer .Net 4</a> (10 Dec 2011)</li>
+<li><a href="../../../2012/02/14/EFCodeFirstTracing-LoggingTheSQL.html">EF Code First tracing - logging the SQL</a> (14 Feb 2012)</li>
+<li><a href="../../../2012/02/22/EFCodeFirst-ReferencesVsValidation.html">EF Code First - references vs validation</a> (22 Feb 2012)</li>
+<li><a href="../../../2013/05/31/WebapiUpdated30May2013.html">WebAPI updated 30 May 2013</a> (31 May 2013)</li>
+<li><a href="../../../2013/08/08/TheJSONRequestWasTooLargeToBeDeserialized .html">The JSON request was too large to be deserialized.</a> (08 Aug 2013)</li>
+<li><a href="../../../2014/03/07/FormsAuthenticationWithClaims.html">Forms Authentication with claims</a> (07 Mar 2014)</li>
+<li><a href="../../../2014/07/23/ NetVersioning.html">.Net Versioning</a> (23 Jul 2014)</li>
+</ul>
+<p>Previously: <a href="../../../2012/01/05/VisualStudio2010-FindTFSWorkingDirectory.html">Visual Studio 2010 - find TFS working directory</a> (05 Jan 2012)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

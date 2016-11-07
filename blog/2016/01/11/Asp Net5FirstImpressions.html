@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Asp.Net 5 First Impressions</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Asp.Net 5 First Impressions</h2>
+<p>Published Monday 11 January 2016</p><article>
+
+<p>I'm at the NDC London conference, doing the Asp.net 5 introduction by Microsoft's Damian Edwards and David Fowler, who are the guys leading the team writing it. I've downloaded a couple of previous milestones, but it was clear the API was changing radically, so I didn't follow too closely. Now we're on release candidate 1, with 2 due in Feb and the final release at the end of March 2016.</p>
+
+<p>Workshop files are here: <a title="https://github.com/damianedwards/aspnet5-workshop" href="https://github.com/damianedwards/aspnet5-workshop">https://github.com/damianedwards/aspnet5-workshop</a></p>
+<p>Asp.Net 5 docs are here: <a title="https://docs.asp.net/en/latest/" href="https://docs.asp.net/en/latest/">https://docs.asp.net/en/latest/</a></p>
+<p>My first impressions from the first day:</p>
+<p>It's still changing a lot- we're working off the CI builds nuget feeds, so it's RC1+update 1+lots of changes. RC2 has some big changes still to do, including renaming stuff. It's still too early to start playing in depth, let alone thinking about doing real work in it. There's a lot that isn't there at all. Surprisingly, no MsTest, you have to use XUnit.</p>
+<p>But. it's not long until it will be out. And it has some major changes, as big a shift as MVC was from web forms. Developers will have to spend a lot of time learning a new framework.</p>
+<p>Asp MVC and WebApi are pretty stable, simple and powerful, but System.Web is a huge beast with legacy going back to ASP classic compatibility. Asp 5 doesn't use System.Web, although some concepts are copied over (there's still something called HttpContext, it just has a lot less in it). So it's faster, more consistent, more portable - for cloud, and cross-platform.</p>
+
+<p>The main changes (from the first day):</p>
+<p>There's a new project structure. The website is built into a wwwroot folder - the old VS publish is redundant. On the solution level, there's a global.json (the project list), although .sln still exists. On the project level, there's a project.json and (not seen in VS) an .xproj file that between them replace the .csproj. You can also add other json files- hosting, appsettings.</p>
+<p>It's based on nuget packages, so it's easily deployed side-by-side. This downside is the packages are very granular and manual. Visual Studio auto-suggests from nuget feeds while entering the dependencies in project.json. To make it easier, there will be standard packages with simple names that bring in a bunch of other packages (but they aren't there yet). On the MVC level, the Microsoft.AspNet.Mvc package is probably the one you want, unless you want to individually reference Microsoft.AspNet.Mvc.Core and half a dozen other packages for the precise combination of features you're using. Still, we've swapped dll hell for version hell when packages start updating independently.</p>
+<p>There is a plan for zero day patching from Windows Update (presumably this is where the GAC comes back). The proposal is that packages are supported for 12 months- so when an update comes out, you have a year to update. In most organizations, applications get released and the team disperses, and no updates are ever done. With Asp.net 5, that could be a problem.</p>
+<p>It's bootstrapped just like a classic console- with a public static void Main(string[] args) method. (This was hidden away in IIS before). IIS will now use the static void Main, and more things get done in asp and it's Kestrel server (Kestrel now sits behind IIS, as well as being able to run standalone. HttpListener sounds like it's gone).</p>
+<p>Dependency Injection is built in and pervasive. It's used when configuring your asp.net 5 environment, in preference to base classes or interfaces.&#160; In controllers it's not too bad, but in your startup class and middleware you don't have any way to discover what you can do. You have a Configure method which is magically called with the arguments you specify- say, an IApplicationBuilder or an ILoggerFactory. We're going to be relying on the documentation website (and I hope the docs cover updates and and are versioned.)</p>
+</article>
+<ul class="seeAlso">
+<li><a href="../../../2016/01/19/NDCLondonLinkDump.html">NDC London link dump</a> (19 Jan 2016)</li>
+</ul>
+<p>Previously: <a href="../../../2015/08/04/UpgradingWindows10.html">Upgrading Windows 10</a> (04 Aug 2015)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

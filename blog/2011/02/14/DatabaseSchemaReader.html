@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Database Schema Reader</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Database Schema Reader</h2>
+<p>Published Monday 14 February 2011</p><article>
+
+<p>My little <a href="http://dbschemareader.codeplex.com/" target="_blank">Codeplex project</a> has had a few updates lately, with a new release tonight. This weekend I was transferring a SqlServer database onto MySQL, so I fixed up the SQL generation capabilities and added it to the UI.</p>
+
+<p>Simply, it now can read the SqlServer schema (or almost any other ADO database), and write out the DDL for a MySQL database. Or an Oracle one. It should also work from Oracle to SqlServer etc.</p>
+
+<p>Of course this only works for simple databases. Mine had a couple of uniqueidentifer columns (GUIDs), which don't translate to anything other than in SqlServer, so that was fixed up manually. Check constraints can be problematic, and it doesn't touch views or, God forbid, triggers and stored procedures. It won't roundtrip accurately (say SqlServer to MySql to SqlServer) because we are generalizing datatypes each time.</p>
+
+<p>It works on my database. <img style="border-bottom-style: none; border-left-style: none; border-top-style: none; border-right-style: none" class="wlEmoticon wlEmoticon-winkingsmile" alt="Winking smile" src="http://www.martinwilley.com/blog/content/binary/Database-Schema-Reader_13266/wlEmoticon-winkingsmile.png" /></p>
+</article>
+<ul class="seeAlso">
+<li><a href="../../../2011/04/09/DatabaseSchemaReaderNowWithExtraSqlite.html">Database Schema Reader now with extra SQLite</a> (09 Apr 2011)</li>
+<li><a href="../../../2011/04/25/DatabaseSchemaReaderWithMoreSqlserverce4 0Love.html">Database Schema Reader with more SqlServerCE 4.0 love</a> (25 Apr 2011)</li>
+<li><a href="../../../2015/03/29/GithubAndAppveyor.html">Github and Appveyor</a> (29 Mar 2015)</li>
+</ul>
+<p>Previously: <a href="../../../2011/01/26/DatabaseSchemaReaderWithCodegen.html">Database Schema Reader with codegen</a> (26 Jan 2011)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

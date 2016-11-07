@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Visual Studio 2012 Unit Tests Changes</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Visual Studio 2012 Unit Tests Changes</h2>
+<p>Published Saturday 30 June 2012</p><article>
+<h3>MsTest, Nunit, MbUnit etc</h3>
+<p>Unit testing is now available in VS 2012 Express. In the paid-for SKUs, you can use other unit test frameworks, not just MSTest. For instance, NUnit, MbUnit and so on.</p>
+<p>First, install an adapter via Extensions.</p>
+<p><a href="http://www.martinwilley.com/blog/content/binary/Visual-Studio-2012-Test_C071/NunitTestAdapter.png"><img style="background-image: none; border-bottom: 0px; border-left: 0px; padding-left: 0px; padding-right: 0px; display: inline; border-top: 0px; border-right: 0px; padding-top: 0px" title="NunitTestAdapter" border="0" alt="NunitTestAdapter" src="http://www.martinwilley.com/blog/content/binary/Visual-Studio-2012-Test_C071/NunitTestAdapter_thumb.png" width="324" height="184" /></a></p>
+<p>Then install the framework via Nuget- and start writing tests!</p>
+<p><a href="http://www.martinwilley.com/blog/content/binary/Visual-Studio-2012-Test_C071/NunitTests.png"><img style="background-image: none; border-bottom: 0px; border-left: 0px; padding-left: 0px; padding-right: 0px; display: inline; border-top: 0px; border-right: 0px; padding-top: 0px" title="NunitTests" border="0" alt="NunitTests" src="http://www.martinwilley.com/blog/content/binary/Visual-Studio-2012-Test_C071/NunitTests_thumb.png" width="324" height="275" /></a></p>  <h3>Test windows</h3>
+<p><a href="http://www.martinwilley.com/blog/content/binary/Visual-Studio-2012-Test_C071/TestExplorer.png"><img style="background-image: none; border-right-width: 0px; margin: 0px 10px 0px 0px; padding-left: 0px; padding-right: 0px; display: inline; float: left; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; padding-top: 0px" title="TestExplorer" border="0" alt="TestExplorer" align="left" src="http://www.martinwilley.com/blog/content/binary/Visual-Studio-2012-Test_C071/TestExplorer_thumb.png" width="244" height="431" /></a>There's now only one, the Test Explorer. Most people only ever used the Test Results before, and Test Lists was unusable. It has a thin red or green bar (at last!), and simple splitting into Failed and Passed tests (now with timings).</p>
+
+<p>There's a search with filters ("FullName: Domain.Tests.MyTest"). For solutions with large numbers of tests this might be awkward- I'd like to see more customization of the result tree (by project/folder or namespace), and more filters.</p>
+
+<p>The results at the bottom of the window are summarized, but you can still click through to the test and stack.</p>
+<p>There's a button to make every build (Ctl-Shift-B) also run the tests - "Run Tests After Build". Builds and test are run in the&#160; background so it doesn't stop you coding (well, my underpowered 32bit laptop is less responsive, but it's vastly better than previous versions of VS). Not so good if you include some integration tests, but nice nonetheless.</p>
+<p><a href="http://www.martinwilley.com/blog/content/binary/Visual-Studio-2012-Test_C071/RunTestsAfterBuild.png"><img style="background-image: none; border-bottom: 0px; border-left: 0px; padding-left: 0px; padding-right: 0px; display: inline; border-top: 0px; border-right: 0px; padding-top: 0px" title="RunTestsAfterBuild" border="0" alt="RunTestsAfterBuild" src="http://www.martinwilley.com/blog/content/binary/Visual-Studio-2012-Test_C071/RunTestsAfterBuild_thumb.png" width="244" height="95" /></a></p>  <h3>Features </h3>
+<p>Unit tests support async tests. And code coverage (in Premium and Ultimate only) is much easier- no .testsettings, no having to select the dlls, just right click the tests (or add /enablecodecoverage on the vstest.console.exe command line).</p>
+<p><a href="http://www.martinwilley.com/blog/content/binary/Visual-Studio-2012-Test_C071/CodeCoverage.png"><img style="background-image: none; border-bottom: 0px; border-left: 0px; padding-left: 0px; padding-right: 0px; display: inline; border-top: 0px; border-right: 0px; padding-top: 0px" title="CodeCoverage" border="0" alt="CodeCoverage" src="http://www.martinwilley.com/blog/content/binary/Visual-Studio-2012-Test_C071/CodeCoverage_thumb.png" width="324" height="215" /></a></p>
+<p>You can't test private methods anymore (didn't use that anyway). You can't Generate Unit Tests from a method either. In VS2010 I used this a fair amount- I got a test project with the correct references, and the correct namespaces as well, even if the stub test it created normally had to be deleted and rewritten straight away. I'll miss that.</p>  <h3>Key Mappings</h3>
+<p>Of course, they broke something. I always use Ctl+R-T to run the current test. Well, I hold Ctl and type R then T. Which just doesn't work in VS2012. You have to hold Ctl and type R, then release Ctl and press T. The combination I used, which turns out to be Ctl R,Ctl T, isn't mapped in VS2012. You can remap it manually. Very annoying.</p>
+<p><a href="http://www.martinwilley.com/blog/content/binary/Visual-Studio-2012-Test_C071/CtrlRT.png"><img style="background-image: none; border-bottom: 0px; border-left: 0px; padding-left: 0px; padding-right: 0px; display: inline; border-top: 0px; border-right: 0px; padding-top: 0px" title="CtrlRT" border="0" alt="CtrlRT" src="http://www.martinwilley.com/blog/content/binary/Visual-Studio-2012-Test_C071/CtrlRT_thumb.png" width="324" height="103" /></a></p>            <h3>Microsoft.Fakes: Stubs and Shims</h3>
+<p>These are mocking classes, similar to Moq, NMock and RhinoMocks, and derived from the Pex Moles project. It's simpler than Moq: there's no "Setup(" or "Verify". It's also VS Ultimate only (not in Premium or Professional). Personally I much prefer to do simple manual stubs (implement an interface in the test project) than full mocking. Full mocks are powerful but you end up with loads of code setting up the tests (tight coupling), and they make it easy to add too many dependencies (just because you can test it doesn't mean you can forget all about the SRP).</p>
+<p>Microsoft.Fakes isn't going to replace mocking frameworks (there's no behaviour verification). The shimming is very powerful (and dangerous), similar to TypeMock Isolator and other expensive tools.</p>
+<p>To add Fakes, right click the references.</p>
+<p><a href="http://www.martinwilley.com/blog/content/binary/Visual-Studio-2012-Test_C071/AddFakesAssembly.png"><img style="background-image: none; border-bottom: 0px; border-left: 0px; padding-left: 0px; padding-right: 0px; display: inline; border-top: 0px; border-right: 0px; padding-top: 0px" title="AddFakesAssembly" border="0" alt="AddFakesAssembly" src="http://www.martinwilley.com/blog/content/binary/Visual-Studio-2012-Test_C071/AddFakesAssembly_thumb.png" width="324" height="239" /></a></p>
+<p>You'll get a reference to Microsoft.QualityTools.Testing.Fakes and a project folder called Fakes with an xml file in it. For example, in a web application, you'll probably want to fake System.Web so you handle all the HttpContext/ Request stuff.</p>
+<p>Stubs are simple (<a href="http://msdn.microsoft.com/en-us/library/tfs/hh549174%28v=vs.110%29.aspx" target="_blank">MSDN</a>). Let's stub our input object and initialize it's value. All properties are automatically prepared to return the defaults (0s or nulls). The stub method (in the .Net framework or a local assembly) has a "Stub" prefix.</p>  <pre class="csharpcode">        [Test]
+        <span class="kwrd">public</span> <span class="kwrd">void</span> Test20()
+        {
+            <span class="rem">//arrange</span>
+            var entity = <span class="kwrd">new</span> ClassLibrary1.Tasks.Fakes.StubEntity();
+            entity.Value = 20;
+            var processor = <span class="kwrd">new</span> Processor();
+
+            <span class="rem">//act</span>
+            var result = processor.Execute(entity);
+
+            <span class="rem">//assert</span>
+            Assert.That(result.Value, Is.EqualTo(20));
+        }</pre>
+<style type="text/css">
+.csharpcode, .csharpcode pre
+{
+	font-size: small;
+	color: black;
+	font-family: consolas, "Courier New", courier, monospace;
+	background-color: #ffffff;
+	/*white-space: pre;*/
+}
+.csharpcode pre { margin: 0em; }
+.csharpcode .rem { color: #008000; }
+.csharpcode .kwrd { color: #0000ff; }
+.csharpcode .str { color: #006080; }
+.csharpcode .op { color: #0000c0; }
+.csharpcode .preproc { color: #cc6633; }
+.csharpcode .asp { background-color: #ffff00; }
+.csharpcode .html { color: #800000; }
+.csharpcode .attr { color: #ff0000; }
+.csharpcode .alt 
+{
+	background-color: #f4f4f4;
+	width: 100%;
+	margin: 0em;
+}
+.csharpcode .lnum { color: #606060; }</style>
+
+
+<p>Shims are more difficult and powerful (<a href="http://msdn.microsoft.com/en-us/library/tfs/hh549176%28v=vs.110%29.aspx" target="_blank">MSDN</a>).</p>
+
+
+
+<p>Here's a method we want to test:</p>
+
+<pre class="csharpcode">    <span class="kwrd">public</span> <span class="kwrd">class</span> FileReader
+    {
+        <span class="kwrd">public</span> <span class="kwrd">string</span> ReadAllText(<span class="kwrd">string</span> path)
+        {
+            <span class="kwrd">return</span> System.IO.File.ReadAllText(path);
+        }</pre>
+
+
+<p><style type="text/css">
+.csharpcode, .csharpcode pre
+{
+	font-size: small;
+	color: black;
+	font-family: consolas, "Courier New", courier, monospace;
+	background-color: #ffffff;
+	/*white-space: pre;*/
+}
+.csharpcode pre { margin: 0em; }
+.csharpcode .rem { color: #008000; }
+.csharpcode .kwrd { color: #0000ff; }
+.csharpcode .str { color: #006080; }
+.csharpcode .op { color: #0000c0; }
+.csharpcode .preproc { color: #cc6633; }
+.csharpcode .asp { background-color: #ffff00; }
+.csharpcode .html { color: #800000; }
+.csharpcode .attr { color: #ff0000; }
+.csharpcode .alt 
+{
+	background-color: #f4f4f4;
+	width: 100%;
+	margin: 0em;
+}
+.csharpcode .lnum { color: #606060; }</style>Here's how we can test it. Here we have to fake the System reference (which includes mscorlib). Note for shims, we have to have a ShimsContext. The prefix is "Shim" and methods and properties are prepared with lambda functions.</p>
+
+<pre class="csharpcode">        [Test]
+        <span class="kwrd">public</span> <span class="kwrd">void</span> ReadAllTextTest()
+        {
+            <span class="rem">//arrange</span>
+            <span class="kwrd">string</span> result;
+            var reader = <span class="kwrd">new</span> FileReader();
+            <span class="kwrd">using</span> (Microsoft.QualityTools.Testing.Fakes.
+                ShimsContext.Create())
+            {
+                System.IO.Fakes.ShimFile.ReadAllTextString = (arg) =&gt; <span class="str">&quot;x&quot;</span>;
+
+                <span class="rem">//act</span>
+                result = reader.ReadAllText(<span class="str">@&quot;X:\doesnotexist\notThere.txt&quot;</span>);
+            }
+
+            <span class="rem">//assert</span>
+            Assert.That(result, Is.EqualTo(<span class="str">&quot;x&quot;</span>));
+        }</pre>
+<style type="text/css">
+.csharpcode, .csharpcode pre
+{
+	font-size: small;
+	color: black;
+	font-family: consolas, "Courier New", courier, monospace;
+	background-color: #ffffff;
+	/*white-space: pre;*/
+}
+.csharpcode pre { margin: 0em; }
+.csharpcode .rem { color: #008000; }
+.csharpcode .kwrd { color: #0000ff; }
+.csharpcode .str { color: #006080; }
+.csharpcode .op { color: #0000c0; }
+.csharpcode .preproc { color: #cc6633; }
+.csharpcode .asp { background-color: #ffff00; }
+.csharpcode .html { color: #800000; }
+.csharpcode .attr { color: #ff0000; }
+.csharpcode .alt 
+{
+	background-color: #f4f4f4;
+	width: 100%;
+	margin: 0em;
+}
+.csharpcode .lnum { color: #606060; }</style>
+</article>
+<ul class="seeAlso">
+<li><a href="../../../2012/11/30/TF31003Windows8VsTeamFoundationService.html">TF31003: Windows 8 vs Team Foundation Service</a> (30 Nov 2012)</li>
+<li><a href="../../../2013/05/31/WebapiUpdated30May2013.html">WebAPI updated 30 May 2013</a> (31 May 2013)</li>
+<li><a href="../../../2013/06/13/NugetVsJquery2.html">Nuget vs jQuery 2 </a> (13 Jun 2013)</li>
+</ul>
+<p>Previously: <a href="../../../2012/06/29/TechedEurope2012.html">TechEd Europe 2012</a> (29 Jun 2012)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

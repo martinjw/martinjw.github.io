@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>IIS7 httpModules/httpHandlers vs Default ApplicationPool</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>IIS7 httpModules/httpHandlers vs Default ApplicationPool</h2>
+<p>Published Tuesday 10 August 2010</p><article>
+When installing a website built on XP/ IIS6 or the built-in Visual Studio Cassini, you put httpHandlers and httpModules in <b>system.web</b>.<br />
+On Windows Server 2008/ IIS7, you use <b>system.webServer</b>, with modules and handlers.<br />
+<br />
+If you use the web.config in the standard Ajax-enabled template, this just works.<br />
+<br />
+If not, it doesn't. IIS7 throws an error page.<br />
+<font color="#FF0000" size="2"><i>Description: This application is running in an application pool that 
+uses the Integrated .NET mode. This is the preferred mode for running 
+ASP.NET applications on the current and future version of IIS.<br />
+<br />
+In
+ this mode, the application should not specify ASP.NET module components
+ in the &lt;system.web&gt;/&lt;httpModules&gt; configuration section. 
+Instead, it should use the &lt;system.webServer&gt;/&lt;modules&gt; 
+configuration section to load ASP.NET module components.</i></font><br />
+<br />
+The fix is in that Ajax web.config.<br />
+&nbsp;<font color="#FF0000"><b>&nbsp;&nbsp; </b>&lt;system.webServer&gt;<b><br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &lt;validation validateIntegratedModeConfiguration="false"/&gt;</b></font><br />
+It just turns off the validation, allowing system.web/httpModules etc to exist, but ignores them and uses the system.webServer/modules etc version.<br />
+<br />
+Documentation is <a href="http://www.iis.net/ConfigReference/system.webServer/validation">here</a>.<br />
+<br />
+Yes, this just happened to me. Doh.<br />
+<br />
+
+<p></p>
+</article>
+<ul class="seeAlso">
+<li><a href="../../../2010/08/09/InstallingIISOnWindowsServer2008.html">Installing IIS on Windows Server 2008</a> (09 Aug 2010)</li>
+<li><a href="../../../2015/08/04/UpgradingWindows10.html">Upgrading Windows 10</a> (04 Aug 2015)</li>
+</ul>
+<p>Previously: <a href="../../../2010/08/10/IIS7HasNoHandlerFor Svc.html">IIS 7 has no handler for *.svc</a> (10 Aug 2010)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

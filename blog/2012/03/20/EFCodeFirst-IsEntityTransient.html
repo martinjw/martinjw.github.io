@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>EF Code First - is entity transient?</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>EF Code First - is entity transient?</h2>
+<p>Published Tuesday 20 March 2012</p><article>
+When the Code First project get a detached entity from the UI, it may need to check if it is a new (transient) entity - which can be added to the DbSet - or an existing entity that has been modified. You can then implement an AddOrUpdate method.<br />
+<br />
+To do that, it needs to know what the primary key of the entity is, and read the value.<br />
+<br />
+The easiest way to do is generically is for all entities to have a standard interface or abstract base. <br />
+<pre style="font-family:Consolas;font-size:13;color:black;background:white;"><span style="color:blue;">var</span>&nbsp;id&nbsp;=&nbsp;((<span style="color:#2b91af;">IEntity</span>)&nbsp;entity).Id;
+<span style="color:blue;">if</span>&nbsp;(id&nbsp;==&nbsp;<span style="color:blue;">default</span>(<span style="color:blue;">int</span>))
+{
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//add</span>
+}
+<span style="color:blue;">else</span>
+{
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//update</span>
+}</pre>If you use the [Key] attribute you can also use that to discover the primary key of the entity, whatever the type.<br />
+<br />
+Finally,&nbsp; you can use EF's internal metadata. <br />
+<pre style="font-family:Consolas;font-size:13;color:black;background:white;"><span style="color:blue;">public</span>&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:blue;">bool</span>&nbsp;IsTransient&lt;T&gt;(<span style="color:#2b91af;">DbContext</span>&nbsp;context,&nbsp;T&nbsp;entity)
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">where</span>&nbsp;T&nbsp;:&nbsp;<span style="color:blue;">class</span>
+{
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//find&nbsp;the&nbsp;primary&nbsp;key</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;objectContext&nbsp;=&nbsp;((<span style="color:#2b91af;">IObjectContextAdapter</span>)context).ObjectContext;
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//this&nbsp;will&nbsp;error&nbsp;if&nbsp;it's&nbsp;not&nbsp;a&nbsp;mapped&nbsp;entity</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;objectSet&nbsp;=&nbsp;objectContext.CreateObjectSet&lt;T&gt;();
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;elementType&nbsp;=&nbsp;objectSet.EntitySet.ElementType;
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;pk&nbsp;=&nbsp;elementType.KeyMembers.First();
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//look&nbsp;it&nbsp;up&nbsp;on&nbsp;the&nbsp;entity</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;propertyInfo&nbsp;=&nbsp;<span style="color:blue;">typeof</span>(T).GetProperty(pk.Name);
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;propertyType&nbsp;=&nbsp;propertyInfo.PropertyType;
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//what's&nbsp;the&nbsp;default&nbsp;value&nbsp;for&nbsp;the&nbsp;type?</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;transientValue&nbsp;=&nbsp;propertyType.IsValueType&nbsp;?&nbsp;<span style="color:#2b91af;">Activator</span>.CreateInstance(propertyType)&nbsp;:&nbsp;<span style="color:blue;">null</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//is&nbsp;the&nbsp;pk&nbsp;the&nbsp;same&nbsp;as&nbsp;the&nbsp;default&nbsp;value&nbsp;(int&nbsp;==&nbsp;0,&nbsp;string&nbsp;==&nbsp;null&nbsp;...)</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">return</span>&nbsp;propertyInfo.GetValue(entity,&nbsp;<span style="color:blue;">null</span>)&nbsp;==&nbsp;transientValue;
+}</pre><br />
+
+<p></p>
+</article>
+<ul class="seeAlso">
+<li><a href="../../../2012/02/05/EFCodeFirstManyToManyMapping.html">EF Code First Many to Many Mapping</a> (05 Feb 2012)</li>
+<li><a href="../../../2012/02/14/EFCodeFirstTracing-LoggingTheSQL.html">EF Code First tracing - logging the SQL</a> (14 Feb 2012)</li>
+<li><a href="../../../2012/02/16/EFCodeFirst-NavigationPropertyCounts.html">EF Code First - navigation property counts</a> (16 Feb 2012)</li>
+<li><a href="../../../2012/02/17/EFCodeFirst-NavigationCollectionPaging.html">EF Code First - navigation collection paging</a> (17 Feb 2012)</li>
+<li><a href="../../../2012/02/22/EFCodeFirst-ReferencesVsValidation.html">EF Code First - references vs validation</a> (22 Feb 2012)</li>
+<li><a href="../../../2012/03/17/EFCodeFirst-UpdatingChangedValuesOnly.html">EF Code First - Updating changed values only</a> (17 Mar 2012)</li>
+<li><a href="../../../2012/03/18/EFCodeFirst-UsingDummyReferences.html">EF Code First - Using dummy references</a> (18 Mar 2012)</li>
+<li><a href="../../../2012/03/21/EFCodeFirst-AddADTO.html">EF Code First - Add a DTO</a> (21 Mar 2012)</li>
+</ul>
+<p>Previously: <a href="../../../2012/03/19/EFCodeFirst-GenericallySettingEntityReferencesToUnchangedStatus.html">EF Code First -  Generically setting entity references to unchanged status</a> (19 Mar 2012)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

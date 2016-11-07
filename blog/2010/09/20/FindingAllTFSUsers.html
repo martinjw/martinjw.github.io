@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Finding all TFS users</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Finding all TFS users</h2>
+<p>Published Monday 20 September 2010</p><article>
+Finding out all users on Team Foundation Server turns out to be pretty easy.<br />
+I found the answer at <a href="http://blogs.msdn.com/b/jmanning/archive/2006/05/02/588648.aspx">http://blogs.msdn.com/b/jmanning/archive/2006/05/02/588648.aspx</a><br />
+<br />
+You need a reference to C:\Program Files\Microsoft Visual Studio 9.0\Common7\IDE\PrivateAssemblies\Microsoft.TeamFoundation.dll plus the Microsoft.TeamFoundation.Client.dll and Microsoft.TeamFoundation.Common.dll<br />
+<br />
+var server = new TeamFoundationServer(tfsUrl);<br />
+var groupSecurityService = <br />
+&nbsp;&nbsp;&nbsp; (IGroupSecurityService)server.GetService(typeof(IGroupSecurityService));<br />
+<br />
+var validUserSid = <br />
+&nbsp;&nbsp;&nbsp; groupSecurityService.ReadIdentity(<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; SearchFactor.AccountName, <br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; @"[Server]\Team Foundation Valid Users", <br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; QueryMembership.Expanded);<br />
+<br />
+Identity[] identities = <br />
+&nbsp;&nbsp;&nbsp; groupSecurityService.ReadIdentities(<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; SearchFactor.Sid, <br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; validUserSid.Members, <br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; QueryMembership.None);<br />
+<br />
+//exclude Administrators and system accounts<br />
+foreach (Identity id in identities.Where(x=&gt;<br />
+&nbsp;&nbsp;&nbsp; x.Type == IdentityType.WindowsUser &amp;&amp;<br />
+&nbsp;&nbsp;&nbsp; x.Deleted == false &amp;&amp;<br />
+&nbsp;&nbsp;&nbsp; !x.Description.StartsWith("Built-in account", StringComparison.OrdinalIgnoreCase) &amp;&amp;<br />
+&nbsp;&nbsp;&nbsp; !string.IsNullOrEmpty(x.MailAddress) &amp;&amp;<br />
+&nbsp;&nbsp;&nbsp; !x.AccountName.StartsWith("sys_", StringComparison.OrdinalIgnoreCase)))<br />
+{<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Debug.WriteLine(id.AccountName + " " + id.DisplayName);<br />
+}<br />
+
+<br />
+<br />
+
+<p></p>
+</article>
+<ul class="seeAlso">
+<li><a href="../../../2012/01/05/VisualStudio2010-FindTFSWorkingDirectory.html">Visual Studio 2010 - find TFS working directory</a> (05 Jan 2012)</li>
+<li><a href="../../../2012/11/30/TF31003Windows8VsTeamFoundationService.html">TF31003: Windows 8 vs Team Foundation Service</a> (30 Nov 2012)</li>
+<li><a href="../../../2014/07/23/ NetVersioning.html">.Net Versioning</a> (23 Jul 2014)</li>
+</ul>
+<p>Previously: <a href="../../../2010/08/10/IIS7HttpmodulesHttphandlersVsDefaultApplicationpool.html">IIS7 httpModules/httpHandlers vs Default ApplicationPool</a> (10 Aug 2010)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

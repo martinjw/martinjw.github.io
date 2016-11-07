@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Database Schema Reader now with extra SQLite</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Database Schema Reader now with extra SQLite</h2>
+<p>Published Saturday 09 April 2011</p><article>
+
+<p>My Codeplex project, <a href="http://dbschemareader.codeplex.com/" target="_blank">Database Schema Reader</a>, has a new version.</p>
+<p>I needed to create a SQLite database was a replica of a parent SQL Server database. The existing project could easily read the schema, and the code generation tools could give me the table DDL and the insert SQL. It was just a matter of executing the SQL and creating the database file.</p>
+
+<p>So I created another simple Windows Forms UI. The SqlWriter class needed some tweaks for SQLite support (and I added integration tests).</p>
+<p>For fun, I decided to see if it could also support Microsoft's latest version of SQL Server CE 4.0.</p>
+
+<p>SQL Server CE 4.0 is, like SQLite, an in-process database which can be XCOPY deployed. And unlike previous versions, it is easily able to run ASP.Net websites (it's the default database behind WebMatrix). And 4.0 provides the standard ADO GetSchema which my Database Schema Reader uses (3.5 throws a Not Implemented exception).</p>
+<p>It has some of the same limitations as SQLite, such as no stored procedures (good riddance), and no output parameters. But it also has additional limitations. In SQLite you can batch together multiple SQL statements in a single line and execute them in one command. You can't in SQL Server CE.</p>
+<p>Unlike SQLite's weakly typed and very simple data types, SQL Server CE 4.0 has most of the standard data types as SQL Server Express and full versions. Unfortunately, this was the big problem. If your table is defined with an IDENTITY primary key, you can't insert the data row with the same primary key, and subsequent foreign key relationships are broken. It's a pretty critical limitation for my scenario.</p>
+
+<p>SQL Server CE 4 only supports a subset of SQL Server data types. The one data type it didn't support, which my database (and later versions of Northwind) use, is NVARCHAR(MAX). You have to use the horrible old NTEXT data type. I could have written a DDL provider that translates varchar max to ntext, but I don't think it's worth the effort.</p>
+<p>So my SQL Server CE creation program has major limitations, compared to the SQLite version. It's built into CopyToSQLite.exe, and auto-detects if you've installed SQL Server CE, but you have to have a very simple database for it to work.</p>
+<p>SQL Server CE 4 also doesn't support the ADO Sync framework which allows you to synchronize a disconnected database to a parent SQL Server database. Even SQL Server 2008 R2 Management Studio doesn't support it (you have to use Visual Studio 2010 with SP1).</p>
+<p>The new FETCH /OFFSET syntax for paging, that will be SQL Server 11, is very nice though. I'm looking forward to that.</p>
+</article>
+<ul class="seeAlso">
+<li><a href="../../../2011/02/14/DatabaseSchemaReader.html">Database Schema Reader</a> (14 Feb 2011)</li>
+<li><a href="../../../2015/03/29/GithubAndAppveyor.html">Github and Appveyor</a> (29 Mar 2015)</li>
+</ul>
+<ul class="seeAlso">
+<li><a href="../../../2011/04/25/DatabaseSchemaReaderWithMoreSqlserverce4 0Love.html">Database Schema Reader with more SqlServerCE 4.0 love</a> (25 Apr 2011)</li>
+</ul>
+<ul class="seeAlso">
+<li><a href="../../../2010/04/02/CovarianceAndContravarianceIn Net4In2Minutes.html">covariance and contravariance in .net 4 in 2 minutes</a> (02 Apr 2010)</li>
+<li><a href="../../../2010/06/06/SmartPasteIn2010.html">Smart Paste in 2010</a> (06 Jun 2010)</li>
+<li><a href="../../../2010/11/01/DatabaseSchemaReader.html">Database Schema Reader</a> (01 Nov 2010)</li>
+<li><a href="../../../2011/05/02/IldasmAndIlasmToSignAnUnsignedAssembly.html">ildasm and ilasm to sign an unsigned assembly</a> (02 May 2011)</li>
+<li><a href="../../../2011/06/10/T4Preprocessing.html">T4 preprocessing</a> (10 Jun 2011)</li>
+<li><a href="../../../2011/07/08/ Net4 0Caching-NotJustForAsp.html">.Net 4.0 Caching - not just for Asp</a> (08 Jul 2011)</li>
+<li><a href="../../../2011/12/10/MCPDWebDeveloper Net4.html">MCPD Web Developer .Net 4</a> (10 Dec 2011)</li>
+<li><a href="../../../2012/02/05/EFCodeFirstManyToManyMapping.html">EF Code First Many to Many Mapping</a> (05 Feb 2012)</li>
+<li><a href="../../../2012/02/14/EFCodeFirstTracing-LoggingTheSQL.html">EF Code First tracing - logging the SQL</a> (14 Feb 2012)</li>
+<li><a href="../../../2012/02/22/EFCodeFirst-ReferencesVsValidation.html">EF Code First - references vs validation</a> (22 Feb 2012)</li>
+<li><a href="../../../2013/05/31/WebapiUpdated30May2013.html">WebAPI updated 30 May 2013</a> (31 May 2013)</li>
+<li><a href="../../../2013/08/08/TheJSONRequestWasTooLargeToBeDeserialized .html">The JSON request was too large to be deserialized.</a> (08 Aug 2013)</li>
+<li><a href="../../../2014/03/07/FormsAuthenticationWithClaims.html">Forms Authentication with claims</a> (07 Mar 2014)</li>
+<li><a href="../../../2014/07/23/ NetVersioning.html">.Net Versioning</a> (23 Jul 2014)</li>
+</ul>
+<p>Previously: <a href="../../../2011/04/07/PublishAndTransformInMsbuildScript.html">Publish and Transform in MSBuild script</a> (07 Apr 2011)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

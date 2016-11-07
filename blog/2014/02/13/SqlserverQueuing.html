@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>SqlServer Queuing</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>SqlServer Queuing</h2>
+<p>Published Thursday 13 February 2014</p><article>
+<h4>&#160;</h4>
+<p>Using a database as a queue is a common requirement. An example is sending emails within a website- it can be slow, error-prone, and you don't want to delay returning a page to the user. So the server processing just queues a request in the database, and a worker process picks it up and tries to execute it.</p>
+<p>The real problem is there may be more than one worker process, perhaps running on different servers. By using the table as a queue, they can avoid deadlocks or processing records multiple times.</p>
+<p><a href="http://rusanu.com/2010/03/26/using-tables-as-queues/">Comprehensive breakdown of queuing including heap queues, FIFO and LIFO.</a></p>  <h5>Table</h5>
+<p>Let's have a [Created] column, and an [IsProcessed] column. Alternatively we could just delete the rows when they are processed.</p>  <pre>CREATE TABLE [dbo].[EmailRequests](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[EmailAddress] [nvarchar](250) NOT NULL,
+	[Subject] [nvarchar](50) NOT NULL,
+	[Body] [nvarchar](500) NOT NULL,
+	[IsProcessed] [bit] NOT NULL,
+	[Created] [datetime] NOT NULL,
+ CONSTRAINT [PK_EmailRequests] PRIMARY KEY CLUSTERED (	[Id] ASC )
+)</pre>
+
+
+<p>The INSERT is just a normal INSERT.</p>
+
+<pre>INSERT INTO [EmailRequests]
+           ([EmailAddress],[Subject],[Body],[IsProcessed],[Created])
+     VALUES
+           ('test@email.com','Hello','Spam spam spam',0,CURRENT_TIMESTAMP)</pre>
+
+<h5>Dequeue</h5>
+
+
+<p>This is a FIFO queue, but the order isn't strict (see <a href="http://rusanu.com/2010/03/26/using-tables-as-queues/">this explanation</a>)</p>
+
+<ul>
+  <li>The lock hints mean lock the row (as normal), but skip any existing locks (so avoiding deadlocks) </li>
+
+  <li>The OUTPUT clause with the CTE makes it all a single atomic operation </li>
+
+  <li>The inserted identifier includes UPDATEs and INSERTs. For DELETEs, there is a deleted identifier, </li>
+</ul>
+
+<pre>with cte as (
+ select top(1) [Id], [IsProcessed], [EmailAddress], [Subject], [Body]
+ from [EmailRequests] with (ROWLOCK, READPAST)
+ where [IsProcessed]= 0
+ order by [Created]
+)
+update cte
+	set [IsProcessed] = 1
+	output inserted.[Id], inserted.[EmailAddress], inserted.[Subject], inserted.[Body]</pre>
+
+
+<p>&#160;</p>
+
+
+<p>To make this a bit more realistic, you could add a [IsEmailSent] column, updated when the emailing succeeds. Only one worker de-queued the record and has the [Id] so this is straightforward. Then you need a process for dealing with records that are [IsProcessed] but not [IsEmailSent] (dequeued, but the email failed). You might retry (in which case, add a [RetryCount] counter up to a maximum), or have a manual alert (the email address is bogus, etc etc).</p>
+
+
+<p>&#160;</p>
+
+
+<p>Remember resetting [IsProcessed] to 0 or infinitely retrying may poison the queue!</p>
+</article>
+<p>Previously: <a href="../../../2014/02/12/SqlserverUpserts.html">SqlServer Upserts</a> (12 Feb 2014)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Azure web roles vs web sites</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Azure web roles vs web sites</h2>
+<p>Published Thursday 28 June 2012</p><article>
+
+<p><a href="http://www.martinwilley.com/blog/content/binary/Azure-web-roles-vs-web-sites_142CD/azurelogo.png"><img style="background-image: none; border-bottom: 0px; border-left: 0px; padding-left: 0px; padding-right: 0px; display: inline; float: right; border-top: 0px; border-right: 0px; padding-top: 0px" title="azurelogo" border="0" alt="azurelogo" align="right" src="http://www.martinwilley.com/blog/content/binary/Azure-web-roles-vs-web-sites_142CD/azurelogo_thumb.png" width="168" height="35" /></a>Websites are new in Azure From conversations and talks at Teched:</p>  <table border="0" cellspacing="0" cellpadding="2" width="400"><tbody>     <tr>       <td valign="top" width="200">Web Roles</td>        <td valign="top" width="200">Websites</td>     </tr>      <tr>       <td valign="top" width="200">The standard offering</td>        <td valign="top" width="200">New (summer 2012). In preview and discounted at time of writing.</td>     </tr>      <tr>       <td valign="top" width="200">For asp.net/php/html</td>        <td valign="top" width="200">same</td>     </tr>      <tr>       <td valign="top" width="200">Use Azure SQL/Blobs/Table storage. Can use the new Caching.</td>        <td valign="top" width="200">same</td>     </tr>      <tr>       <td valign="top" width="200">-</td>        <td valign="top" width="200">Has a persistent shared disk.</td>     </tr>      <tr>       <td valign="top" width="200">Production and staging. Instant switch for releases.</td>        <td valign="top" width="200">No. You upload to the live site, so a long release will mean the site is broken for that time ( but see below- you can do diff releases)</td>     </tr>      <tr>       <td valign="top" width="200">Can install dependencies (3rd party installations etc, GAC)</td>        <td valign="top" width="200">Bin-deployment of dlls only - or one of a small number of packages like Umbracco.</td>     </tr>      <tr>       <td valign="top" width="200">Release as cspack. Spins up new VMs for each release.</td>        <td valign="top" width="200">Release by web deploy, git, TFS, FTP. </td>     </tr>      <tr>       <td valign="top" width="200">RDP access</td>        <td valign="top" width="200">No. Just FTP.</td>     </tr>      <tr>       <td valign="top" width="200">&nbsp;</td>        <td valign="top" width="200">&nbsp;</td>     </tr>   </tbody></table>  <h4>In conclusion:</h4>
+<p>Web sites simplify the story for simple web sites. But having no staging is a bit limited.</p>
+<p>Web roles are better for more complex sites, with dependencies and/or worker roles.</p>
+
+<p>There is no option to upgrade a website to a web role.</p>
+<p>All the above will probably be obsolete is 6 months as the features expand.</p>
+</article>
+<ul class="seeAlso">
+<li><a href="../../../2010/11/09/LiveFromTechedEurope2010.html">Live From TechEd Europe 2010</a> (09 Nov 2010)</li>
+<li><a href="../../../2010/11/13/TechedEurope2010WrapUp.html">TechEd Europe 2010 wrap up</a> (13 Nov 2010)</li>
+<li><a href="../../../2012/06/29/TechedEurope2012.html">TechEd Europe 2012</a> (29 Jun 2012)</li>
+</ul>
+<p>Previously: <a href="../../../2012/03/21/EFCodeFirst-AddADTO.html">EF Code First - Add a DTO</a> (21 Mar 2012)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

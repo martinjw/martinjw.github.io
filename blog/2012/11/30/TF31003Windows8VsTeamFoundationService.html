@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>TF31003: Windows 8 vs Team Foundation Service</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>TF31003: Windows 8 vs Team Foundation Service</h2>
+<p>Published Friday 30 November 2012</p><article>
+
+<p>At work I can happily connect to my Azure-hosted Team Foundation Service. But I couldn't do it from home. It says it is looking up identity providers, but the live.com logon screen never shows up. I just see the dreaded TFS31003 error ("<em>Either you have not entered the necessary credentials or your user account does not have permission to connect to Team Foundation Server </em>").</p>
+<p>My home machines are Windows 8 and linked to my personal LiveIDs, not my work logon. Windows 8 likes to connect to lots of Skydrive and lots of other services, storing all those credentials. And Visual Studio picks those rather than allow me to add a new one. Deleting entries in the Windows credentials store didn't work.</p>
+<p>How can I force Visual Studio to select the right logon?</p>
+<p>In Visual Studio, View&gt;Other Windows&gt;Web Browser</p>
+<p>In the browser, go to live.com, and log on.</p>
+
+<p>On mine it automatically logged on with another of my logons, so I signed off, and then signed back in with the correct one.</p>
+<p>Now when I tried to connect to the TFS service address, it works.</p>
+
+</article>
+<ul class="seeAlso">
+<li><a href="../../../2013/05/31/WebapiUpdated30May2013.html">WebAPI updated 30 May 2013</a> (31 May 2013)</li>
+<li><a href="../../../2013/06/13/NugetVsJquery2.html">Nuget vs jQuery 2 </a> (13 Jun 2013)</li>
+</ul>
+<ul class="seeAlso">
+<li><a href="../../../2010/09/20/FindingAllTFSUsers.html">Finding all TFS users</a> (20 Sep 2010)</li>
+<li><a href="../../../2012/01/05/VisualStudio2010-FindTFSWorkingDirectory.html">Visual Studio 2010 - find TFS working directory</a> (05 Jan 2012)</li>
+<li><a href="../../../2014/07/23/ NetVersioning.html">.Net Versioning</a> (23 Jul 2014)</li>
+</ul>
+<p>Previously: <a href="../../../2012/06/30/VisualStudio2012UnitTestsChanges.html">Visual Studio 2012 Unit Tests Changes</a> (30 Jun 2012)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

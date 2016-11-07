@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>EF Code First - references vs validation</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>EF Code First - references vs validation</h2>
+<p>Published Wednesday 22 February 2012</p><article>
+In EF Code First, context.SaveChanges() automatically does validations.<br />
+But lazy loading can collide with validations.<br />
+<br />
+In our model, a Product must have a Category.<br />
+<br />
+<pre style="font-family:Consolas;font-size:13;color:black;background:white;"><span style="color:blue;">public</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">Product</span>
+{
+&nbsp;&nbsp;&nbsp;&nbsp;[<span style="color:#2b91af;">Key</span>]
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">int</span>&nbsp;ProductId&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;<span style="color:blue;">set</span>;&nbsp;}
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;[<span style="color:#2b91af;">Required</span>]
+&nbsp;&nbsp;&nbsp;&nbsp;[<span style="color:#2b91af;">StringLength</span>(40)]
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">string</span>&nbsp;ProductName&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;<span style="color:blue;">set</span>;&nbsp;}
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;[<span style="color:#2b91af;">Required</span>]
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">virtual</span>&nbsp;<span style="color:#2b91af;">Category</span>&nbsp;Category&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;<span style="color:blue;">set</span>;&nbsp;}
+}</pre><br />
+Let's try this...<br />
+<pre style="font-family:Consolas;font-size:13;color:black;background:white;"><span style="color:blue;">using</span>&nbsp;(<span style="color:blue;">var</span>&nbsp;context&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">NorthwindContext</span>())
+{
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//find&nbsp;a&nbsp;specific&nbsp;product</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;product&nbsp;=&nbsp;context.Products.Find(147);
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//set&nbsp;a&nbsp;new&nbsp;name</span>
+&nbsp;&nbsp;&nbsp;&nbsp;product.ProductName&nbsp;=&nbsp;<span style="color:#2b91af;">Guid</span>.NewGuid().ToString();
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//ERROR!</span>
+&nbsp;&nbsp;&nbsp;&nbsp;context.SaveChanges();
+}</pre><br />
+<br />
+Oh no, System.Data.Entity.Validation.DbEntityValidationException. "Validation failed for one or more entities." How can that be? We just loaded it from the database, it must be correct?<br />
+The exception says that Category is null. But it exists in the database. <br />
+<br />
+If you inspect it in the debugger, you can see the category ... and if you continue the SaveChanges succeeds. The debugger triggered a lazy load, so it works.<br />
+<br />
+context.SaveChanges() internally turns off lazy loading before validating. Which is good, because you don't want unnecessary database access. But when the reference is required, the validation doesn't recognise this is a proxy which has a categoryId but hasn't loaded it.<br />
+<br />
+
+<h2>Solution 1- no auto validation</h2><br />
+One solution is to turn off validation. When you are setting individual properties with values you've already validated, you do not need it here.<br />
+<br />
+<pre style="font-family:Consolas;font-size:13;color:black;background:white;">context.Configuration.ValidateOnSaveEnabled&nbsp;=&nbsp;<span style="color:blue;">false</span>;
+context.SaveChanges();
+</pre><br />
+The SQL, by the way, is update [dbo].[Products] set [ProductName] = @0 where ([ProductID] = @1).<br />
+(Check it by hooking up a SQL logger, <a href="http://martinwilley.com/blog/2012/02/14/EFCodeFirstTracingLoggingTheSQL.html">as described here</a>)<br />
+<br />
+An alternative is to cheat the model- ensure references are not Required. <br />
+<br />
+But if you have a product coming back from a UI for insert or update, you need to manually validate that it always has a category. <br />
+<br />
+
+<h2>Solution 2- ensure required references are loaded</h2><br />
+This triggers extra database access, but you can keep the automatic validation.<br />
+<br />
+<pre style="font-family:Consolas;font-size:13;color:black;background:white;"><span style="color:green;">//find&nbsp;a&nbsp;specific&nbsp;product</span>
+<span style="color:blue;">var</span>&nbsp;product&nbsp;=&nbsp;context.Products.Find(147);
+<span style="color:green;">//make&nbsp;sure&nbsp;it's&nbsp;loaded</span>
+context.Entry(product).Reference(p&nbsp;=&gt;&nbsp;p.Category).Load();</pre><br />
+If you load from a query, you can use an .Include(p =&gt; p.Category) which will load the product with a join to the category table, so there is only one sql statement. This will bypass the internal cache so if it was loaded the same product earlier, you can't save any data access.<br />
+<pre style="font-family:Consolas;font-size:13;color:black;background:white;"><span style="color:blue;">var</span>&nbsp;product&nbsp;=&nbsp;context.Products
+&nbsp;&nbsp;&nbsp;&nbsp;.Include(p&nbsp;=&gt;&nbsp;p.Category)
+&nbsp;&nbsp;&nbsp;&nbsp;.First(p&nbsp;=&gt;&nbsp;p.ProductId&nbsp;==&nbsp;147);</pre><br />
+
+<h2>Solution 3- Add a foreign key Id property</h2><br />
+You can specify foreign key Id properties in addition to the instance property.<br />
+<pre style="font-family:Consolas;font-size:13;color:black;background:white;"><span style="color:green;">//it's&nbsp;not&nbsp;nullable&nbsp;so&nbsp;it's&nbsp;implicitly&nbsp;required</span>
+<span style="color:blue;">public</span> <span style="color:blue;">int</span>&nbsp;CategoryId&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;<span style="color:blue;">set</span>;&nbsp;}
+ 
+<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">virtual</span>&nbsp;<span style="color:#2b91af;">Category</span>&nbsp;Category&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;<span style="color:blue;">set</span>;&nbsp;}</pre><br />
+<br />
+Note the CategoryId is now required. The Category instance isn't. Validation can check the CategoryId, and we can set it directly without having to load the instance.<br />
+<br />
+You have to map this arrangement (unless you like to see an EntityCommandCompilationException with the inner exception message being "More than one item in the metadata collection match the identity 'CategoryId'." - I didn't).<br />
+In the EntityTypeConfiguration&lt;Product&gt; the mapping must point to the foreign key id property. <br />
+<pre style="font-family:Consolas;font-size:13;color:black;background:white;">HasRequired(x&nbsp;=&gt;&nbsp;x.Category)
+&nbsp;&nbsp;&nbsp;&nbsp;.WithMany()
+&nbsp;&nbsp;&nbsp;&nbsp;.HasForeignKey(p&nbsp;=&gt;&nbsp;p.CategoryId);</pre><br />
+<br />
+We've "denormalized" our entity model here, but it makes dealing with detached objects and viewmodels a little easier. <br />
+<br />
+But won't the CategoryId and Category properties get out of step? If you set one, which gets persisted? <br />
+<br />
+Let's set the foreign key id property.<br />
+<pre style="font-family:Consolas;font-size:13;color:black;background:white;"><span style="color:green;">//find&nbsp;a&nbsp;specific&nbsp;product</span>
+<span style="color:blue;">var</span>&nbsp;product&nbsp;=&nbsp;context.Products.Find(146);
+ 
+<span style="color:green;">//it's&nbsp;category&nbsp;4&nbsp;in&nbsp;both</span>
+<span style="color:#2b91af;">Console</span>.WriteLine(product.Category.CategoryId);
+<span style="color:#2b91af;">Console</span>.WriteLine(product.CategoryId);
+ 
+<span style="color:green;">//set&nbsp;the&nbsp;categoryId&nbsp;property</span>
+product.CategoryId&nbsp;=&nbsp;1;
+ 
+<span style="color:green;">//we've&nbsp;just&nbsp;set&nbsp;it,&nbsp;so&nbsp;it's&nbsp;1</span>
+<span style="color:#2b91af;">Console</span>.WriteLine(product.CategoryId);
+<span style="color:green;">//oh&nbsp;no,&nbsp;still&nbsp;says&nbsp;4!</span>
+<span style="color:#2b91af;">Console</span>.WriteLine(product.Category.CategoryId);</pre><br />
+<br />
+context.SaveChanges() does the right thing- it saves the new value, 1, assigned to the id property.<br />
+<br />
+Let's set the instance.<br />
+<pre style="font-family:Consolas;font-size:13;color:black;background:white;"><span style="color:green;">//find&nbsp;a&nbsp;specific&nbsp;product</span>
+<span style="color:blue;">var</span>&nbsp;product&nbsp;=&nbsp;context.Products.Find(146);
+ 
+<span style="color:green;">//it's&nbsp;category&nbsp;1&nbsp;in&nbsp;both</span>
+<span style="color:#2b91af;">Console</span>.WriteLine(product.Category.CategoryId);
+<span style="color:#2b91af;">Console</span>.WriteLine(product.CategoryId);
+ 
+<span style="color:green;">//set&nbsp;the&nbsp;category&nbsp;instance</span>
+product.Category&nbsp;=&nbsp;context.Categories.Find(2);
+ 
+<span style="color:green;">//we've&nbsp;just&nbsp;set&nbsp;it,&nbsp;so&nbsp;it's&nbsp;2</span>
+<span style="color:#2b91af;">Console</span>.WriteLine(product.Category.CategoryId);
+<span style="color:green;">//oh&nbsp;no,&nbsp;still&nbsp;says&nbsp;1!</span>
+<span style="color:#2b91af;">Console</span>.WriteLine(product.CategoryId);
+</pre><br />
+<br />
+But again, context.SaveChanges() does the right thing- it saves the new value, 2, assigned to the instance.<br />
+<br />
+So it looks like persistence always works as you'd expect, but the properties get out of step. You must be careful in your workflow. This won't work...<br />
+<pre style="font-family:Consolas;font-size:13;color:black;background:white;">product.CategoryId&nbsp;=&nbsp;1;
+<span style="color:blue;">var</span>&nbsp;returnMessage&nbsp;=&nbsp;<span style="color:#a31515;">"Category&nbsp;updated&nbsp;to&nbsp;"</span>&nbsp;+&nbsp;product.Category.CategoryName;
+</pre><br />
+<br />
+
+<h2>Conclusion</h2>In most cases I'd prefer to remove validation on save with context.Configuration.ValidateOnSaveEnabled = false - as long as the values were validated downstream (perhaps in the UI validation framework).<br />
+<br />
+But exposing the foreign key property is undoubtably convenient when the UI just sends you categoryId= 1 and you don't want to load that category from the database just so you can persist product.
+</article>
+<ul class="seeAlso">
+<li><a href="../../../2012/02/16/EFCodeFirst-NavigationPropertyCounts.html">EF Code First - navigation property counts</a> (16 Feb 2012)</li>
+<li><a href="../../../2012/03/17/EFCodeFirst-UpdatingChangedValuesOnly.html">EF Code First - Updating changed values only</a> (17 Mar 2012)</li>
+<li><a href="../../../2012/03/18/EFCodeFirst-UsingDummyReferences.html">EF Code First - Using dummy references</a> (18 Mar 2012)</li>
+<li><a href="../../../2012/03/19/EFCodeFirst-GenericallySettingEntityReferencesToUnchangedStatus.html">EF Code First -  Generically setting entity references to unchanged status</a> (19 Mar 2012)</li>
+<li><a href="../../../2012/03/20/EFCodeFirst-IsEntityTransient.html">EF Code First - is entity transient?</a> (20 Mar 2012)</li>
+<li><a href="../../../2012/03/21/EFCodeFirst-AddADTO.html">EF Code First - Add a DTO</a> (21 Mar 2012)</li>
+</ul>
+<ul class="seeAlso">
+<li><a href="../../../2010/04/02/CovarianceAndContravarianceIn Net4In2Minutes.html">covariance and contravariance in .net 4 in 2 minutes</a> (02 Apr 2010)</li>
+<li><a href="../../../2010/06/06/SmartPasteIn2010.html">Smart Paste in 2010</a> (06 Jun 2010)</li>
+<li><a href="../../../2010/11/01/DatabaseSchemaReader.html">Database Schema Reader</a> (01 Nov 2010)</li>
+<li><a href="../../../2011/04/07/PublishAndTransformInMsbuildScript.html">Publish and Transform in MSBuild script</a> (07 Apr 2011)</li>
+<li><a href="../../../2011/04/09/DatabaseSchemaReaderNowWithExtraSqlite.html">Database Schema Reader now with extra SQLite</a> (09 Apr 2011)</li>
+<li><a href="../../../2011/05/02/IldasmAndIlasmToSignAnUnsignedAssembly.html">ildasm and ilasm to sign an unsigned assembly</a> (02 May 2011)</li>
+<li><a href="../../../2011/06/10/T4Preprocessing.html">T4 preprocessing</a> (10 Jun 2011)</li>
+<li><a href="../../../2011/07/08/ Net4 0Caching-NotJustForAsp.html">.Net 4.0 Caching - not just for Asp</a> (08 Jul 2011)</li>
+<li><a href="../../../2011/12/10/MCPDWebDeveloper Net4.html">MCPD Web Developer .Net 4</a> (10 Dec 2011)</li>
+<li><a href="../../../2012/02/05/EFCodeFirstManyToManyMapping.html">EF Code First Many to Many Mapping</a> (05 Feb 2012)</li>
+<li><a href="../../../2012/02/14/EFCodeFirstTracing-LoggingTheSQL.html">EF Code First tracing - logging the SQL</a> (14 Feb 2012)</li>
+<li><a href="../../../2013/05/31/WebapiUpdated30May2013.html">WebAPI updated 30 May 2013</a> (31 May 2013)</li>
+<li><a href="../../../2013/08/08/TheJSONRequestWasTooLargeToBeDeserialized .html">The JSON request was too large to be deserialized.</a> (08 Aug 2013)</li>
+<li><a href="../../../2014/03/07/FormsAuthenticationWithClaims.html">Forms Authentication with claims</a> (07 Mar 2014)</li>
+<li><a href="../../../2014/07/23/ NetVersioning.html">.Net Versioning</a> (23 Jul 2014)</li>
+</ul>
+<p>Previously: <a href="../../../2012/02/17/EFCodeFirst-NavigationCollectionPaging.html">EF Code First - navigation collection paging</a> (17 Feb 2012)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

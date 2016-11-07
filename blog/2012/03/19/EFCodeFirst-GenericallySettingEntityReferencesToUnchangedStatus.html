@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>EF Code First -  Generically setting entity references to unchanged status</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>EF Code First -  Generically setting entity references to unchanged status</h2>
+<p>Published Monday 19 March 2012</p><article>
+<a href="http://martinwilley.com/blog/2012/03/18/EFCodeFirstUsingDummyReferences.html">Last time</a> I was adding a new record with a reference to a dummy record. I marked the reference as Unchanged so Code First wouldn't try to validate or save it.<br />
+
+<p><span style="font-family:Consolas;color:#000000;">var johnCarter = new </span><span style="font-family:Consolas;color:#2b91af;">Movie</span><span style="font-family:Consolas;color:#000000;">() { Title = </span><span style="font-family:Consolas;color:#a31515;">"John Carter"</span><span style="font-family:Consolas;color:#000000;"> };<br />
+johnCarter.DirectorId = andrewStantonId;<br />
+context.Movies.Add(johnCarter);<br />
+//after it's added, change the status of the reference<br />
+context.Entry(johnCarter.Director).State = </span><span style="font-family:Consolas;color:#2b91af;">EntityState</span><span style="font-family:Consolas;color:#000000;">.Unchanged;<br />
+context.SaveChanges();</span></p>Can you set all the references on any entity? <br />
+<p style="font-family:Consolas;color:#000000;">var johnCarter = new <span style="font-family:Consolas;color:#2b91af;">Movie</span><span style="font-family:Consolas;color:#000000;">() { Title = </span><span style="font-family:Consolas;color:#a31515;">"John Carter"</span> };<br />
+johnCarter.DirectorId = andrewStantonId;<br />
+context.Movies.Add(johnCarter);<br />
+//after it's added, change the status of the reference<br />
+<span style="background-color:#ff0">MarkNavigationPropertiesUnchanged(johnCarter)</span><span style="font-family:Consolas;color:#000000;">;<br />
+context.SaveChanges();</span></p>We have to look into the underlying EF model.<br />
+<br />
+<pre style="font-family:Consolas;font-size:13;color:black;background:white;"><span style="color:blue;">private</span>&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:blue;">void</span>&nbsp;MarkNavigationPropertiesUnchanged&lt;T&gt;(<span style="color:#2b91af;">DbContext</span>&nbsp;context,&nbsp;T&nbsp;entity)
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">where</span>&nbsp;T&nbsp;:&nbsp;<span style="color:blue;">class</span>
+{
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;objectContext&nbsp;=&nbsp;((<span style="color:#2b91af;">IObjectContextAdapter</span>)context).ObjectContext;
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;objectSet&nbsp;=&nbsp;objectContext.CreateObjectSet&lt;T&gt;();
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;elementType&nbsp;=&nbsp;objectSet.EntitySet.ElementType;
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;navigationProperties&nbsp;=&nbsp;elementType.NavigationProperties;
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//the&nbsp;references</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;references&nbsp;=&nbsp;<span style="color:blue;">from</span>&nbsp;navigationProperty&nbsp;<span style="color:blue;">in</span>&nbsp;navigationProperties
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">let</span>&nbsp;end&nbsp;=&nbsp;navigationProperty.ToEndMember
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">where</span>&nbsp;end.RelationshipMultiplicity&nbsp;==&nbsp;<span style="color:#2b91af;">RelationshipMultiplicity</span>.ZeroOrOne&nbsp;||
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;end.RelationshipMultiplicity&nbsp;==&nbsp;<span style="color:#2b91af;">RelationshipMultiplicity</span>.One
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">select</span>&nbsp;navigationProperty.Name;
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//NB:&nbsp;We&nbsp;don't&nbsp;check&nbsp;Collections.&nbsp;EF&nbsp;wants&nbsp;to&nbsp;handle&nbsp;the&nbsp;object&nbsp;graph.</span>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;parentEntityState&nbsp;=&nbsp;context.Entry(entity).State;
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">foreach</span>&nbsp;(<span style="color:blue;">var</span>&nbsp;navigationProperty&nbsp;<span style="color:blue;">in</span>&nbsp;references)
+&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//if&nbsp;it's&nbsp;modified&nbsp;but&nbsp;not&nbsp;loaded,&nbsp;don't&nbsp;need&nbsp;to&nbsp;touch&nbsp;it</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(parentEntityState&nbsp;==&nbsp;<span style="color:#2b91af;">EntityState</span>.Modified&nbsp;&amp;&amp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;!context.Entry(entity).Reference(navigationProperty).IsLoaded)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">continue</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;propertyInfo&nbsp;=&nbsp;<span style="color:blue;">typeof</span>(T).GetProperty(navigationProperty);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;value&nbsp;=&nbsp;propertyInfo.GetValue(entity,&nbsp;<span style="color:blue;">null</span>);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;context.Entry(value).State&nbsp;=&nbsp;<span style="color:#2b91af;">EntityState</span>.Unchanged;
+&nbsp;&nbsp;&nbsp;&nbsp;}
+}</pre><br />
+This code only fixes the references to single entities (like movie.Director) - not collections (like director.Movies). It's possible to discover and iterate the collections to change their status, but you'll likely get exceptions from EF because its model is broken.<br />
+<br />
+
+<p></p>
+</article>
+<ul class="seeAlso">
+<li><a href="../../../2012/02/05/EFCodeFirstManyToManyMapping.html">EF Code First Many to Many Mapping</a> (05 Feb 2012)</li>
+<li><a href="../../../2012/02/14/EFCodeFirstTracing-LoggingTheSQL.html">EF Code First tracing - logging the SQL</a> (14 Feb 2012)</li>
+<li><a href="../../../2012/02/16/EFCodeFirst-NavigationPropertyCounts.html">EF Code First - navigation property counts</a> (16 Feb 2012)</li>
+<li><a href="../../../2012/02/17/EFCodeFirst-NavigationCollectionPaging.html">EF Code First - navigation collection paging</a> (17 Feb 2012)</li>
+<li><a href="../../../2012/02/22/EFCodeFirst-ReferencesVsValidation.html">EF Code First - references vs validation</a> (22 Feb 2012)</li>
+<li><a href="../../../2012/03/17/EFCodeFirst-UpdatingChangedValuesOnly.html">EF Code First - Updating changed values only</a> (17 Mar 2012)</li>
+<li><a href="../../../2012/03/20/EFCodeFirst-IsEntityTransient.html">EF Code First - is entity transient?</a> (20 Mar 2012)</li>
+<li><a href="../../../2012/03/21/EFCodeFirst-AddADTO.html">EF Code First - Add a DTO</a> (21 Mar 2012)</li>
+</ul>
+<p>Previously: <a href="../../../2012/03/18/EFCodeFirst-UsingDummyReferences.html">EF Code First - Using dummy references</a> (18 Mar 2012)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

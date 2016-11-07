@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Nuget vs jQuery 2 </title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Nuget vs jQuery 2 </h2>
+<p>Published Thursday 13 June 2013</p><article>
+The <a href="http://jquery.com/download/">jQuery 2</a> branch does not support IE 6,7 or 8. Unless the site is exclusively targeted at mobile, or you have a very small and up-to-date audience, everyone should still use the jQuery 1.9+ branch.<br />
+<br />
+Nuget insists that you want to update to jQuery 2.x<br />
+<br />
+Doh.<br />
+<br />
+The package should not have been updated from 1.x to 2.x. There should have been a separate package for jQuery 2, so .net websites continue to update on the 1.x branch.<br />
+<br />
+There is a workaround.<br />
+<br />
+You must manually change the packages.config in the project. Add a range of allowed versions:<br />
+&nbsp;<br />
+<pre style="font-family:Consolas;font-size:13;color:black;background:white;"><span style="color:blue;">&lt;</span><span style="color:#a31515;">package</span><span style="color:blue;">&nbsp;</span><span style="color:red;">id</span><span style="color:blue;">=</span>"<span style="color:blue;">jQuery</span>"<span style="color:blue;">&nbsp;</span><span style="color:red;">version</span><span style="color:blue;">=</span>"<span style="color:blue;">1.10.1</span>"<span style="color:blue;">&nbsp;</span><span style="color:red;">targetFramework</span><span style="color:blue;">=</span>"<span style="color:blue;">net45</span>"<span style="color:blue;">&nbsp;</span><span style="color:red;">allowedVersions</span><span style="color:blue;">=</span>"<span style="color:blue;">[1.7.1,2)</span>"<span style="color:blue;">&nbsp;/&gt;</span>
+<br />
+<br />
+</pre>
+<p>Square bracket "[" is "greater or equal to". So versions greater than 1.7.1 here...<br />
+</p>
+<p>Closing round bracket ")" is less than (not inclusive). So versions up to but not including 2.<br />
+</p>
+<p><br />
+</p><pre style="font-family:Consolas;font-size:13;color:black;background:white;"></pre>
+<p></p>
+</article>
+<ul class="seeAlso">
+<li><a href="../../../2012/06/30/VisualStudio2012UnitTestsChanges.html">Visual Studio 2012 Unit Tests Changes</a> (30 Jun 2012)</li>
+<li><a href="../../../2012/11/30/TF31003Windows8VsTeamFoundationService.html">TF31003: Windows 8 vs Team Foundation Service</a> (30 Nov 2012)</li>
+</ul>
+<p>Previously: <a href="../../../2013/05/31/WebapiUpdated30May2013.html">WebAPI updated 30 May 2013</a> (31 May 2013)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

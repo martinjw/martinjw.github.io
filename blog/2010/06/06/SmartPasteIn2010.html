@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Smart Paste in 2010</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Smart Paste in 2010</h2>
+<p>Published Sunday 06 June 2010</p><article>
+
+<p>One of the really useful Visual Studio add-ins is <a href="http://weblogs.asp.net/alex_papadimoulis/archive/2004/05/25/Smart-Paster-1.1-Add-In---StringBuilder-and-Better-C_2300_-Handling.aspx" target="_blank">Smart Paster</a>. It adds a "Paste As." context menu that allows you to paste in the clipboard text as a comment, a correctly quoted string or a string builder.</p>
+<p><a href="http://www.martinwilley.com/blog/content/binary/SmartPastein2010_E81F/smartpaster.png"><img style="border-width: 0px; display: inline;" title="smartpaster" alt="smartpaster" src="http://www.martinwilley.com/blog/content/binary/SmartPastein2010_E81F/smartpaster_thumb.png" height="46" border="0" width="244"></a></p>
+
+<p>There are versions for VS 2003, 2005 and 2008. But not 2010.</p>
+<p>Sometimes you can just copy in the dll and addin file into the VS 2010 Addins folder (.\Documents\Visual Studio 2010\Addins) and edit the addin file (it's just xml) to say "10.0" instead of "9.0". But that doesn't work for SmartPaster - VS 2010 shows an error and insists on disabling the addin.</p>
+<p>The VS 2008 download includes the source, so I tried to upgrade it.</p>
+<p>It turns out the problem is when it creates the context menus it sets the CommandBarButton.FaceId property (to show an image next to the text). But in VS2010 that throws a DeprecatedException.</p>
+
+<p>Ok, simple fix, but the original source is old code with a fairly high WTF-per-line ratio (well, it was written 2004, .Net 1.1). Before long I had ported it from VB.Net to C# (thanks <a href="http://converter.telerik.com/" target="_blank">Telerik</a>) and rewritten large parts (mostly refactoring with Coderush). I simplified by dropping the "regionize" stuff (never use it), the VB support and the configuration form. Here's my code- you can create a new Extensibility Addin project, replace the Connect class and add the SmartPaster class- see below.</p>
+<p>It's still a port, so certainly not as clean as something just written from scratch. And perhaps VS2010 has nicer ways of doing all these things now the code window is a WPF control - the EnvDTE objects are ugly and hard to use. Anyway, thanks to Alex Papadimoulis for the original code.</p>
+<p><b><font color="#ff0000">Update: <a href="http://www.martinwilley.com/download/?p=sp2010">download the binary</a> and unzip into your Addins folder.</font></b>&nbsp;</p>
+<p><b><font color="#FF0000">Update 2: source and binary are also on</font> <font color="#000080"><a href="http://smartpaster2010.codeplex.com/">Codeplex</a></font></b>.<font color="#FF0000"> (It's exactly the same as shown here.)</font></p>
+<p><font color="#FF0000"><b>Update 3 (March 2012): The <a href="http://smartpaster2010.codeplex.com/">Codeplex version</a> is updated to support VB.Net and is compatible with Visual Studio 11</b></font><br />
+</p>
+<p><br />
+</p>  <div class="csharpcode">   <pre class="alt"><span class="lnum">   1:  </span><span class="kwrd">using</span> System;</pre>
+
+  <pre><span class="lnum">   2:  </span><span class="kwrd">using</span> System.Collections;</pre>
+
+  <pre class="alt"><span class="lnum">   3:  </span><span class="kwrd">using</span> EnvDTE;</pre>
+
+  <pre><span class="lnum">   4:  </span><span class="kwrd">using</span> EnvDTE80;</pre>
+
+  <pre class="alt"><span class="lnum">   5:  </span><span class="kwrd">using</span> Extensibility;</pre>
+
+  <pre><span class="lnum">   6:  </span><span class="kwrd">using</span> Microsoft.VisualStudio.CommandBars;</pre>
+
+  <pre class="alt"><span class="lnum">   7:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum">   8:  </span><span class="kwrd">namespace</span> SmartPaster2010</pre>
+
+  <pre class="alt"><span class="lnum">   9:  </span>{</pre>
+
+  <pre><span class="lnum">  10:  </span>    <span class="rem">///&lt;summary&gt;The object for implementing an Add-in.&lt;/summary&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum">  11:  </span>    <span class="rem">///&lt;seealso class='IDTExtensibility2' /&gt;</span></pre>
+
+  <pre><span class="lnum">  12:  </span>    <span class="kwrd">public</span> <span class="kwrd">class</span> Connect : IDTExtensibility2</pre>
+
+  <pre class="alt"><span class="lnum">  13:  </span>    {</pre>
+
+  <pre><span class="lnum">  14:  </span>        <span class="kwrd">private</span> <span class="kwrd">readonly</span> ArrayList _pasteAsButtons;</pre>
+
+  <pre class="alt"><span class="lnum">  15:  </span>        <span class="kwrd">private</span> <span class="kwrd">readonly</span> SmartPaster _smartPaster;</pre>
+
+  <pre><span class="lnum">  16:  </span>        <span class="kwrd">private</span> CommandBarPopup _pasteAsPopup;</pre>
+
+  <pre class="alt"><span class="lnum">  17:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum">  18:  </span>        <span class="rem">///&lt;summary&gt;Implements the constructor for the Add-in object. Place your initialization code within this method.&lt;/summary&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum">  19:  </span>        <span class="kwrd">public</span> Connect()</pre>
+
+  <pre><span class="lnum">  20:  </span>        {</pre>
+
+  <pre class="alt"><span class="lnum">  21:  </span>            _pasteAsButtons = <span class="kwrd">new</span> ArrayList();</pre>
+
+  <pre><span class="lnum">  22:  </span>            _smartPaster = <span class="kwrd">new</span> SmartPaster();</pre>
+
+  <pre class="alt"><span class="lnum">  23:  </span>        }</pre>
+
+  <pre><span class="lnum">  24:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum">  25:  </span>        <span class="rem">///&lt;summary&gt;Implements the OnConnection method of the IDTExtensibility2 interface. Receives notification that the Add-in is being loaded.&lt;/summary&gt;</span></pre>
+
+  <pre><span class="lnum">  26:  </span>        <span class="rem">///&lt;param term='application'&gt;Root object of the host application.&lt;/param&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum">  27:  </span>        <span class="rem">///&lt;param term='connectMode'&gt;Describes how the Add-in is being loaded.&lt;/param&gt;</span></pre>
+
+  <pre><span class="lnum">  28:  </span>        <span class="rem">///&lt;param term='addInInst'&gt;Object representing this Add-in.&lt;/param&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum">  29:  </span>        <span class="rem">///&lt;seealso class='IDTExtensibility2' /&gt;</span></pre>
+
+  <pre><span class="lnum">  30:  </span>        <span class="kwrd">public</span> <span class="kwrd">void</span> OnConnection(<span class="kwrd">object</span> application, ext_ConnectMode connectMode, </pre>
+
+  <pre><span class="kwrd">object</span> addInInst, <span class="kwrd">ref</span> Array custom)</pre>
+
+  <pre class="alt"><span class="lnum">  31:  </span>        {</pre>
+
+  <pre><span class="lnum">  32:  </span>            _applicationObject = (DTE2)application;</pre>
+
+  <pre class="alt"><span class="lnum">  33:  </span>            _addInInstance = (AddIn)addInInst;</pre>
+
+  <pre><span class="lnum">  34:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum">  35:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum">  36:  </span>            <span class="rem">//check for the commands</span></pre>
+
+  <pre class="alt"><span class="lnum">  37:  </span>            <span class="kwrd">bool</span> cmdExists = <span class="kwrd">false</span>;</pre>
+
+  <pre><span class="lnum">  38:  </span>            <span class="kwrd">foreach</span> (Command cmd <span class="kwrd">in</span> _applicationObject.Commands)</pre>
+
+  <pre class="alt"><span class="lnum">  39:  </span>            {</pre>
+
+  <pre><span class="lnum">  40:  </span>                <span class="kwrd">if</span> (cmd.Name.EndsWith(<span class="str">"PasteAsComment"</span>, StringComparison.OrdinalIgnoreCase))</pre>
+
+  <pre class="alt"><span class="lnum">  41:  </span>                {</pre>
+
+  <pre><span class="lnum">  42:  </span>                    cmdExists = <span class="kwrd">true</span>;</pre>
+
+  <pre class="alt"><span class="lnum">  43:  </span>                    <span class="kwrd">break</span>;</pre>
+
+  <pre><span class="lnum">  44:  </span>                }</pre>
+
+  <pre class="alt"><span class="lnum">  45:  </span>            }</pre>
+
+  <pre><span class="lnum">  46:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum">  47:  </span>            <span class="kwrd">try</span></pre>
+
+  <pre><span class="lnum">  48:  </span>            {</pre>
+
+  <pre class="alt"><span class="lnum">  49:  </span>                <span class="kwrd">if</span> (!cmdExists)</pre>
+
+  <pre><span class="lnum">  50:  </span>                {</pre>
+
+  <pre class="alt"><span class="lnum">  51:  </span>                    AddPasteAsCommands();</pre>
+
+  <pre><span class="lnum">  52:  </span>                }</pre>
+
+  <pre class="alt"><span class="lnum">  53:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum">  54:  </span>                <span class="kwrd">if</span> (connectMode == ext_ConnectMode.ext_cm_Startup &amp;&amp; _pasteAsPopup == <span class="kwrd">null</span>)</pre>
+
+  <pre class="alt"><span class="lnum">  55:  </span>                {</pre>
+
+  <pre><span class="lnum">  56:  </span>                    <span class="rem">//Add items to the Context (Right-Click) Menu</span></pre>
+
+  <pre class="alt"><span class="lnum">  57:  </span>                    <span class="rem">//find the position of the &amp;Paste command</span></pre>
+
+  <pre><span class="lnum">  58:  </span>                    <span class="kwrd">int</span> position = 0;</pre>
+
+  <pre class="alt"><span class="lnum">  59:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum">  60:  </span>                    CommandBar codeWindow = _applicationObject.CommandBars[<span class="str">"Code Window"</span>];</pre>
+
+  <pre class="alt"><span class="lnum">  61:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum">  62:  </span>                    <span class="kwrd">for</span> (<span class="kwrd">int</span> i = 1; i &lt;= codeWindow.Controls.Count; i++)</pre>
+
+  <pre class="alt"><span class="lnum">  63:  </span>                    {</pre>
+
+  <pre><span class="lnum">  64:  </span>                        <span class="kwrd">if</span> (codeWindow.Controls[i].Caption == <span class="str">"&amp;Paste"</span>)</pre>
+
+  <pre class="alt"><span class="lnum">  65:  </span>                        {</pre>
+
+  <pre><span class="lnum">  66:  </span>                            position = i;</pre>
+
+  <pre class="alt"><span class="lnum">  67:  </span>                            <span class="kwrd">break</span>;</pre>
+
+  <pre><span class="lnum">  68:  </span>                        }</pre>
+
+  <pre class="alt"><span class="lnum">  69:  </span>                    }</pre>
+
+  <pre><span class="lnum">  70:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum">  71:  </span>                    <span class="rem">//add the popup menu "Paste As...", which may already be on the menu</span></pre>
+
+  <pre><span class="lnum">  72:  </span>                    _pasteAsPopup = (CommandBarPopup)codeWindow.Controls.Add(</pre>
+
+  <pre>(<span class="kwrd">int</span>)MsoControlType.msoControlPopup, 1, Type.Missing, position + 1, Type.Missing);</pre>
+
+  <pre class="alt"><span class="lnum">  73:  </span>                    _pasteAsPopup.Caption = <span class="str">"Paste As ..."</span>;</pre>
+
+  <pre><span class="lnum">  74:  </span>                    AddPasteAsButtons();</pre>
+
+  <pre class="alt"><span class="lnum">  75:  </span>                }</pre>
+
+  <pre><span class="lnum">  76:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum">  77:  </span>            }</pre>
+
+  <pre><span class="lnum">  78:  </span>            <span class="kwrd">catch</span> (Exception ex)</pre>
+
+  <pre class="alt"><span class="lnum">  79:  </span>            {</pre>
+
+  <pre><span class="lnum">  80:  </span>                System.Diagnostics.Debug.WriteLine(ex.Message);</pre>
+
+  <pre class="alt"><span class="lnum">  81:  </span>            }</pre>
+
+  <pre><span class="lnum">  82:  </span>        }</pre>
+
+  <pre class="alt"><span class="lnum">  83:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum">  84:  </span>        <span class="kwrd">private</span> <span class="kwrd">void</span> AddPasteAsCommands()</pre>
+
+  <pre class="alt"><span class="lnum">  85:  </span>        {</pre>
+
+  <pre><span class="lnum">  86:  </span>            <span class="rem">//no configure or regionize because I never use 'em</span></pre>
+
+  <pre class="alt"><span class="lnum">  87:  </span>            _applicationObject.Commands.AddNamedCommand(_addInInstance, <span class="str">"PasteAsComment"</span>, <span class="str">"Paste As Comment"</span>, <span class="str">"Pastes clipboard text as a comment."</span>, <span class="kwrd">true</span>, 22, <span class="kwrd">null</span>, Convert.ToInt32(vsCommandStatus.vsCommandStatusSupported) + Convert.ToInt32(vsCommandStatus.vsCommandStatusEnabled));</pre>
+
+  <pre><span class="lnum">  88:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum">  89:  </span>            _applicationObject.Commands.AddNamedCommand(_addInInstance, <span class="str">"PasteAsString"</span>, <span class="str">"Paste As String"</span>, <span class="str">"Pastes clipboard text as a string literal."</span>, <span class="kwrd">true</span>, 22, <span class="kwrd">null</span>, Convert.ToInt32(vsCommandStatus.vsCommandStatusSupported) + Convert.ToInt32(vsCommandStatus.vsCommandStatusEnabled));</pre>
+
+  <pre><span class="lnum">  90:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum">  91:  </span>            _applicationObject.Commands.AddNamedCommand(_addInInstance, <span class="str">"PasteAsStringBuilder"</span>, <span class="str">"Paste As StringBuilder"</span>, <span class="str">"Pastes clipboard text as a stringbuilder."</span>, <span class="kwrd">true</span>, 22, <span class="kwrd">null</span>, Convert.ToInt32(vsCommandStatus.vsCommandStatusSupported) + Convert.ToInt32(vsCommandStatus.vsCommandStatusEnabled));</pre>
+
+  <pre><span class="lnum">  92:  </span>        }</pre>
+
+  <pre class="alt"><span class="lnum">  93:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum">  94:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum">  95:  </span>        <span class="kwrd">private</span> <span class="kwrd">void</span> AddPasteAsButtons()</pre>
+
+  <pre><span class="lnum">  96:  </span>        {</pre>
+
+  <pre class="alt"><span class="lnum">  97:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum">  98:  </span>            <span class="rem">//now the buttons</span></pre>
+
+  <pre class="alt"><span class="lnum">  99:  </span>            CommandBarButton pasteAsButton;</pre>
+
+  <pre><span class="lnum"> 100:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum"> 101:  </span>            <span class="rem">//add "Comment"</span></pre>
+
+  <pre><span class="lnum"> 102:  </span>            pasteAsButton = AddCommandButton();</pre>
+
+  <pre class="alt"><span class="lnum"> 103:  </span>            pasteAsButton.Caption = <span class="str">"Comment"</span>;</pre>
+
+  <pre><span class="lnum"> 104:  </span>            pasteAsButton.TooltipText = <span class="str">"Inserts clipboard with each line prefixed with a comment character"</span>;</pre>
+
+  <pre class="alt"><span class="lnum"> 105:  </span>            pasteAsButton.Click += PasteAsComment;</pre>
+
+  <pre><span class="lnum"> 106:  </span>            _pasteAsButtons.Add(pasteAsButton);</pre>
+
+  <pre class="alt"><span class="lnum"> 107:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum"> 108:  </span>            <span class="rem">//add "String"</span></pre>
+
+  <pre class="alt"><span class="lnum"> 109:  </span>            pasteAsButton = AddCommandButton();</pre>
+
+  <pre><span class="lnum"> 110:  </span>            pasteAsButton.Caption = <span class="str">"String"</span>;</pre>
+
+  <pre class="alt"><span class="lnum"> 111:  </span>            pasteAsButton.TooltipText = <span class="str">"Inserts enquoted clipboard text with line breaks and other characters escaped"</span>;</pre>
+
+  <pre><span class="lnum"> 112:  </span>            pasteAsButton.Click += PasteAsString;</pre>
+
+  <pre class="alt"><span class="lnum"> 113:  </span>            _pasteAsButtons.Add(pasteAsButton);</pre>
+
+  <pre><span class="lnum"> 114:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum"> 115:  </span>            <span class="rem">//add "StringBuilder"</span></pre>
+
+  <pre><span class="lnum"> 116:  </span>            pasteAsButton = AddCommandButton();</pre>
+
+  <pre class="alt"><span class="lnum"> 117:  </span>            pasteAsButton.Caption = <span class="str">"StringBuilder"</span>;</pre>
+
+  <pre><span class="lnum"> 118:  </span>            pasteAsButton.TooltipText = <span class="str">"Inserts enquoted clipboard text built up by a stringbuilder."</span>;</pre>
+
+  <pre class="alt"><span class="lnum"> 119:  </span>            pasteAsButton.Click += PasteAsStringBuilder;</pre>
+
+  <pre><span class="lnum"> 120:  </span>            _pasteAsButtons.Add(pasteAsButton);</pre>
+
+  <pre class="alt"><span class="lnum"> 121:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum"> 122:  </span>        }</pre>
+
+  <pre class="alt"><span class="lnum"> 123:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum"> 124:  </span>        <span class="kwrd">private</span> CommandBarButton AddCommandButton()</pre>
+
+  <pre class="alt"><span class="lnum"> 125:  </span>        {</pre>
+
+  <pre><span class="lnum"> 126:  </span>            var pasteAsButton = (CommandBarButton)_pasteAsPopup.Controls.Add((<span class="kwrd">int</span>)MsoControlType.msoControlButton);</pre>
+
+  <pre class="alt"><span class="lnum"> 127:  </span>            <span class="rem">//in 2010, CommandBarButton.FaceId throws a DeprecatedException.</span></pre>
+
+  <pre><span class="lnum"> 128:  </span>            <span class="rem">//pasteAsButton.FaceId = 22;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 129:  </span>            pasteAsButton.Visible = <span class="kwrd">true</span>;</pre>
+
+  <pre><span class="lnum"> 130:  </span>            <span class="kwrd">return</span> pasteAsButton;</pre>
+
+  <pre class="alt"><span class="lnum"> 131:  </span>        }</pre>
+
+  <pre><span class="lnum"> 132:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum"> 133:  </span>        <span class="preproc">#region</span> <span class="str">"PasteAs Handlers"</span></pre>
+
+  <pre><span class="lnum"> 134:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum"> 135:  </span>        <span class="rem">///&lt;summary&gt;</span></pre>
+
+  <pre><span class="lnum"> 136:  </span>        <span class="rem">///Occurs when the user clicks the PasteAsString button.</span></pre>
+
+  <pre class="alt"><span class="lnum"> 137:  </span>        <span class="rem">///&lt;/summary&gt;</span></pre>
+
+  <pre><span class="lnum"> 138:  </span>        <span class="rem">///&lt;param name="ctrl"&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 139:  </span>        <span class="rem">///Denotes the CommandBarButton control that initiated the event. </span></pre>
+
+  <pre><span class="lnum"> 140:  </span>        <span class="rem">///&lt;/param&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 141:  </span>        <span class="rem">///&lt;param name="cancelDefault"&gt;</span></pre>
+
+  <pre><span class="lnum"> 142:  </span>        <span class="rem">///False if the default behavior associated with the CommandBarButton control occurs, unless its canceled by another process or add-in. </span></pre>
+
+  <pre class="alt"><span class="lnum"> 143:  </span>        <span class="rem">///&lt;/param&gt;</span></pre>
+
+  <pre><span class="lnum"> 144:  </span>        <span class="kwrd">private</span> <span class="kwrd">void</span> PasteAsString(CommandBarButton ctrl, <span class="kwrd">ref</span> <span class="kwrd">bool</span> cancelDefault)</pre>
+
+  <pre class="alt"><span class="lnum"> 145:  </span>        {</pre>
+
+  <pre><span class="lnum"> 146:  </span>            _smartPaster.PasteAsString(_applicationObject);</pre>
+
+  <pre class="alt"><span class="lnum"> 147:  </span>        }</pre>
+
+  <pre><span class="lnum"> 148:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum"> 149:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum"> 150:  </span>        <span class="rem">///&lt;summary&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 151:  </span>        <span class="rem">///Occurs when the user clicks the PasteAsComment button.</span></pre>
+
+  <pre><span class="lnum"> 152:  </span>        <span class="rem">///&lt;/summary&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 153:  </span>        <span class="rem">///&lt;param name="ctrl"&gt;</span></pre>
+
+  <pre><span class="lnum"> 154:  </span>        <span class="rem">///Denotes the CommandBarButton control that initiated the event. </span></pre>
+
+  <pre class="alt"><span class="lnum"> 155:  </span>        <span class="rem">///&lt;/param&gt;</span></pre>
+
+  <pre><span class="lnum"> 156:  </span>        <span class="rem">///&lt;param name="cancelDefault"&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 157:  </span>        <span class="rem">///False if the default behavior associated with the CommandBarButton control occurs, unless its canceled by another process or add-in. </span></pre>
+
+  <pre><span class="lnum"> 158:  </span>        <span class="rem">///&lt;/param&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 159:  </span>        <span class="kwrd">private</span> <span class="kwrd">void</span> PasteAsComment(CommandBarButton ctrl, <span class="kwrd">ref</span> <span class="kwrd">bool</span> cancelDefault)</pre>
+
+  <pre><span class="lnum"> 160:  </span>        {</pre>
+
+  <pre class="alt"><span class="lnum"> 161:  </span>            _smartPaster.PasteAsComment(_applicationObject);</pre>
+
+  <pre><span class="lnum"> 162:  </span>        }</pre>
+
+  <pre class="alt"><span class="lnum"> 163:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum"> 164:  </span>        <span class="rem">///&lt;summary&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 165:  </span>        <span class="rem">///Occurs when the user clicks the PasteAsStringBuilder button.</span></pre>
+
+  <pre><span class="lnum"> 166:  </span>        <span class="rem">///&lt;/summary&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 167:  </span>        <span class="rem">///&lt;param name="ctrl"&gt;</span></pre>
+
+  <pre><span class="lnum"> 168:  </span>        <span class="rem">///Denotes the CommandBarButton control that initiated the event. </span></pre>
+
+  <pre class="alt"><span class="lnum"> 169:  </span>        <span class="rem">///&lt;/param&gt;</span></pre>
+
+  <pre><span class="lnum"> 170:  </span>        <span class="rem">///&lt;param name="cancelDefault"&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 171:  </span>        <span class="rem">///False if the default behavior associated with the CommandBarButton control occurs, unless its canceled by another process or add-in. </span></pre>
+
+  <pre><span class="lnum"> 172:  </span>        <span class="rem">///&lt;/param&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 173:  </span>        <span class="kwrd">private</span> <span class="kwrd">void</span> PasteAsStringBuilder(CommandBarButton ctrl, <span class="kwrd">ref</span> <span class="kwrd">bool</span> cancelDefault)</pre>
+
+  <pre><span class="lnum"> 174:  </span>        {</pre>
+
+  <pre class="alt"><span class="lnum"> 175:  </span>            _smartPaster.PasteAsStringBuilder(_applicationObject);</pre>
+
+  <pre><span class="lnum"> 176:  </span>        }</pre>
+
+  <pre class="alt"><span class="lnum"> 177:  </span>        <span class="preproc">#endregion</span></pre>
+
+  <pre><span class="lnum"> 178:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum"> 179:  </span>        <span class="preproc">#region</span> <span class="str">"Exec"</span></pre>
+
+  <pre><span class="lnum"> 180:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum"> 181:  </span>        <span class="rem">///&lt;summary&gt;</span></pre>
+
+  <pre><span class="lnum"> 182:  </span>        <span class="rem">/// Implements the Exec method of the IDTCommandTarget interface.</span></pre>
+
+  <pre class="alt"><span class="lnum"> 183:  </span>        <span class="rem">/// This is called when the command is invoked.</span></pre>
+
+  <pre><span class="lnum"> 184:  </span>        <span class="rem">///&lt;/summary&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 185:  </span>        <span class="rem">///&lt;param name='commandName'&gt;</span></pre>
+
+  <pre><span class="lnum"> 186:  </span>        <span class="rem">///        The name of the command to execute.</span></pre>
+
+  <pre class="alt"><span class="lnum"> 187:  </span>        <span class="rem">///&lt;/param&gt;</span></pre>
+
+  <pre><span class="lnum"> 188:  </span>        <span class="rem">///&lt;param name='executeOption'&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 189:  </span>        <span class="rem">///        Describes how the command should be run.</span></pre>
+
+  <pre><span class="lnum"> 190:  </span>        <span class="rem">///&lt;/param&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 191:  </span>        <span class="rem">///&lt;param name='varIn'&gt;</span></pre>
+
+  <pre><span class="lnum"> 192:  </span>        <span class="rem">///        Parameters passed from the caller to the command handler.</span></pre>
+
+  <pre class="alt"><span class="lnum"> 193:  </span>        <span class="rem">///&lt;/param&gt;</span></pre>
+
+  <pre><span class="lnum"> 194:  </span>        <span class="rem">///&lt;param name='varOut'&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 195:  </span>        <span class="rem">///        Parameters passed from the command handler to the caller.</span></pre>
+
+  <pre><span class="lnum"> 196:  </span>        <span class="rem">///&lt;/param&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 197:  </span>        <span class="rem">///&lt;param name='handled'&gt;</span></pre>
+
+  <pre><span class="lnum"> 198:  </span>        <span class="rem">///        Informs the caller if the command was handled or not.</span></pre>
+
+  <pre class="alt"><span class="lnum"> 199:  </span>        <span class="rem">///&lt;/param&gt;</span></pre>
+
+  <pre><span class="lnum"> 200:  </span>        <span class="rem">///&lt;seealso class='Exec' /&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 201:  </span>        <span class="kwrd">public</span> <span class="kwrd">void</span> Exec(<span class="kwrd">string</span> commandName, vsCommandExecOption executeOption, <span class="kwrd">ref</span> <span class="kwrd">object</span> varIn, <span class="kwrd">ref</span> <span class="kwrd">object</span> varOut, <span class="kwrd">ref</span> <span class="kwrd">bool</span> handled)</pre>
+
+  <pre><span class="lnum"> 202:  </span>        {</pre>
+
+  <pre class="alt"><span class="lnum"> 203:  </span>            handled = <span class="kwrd">false</span>;</pre>
+
+  <pre><span class="lnum"> 204:  </span>            <span class="kwrd">if</span> ((executeOption == vsCommandExecOption.vsCommandExecOptionDoDefault))</pre>
+
+  <pre class="alt"><span class="lnum"> 205:  </span>            {</pre>
+
+  <pre><span class="lnum"> 206:  </span>                handled = <span class="kwrd">true</span>;</pre>
+
+  <pre class="alt"><span class="lnum"> 207:  </span>                <span class="kwrd">switch</span> (commandName)</pre>
+
+  <pre><span class="lnum"> 208:  </span>                {</pre>
+
+  <pre class="alt"><span class="lnum"> 209:  </span>                    <span class="rem">//case "SmartPaster.Connect.Configure":</span></pre>
+
+  <pre><span class="lnum"> 210:  </span>                    <span class="rem">//    //show the config form</span></pre>
+
+  <pre class="alt"><span class="lnum"> 211:  </span>                    <span class="rem">//    SmartPasterForm myForm = new SmartPasterForm();</span></pre>
+
+  <pre><span class="lnum"> 212:  </span>                    <span class="rem">//    myForm.ShowDialog();</span></pre>
+
+  <pre class="alt"><span class="lnum"> 213:  </span>                    <span class="rem">//    //since config may have changed, show/hide buttons</span></pre>
+
+  <pre><span class="lnum"> 214:  </span>                    <span class="rem">//    EnableContextMenuButtons();</span></pre>
+
+  <pre class="alt"><span class="lnum"> 215:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum"> 216:  </span>                    <span class="rem">//    break;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 217:  </span>                    <span class="kwrd">case</span> <span class="str">"SmartPaster.Connect.PasteAsComment"</span>:</pre>
+
+  <pre><span class="lnum"> 218:  </span>                        _smartPaster.PasteAsComment(_applicationObject);</pre>
+
+  <pre class="alt"><span class="lnum"> 219:  </span>                        <span class="kwrd">break</span>;</pre>
+
+  <pre><span class="lnum"> 220:  </span>                    <span class="kwrd">case</span> <span class="str">"SmartPaster.Connect.PasteAsString"</span>:</pre>
+
+  <pre class="alt"><span class="lnum"> 221:  </span>                        _smartPaster.PasteAsString(_applicationObject);</pre>
+
+  <pre><span class="lnum"> 222:  </span>                        <span class="kwrd">break</span>;</pre>
+
+  <pre class="alt"><span class="lnum"> 223:  </span>                    <span class="kwrd">case</span> <span class="str">"SmartPaster.Connect.PasteAsStringBuilder"</span>:</pre>
+
+  <pre><span class="lnum"> 224:  </span>                        _smartPaster.PasteAsStringBuilder(_applicationObject);</pre>
+
+  <pre class="alt"><span class="lnum"> 225:  </span>                        <span class="kwrd">break</span>;</pre>
+
+  <pre><span class="lnum"> 226:  </span>                    <span class="rem">//case "SmartPaster.Connect.PasteAsRegion":</span></pre>
+
+  <pre class="alt"><span class="lnum"> 227:  </span>                    <span class="rem">//    _smartPaster.PasteAsRegion(_applicationObject);</span></pre>
+
+  <pre><span class="lnum"> 228:  </span>                    <span class="rem">//    break;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 229:  </span>                    <span class="kwrd">default</span>:</pre>
+
+  <pre><span class="lnum"> 230:  </span>                        handled = <span class="kwrd">false</span>;</pre>
+
+  <pre class="alt"><span class="lnum"> 231:  </span>                        <span class="kwrd">break</span>;</pre>
+
+  <pre><span class="lnum"> 232:  </span>                }</pre>
+
+  <pre class="alt"><span class="lnum"> 233:  </span>            }</pre>
+
+  <pre><span class="lnum"> 234:  </span>        }</pre>
+
+  <pre class="alt"><span class="lnum"> 235:  </span>        <span class="preproc">#endregion</span></pre>
+
+  <pre><span class="lnum"> 236:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum"> 237:  </span>        <span class="preproc">#region</span> Standard Template Stuff</pre>
+
+  <pre><span class="lnum"> 238:  </span>        <span class="rem">///&lt;summary&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 239:  </span>        <span class="rem">///Implements the OnDisconnection method of the IDTExtensibility2 interface. Receives notification that the Add-in is being unloaded.</span></pre>
+
+  <pre><span class="lnum"> 240:  </span>        <span class="rem">///&lt;/summary&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 241:  </span>        <span class="rem">///&lt;param name="disconnectMode"&gt;The disconnect mode.&lt;/param&gt;</span></pre>
+
+  <pre><span class="lnum"> 242:  </span>        <span class="rem">///&lt;param name="custom"&gt;The custom.&lt;/param&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 243:  </span>        <span class="rem">///&lt;seealso class="IDTExtensibility2"/&gt;</span></pre>
+
+  <pre><span class="lnum"> 244:  </span>        <span class="kwrd">public</span> <span class="kwrd">void</span> OnDisconnection(ext_DisconnectMode disconnectMode, <span class="kwrd">ref</span> Array custom)</pre>
+
+  <pre class="alt"><span class="lnum"> 245:  </span>        {</pre>
+
+  <pre><span class="lnum"> 246:  </span>            <span class="kwrd">if</span> (_pasteAsPopup != <span class="kwrd">null</span> &amp;&amp; </pre>
+
+  <pre class="alt"><span class="lnum"> 247:  </span>                (disconnectMode == ext_DisconnectMode.ext_dm_UserClosed || disconnectMode == ext_DisconnectMode.ext_dm_HostShutdown))</pre>
+
+  <pre><span class="lnum"> 248:  </span>            {</pre>
+
+  <pre class="alt"><span class="lnum"> 249:  </span>                _pasteAsPopup.Delete(<span class="kwrd">true</span>);</pre>
+
+  <pre><span class="lnum"> 250:  </span>            }</pre>
+
+  <pre class="alt"><span class="lnum"> 251:  </span>        }</pre>
+
+  <pre><span class="lnum"> 252:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum"> 253:  </span>        <span class="rem">///&lt;summary&gt;Implements the OnAddInsUpdate method of the IDTExtensibility2 interface. Receives notification when the collection of Add-ins has changed.&lt;/summary&gt;</span></pre>
+
+  <pre><span class="lnum"> 254:  </span>        <span class="rem">///&lt;param term='custom'&gt;Array of parameters that are host application specific.&lt;/param&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 255:  </span>        <span class="rem">///&lt;seealso class='IDTExtensibility2' /&gt;        </span></pre>
+
+  <pre><span class="lnum"> 256:  </span>        <span class="kwrd">public</span> <span class="kwrd">void</span> OnAddInsUpdate(<span class="kwrd">ref</span> Array custom)</pre>
+
+  <pre class="alt"><span class="lnum"> 257:  </span>        {</pre>
+
+  <pre><span class="lnum"> 258:  </span>        }</pre>
+
+  <pre class="alt"><span class="lnum"> 259:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum"> 260:  </span>        <span class="rem">///&lt;summary&gt;Implements the OnStartupComplete method of the IDTExtensibility2 interface. Receives notification that the host application has completed loading.&lt;/summary&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 261:  </span>        <span class="rem">///&lt;param term='custom'&gt;Array of parameters that are host application specific.&lt;/param&gt;</span></pre>
+
+  <pre><span class="lnum"> 262:  </span>        <span class="rem">///&lt;seealso class='IDTExtensibility2' /&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 263:  </span>        <span class="kwrd">public</span> <span class="kwrd">void</span> OnStartupComplete(<span class="kwrd">ref</span> Array custom)</pre>
+
+  <pre><span class="lnum"> 264:  </span>        {</pre>
+
+  <pre class="alt"><span class="lnum"> 265:  </span>        }</pre>
+
+  <pre><span class="lnum"> 266:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum"> 267:  </span>        <span class="rem">///&lt;summary&gt;Implements the OnBeginShutdown method of the IDTExtensibility2 interface. Receives notification that the host application is being unloaded.&lt;/summary&gt;</span></pre>
+
+  <pre><span class="lnum"> 268:  </span>        <span class="rem">///&lt;param term='custom'&gt;Array of parameters that are host application specific.&lt;/param&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 269:  </span>        <span class="rem">///&lt;seealso class='IDTExtensibility2' /&gt;</span></pre>
+
+  <pre><span class="lnum"> 270:  </span>        <span class="kwrd">public</span> <span class="kwrd">void</span> OnBeginShutdown(<span class="kwrd">ref</span> Array custom)</pre>
+
+  <pre class="alt"><span class="lnum"> 271:  </span>        {</pre>
+
+  <pre><span class="lnum"> 272:  </span>        }</pre>
+
+  <pre class="alt"><span class="lnum"> 273:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum"> 274:  </span>        <span class="kwrd">private</span> DTE2 _applicationObject;</pre>
+
+  <pre class="alt"><span class="lnum"> 275:  </span>        <span class="kwrd">private</span> AddIn _addInInstance;</pre>
+
+  <pre><span class="lnum"> 276:  </span>        <span class="preproc">#endregion</span></pre>
+
+  <pre class="alt"><span class="lnum"> 277:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum"> 278:  </span>        <span class="rem">///&lt;summary&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 279:  </span>        <span class="rem">///Queries the status.</span></pre>
+
+  <pre><span class="lnum"> 280:  </span>        <span class="rem">///&lt;/summary&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 281:  </span>        <span class="rem">///&lt;param name="commandName"&gt;Name of the command.&lt;/param&gt;</span></pre>
+
+  <pre><span class="lnum"> 282:  </span>        <span class="rem">///&lt;param name="neededText"&gt;The needed text.&lt;/param&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 283:  </span>        <span class="rem">///&lt;param name="statusOption"&gt;The status option.&lt;/param&gt;</span></pre>
+
+  <pre><span class="lnum"> 284:  </span>        <span class="rem">///&lt;param name="commandText"&gt;The command text.&lt;/param&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 285:  </span>        <span class="kwrd">public</span> <span class="kwrd">void</span> QueryStatus(<span class="kwrd">string</span> commandName, vsCommandStatusTextWanted neededText, <span class="kwrd">ref</span> vsCommandStatus statusOption, <span class="kwrd">ref</span> <span class="kwrd">object</span> commandText)</pre>
+
+  <pre><span class="lnum"> 286:  </span>        {</pre>
+
+  <pre class="alt"><span class="lnum"> 287:  </span>            <span class="kwrd">if</span> (neededText == vsCommandStatusTextWanted.vsCommandStatusTextWantedNone)</pre>
+
+  <pre><span class="lnum"> 288:  </span>            {</pre>
+
+  <pre class="alt"><span class="lnum"> 289:  </span>                <span class="kwrd">if</span> (commandName.StartsWith(<span class="str">"SmartPaster.Connect"</span>))</pre>
+
+  <pre><span class="lnum"> 290:  </span>                {</pre>
+
+  <pre class="alt"><span class="lnum"> 291:  </span>                    <span class="kwrd">if</span> (((_applicationObject.ActiveDocument != <span class="kwrd">null</span>)) &amp;&amp; ((_applicationObject.ActiveDocument.Object(<span class="str">"TextDocument"</span>) != <span class="kwrd">null</span>)))</pre>
+
+  <pre><span class="lnum"> 292:  </span>                    {</pre>
+
+  <pre class="alt"><span class="lnum"> 293:  </span>                        statusOption = vsCommandStatus.vsCommandStatusEnabled | vsCommandStatus.vsCommandStatusSupported;</pre>
+
+  <pre><span class="lnum"> 294:  </span>                    }</pre>
+
+  <pre class="alt"><span class="lnum"> 295:  </span>                    <span class="kwrd">else</span></pre>
+
+  <pre><span class="lnum"> 296:  </span>                    {</pre>
+
+  <pre class="alt"><span class="lnum"> 297:  </span>                        statusOption = vsCommandStatus.vsCommandStatusSupported;</pre>
+
+  <pre><span class="lnum"> 298:  </span>                    }</pre>
+
+  <pre class="alt"><span class="lnum"> 299:  </span>                }</pre>
+
+  <pre><span class="lnum"> 300:  </span>                <span class="kwrd">else</span></pre>
+
+  <pre class="alt"><span class="lnum"> 301:  </span>                {</pre>
+
+  <pre><span class="lnum"> 302:  </span>                    statusOption = vsCommandStatus.vsCommandStatusUnsupported;</pre>
+
+  <pre class="alt"><span class="lnum"> 303:  </span>                }</pre>
+
+  <pre><span class="lnum"> 304:  </span>            }</pre>
+
+  <pre class="alt"><span class="lnum"> 305:  </span>        }</pre>
+
+  <pre><span class="lnum"> 306:  </span>    }</pre>
+
+  <pre class="alt"><span class="lnum"> 307:  </span>}</pre>
+</div>
+<style type="text/css">
+
+.csharpcode, .csharpcode pre
+{
+	font-size: small;
+	color: black;
+	font-family: consolas, "Courier New", courier, monospace;
+	background-color: #ffffff;
+	/*white-space: pre;*/
+}
+.csharpcode pre { margin: 0em; }
+.csharpcode .rem { color: #008000; }
+.csharpcode .kwrd { color: #0000ff; }
+.csharpcode .str { color: #006080; }
+.csharpcode .op { color: #0000c0; }
+.csharpcode .preproc { color: #cc6633; }
+.csharpcode .asp { background-color: #ffff00; }
+.csharpcode .html { color: #800000; }
+.csharpcode .attr { color: #ff0000; }
+.csharpcode .alt 
+{
+	background-color: #f4f4f4;
+	width: 100%;
+	margin: 0em;
+}
+.csharpcode .lnum { color: #606060; }</style>
+
+
+<p>Here's the SmartPaster class.</p>
+
+<div class="csharpcode">
+  <pre class="alt"><span class="lnum">   1:  </span><span class="kwrd">using</span> System;</pre>
+
+  <pre><span class="lnum">   2:  </span><span class="kwrd">using</span> System.IO;</pre>
+
+  <pre class="alt"><span class="lnum">   3:  </span><span class="kwrd">using</span> System.Text;</pre>
+
+  <pre><span class="lnum">   4:  </span><span class="kwrd">using</span> System.Windows.Forms; <span class="rem">//clipboard</span></pre>
+
+  <pre class="alt"><span class="lnum">   5:  </span><span class="kwrd">using</span> EnvDTE;</pre>
+
+  <pre><span class="lnum">   6:  </span><span class="kwrd">using</span> EnvDTE80;</pre>
+
+  <pre class="alt"><span class="lnum">   7:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum">   8:  </span><span class="kwrd">namespace</span> SmartPaster2010</pre>
+
+  <pre class="alt"><span class="lnum">   9:  </span>{</pre>
+
+  <pre><span class="lnum">  10:  </span>    <span class="rem">/// &lt;summary&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum">  11:  </span>    <span class="rem">/// Class responsible for doing the pasting/manipulating of clipdata.</span></pre>
+
+  <pre><span class="lnum">  12:  </span>    <span class="rem">/// &lt;/summary&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum">  13:  </span>    <span class="kwrd">internal</span> <span class="kwrd">sealed</span> <span class="kwrd">class</span> SmartPaster</pre>
+
+  <pre><span class="lnum">  14:  </span>    {</pre>
+
+  <pre class="alt"><span class="lnum">  15:  </span>        <span class="rem">/// &lt;summary&gt;</span></pre>
+
+  <pre><span class="lnum">  16:  </span>        <span class="rem">///  Convient property to retrieve the clipboard text from the clipboard</span></pre>
+
+  <pre class="alt"><span class="lnum">  17:  </span>        <span class="rem">/// &lt;/summary&gt;</span></pre>
+
+  <pre><span class="lnum">  18:  </span>        <span class="kwrd">private</span> <span class="kwrd">static</span> <span class="kwrd">string</span> ClipboardText</pre>
+
+  <pre class="alt"><span class="lnum">  19:  </span>        {</pre>
+
+  <pre><span class="lnum">  20:  </span>            get</pre>
+
+  <pre class="alt"><span class="lnum">  21:  </span>            {</pre>
+
+  <pre><span class="lnum">  22:  </span>                IDataObject iData = Clipboard.GetDataObject();</pre>
+
+  <pre class="alt"><span class="lnum">  23:  </span>                <span class="kwrd">if</span> (iData.GetDataPresent(DataFormats.Text))</pre>
+
+  <pre><span class="lnum">  24:  </span>                    <span class="kwrd">return</span> Convert.ToString(iData.GetData(DataFormats.Text));</pre>
+
+  <pre class="alt"><span class="lnum">  25:  </span>                <span class="kwrd">return</span> <span class="kwrd">string</span>.Empty;</pre>
+
+  <pre><span class="lnum">  26:  </span>            }</pre>
+
+  <pre class="alt"><span class="lnum">  27:  </span>        }</pre>
+
+  <pre><span class="lnum">  28:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum">  29:  </span>        <span class="preproc">#region</span> <span class="str">"Stringinize"</span></pre>
+
+  <pre><span class="lnum">  30:  </span>        <span class="rem">/// &lt;summary&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum">  31:  </span>        <span class="rem">/// Stringinizes text passed to it for use in C#</span></pre>
+
+  <pre><span class="lnum">  32:  </span>        <span class="rem">/// &lt;/summary&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum">  33:  </span>        <span class="rem">/// &lt;param name="txt"&gt;Text to be Stringinized&lt;/param&gt;</span></pre>
+
+  <pre><span class="lnum">  34:  </span>        <span class="rem">/// &lt;returns&gt;C# Stringinized text&lt;/returns&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum">  35:  </span>        <span class="kwrd">private</span> <span class="kwrd">static</span> <span class="kwrd">string</span> StringinizeInCs(<span class="kwrd">string</span> txt)</pre>
+
+  <pre><span class="lnum">  36:  </span>        {</pre>
+
+  <pre class="alt"><span class="lnum">  37:  </span>            <span class="rem">//c# quote character -- really just a "</span></pre>
+
+  <pre><span class="lnum">  38:  </span>            <span class="kwrd">const</span> <span class="kwrd">string</span> qChr = <span class="str">"\""</span>;</pre>
+
+  <pre class="alt"><span class="lnum">  39:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum">  40:  </span>            <span class="rem">//sb to work with</span></pre>
+
+  <pre class="alt"><span class="lnum">  41:  </span>            var sb = <span class="kwrd">new</span> StringBuilder(txt);</pre>
+
+  <pre><span class="lnum">  42:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum">  43:  </span>            <span class="rem">//escape appropriately</span></pre>
+
+  <pre><span class="lnum">  44:  </span>            <span class="rem">//escape the quotes with ""</span></pre>
+
+  <pre class="alt"><span class="lnum">  45:  </span>            sb.Replace(qChr, qChr + qChr);</pre>
+
+  <pre><span class="lnum">  46:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum">  47:  </span>            <span class="rem">//insert " at beginning and end</span></pre>
+
+  <pre><span class="lnum">  48:  </span>            sb.Insert(0, <span class="str">"@"</span> + qChr);</pre>
+
+  <pre class="alt"><span class="lnum">  49:  </span>            sb.Append(qChr);</pre>
+
+  <pre><span class="lnum">  50:  </span>            <span class="kwrd">return</span> sb.ToString();</pre>
+
+  <pre class="alt"><span class="lnum">  51:  </span>        }</pre>
+
+  <pre><span class="lnum">  52:  </span>        <span class="preproc">#endregion</span></pre>
+
+  <pre class="alt"><span class="lnum">  53:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum">  54:  </span>        <span class="preproc">#region</span> <span class="str">"Commentize"</span></pre>
+
+  <pre class="alt"><span class="lnum">  55:  </span>        <span class="rem">/// &lt;summary&gt;</span></pre>
+
+  <pre><span class="lnum">  56:  </span>        <span class="rem">/// Commentizes text passed to it for use in C#</span></pre>
+
+  <pre class="alt"><span class="lnum">  57:  </span>        <span class="rem">/// &lt;/summary&gt;</span></pre>
+
+  <pre><span class="lnum">  58:  </span>        <span class="rem">/// &lt;param name="txt"&gt;Text to be Stringinized&lt;/param&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum">  59:  </span>        <span class="rem">/// &lt;returns&gt;C# Commentized text&lt;/returns&gt;</span></pre>
+
+  <pre><span class="lnum">  60:  </span>        <span class="kwrd">private</span> <span class="kwrd">static</span> <span class="kwrd">string</span> CommentizeInCs(<span class="kwrd">string</span> txt)</pre>
+
+  <pre class="alt"><span class="lnum">  61:  </span>        {</pre>
+
+  <pre><span class="lnum">  62:  </span>            <span class="kwrd">const</span> <span class="kwrd">string</span> cmtChar = <span class="str">"//"</span>;</pre>
+
+  <pre class="alt"><span class="lnum">  63:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum">  64:  </span>            var sb = <span class="kwrd">new</span> StringBuilder(txt.Length);</pre>
+
+  <pre class="alt"><span class="lnum">  65:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum">  66:  </span>            <span class="rem">//process the passed string (txt), one line at a time</span></pre>
+
+  <pre class="alt"><span class="lnum">  67:  </span>            <span class="rem">//the original was horrible WTF code</span></pre>
+
+  <pre><span class="lnum">  68:  </span>            <span class="kwrd">using</span> (var reader = <span class="kwrd">new</span> StringReader(txt))</pre>
+
+  <pre class="alt"><span class="lnum">  69:  </span>            {</pre>
+
+  <pre><span class="lnum">  70:  </span>                <span class="kwrd">string</span> line;</pre>
+
+  <pre class="alt"><span class="lnum">  71:  </span>                <span class="kwrd">while</span> ((line = reader.ReadLine()) != <span class="kwrd">null</span>)</pre>
+
+  <pre><span class="lnum">  72:  </span>                {</pre>
+
+  <pre class="alt"><span class="lnum">  73:  </span>                    sb.AppendLine(cmtChar + line);</pre>
+
+  <pre><span class="lnum">  74:  </span>                }</pre>
+
+  <pre class="alt"><span class="lnum">  75:  </span>            }</pre>
+
+  <pre><span class="lnum">  76:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum">  77:  </span>            <span class="kwrd">return</span> sb.ToString();</pre>
+
+  <pre><span class="lnum">  78:  </span>        }</pre>
+
+  <pre class="alt"><span class="lnum">  79:  </span>        <span class="preproc">#endregion</span></pre>
+
+  <pre><span class="lnum">  80:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum">  81:  </span>        <span class="preproc">#region</span> <span class="str">"Stringbuilderize"</span></pre>
+
+  <pre><span class="lnum">  82:  </span>        <span class="kwrd">private</span> <span class="kwrd">static</span> <span class="kwrd">string</span> StringbuilderizeInCs(<span class="kwrd">string</span> txt, <span class="kwrd">string</span> sbName)</pre>
+
+  <pre class="alt"><span class="lnum">  83:  </span>        {</pre>
+
+  <pre><span class="lnum">  84:  </span>            <span class="rem">//c# quote character -- really just a "</span></pre>
+
+  <pre class="alt"><span class="lnum">  85:  </span>            <span class="kwrd">const</span> <span class="kwrd">string</span> qChr = <span class="str">"\""</span>;</pre>
+
+  <pre><span class="lnum">  86:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum">  87:  </span>            <span class="rem">//sb to work with</span></pre>
+
+  <pre><span class="lnum">  88:  </span>            var sb = <span class="kwrd">new</span> StringBuilder(txt);</pre>
+
+  <pre class="alt"><span class="lnum">  89:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum">  90:  </span>            <span class="rem">//escape \,", and {}</span></pre>
+
+  <pre class="alt"><span class="lnum">  91:  </span>            sb.Replace(qChr, qChr + qChr);</pre>
+
+  <pre><span class="lnum">  92:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum">  93:  </span>            <span class="rem">//process the passed string (txt), one line at a time</span></pre>
+
+  <pre><span class="lnum">  94:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum">  95:  </span>            <span class="rem">//dump the stringbuilder into a temp string</span></pre>
+
+  <pre><span class="lnum">  96:  </span>            <span class="kwrd">string</span> fullString = sb.ToString();</pre>
+
+  <pre class="alt"><span class="lnum">  97:  </span>            sb.Clear(); <span class="rem">//lovely .net 4 - sb.Remove(0, sb.Length);</span></pre>
+
+  <pre><span class="lnum">  98:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum">  99:  </span>            <span class="rem">//the original was horrible WTF code</span></pre>
+
+  <pre><span class="lnum"> 100:  </span>            <span class="kwrd">using</span> (var reader = <span class="kwrd">new</span> StringReader(fullString))</pre>
+
+  <pre class="alt"><span class="lnum"> 101:  </span>            {</pre>
+
+  <pre><span class="lnum"> 102:  </span>                <span class="kwrd">string</span> line;</pre>
+
+  <pre class="alt"><span class="lnum"> 103:  </span>                <span class="kwrd">while</span> ((line = reader.ReadLine()) != <span class="kwrd">null</span>)</pre>
+
+  <pre><span class="lnum"> 104:  </span>                {</pre>
+
+  <pre class="alt"><span class="lnum"> 105:  </span>                    sb.Append(sbName + <span class="str">".AppendLine("</span>);</pre>
+
+  <pre><span class="lnum"> 106:  </span>                    sb.Append(<span class="str">"@"</span> + qChr);</pre>
+
+  <pre class="alt"><span class="lnum"> 107:  </span>                    sb.Append(line.Replace(<span class="str">"\t"</span>, <span class="str">"\\t"</span>));</pre>
+
+  <pre><span class="lnum"> 108:  </span>                    sb.AppendLine(qChr + <span class="str">");"</span>);</pre>
+
+  <pre class="alt"><span class="lnum"> 109:  </span>                }</pre>
+
+  <pre><span class="lnum"> 110:  </span>            }</pre>
+
+  <pre class="alt"><span class="lnum"> 111:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum"> 112:  </span>            <span class="rem">//TODO: Better '@"" + ' replacement to not cover inside strings</span></pre>
+
+  <pre class="alt"><span class="lnum"> 113:  </span>            sb.Replace(<span class="str">"@"</span> + qChr + qChr + <span class="str">" + "</span>, <span class="str">""</span>);</pre>
+
+  <pre><span class="lnum"> 114:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum"> 115:  </span>            <span class="rem">//add the dec statement</span></pre>
+
+  <pre><span class="lnum"> 116:  </span>            sb.Insert(0, <span class="str">"StringBuilder "</span> + sbName + <span class="str">" = new StringBuilder("</span> + txt.Length + <span class="str">");"</span> + Environment.NewLine);</pre>
+
+  <pre class="alt"><span class="lnum"> 117:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum"> 118:  </span>            <span class="rem">//and return</span></pre>
+
+  <pre class="alt"><span class="lnum"> 119:  </span>            <span class="kwrd">return</span> sb.ToString();</pre>
+
+  <pre><span class="lnum"> 120:  </span>        }</pre>
+
+  <pre class="alt"><span class="lnum"> 121:  </span>        <span class="preproc">#endregion</span></pre>
+
+  <pre><span class="lnum"> 122:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum"> 123:  </span>        <span class="rem">/// &lt;summary&gt;</span></pre>
+
+  <pre><span class="lnum"> 124:  </span>        <span class="rem">/// Inserts text at current cursor location in the application</span></pre>
+
+  <pre class="alt"><span class="lnum"> 125:  </span>        <span class="rem">/// &lt;/summary&gt;</span></pre>
+
+  <pre><span class="lnum"> 126:  </span>        <span class="rem">/// &lt;param name="application"&gt;application with activewindow&lt;/param&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 127:  </span>        <span class="rem">/// &lt;param name="text"&gt;text to insert&lt;/param&gt;</span></pre>
+
+  <pre><span class="lnum"> 128:  </span>        <span class="kwrd">private</span> <span class="kwrd">static</span> <span class="kwrd">void</span> Paste(DTE2 application, <span class="kwrd">string</span> text)</pre>
+
+  <pre class="alt"><span class="lnum"> 129:  </span>        {</pre>
+
+  <pre><span class="lnum"> 130:  </span>            <span class="rem">//get the text document</span></pre>
+
+  <pre class="alt"><span class="lnum"> 131:  </span>            var txt = (TextDocument)application.ActiveDocument.Object(<span class="str">"TextDocument"</span>);</pre>
+
+  <pre><span class="lnum"> 132:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum"> 133:  </span>            <span class="rem">//get an edit point</span></pre>
+
+  <pre><span class="lnum"> 134:  </span>            EditPoint ep = txt.Selection.ActivePoint.CreateEditPoint();</pre>
+
+  <pre class="alt"><span class="lnum"> 135:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum"> 136:  </span>            <span class="rem">//get a start point</span></pre>
+
+  <pre class="alt"><span class="lnum"> 137:  </span>            EditPoint sp = txt.Selection.ActivePoint.CreateEditPoint();</pre>
+
+  <pre><span class="lnum"> 138:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum"> 139:  </span>            <span class="rem">//open the undo context</span></pre>
+
+  <pre><span class="lnum"> 140:  </span>            <span class="kwrd">bool</span> isOpen = application.UndoContext.IsOpen;</pre>
+
+  <pre class="alt"><span class="lnum"> 141:  </span>            <span class="kwrd">if</span> (!isOpen)</pre>
+
+  <pre><span class="lnum"> 142:  </span>                application.UndoContext.Open(<span class="str">"SmartPaster"</span>);</pre>
+
+  <pre class="alt"><span class="lnum"> 143:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum"> 144:  </span>            <span class="rem">//clear the selection</span></pre>
+
+  <pre class="alt"><span class="lnum"> 145:  </span>            <span class="kwrd">if</span> (!txt.Selection.IsEmpty)</pre>
+
+  <pre><span class="lnum"> 146:  </span>                txt.Selection.Delete();</pre>
+
+  <pre class="alt"><span class="lnum"> 147:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum"> 148:  </span>            <span class="rem">//insert the text</span></pre>
+
+  <pre class="alt"><span class="lnum"> 149:  </span>            <span class="rem">//ep.Insert(Indent(text, ep.LineCharOffset))</span></pre>
+
+  <pre><span class="lnum"> 150:  </span>            ep.Insert(text);</pre>
+
+  <pre class="alt"><span class="lnum"> 151:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum"> 152:  </span>            <span class="rem">//smart format</span></pre>
+
+  <pre class="alt"><span class="lnum"> 153:  </span>            sp.SmartFormat(ep);</pre>
+
+  <pre><span class="lnum"> 154:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum"> 155:  </span>            <span class="rem">//close the context</span></pre>
+
+  <pre><span class="lnum"> 156:  </span>            <span class="kwrd">if</span> (!isOpen)</pre>
+
+  <pre class="alt"><span class="lnum"> 157:  </span>                application.UndoContext.Close();</pre>
+
+  <pre><span class="lnum"> 158:  </span>        }</pre>
+
+  <pre class="alt"><span class="lnum"> 159:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum"> 160:  </span>        <span class="preproc">#region</span> <span class="str">"Paste As ..."</span></pre>
+
+  <pre class="alt"><span class="lnum"> 161:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum"> 162:  </span>        <span class="rem">/// &lt;summary&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 163:  </span>        <span class="rem">/// Public method to paste and format clipboard text as string the cursor </span></pre>
+
+  <pre><span class="lnum"> 164:  </span>        <span class="rem">/// location for the configured or active window's langage .</span></pre>
+
+  <pre class="alt"><span class="lnum"> 165:  </span>        <span class="rem">/// &lt;/summary&gt;</span></pre>
+
+  <pre><span class="lnum"> 166:  </span>        <span class="rem">/// &lt;param name="application"&gt;application to insert&lt;/param&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 167:  </span>        <span class="kwrd">public</span> <span class="kwrd">void</span> PasteAsString(DTE2 application)</pre>
+
+  <pre><span class="lnum"> 168:  </span>        {</pre>
+
+  <pre class="alt"><span class="lnum"> 169:  </span>            Paste(application, StringinizeInCs(ClipboardText));</pre>
+
+  <pre><span class="lnum"> 170:  </span>        }</pre>
+
+  <pre class="alt"><span class="lnum"> 171:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum"> 172:  </span>        <span class="rem">/// &lt;summary&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 173:  </span>        <span class="rem">/// Public method to paste and format clipboard text as comment the cursor </span></pre>
+
+  <pre><span class="lnum"> 174:  </span>        <span class="rem">/// location for the configured or active window's langage .</span></pre>
+
+  <pre class="alt"><span class="lnum"> 175:  </span>        <span class="rem">/// &lt;/summary&gt;</span></pre>
+
+  <pre><span class="lnum"> 176:  </span>        <span class="rem">/// &lt;param name="application"&gt;application to insert&lt;/param&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 177:  </span>        <span class="kwrd">public</span> <span class="kwrd">void</span> PasteAsComment(DTE2 application)</pre>
+
+  <pre><span class="lnum"> 178:  </span>        {</pre>
+
+  <pre class="alt"><span class="lnum"> 179:  </span>            Paste(application, CommentizeInCs(ClipboardText));</pre>
+
+  <pre><span class="lnum"> 180:  </span>        }</pre>
+
+  <pre class="alt"><span class="lnum"> 181:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum"> 182:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum"> 183:  </span>        <span class="rem">/// &lt;summary&gt;</span></pre>
+
+  <pre><span class="lnum"> 184:  </span>        <span class="rem">/// Public method to paste format clipboard text into a specified region</span></pre>
+
+  <pre class="alt"><span class="lnum"> 185:  </span>        <span class="rem">/// &lt;/summary&gt;</span></pre>
+
+  <pre><span class="lnum"> 186:  </span>        <span class="rem">/// &lt;param name="application"&gt;application to insert&lt;/param&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 187:  </span>        <span class="kwrd">public</span> <span class="kwrd">void</span> PasteAsRegion(DTE2 application)</pre>
+
+  <pre><span class="lnum"> 188:  </span>        {</pre>
+
+  <pre class="alt"><span class="lnum"> 189:  </span>            <span class="rem">//get the region name</span></pre>
+
+  <pre><span class="lnum"> 190:  </span>            <span class="kwrd">const</span> <span class="kwrd">string</span> region = <span class="str">"myRegion"</span>;</pre>
+
+  <pre class="alt"><span class="lnum"> 191:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum"> 192:  </span>            <span class="rem">//it's so simple, we really don't need a function</span></pre>
+
+  <pre class="alt"><span class="lnum"> 193:  </span>            <span class="kwrd">string</span> csRegionized = <span class="str">"#region "</span> + region + Environment.NewLine + ClipboardText + Environment.NewLine + <span class="str">"#endregion"</span>;</pre>
+
+  <pre><span class="lnum"> 194:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum"> 195:  </span>            <span class="rem">//and paste</span></pre>
+
+  <pre><span class="lnum"> 196:  </span>            Paste(application, csRegionized);</pre>
+
+  <pre class="alt"><span class="lnum"> 197:  </span>        }</pre>
+
+  <pre><span class="lnum"> 198:  </span>&nbsp;</pre>
+
+  <pre class="alt"><span class="lnum"> 199:  </span>        <span class="rem">/// &lt;summary&gt;</span></pre>
+
+  <pre><span class="lnum"> 200:  </span>        <span class="rem">/// Public method to paste and format clipboard text as stringbuilder the cursor </span></pre>
+
+  <pre class="alt"><span class="lnum"> 201:  </span>        <span class="rem">/// location for the configured or active window's langage .</span></pre>
+
+  <pre><span class="lnum"> 202:  </span>        <span class="rem">/// &lt;/summary&gt;</span></pre>
+
+  <pre class="alt"><span class="lnum"> 203:  </span>        <span class="rem">/// &lt;param name="application"&gt;application to insert&lt;/param&gt;</span></pre>
+
+  <pre><span class="lnum"> 204:  </span>        <span class="kwrd">public</span> <span class="kwrd">void</span> PasteAsStringBuilder(DTE2 application)</pre>
+
+  <pre class="alt"><span class="lnum"> 205:  </span>        {</pre>
+
+  <pre><span class="lnum"> 206:  </span>            <span class="kwrd">const</span> <span class="kwrd">string</span> stringbuilder = <span class="str">"sb"</span>;</pre>
+
+  <pre class="alt"><span class="lnum"> 207:  </span>            Paste(application, StringbuilderizeInCs(ClipboardText, stringbuilder));</pre>
+
+  <pre><span class="lnum"> 208:  </span>        }</pre>
+
+  <pre class="alt"><span class="lnum"> 209:  </span>&nbsp;</pre>
+
+  <pre><span class="lnum"> 210:  </span>        <span class="preproc">#endregion</span></pre>
+
+  <pre class="alt"><span class="lnum"> 211:  </span>    }</pre>
+
+  <pre><span class="lnum"> 212:  </span>}</pre>
+</div>
+<style type="text/css">
+
+.csharpcode, .csharpcode pre
+{
+	font-size: small;
+	color: black;
+	font-family: consolas, "Courier New", courier, monospace;
+	background-color: #ffffff;
+	/*white-space: pre;*/
+}
+.csharpcode pre { margin: 0em; }
+.csharpcode .rem { color: #008000; }
+.csharpcode .kwrd { color: #0000ff; }
+.csharpcode .str { color: #006080; }
+.csharpcode .op { color: #0000c0; }
+.csharpcode .preproc { color: #cc6633; }
+.csharpcode .asp { background-color: #ffff00; }
+.csharpcode .html { color: #800000; }
+.csharpcode .attr { color: #ff0000; }
+.csharpcode .alt 
+{
+	background-color: #f4f4f4;
+	width: 100%;
+	margin: 0em;
+}
+.csharpcode .lnum { color: #606060; }</style>
+</article>
+<ul class="seeAlso">
+<li><a href="../../../2010/04/02/CovarianceAndContravarianceIn Net4In2Minutes.html">covariance and contravariance in .net 4 in 2 minutes</a> (02 Apr 2010)</li>
+<li><a href="../../../2011/04/09/DatabaseSchemaReaderNowWithExtraSqlite.html">Database Schema Reader now with extra SQLite</a> (09 Apr 2011)</li>
+<li><a href="../../../2011/05/02/IldasmAndIlasmToSignAnUnsignedAssembly.html">ildasm and ilasm to sign an unsigned assembly</a> (02 May 2011)</li>
+<li><a href="../../../2011/07/08/ Net4 0Caching-NotJustForAsp.html">.Net 4.0 Caching - not just for Asp</a> (08 Jul 2011)</li>
+<li><a href="../../../2012/02/05/EFCodeFirstManyToManyMapping.html">EF Code First Many to Many Mapping</a> (05 Feb 2012)</li>
+<li><a href="../../../2012/02/14/EFCodeFirstTracing-LoggingTheSQL.html">EF Code First tracing - logging the SQL</a> (14 Feb 2012)</li>
+<li><a href="../../../2012/02/22/EFCodeFirst-ReferencesVsValidation.html">EF Code First - references vs validation</a> (22 Feb 2012)</li>
+<li><a href="../../../2013/05/31/WebapiUpdated30May2013.html">WebAPI updated 30 May 2013</a> (31 May 2013)</li>
+<li><a href="../../../2013/08/08/TheJSONRequestWasTooLargeToBeDeserialized .html">The JSON request was too large to be deserialized.</a> (08 Aug 2013)</li>
+<li><a href="../../../2014/03/07/FormsAuthenticationWithClaims.html">Forms Authentication with claims</a> (07 Mar 2014)</li>
+<li><a href="../../../2014/07/23/ NetVersioning.html">.Net Versioning</a> (23 Jul 2014)</li>
+</ul>
+<ul class="seeAlso">
+<li><a href="../../../2009/11/30/VisualStudio2010Downloads.html">Visual Studio 2010 downloads</a> (30 Nov 2009)</li>
+<li><a href="../../../2009/12/04/VisualStudio2010IntellisenseConsumeFirst.html">Visual Studio 2010 intellisense "consume first"</a> (04 Dec 2009)</li>
+<li><a href="../../../2010/02/13/VisualStudio2010ReleaseCandidate.html">Visual Studio 2010 Release Candidate</a> (13 Feb 2010)</li>
+<li><a href="../../../2010/03/31/MicrosoftTechdaysRoundup.html">Microsoft TechDays roundup</a> (31 Mar 2010)</li>
+<li><a href="../../../2010/04/22/VisualStudio2010Editions.html">Visual Studio 2010 editions</a> (22 Apr 2010)</li>
+<li><a href="../../../2010/11/01/DatabaseSchemaReader.html">Database Schema Reader</a> (01 Nov 2010)</li>
+<li><a href="../../../2011/04/07/PublishAndTransformInMsbuildScript.html">Publish and Transform in MSBuild script</a> (07 Apr 2011)</li>
+<li><a href="../../../2011/06/10/T4Preprocessing.html">T4 preprocessing</a> (10 Jun 2011)</li>
+<li><a href="../../../2011/12/10/MCPDWebDeveloper Net4.html">MCPD Web Developer .Net 4</a> (10 Dec 2011)</li>
+<li><a href="../../../2012/01/05/VisualStudio2010-FindTFSWorkingDirectory.html">Visual Studio 2010 - find TFS working directory</a> (05 Jan 2012)</li>
+</ul>
+<p>Previously: <a href="../../../2010/05/04/VisualStudioNavigation.html">Visual Studio navigation</a> (04 May 2010)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

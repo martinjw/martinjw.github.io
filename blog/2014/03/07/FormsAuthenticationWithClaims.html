@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Forms Authentication with claims</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Forms Authentication with claims</h2>
+<p>Published Friday 07 March 2014</p><article>
+
+<p>Forms Authentication is ASP.net is simple but the FormsIdentity and GenericPrincipal/RolePrincipal are a little too simple. All we get are IIdentity.Name and IPrincipal.IsInRole(x)</p> 
+<p>Most real applications need a bit more, like the user's full name or email address, or domain-specific data.</p> <h3>Custom Principal</h3> 
+<p>The usual way to do this was to create a custom principal, the UserData field in the forms authentication cookie, and the asp.net pipeline event "PostAuthenticateRequest".</p> 
+<p>Here's our custom principal:</p><pre class="csharpcode">    <span class="kwrd">public</span> <span class="kwrd">class</span> UserPrincipal : GenericPrincipal
+    {
+        <span class="kwrd">public</span> UserPrincipal(IIdentity identity, <span class="kwrd">string</span>[] roles)
+            : <span class="kwrd">base</span>(identity, roles)
+        {
+        }
+
+        <span class="kwrd">public</span> <span class="kwrd">string</span> Email { get; set; }
+    }</pre>
+<style type="text/css">
+
+
+
+.csharpcode, .csharpcode pre
+{
+	font-size: small;
+	color: black;
+	font-family: consolas, "Courier New", courier, monospace;
+	background-color: #ffffff;
+	/*white-space: pre;*/
+}
+.csharpcode pre { margin: 0em; }
+.csharpcode .rem { color: #008000; }
+.csharpcode .kwrd { color: #0000ff; }
+.csharpcode .str { color: #006080; }
+.csharpcode .op { color: #0000c0; }
+.csharpcode .preproc { color: #cc6633; }
+.csharpcode .asp { background-color: #ffff00; }
+.csharpcode .html { color: #800000; }
+.csharpcode .attr { color: #ff0000; }
+.csharpcode .alt 
+{
+	background-color: #f4f4f4;
+	width: 100%;
+	margin: 0em;
+}
+.csharpcode .lnum { color: #606060; }</style>
+
+
+<p>Here's the login action. Instead of the normal FormsAuthentication.SetAuthCookie, we do it manually (see below):</p><pre class="csharpcode">        [AllowAnonymous]
+        [HttpPost]
+        <span class="kwrd">public</span> ActionResult Login(LoginModel model, <span class="kwrd">string</span> returnUrl)
+        {
+            <span class="kwrd">if</span> (ModelState.IsValid) <span class="rem">//Required, string length etc</span>
+            {
+                var userStore = <span class="kwrd">new</span> UserRepository();
+                var user = userStore.FindUser(model.UserName, model.Password);
+                <span class="kwrd">if</span> (user != <span class="kwrd">null</span>)
+                {
+                    <span class="rem">//FormsAuthentication.SetAuthCookie(user.Name, false);</span>
+                    SetAuthCookie(user);
+                    <span class="rem">//redirect to returnUrl</span>
+                    <span class="kwrd">if</span> (!<span class="kwrd">string</span>.IsNullOrEmpty(returnUrl) &amp;&amp;
+                        Url.IsLocalUrl(returnUrl) &amp;&amp;
+                        !returnUrl.Equals(<span class="str">"/Error/NotFound"</span>, StringComparison.OrdinalIgnoreCase))
+                    {
+                        <span class="kwrd">return</span> Redirect(returnUrl);
+                    }
+                    <span class="kwrd">return</span> Redirect(<span class="str">"~/"</span>);
+                }
+                ModelState.AddModelError(<span class="str">"UserName"</span>, <span class="str">"User or password not found"</span>);
+            }
+            <span class="kwrd">return</span> View(model);
+        }</pre>
+
+<p>And here's where we set the authentication cookie, here putting our user object as Json into the userData field of the cookie.</p><pre class="csharpcode">        <span class="kwrd">private</span> <span class="kwrd">void</span> SetAuthCookie(User user)
+        {
+            var userData = JsonConvert.SerializeObject(user);
+            var authTicket = <span class="kwrd">new</span> FormsAuthenticationTicket(
+                  1, <span class="rem">//version</span>
+                  user.Name,
+                  DateTime.Now, <span class="rem">//issue date</span>
+                  DateTime.Now.AddMinutes(30), <span class="rem">//expiration</span>
+                  <span class="kwrd">false</span>,  <span class="rem">//isPersistent</span>
+                  userData,
+                  FormsAuthentication.FormsCookiePath); <span class="rem">//cookie path</span>
+            var cookie = <span class="kwrd">new</span> HttpCookie(FormsAuthentication.FormsCookieName,
+                                        FormsAuthentication.Encrypt(authTicket));
+            Response.Cookies.Add(cookie);
+        }</pre>
+
+<p>Finally, we hook up the PostAuthenticationRequest event. Normal forms authentication will have recognised the authentication cookie and created a GenericPrincipal and FormsIdentity. We unpack the userData field, and create our custom principal.</p><pre class="csharpcode">        <span class="kwrd">protected</span> <span class="kwrd">void</span> Application_PostAuthenticateRequest(Object sender, EventArgs e)
+        {
+            var context = HttpContext.Current;
+            <span class="kwrd">if</span> (context.User == <span class="kwrd">null</span> || !context.User.Identity.IsAuthenticated)
+            {
+                <span class="kwrd">return</span>;
+            }
+
+            var formsIdentity = context.User.Identity <span class="kwrd">as</span> FormsIdentity;
+            <span class="kwrd">if</span> (formsIdentity == <span class="kwrd">null</span>)
+            {
+                <span class="kwrd">return</span>;
+            }
+
+            var id = formsIdentity;
+            var ticket = id.Ticket;
+            var userData = ticket.UserData; <span class="rem">// Get the stored user-data, in this case, our roles</span>
+            var user = JsonConvert.DeserializeObject&lt;User&gt;(userData);
+            var customPrincipal = <span class="kwrd">new</span> UserPrincipal(formsIdentity, user.RolesList.ToArray());
+            customPrincipal.Email = user.Email;
+            Thread.CurrentPrincipal = Context.User = customPrincipal;
+        }</pre>
+
+<p>The userdata is encrypted and safe from tampering, but it can make the cookie rather large.</p>
+<h3>.Net 4.5 making claims</h3>
+
+<p>Now in ASP.net 4.5, we have Windows Identity Foundation (WIF, pronounced "dub-i-f") and claims principals and identities. Usually this is discussed with "federation" and single-sign-on identity providers, but actually claims can be useful in "traditional" stand-alone websites like we've just discussed.</p>
+
+<p>ClaimsPrincipals and Identities have a list of Claims. This can be just a property bag with names and values, but there are many standard claim names, defined by OASIS, in the ClaimTypes enum. In addition to ClaimTypes.Name and ClaimTypes.Role, there are Email, GivenName, Surname, DateOfBirth, MobilePhone and so on. These standard defined types mean libraries can discover these claims without defining common interfaces or contracts. But it is also extensible with application specific claims. The old fixed custom principal is starting to look old-fashioned.</p>
+
+<p>The WIF session authentication module can take over from forms authentication, storing the claims in cookies. You don't need to use the federation aspects. The module handles cookies a little better than forms authentication- if it gets too large, it's chunked over several cookies. There is also a ReferenceMode = true, which keeps the claims data in server side memory and only sends a simple key in the cookie (it's obviously not webfarm safe).</p>
+<h3>FormsAuthentication with Claims</h3>
+
+<p>First, the configuration. You'll need to define the configuration sections. We are still using forms authentication, so keep the authentication mode=Forms. Add the WIF session authentication module, which will handle the cookie.</p><pre class="csharpcode"><span class="kwrd">&lt;</span><span class="html">configuration</span><span class="kwrd">&gt;</span> 
+  <br />
+&nbsp; <span class="kwrd">&lt;</span><span class="html">configSections</span><span class="kwrd">&gt;</span> 
+  <br />
+&nbsp;&nbsp;&nbsp; <span class="kwrd">&lt;</span><span class="html">section</span> <span class="attr">name</span><span class="kwrd">="system.identityModel"</span> 
+  <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="attr">type</span><span class="kwrd">="System.IdentityModel.Configuration.SystemIdentityModelSection, 
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; System.IdentityModel, Version=4.0.0.0, Culture=neutral, PublicKeyToken=B77A5C561934E089"</span> <span class="kwrd">/&gt;</span> 
+  <br />
+&nbsp;&nbsp;&nbsp; <span class="kwrd">&lt;</span><span class="html">section</span> <span class="attr">name</span><span class="kwrd">="system.identityModel.services"</span> 
+  <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="attr">type</span><span class="kwrd">="System.IdentityModel.Services.Configuration.SystemIdentityModelServicesSection, 
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; System.IdentityModel.Services, Version=4.0.0.0, Culture=neutral, PublicKeyToken=B77A5C561934E089"</span> <span class="kwrd">/&gt;</span> 
+  <br />
+&nbsp; <span class="kwrd">&lt;/</span><span class="html">configSections</span><span class="kwrd">&gt;</span> 
+  <br />
+&nbsp; <span class="kwrd">&lt;</span><span class="html">system.web</span><span class="kwrd">&gt;</span> 
+  <br />
+&nbsp;&nbsp;&nbsp; <span class="kwrd">&lt;</span><span class="html">compilation</span> <span class="attr">debug</span><span class="kwrd">="true"</span> <span class="attr">targetFramework</span><span class="kwrd">="4.5"</span> <span class="kwrd">/&gt;</span> 
+  <br />
+&nbsp;&nbsp;&nbsp; <span class="kwrd">&lt;</span><span class="html">httpRuntime</span> <span class="attr">targetFramework</span><span class="kwrd">="4.5"</span> <span class="kwrd">/&gt;</span> 
+  <br />
+&nbsp;&nbsp;&nbsp; <span class="kwrd">&lt;</span><span class="html">authentication</span> <span class="attr">mode</span><span class="kwrd">="Forms"</span><span class="kwrd">&gt;</span> 
+  <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="kwrd">&lt;</span><span class="html">forms</span> <span class="attr">loginUrl</span><span class="kwrd">="~/Account/Login"</span> <span class="kwrd">/&gt;</span> 
+  <br />
+&nbsp;&nbsp;&nbsp; <span class="kwrd">&lt;/</span><span class="html">authentication</span><span class="kwrd">&gt;</span> 
+  <br />
+&nbsp; <span class="kwrd">&lt;/</span><span class="html">system.web</span><span class="kwrd">&gt;</span> 
+  <br />
+&nbsp; <span class="kwrd">&lt;</span><span class="html">system.webServer</span><span class="kwrd">&gt;</span> 
+  <br />
+&nbsp;&nbsp;&nbsp; <span class="kwrd">&lt;</span><span class="html">modules</span><span class="kwrd">&gt;</span> 
+  <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="kwrd">&lt;</span><span class="html">add</span> <span class="attr">name</span><span class="kwrd">="SessionAuthenticationModule"</span> 
+  <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="attr">type</span><span class="kwrd">="System.IdentityModel.Services.SessionAuthenticationModule, 
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; System.IdentityModel.Services, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"</span> 
+  <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="attr">preCondition</span><span class="kwrd">="managedHandler"</span> <span class="kwrd">/&gt;</span> 
+  <br />
+&nbsp;&nbsp;&nbsp; <span class="kwrd">&lt;/</span><span class="html">modules</span><span class="kwrd">&gt;</span> 
+  <br />
+&nbsp; <span class="kwrd">&lt;/</span><span class="html">system.webServer</span><span class="kwrd">&gt;</span></pre>
+
+<p>If you aren't using SSL, you need to add the following (note the configSection defined above):</p><pre class="csharpcode">  <span class="kwrd">&lt;</span><span class="html">system.identityModel.services</span><span class="kwrd">&gt;</span>
+    <span class="kwrd">&lt;</span><span class="html">federationConfiguration</span><span class="kwrd">&gt;</span>
+      <span class="kwrd">&lt;</span><span class="html">cookieHandler</span> <span class="attr">requireSsl</span><span class="kwrd">="false"</span> <span class="kwrd">/&gt;</span>
+    <span class="kwrd">&lt;/</span><span class="html">federationConfiguration</span><span class="kwrd">&gt;</span>
+  <span class="kwrd">&lt;/</span><span class="html">system.identityModel.services</span><span class="kwrd">&gt;</span></pre>
+
+<p>In the login page, set the user properties into claims.</p><pre class="csharpcode">        <span class="kwrd">private</span> <span class="kwrd">void</span> SetClaimsCookie(User user)
+        {
+            var claims = <span class="kwrd">new</span> List&lt;Claim&gt;();
+            claims.Add(<span class="kwrd">new</span> Claim(ClaimTypes.Name, user.Name));
+            claims.Add(<span class="kwrd">new</span> Claim(ClaimTypes.Email, user.Email));
+            <span class="kwrd">foreach</span> (var role <span class="kwrd">in</span> user.RolesList)
+            {
+                claims.Add(<span class="kwrd">new</span> Claim(ClaimTypes.Role, role));
+            }
+            <span class="rem">//needs an authentication issuer otherwise not authenticated</span>
+            var claimsIdentity = <span class="kwrd">new</span> ClaimsIdentity(claims, <span class="str">"Forms"</span>);
+            var claimsPrincipal = <span class="kwrd">new</span> ClaimsPrincipal(claimsIdentity);
+            var sessionAuthenticationModule = FederatedAuthentication.SessionAuthenticationModule;
+            var token = <span class="kwrd">new</span> SessionSecurityToken(claimsPrincipal);
+            sessionAuthenticationModule.WriteSessionTokenToCookie(token);
+        }</pre>
+
+<p>You don't need the PostAuthenticateRequest event- the WIF session module is doing that bit.</p>
+
+<p>And that's it! [Authorize("Admin")] attributes work as normal. Retrieving the claims is simple.</p><pre class="csharpcode">var cp = (ClaimsPrincipal)User;
+var email = cp.FindFirst(ClaimTypes.Email);</pre>
+
+<p>Logging out looks like this:</p><pre class="csharpcode">        <span class="kwrd">public</span> ActionResult SignOut()
+        {
+            var sessionAuthenticationModule = FederatedAuthentication.SessionAuthenticationModule;
+            sessionAuthenticationModule.CookieHandler.Delete();
+
+            <span class="rem">//FormsAuthentication.SignOut();</span>
+            <span class="kwrd">return</span> Redirect(<span class="str">"~/"</span>);
+        }</pre><pre></pre>
+</article>
+<ul class="seeAlso">
+<li><a href="../../../2010/04/02/CovarianceAndContravarianceIn Net4In2Minutes.html">covariance and contravariance in .net 4 in 2 minutes</a> (02 Apr 2010)</li>
+<li><a href="../../../2010/06/06/SmartPasteIn2010.html">Smart Paste in 2010</a> (06 Jun 2010)</li>
+<li><a href="../../../2010/11/01/DatabaseSchemaReader.html">Database Schema Reader</a> (01 Nov 2010)</li>
+<li><a href="../../../2011/04/07/PublishAndTransformInMsbuildScript.html">Publish and Transform in MSBuild script</a> (07 Apr 2011)</li>
+<li><a href="../../../2011/04/09/DatabaseSchemaReaderNowWithExtraSqlite.html">Database Schema Reader now with extra SQLite</a> (09 Apr 2011)</li>
+<li><a href="../../../2011/05/02/IldasmAndIlasmToSignAnUnsignedAssembly.html">ildasm and ilasm to sign an unsigned assembly</a> (02 May 2011)</li>
+<li><a href="../../../2011/06/10/T4Preprocessing.html">T4 preprocessing</a> (10 Jun 2011)</li>
+<li><a href="../../../2011/07/08/ Net4 0Caching-NotJustForAsp.html">.Net 4.0 Caching - not just for Asp</a> (08 Jul 2011)</li>
+<li><a href="../../../2011/12/10/MCPDWebDeveloper Net4.html">MCPD Web Developer .Net 4</a> (10 Dec 2011)</li>
+<li><a href="../../../2012/02/05/EFCodeFirstManyToManyMapping.html">EF Code First Many to Many Mapping</a> (05 Feb 2012)</li>
+<li><a href="../../../2012/02/14/EFCodeFirstTracing-LoggingTheSQL.html">EF Code First tracing - logging the SQL</a> (14 Feb 2012)</li>
+<li><a href="../../../2012/02/22/EFCodeFirst-ReferencesVsValidation.html">EF Code First - references vs validation</a> (22 Feb 2012)</li>
+<li><a href="../../../2013/05/31/WebapiUpdated30May2013.html">WebAPI updated 30 May 2013</a> (31 May 2013)</li>
+<li><a href="../../../2013/08/08/TheJSONRequestWasTooLargeToBeDeserialized .html">The JSON request was too large to be deserialized.</a> (08 Aug 2013)</li>
+<li><a href="../../../2014/07/23/ NetVersioning.html">.Net Versioning</a> (23 Jul 2014)</li>
+</ul>
+<p>Previously: <a href="../../../2014/02/13/SqlserverQueuing.html">SqlServer Queuing</a> (13 Feb 2014)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>
