@@ -35,17 +35,15 @@
 <li><a href="https://addons.mozilla.org/en-US/firefox/addon/1865">Adblock Plus</a>.</li>
 <li><a href="https://addons.mozilla.org/firefox/addon/6622">Dom Inspector</a> (previously an install option on FF2, in 3 an addon)</li>
 <li><a href="https://addons.mozilla.org/firefox/60/">WebDeveloper</a></li>
-<li><a href="https://addons.mozilla.org/firefox/394/">ViewSource With</a></li>
-<li><a href="https://addons.mozilla.org/firefox/1843/">FireBug</a></li>
+<li><a href="https://addons.mozilla.org/en-US/firefox/addon/dafizilla-viewsourcewith/">ViewSource With</a></li>
+<li><a href="https://addons.mozilla.org/en-US/firefox/addon/firebug/">FireBug</a></li>
 <li><a href="https://addons.mozilla.org/en-US/firefox/addon/777">New Tab Homepage</a></li>
 <li><a href="http://mozbackup.jasnapaka.com/">MozBackup for syncing between machines</a></li>
 </ul></li>
 <li><a href="http://filezilla-project.org/">Filezilla</a>. To sync, Site Manager/File has import/export.</li>
-<!--li><a href="http://www.launchy.net/">Launchy- Vista like program launcher, still useful in Vista</a></li-->
-<li><a href="http://technet.microsoft.com/en-gb/sysinternals/default.aspx">SysInternals tools (esp Prcoess Explorer)</a> (also see <a href="http://ccollomb.free.fr/unlocker/">Unlocker- who locked my dll?</a>)</li>
-<li><a href="http://www.microsoft.com/downloads/details.aspx?FamilyID=c26efa36-98e0-4ee9-a7c5-98d0592d8c52&amp;DisplayLang=en">SyncToy</a> - designed for syncing photo folders, but useful as a general backup tool. For simple version control that watches a tree, <a href="http://www.mogware.com/filehamster/index.html">FileHamster</a></li>
+<li><a href="http://technet.microsoft.com/en-gb/sysinternals/default.aspx">SysInternals tools (esp Prcoess Explorer)</a></li>
 <li><a href="http://lessmsi.activescott.com/">LessMsi</a> - tool for looking into msi installers</li>
-<li>Windows XP/7: <a href="http://windows.microsoft.com/is-IS/windows-live/essentials-install-offline-faq">Windows Live Essentials (offline installer)</a></li>
+<li>Windows XP/7: <a href="https://support.microsoft.com/en-us/help/18614/windows-essentials">Windows Live Essentials (offline installer)</a></li>
 </ul>
 
 <h4>Settings</h4>
@@ -59,7 +57,7 @@
 <br />Gacutil and the .Net Framework SDK tools are in C:\Program Files\Microsoft SDKs\Windows\v6.0A\Bin 
 </li>
 <li>WindowsXP properties/security tab isn't there by default-<br /> Tools/Folder Options/View tab; deselect "Use simple file sharing"</li>
-<li><a href="http://support.microsoft.com/default.aspx?scid=KB;EN-US;309173">XP search doesn't search .cs/ .js etc- registry hack</a>
+<li>XP search doesn't search .cs/ .js etc- registry hack
 <pre>[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\ContentIndex]
 "FilterFilesWithUnknownExtensions"=dword:00000001</pre></li>
 <li><strong>Vista/7</strong>: 
@@ -75,7 +73,7 @@
 [HKEY_CURRENT_USER\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders\Shell]
 "FolderType"="NotSpecified"
 </pre></li>
-<li>If installed SP1, <a href="http://technet2.microsoft.com/WindowsVista/en/library/0505991e-49c2-494b-8703-257a14c3d4721033.mspx?mfr=true">C:\WINDOWS\system32\VSP1CLN.exe to recover disc space</a>. For sp2, run Compcln.exe</li>
+<li>If installed SP1, C:\WINDOWS\system32\VSP1CLN.exe to recover disc space. For sp2, run Compcln.exe</li>
 </ul>
 </li>
 <li>Turn off CAPSLOCK<pre>Windows Registry Editor Version 5.00
@@ -88,7 +86,7 @@
 <li>Visual Studio latest + SPs + extensions/addins. 
 <ul>
 <li>Vista/7/8: go to C:\Program Files (x86)\Microsoft Visual Studio 10.0\Common7\IDE and right-click devenv.exe. In compatibility tab, set to run as administrator</li>
-<li>Vista/7/8: install IIS7 + IIS - Web Management - IIS6 Compatibility- IIS Metabase and IIS 6 configuration + IIS - WWW Services - ASP.Net + IIS - Security - Windows Authentication. See <a href="http://support.microsoft.com/kb/920201">KB for SQL Server</a></li>
+<li>Vista/7/8: install IIS7 + IIS - Web Management - IIS6 Compatibility- IIS Metabase and IIS 6 configuration + IIS - WWW Services - ASP.Net + IIS - Security - Windows Authentication. See <a href="https://support.microsoft.com/en-us/kb/920201">KB for SQL Server</a></li>
 </ul></li>
 </ul>
 
@@ -99,7 +97,7 @@
 <li>Add GhostDoc, Resharper</li></ul> </li>
 <li>SQL Server (Express) latest + SPs. In Management Studio, server node rightclick/ Properties/ Security/ SQL Server and Windows Authentication (i.e. mixed mode)</li>
 <li>SSMS can be slow so <em>uncheck</em> IE Options/Advanced tab/Security-<q>Check publisher's certificate revocation</q> (or put this entry in C:\windows\system32\drivers\etc\hosts: 127.0.0.1 crl.microsoft.com)</li>
-<li>For SSL: <ul><li>PreVista: download/install <a href="http://www.microsoft.com/downloads/details.aspx?FamilyID=56fc92ee-a71a-4c73-b628-ade629c89499amp;&amp;DisplayLang=en">IIS 6 resource kit</a> and run SelfSSL (selfssl /T for default localhost website)</li>
+<li>For SSL: <ul><li>PreVista: download/install IIS 6 resource kit and run SelfSSL (selfssl /T for default localhost website)</li>
 <li>Vista/IIS7: all in IIS manager - <a href="http://weblogs.asp.net/scottgu/archive/2007/04/06/tip-trick-enabling-ssl-on-iis7-using-self-signed-certificates.aspx">Scottgu</a></li></ul> </li>
 </ul>
 <h3>Development machine- Node + Grunt</h3>
@@ -142,7 +140,6 @@ no_proxy=https://internal-git
 <ul>
 <li><a href="http://www.ubcd4win.com/contents.htm">ultimate Windows boot cd</a> (and <a href="http://www.ultimatebootcd.com/">the non-Windows original</a>)</li>
 <li>XP-Win7: <a href="http://www.slysoft.com/en/virtual-clonedrive.html">Mount iso images as drives</a></li>
-<li>XP-Win7: <a href="http://free.grisoft.com/ww.download-avg-anti-virus-free-edition">AVG Free</a></li>
 <li>Win 8 Shutdown tile: Create a shortcut to <code>Shutdown.exe -s -t 00</code> (shutdown in 0 seconds) on desktop, customize the icon, then right-click-Pin To Start.</li>
 </ul>
 <p>And see <a href="http://www.hanselman.com/tools">the Scott Hanselman tools list</a></p>
@@ -152,9 +149,9 @@ no_proxy=https://internal-git
 <ul>
 <li>Visual Studio add-ins: <a href="http://www.mztools.com/v3/mztools3.htm">MZTools</a>. <br />
 Also <a href="http://www.turbodeveloper.com/turbovblite.php">TurboVBLite add in (official)</a> <a href="http://www.devx.com/vb2themax/CodeDownload/19793 ">older version (incl more code maintenance, a little buggy with ' but nice)</a></li>
-<li><a href="http://support.microsoft.com/?id=837910">Mousewheel doesn't work fix (KB with download)</a></li>
+<li><a href="https://support.microsoft.com/en-us/kb/837910">Mousewheel doesn't work fix (KB with download)</a></li>
 <li><a href="http://www.aivosto.com/project/project.html">Project Analyzer</a> - fxcop for vb6. Not free.</li>
-<li><a href="http://support.microsoft.com/kb/259725/">VB6/ASP3 debugging problems (ms kb)</a></li> 
+<li><a href="https://support.microsoft.com/en-us/kb/259725">VB6/ASP3 debugging problems (ms kb)</a></li> 
 <li>_Register.bat: <code>For %%f in (*.dll) do regsvr32 /s %%f</code>.<br />
 For context-menu Register item, save and merge this reg file (use HKEY_CLASSES_ROOT for whole machine): 
 <pre>REGEDIT4
