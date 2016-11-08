@@ -19,7 +19,6 @@
 <div class="content">
 <h2>SqlServer Queuing</h2>
 <p>Published Thursday 13 February 2014</p><article>
-<h4>&#160;</h4>
 <p>Using a database as a queue is a common requirement. An example is sending emails within a website- it can be slow, error-prone, and you don't want to delay returning a page to the user. So the server processing just queues a request in the database, and a worker process picks it up and tries to execute it.</p>
 <p>The real problem is there may be more than one worker process, perhaps running on different servers. By using the table as a queue, they can avoid deadlocks or processing records multiple times.</p>
 <p><a href="http://rusanu.com/2010/03/26/using-tables-as-queues/">Comprehensive breakdown of queuing including heap queues, FIFO and LIFO.</a></p>  <h5>Table</h5>
