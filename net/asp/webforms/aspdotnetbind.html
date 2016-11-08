@@ -27,7 +27,7 @@
 </div>
 <div class="content">
 <h2>ASP Webforms Binding</h2>
-<p><a href="../../data/adodotnet.html">ADO/Dataset notes</a> - <a href="http://asp.net/QuickStart/aspnet/doc/data/objects.aspx">Asp2 quickstart (asp.net)</a><br />
+<p><a href="../../data/adodotnet.html">ADO/Dataset notes</a><br />
 MSDN: <a href="http://msdn2.microsoft.com/en-us/library/system.web.ui.webcontrols.gridview.aspx">GridView</a>, <a href="http://msdn2.microsoft.com/en-us/library/system.web.ui.webcontrols.detailsview.aspx">DetailsVew</a>, <a href="http://msdn2.microsoft.com/en-us/library/system.web.ui.webcontrols.sqldatasource.aspx">SQLDataSource</a>, <a href="http://msdn2.microsoft.com/en-us/library/system.web.ui.webcontrols.objectdatasource.aspx">ObjectDataSource</a>, <a href="http://asp.net/learn/data-access/tutorial-25-cs.aspx">Asp.net paging with ODS tutorial</a></p>
 <h3>Eval/Bind syntax</h3>
 <p>Note: do not confuse <span style="background: #ffee62;">&lt;%#</span> binding with...</p>
@@ -87,10 +87,10 @@ MSDN: <a href="http://msdn2.microsoft.com/en-us/library/system.web.ui.webcontrol
 &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <span style="color: red;">AutoGenerateEditButton</span><span style="color: blue;">="true"</span> <span style="color: blue;">/&gt;</span></p>
 </div>
 
-<p>The ASP <a href="http://msdn.microsoft.com/en-us/library/system.web.ui.webcontrols.objectdatasource.aspx">ObjectDataSource</a> is pretty limited for normal business objects/POCOs but it's okay for simple ActiveRecord type classes. In practice I use <a href="../code/asp2/code_gridviewpaged_adaptor.html">my ObjectAdaptor</a> a lot, and sometimes you just have to downgrade to a dataTable (<a href="http://codebetter.com/blogs/brendan.tompkins/archive/2006/05/11/144539.aspx">here's a base EntityDataSource that reflects the object to create a datatable [CodeBetter]</a>.</p>
+<p>The ASP <a href="http://msdn.microsoft.com/en-us/library/system.web.ui.webcontrols.objectdatasource.aspx">ObjectDataSource</a> is pretty limited for normal business objects/POCOs but it's okay for simple ActiveRecord type classes. In practice I use <a href="../../code/asp2/code_gridviewpaged_adaptor.html">my ObjectAdaptor</a> a lot, and sometimes you just have to downgrade to a dataTable (<a href="http://codebetter.com/blogs/brendan.tompkins/archive/2006/05/11/144539.aspx">here's a base EntityDataSource that reflects the object to create a datatable [CodeBetter]</a>.</p>
 <ul>
 <li>Set TypeName to the BLL name</li>
-<li>It's created using default constructor (to keep the instance for caching, override ObjectCreating -supply ObjectInstance- and ObjectDisposing - e.Cancel= true - events - see <a href="../code/asp2/code_gridviewpaged_filler.html">here</a>)</li>
+<li>It's created using default constructor (to keep the instance for caching, override ObjectCreating -supply ObjectInstance- and ObjectDisposing - e.Cancel= true - events - see <a href="../../code/asp2/code_gridviewpaged_filler.html">here</a>)</li>
 <li>Populate the properties and call designated Select/Insert/Update/Delete methods (all made by non-cached reflection).</li>
 <li>For paging, EnablePaging="true" and SelectCountMethod plus (for nondefault named) MaximumRowsParameterName and StartRowIndexParameterName (NB the Configure DataSource wizard wrongly puts this in the asp:Parameter list)</li>
 <li>For InsertMethod there is an InsertParameters to map the properties to arguments. Otherwise set DataObjectTypeName.</li>
@@ -170,8 +170,8 @@ If you template it, you can do the same trick with one of the following:  <br />
 <p>Practically you have to template most columns (to add the validators). Oh yes, and the CompareValidator still doesn't understand currency symbols if Type="currency". Grrr.<br />
 ButtonFields with <strong>ButtonType="Image"</strong> always post twice. As a button, or a templated field, it's okay. (<a href="http://connect.microsoft.com/VisualStudio/feedback/ViewFeedback.aspx?FeedbackID=105123">MS bug- marked "fixed" but it's still in 3.5</a>)</p>
 <ul>
-<li><a href="../code/asp2/asp_detailview.html">Example: DetailView/SqlDataSource with integer identity</a></li>
-<li><a href="../code/asp2/asp_sqldatasource.html">Example: SqlDataSource with guid primary key</a></li>
+<li><a href="../../code/asp2/asp_detailview.html">Example: DetailView/SqlDataSource with integer identity</a></li>
+<li><a href="../../code/asp2/asp_sqldatasource.html">Example: SqlDataSource with guid primary key</a></li>
 </ul>
 
 <p>If you're deleting, you'll get paging display bugs in GridView because ObjectDataSource doesn't return AffectedRows (SqlDataSource default paging works, but it loads all the data every time).</p>
@@ -222,7 +222,7 @@ ButtonFields with <strong>ButtonType="Image"</strong> always post twice. As a bu
 
 
 <h3>Dynamic Data</h3>
-<p><a href="http://msdn.microsoft.com/en-us/library/cc488545.aspx">Dynamic Data</a> includes scaffolding for Linq2Sql/EF data models (useful for simple Admin websites; it's customizable but I don't think anybody has used it for real-world websites). It also reads richer information about types (UIHints, foreign keys etc) for better presentation- this part is useful (see <a href="dataannotations.html">DataAnnotations</a>.</p>
+<p><a href="http://msdn.microsoft.com/en-us/library/cc488545.aspx">Dynamic Data</a> includes scaffolding for Linq2Sql/EF data models (useful for simple Admin websites; it's customizable but I don't think anybody has used it for real-world websites). It also reads richer information about types (UIHints, foreign keys etc) for better presentation- this part is useful (see <a href="../dataannotations.html">DataAnnotations</a>.</p>
 <p>There are VS2010 templates for EF and L2Sql. You can only have one model.</p>
 <p>Use buddy classes to add metadata - add a partial class for the type with MetadataType attribute, and attribute the buddy class ([ScaffoldColumn(false)], UIHint, DisplayFormat, Editable, EnumDataType). You can also use the partial methods OnChanging/OnChanged - for validation, throw a DataAnnotations.ValidationError.</p>
 <h4>Structure</h4>
