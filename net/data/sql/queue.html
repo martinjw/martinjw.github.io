@@ -64,14 +64,12 @@ update cte
 <p>To make this a bit more realistic, you could add a [IsEmailSent] column, updated when the emailing succeeds. Then you need a process for dealing with records that are IsProcessed but not IsEmailSent (dequeued, but the email failed). Remember resetting IsProcessed may poison the queue! (A [RetryCount] up to a maximum may help).</p>
 </div>
 <div class="Footer">
-<script type="text/javascript" src="../../js/prettify.js">
+<script type="text/javascript" src="../../../js/prettify.js">
 </script>
-<script type="text/javascript" src="../../js/lang-sql.js">
+<script type="text/javascript" src="../../../js/lang-sql.js">
 </script>
 <script type="text/javascript">
 //<![CDATA[
-
-
 prettyPrint();
 //]]>
 </script></div>
