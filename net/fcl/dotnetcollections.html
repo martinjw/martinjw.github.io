@@ -68,7 +68,7 @@ NB: collections ctors can take StringComparer.InvarientCulture</li>
 <p>Implementing interfaces</p>
 <ul>
 <li>Sort: Implement IComparable (GetComparer static method, CompareTo instance method) and IComparer (which calls CompareTo on the instances, normally a nested class). Can pass in a generic delegate (a typed sort method can be passed in that matches the generic signature)</li>
-<li>See my <a href="../code/genericcomparer.html">GenericComparer&lt;T&gt;</a> using reflection</li>
+<li>See my <a href="../code/reflection/genericcomparer.html">GenericComparer&lt;T&gt;</a> using reflection</li>
 <li>Duplicate objects- override .GetHashCode to return the unique property, AND override object.Equals
 Or create an IEqualityComparer (which also has .GetHashCode and .Equals). You can't just hash all the properties, because if you change one, it's a "different" object.</li>
 <li>BitArray is an array of booleans (doesn't dynamically resize- but you can reset .Length)</li>

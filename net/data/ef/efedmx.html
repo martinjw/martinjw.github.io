@@ -100,7 +100,7 @@
 <p>Or load a fk collection: order.Order_Details.Load();</p>
 
 <h3>Object Queries</h3>
-<p><a href="../code/nhibernate/query.html">NHibernate</a> has a confusing range of query methods (HQL, Criteria, QueryOver, Query/Linq). Entity Framework has linq to entities, Query builder and Entity SQL.</p>
+<p><a href="../../code/nhibernate/query.html">NHibernate</a> has a confusing range of query methods (HQL, Criteria, QueryOver, Query/Linq). Entity Framework has linq to entities, Query builder and Entity SQL.</p>
 <p>The ObjectContext collection properties are ObjectSet&lt;Entity&gt; (extends ObjectQuery) which allows you to build <a href="http://msdn.microsoft.com/en-us/library/bb896241.aspx">Object Queries</a> (you can use IQueryable as in Linq2Sql). ObjectQueries have standard methods including Where, Select, OrderBy, GroupBy etc - note that standard Linq versions may throw exceptions (eg using a IComparer in OrderBy) unless you turn into client side objects (AsEnumerable) first.</p>
 <div class="code">
 <p><span style="color: green;">//Option 1: IQueryable works but you lose the ObjectSet</span><br />
