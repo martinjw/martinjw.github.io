@@ -110,9 +110,9 @@ ClientScript.RegisterStartupScript(GetType(), <span style="color: #a31515;">"Pag
 <p>[<span style="color: blue;">assembly</span>: System.Web.UI.<span style="color: #2b91af;">WebResource</span>(<span style="color: #a31515;">"WebApplication1.Scripts.EmbeddedScript.js"</span>, <span style="color: #a31515;">"text/javascript"</span>)]</p>
 </div>
 
-
+<!--
 <h4>OnSubmit- waiting</h4>
-<p>Another version of a waiting script (see <a href="../../jslib2.html">a general js version</a>). Styles are in the javascript to reduce dependencies, otherwise just extract them out.</p>
+<p>Another version of a waiting script. Styles are in the javascript to reduce dependencies, otherwise just extract them out.</p>
 <ol>
 <li><a href="waiting.js">waiting.js</a> (adjust relative paths as required)</li>
 <li>This image: <img src="waiting.gif" height="16" width="16" alt="Please wait..." /></li>
@@ -123,12 +123,12 @@ Page.ClientScript.RegisterOnSubmitStatement(GetType(), <span style="color: #a315
 </div>
 </li>
 </ol>
-
+-->
 <h4>Highlight on error</h4>
-<p>See <a href="aspvalidation.html#hi">the validomatic page</a>.</p>
+<p>See <a href="../aspvalidation.html#hi">the validomatic page</a>.</p>
 
 <h4>jQuery</h4>
-<p><a href="../../jquery.html">See jQuery syntax notes</a>.</p>
+<p><a href="../../../web/jquery.html">See jQuery syntax notes</a>.</p>
 <p>jQuery UI's dialog is by default outside the form, so do this:</p>
 <div class="code">
 <p><span style="color: blue;">var</span> dlg = $(<span style="color: maroon;">'#</span><span style="color: maroon; background: yellow;">&lt;%</span><span style="color: maroon;">= MyDialogPanel.ClientID </span><span style="color: maroon; background: yellow;">%&gt;</span><span style="color: maroon;">'</span>).dialog({ autoOpen: <span style="color: blue;">false</span>, title: <span style="color: maroon;">'</span><span style="color: maroon; background: yellow;">&lt;%</span><span style="color: maroon;">= Resources.WebResources.MyDialogTitle </span><span style="color: maroon; background: yellow;">%&gt;</span><span style="color: maroon;">'</span> });<br />
