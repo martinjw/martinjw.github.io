@@ -1,0 +1,18 @@
+﻿<?xml version="1.0"?>
+<rss version="2.0">
+  <channel>
+    <title>Static Void</title>
+    <link>https://martinwilley.com/</link>
+    <description>Static void - martinwilley.com</description>
+    <language>en-gb</language>
+    <pubDate>Mon, 14 Nov 2016 10:53:48 GMT</pubDate>
+    <lastBuildDate>Mon, 14 Nov 2016 10:53:48 GMT</lastBuildDate>
+    <ttl>600</ttl>
+    <item>
+      <description>Cloudflare and Github Pages</description>
+      <title>Cloudflare and Github Pages</title>
+      <link>https://martinwilley.com/blog/2016/11/14/CloudflareAndGithubPages.html</link>
+      <pubDate>Mon, 14 Nov 2016 10:53:48 GMT</pubDate>
+    </item>
+  </channel>
+</rss>

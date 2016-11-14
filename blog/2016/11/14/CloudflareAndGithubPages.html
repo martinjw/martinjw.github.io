@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Cloudflare and Github Pages</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Cloudflare and Github Pages</h2>
+<p>Published Monday 14 November 2016</p><article>
+
+<p>After 7 years on GoDaddy, <a href="http://martinwilley.com">http://martinwilley.com</a> has moved on to <a href="https://pages.github.com/">Github Pages</a> behind <a href="https://www.cloudflare.com/">Cloudflare</a>. It's pretty easy, and both services are free.</p>
+
+<p>The GoDaddy hosting (the cheapest level for asp.net) was on IIS7 (so Windows Server 2008) with maximum of .net 4.0. The blog was the ancient dasBlog. There are better asp.net hosting companies, but it's not cheap for personal site, and overkill for a blog. Github Pages is free static hosting, backed by a Github repository. Developers need to be on Github anyway, so why not add your blog to it? There's no dynamic code, but you can use Jekyll as a static site generator. It was simple to convert the dasBlog blog entries into plain html. At that point Jekyll itself became overkill. The Jekyll-redirect-from gem creates an html page with a browser-redirect (meta-refresh/javascript), so I just wrote a quick script to generate some identical redirect htmls and pushed those. </p>
+
+<p>Github Pages are otherwise normal git repositories (git push, accept pull requests and github issues). </p>
+
+<p>Cloudflare sits in front of a site, acting as a content delivery network and DDoS firewall. Acting as a reverse proxy, they can even provide https for your site (although it's not end-to-end security at the free level). According to their analytics, I saved 6% in bandwidth due to their caching, and 68 threats over the last week (mostly US and Ukraine). One of the reasons I stripped back the asp to html was the number of probing attacks I used to see in my logs, trying to break in via /admin and non-existent urls. With static code, it's (mostly) bullet-proof. Despite not publishing any https links, 3% of traffic is already SSL. </p>
+
+</article>
+<ul class="seeAlso">
+<li><a href="../../../2009/11/28/First.html">First</a> (28 November 2009)</li>
+</ul>
+<p>Previously: <a href="../../../2016/05/22/DotnetCoreClassLibraries.html">Dotnet Core Class Libraries</a> (22 May 2016)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>
