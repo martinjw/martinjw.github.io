@@ -23,36 +23,36 @@
 <p>net Core RC2 came out on 2 days ago (May 16 2016). I tried upgrading a simple class library so that it can support .net Core RC2 plus older .net frameworks.</p>
 
 <p>It was relatively straightforward, unlike RC1. Here's what I did.</p>
-<p>The library I used was very simple (<a href="https://github.com/martinjw/Holiday library">my public holidays project</a>).&#160; There is just one project. We're not doing tests for now- we're using vanilla MsTest. RC2 still only supports XUnit, but we should get MsTest for RTM. For now, we want to be able to use the &quot;classic&quot; solution, with tests, and add a parallel &quot;Core&quot; solution that sits alongside it.</p>  
-<h2>Installing RC2</h2>  <ul>   <li>If upgrading from RC1, clear the nuget cache: <em>nuget locals all -clear</em></li>    <ul>     <li>If you upgrade projects, there are numerous low-level changes (project.json structure, package names)</li>   </ul>    <li>If you installed older versions of RC2/dotnet CLI, uninstall them via Programs + Features (&quot;<em>Microsoft Dotnet CLI for Windows</em>&quot;. You can also get rid of &quot;<em>Microsoft ASP.Net 5 RC1 Update 1</em>&quot; which seemed to work but didn't disappear from the list)</li>    <ul>     <li>If you forget (as I did!), VS shows the error &quot;<em>The project is configured to use .NET Core SDK version 1.0.0-preview1-002702 which is not installed or cannot be found</em>.&quot;</li>   </ul>    <li>Use the <a href="https://go.microsoft.com/fwlink/?LinkId=798481">&quot;Microsoft .Net Core 1.0.0 RC2 VS 2015 Tooling Preview 1&quot;</a> </li> </ul>  
+<p>The library I used was very simple (<a href="https://github.com/martinjw/Holiday library">my public holidays project</a>).&nbsp; There is just one project. We're not doing tests for now- we're using vanilla MsTest. RC2 still only supports XUnit, but we should get MsTest for RTM. For now, we want to be able to use the "classic" solution, with tests, and add a parallel "Core" solution that sits alongside it.</p>  
+<h2>Installing RC2</h2>  <ul>   <li>If upgrading from RC1, clear the nuget cache: <em>nuget locals all -clear</em></li>    <ul>     <li>If you upgrade projects, there are numerous low-level changes (project.json structure, package names)</li>   </ul>    <li>If you installed older versions of RC2/dotnet CLI, uninstall them via Programs + Features ("<em>Microsoft Dotnet CLI for Windows</em>". You can also get rid of "<em>Microsoft ASP.Net 5 RC1 Update 1</em>" which seemed to work but didn't disappear from the list)</li>    <ul>     <li>If you forget (as I did!), VS shows the error "<em>The project is configured to use .NET Core SDK version 1.0.0-preview1-002702 which is not installed or cannot be found</em>."</li>   </ul>    <li>Use the <a href="https://go.microsoft.com/fwlink/?LinkId=798481">"Microsoft .Net Core 1.0.0 RC2 VS 2015 Tooling Preview 1"</a> </li> </ul>  
 <h2>Project.json</h2>
 <p>I added a project.json, but I added it alongside the .csproj. There was a bug in RC1 that Visual Studio/ nuget didn't like csproj and project.json together (<a href="https://github.com/dotnet/corefx/issues/4544">https://github.com/dotnet/corefx/issues/4544</a>, last updated April, see also Marc Gravell's instructions at <a href="http://blog.marcgravell.com/2015/11/the-road-to-dnx-part-1.html">http://blog.marcgravell.com/2015/11/the-road-to-dnx-part-1.html</a>, November 2015 so RC1). Let's find out if it's fixed.</p>
 
 <p>{   <br />
-&#160; &quot;version&quot;: &quot;1.0.0-*&quot;,</p>
-<p>&#160; &quot;dependencies&quot;: {   <br />
-&#160;&#160;&#160; &quot;NETStandard.Library&quot;: &quot;1.5.0-rc2-24027&quot;<br />
-&#160; },</p>
-<p>&#160; &quot;frameworks&quot;: {   <br />
-&#160;&#160;&#160; &quot;netstandard1.3&quot;: {<br />
-&#160;&#160;&#160;&#160;&#160; &quot;imports&quot;: &quot;dnxcore50&quot;<br />
-&#160;&#160;&#160; }<br />
-&#160; }<br />
+&nbsp; "version": "1.0.0-*",</p>
+<p>&nbsp; "dependencies": {   <br />
+&nbsp;&nbsp;&nbsp; "NETStandard.Library": "1.5.0-rc2-24027"<br />
+&nbsp; },</p>
+<p>&nbsp; "frameworks": {   <br />
+&nbsp;&nbsp;&nbsp; "netstandard1.3": {<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "imports": "dnxcore50"<br />
+&nbsp;&nbsp;&nbsp; }<br />
+&nbsp; }<br />
 }</p>  <ul>   <li>We're just using the standard library (we could depend on loads of individually specified packages, but this is very concise).</li>    <li>The package/dll name is the folder name.</li>    <li>Not sure why we're importing dnxcore50, when dnx is supposed to be gone- from the discussion on github it looks like another transitional thing. Maybe it will be gone for RTM in June.</li>    <li>You can use framework netstandard1.5 or roll back to netstandard1.0. For 1.0 - 1.2, it red-lined on <em>[assembly: Guid(</em> attribute in AssemblyInfo.cs. So netstandard1.3 it is. </li> </ul>
-<p>I opened up the old solution. Building in Visual Studio broke: &quot;<em>Your project is not referencing the &quot;.NETFramework,Version=v4.0&quot; framework. Add a reference to &quot;.NETFramework,Version=v4.0&quot; in the &quot;frameworks&quot; section of your project.json, and then re-run NuGet restore.&quot;</em></p>
+<p>I opened up the old solution. Building in Visual Studio broke: "<em>Your project is not referencing the ".NETFramework,Version=v4.0" framework. Add a reference to ".NETFramework,Version=v4.0" in the "frameworks" section of your project.json, and then re-run NuGet restore."</em></p>
 <p>The workaround (from the github issue) is to add <em>&lt;ResolveNuGetPackages&gt;false&lt;/ResolveNuGetPackages&gt;</em> to the .csproj. If you have packages, tough.</p>  
 <h2>First dotnet build</h2>
 <p>There's documentation on the "dotnet build" command here: <a title="http://dotnet.github.io/docs/core-concepts/core-sdk/cli/dotnet-build.html" href="http://dotnet.github.io/docs/core-concepts/core-sdk/cli/dotnet-build.html">http://dotnet.github.io/docs/core-concepts/core-sdk/cli/dotnet-build.html</a></p>
 <p><em>&gt;dotnet build <br />
 Project x does not have a lock file  <br />
 Project x does not have a lock file</em></p>
-<p>Saying it twice doesn't make it any more helpful. The lock file is something to do with a package restore.&#160;</p>
+<p>Saying it twice doesn't make it any more helpful. The lock file is something to do with a package restore.&nbsp;</p>
 
 <p><em>&gt;dotnet restore <br />
-log&#160; : Restoring packages for C:\...\project.json...  <br />
+log&nbsp; : Restoring packages for C:\...\project.json...  <br />
 info : Committing restore...  <br />
-log&#160; : Writing lock file to disk. Path: C:\...\project.lock.json  <br />
-log&#160; : Restore completed in 950ms.  <br />
+log&nbsp; : Writing lock file to disk. Path: C:\...\project.lock.json  <br />
+log&nbsp; : Restore completed in 950ms.  <br />
 &gt;dotnet build</em></p>
 <p>It builds!</p>
 <p>We now have a dll and pdb in bin/Debug/netstandard1.3   <br />
@@ -60,42 +60,42 @@ We also have a json file, (x.deps.json), which shows you everything in .NETStand
 <h2>Parallel solutions</h2>
 <p>I created a second solution alongside the current solution (essentially the same, minus the test project).</p>
 <p>Next, alongside the current project, I added an xproj file (a cut-down csproj). To get this file, I created a new Core library in Visual Studio in a different folder, and stole the xproj. I had to change the <em>&lt;RootNamespace&gt;x&lt;/RootNamespace&gt;.</em></p>
-<p>I also changed the&#160; <em>&lt;OutputPath Condition=&quot;'$(OutputPath)'=='' &quot;&gt;.\bin\&lt;/OutputPath&gt;</em> ( to .\bin\core\ ) so building the current and new projects put things in different places. Note this only works in Visual Studio- &quot;dotnet build&quot; doesn't look at the .xproj. Instead you have to <em>&gt;dotnet build -c Release -o .\bin\core\ -f netstandard1.3</em> (note you have to specify the framework when you use --output).</p>  
+<p>I also changed the&nbsp; <em>&lt;OutputPath Condition="'$(OutputPath)'=='' "&gt;.\bin\&lt;/OutputPath&gt;</em> ( to .\bin\core\ ) so building the current and new projects put things in different places. Note this only works in Visual Studio- "dotnet build" doesn't look at the .xproj. Instead you have to <em>&gt;dotnet build -c Release -o .\bin\core\ -f netstandard1.3</em> (note you have to specify the framework when you use --output).</p>  
 <h2>Multi-targeting</h2>
 <p>Adding older frameworks to project.json is as simple as adding the targets (which are the same as used in nuget).</p>
-<p>&#160;<em> &quot;frameworks&quot;: { <br />
-&#160;&#160;&#160; &quot;netstandard1.3&quot;: {  <br />
-&#160;&#160;&#160;&#160;&#160; &quot;imports&quot;: &quot;dnxcore50&quot;  <br />
-&#160;&#160;&#160; },  <br />
-&#160;&#160;&#160; <font style="background-color: #ffff00">&quot;net35&quot;: { },   <br />
-&#160;&#160;&#160; &quot;net40&quot;: { }</font></em><br />
-&#160;&#160;&#160; <br />
+<p>&nbsp;<em> "frameworks": { <br />
+&nbsp;&nbsp;&nbsp; "netstandard1.3": {  <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "imports": "dnxcore50"  <br />
+&nbsp;&nbsp;&nbsp; },  <br />
+&nbsp;&nbsp;&nbsp; <font style="background-color: #ffff00">"net35": { },   <br />
+&nbsp;&nbsp;&nbsp; "net40": { }</font></em><br />
+&nbsp;&nbsp;&nbsp; <br />
 This works, but in Visual Studio it has a deep output folder structure. Using the dotnet command line, it's exactly what you'd expect.</p>
 <p>Not sure why Visual Studio adds more levels.</p>  
 <h2>Packing up</h2>
 <p>Nuspec is now in project.json. Add json like this:   <br />
-<em>&#160; &quot;packOptions&quot;: { <br />
-&#160;&#160;&#160; &quot;summary&quot;: &quot;Wonderful library&quot;,  <br />
-&#160;&#160;&#160; &quot;tags&quot;: [ &quot;Wonderful&quot; ],  <br />
-&#160;&#160;&#160; &quot;owners&quot;: [ &quot;me ],  <br />
-&#160;&#160;&#160; &quot;projectUrl&quot;: &quot;</em><em>https://github.com/xxx&quot;</em><em>, <br />
-&#160;&#160;&#160; &quot;licenseUrl&quot;: &quot;</em><em>http://opensource.org/licenses/MIT&quot;</em><em>, <br />
-&#160;&#160;&#160; &quot;repository&quot;: {  <br />
-&#160;&#160;&#160;&#160;&#160; &quot;type&quot;: &quot;git&quot;,  <br />
-&#160;&#160;&#160;&#160;&#160; &quot;url&quot;: &quot;</em><em>https://github.com/xxx&quot;</em><br />
-<em>&#160;&#160;&#160; } <br />
-&#160; },</em></p>
+<em>&nbsp; "packOptions": { <br />
+&nbsp;&nbsp;&nbsp; "summary": "Wonderful library",  <br />
+&nbsp;&nbsp;&nbsp; "tags": [ "Wonderful" ],  <br />
+&nbsp;&nbsp;&nbsp; "owners": [ "me ],  <br />
+&nbsp;&nbsp;&nbsp; "projectUrl": "</em><em>https://github.com/xxx"</em><em>, <br />
+&nbsp;&nbsp;&nbsp; "licenseUrl": "</em><em>http://opensource.org/licenses/MIT"</em><em>, <br />
+&nbsp;&nbsp;&nbsp; "repository": {  <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "type": "git",  <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "url": "</em><em>https://github.com/xxx"</em><br />
+<em>&nbsp;&nbsp;&nbsp; } <br />
+&nbsp; },</em></p>
 <p>We now use "dotnet pack" instead of "nuget pack": <a href="http://dotnet.github.io/docs/core-concepts/core-sdk/cli/dotnet-pack.html">http://dotnet.github.io/docs/core-concepts/core-sdk/cli/dotnet-pack.html</a><br />
-&#160; <br />
+&nbsp; <br />
 &gt;dotnet pack -c Release -o .\artifacts</p>  <ul>   <li>Pack builds the project, but you can pass --no-build.</li>    <li>Note the version number is taken from the project.json (not the AssemblyInfo.cs).</li> </ul>  
 <h2>ToDo</h2>
 <p>Hopefully appveyor will roll out RC2 support soon (maybe this week?), and we can have easy CI builds. Once that is in-place, I will use it to publish the pre-release package to nuget.</p>
 <p>More complex dependencies, particularly on older parts of .net like ADO, will be more challenging. It would be easy to find yourself with heavy compiler directives all over your code.</p>
 <p>Sometime after RTM, project.json will be phased out, and we move back to csproj (hopefully improved). I suspect this will come with the release of the next version of Visual Studio (2017?).</p>
 </article>
-<ul class="seeAlso">
-<li><a href="../../../2016/05/22/DotnetCoreClassLibraries.html">DotNet Core class libraries</a> (22 May 2016)</li>
-</ul>
+<ul class="categories">
+<li><a href="../../../categories/dotnetCore/">dotnet Core</a></li></ul>
+
 <p>Previously: <a href="../../../2016/02/25/NDCVideoLinkDump2.html">NDC Video Link Dump 2</a> (25 Feb 2016)</p>
 </div>
 <div class="Footer">

@@ -244,7 +244,8 @@ ul.categories li {
 display:inline;
 } 
 ul.categories li a {
-display: block;
+padding: 2px 1em;
+margin: 3px;
 background-color:#FFA500;
 color:#222;
 width:15em;

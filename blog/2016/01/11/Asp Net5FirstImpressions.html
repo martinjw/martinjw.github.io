@@ -34,11 +34,11 @@
 <p>It's based on nuget packages, so it's easily deployed side-by-side. This downside is the packages are very granular and manual. Visual Studio auto-suggests from nuget feeds while entering the dependencies in project.json. To make it easier, there will be standard packages with simple names that bring in a bunch of other packages (but they aren't there yet). On the MVC level, the Microsoft.AspNet.Mvc package is probably the one you want, unless you want to individually reference Microsoft.AspNet.Mvc.Core and half a dozen other packages for the precise combination of features you're using. Still, we've swapped dll hell for version hell when packages start updating independently.</p>
 <p>There is a plan for zero day patching from Windows Update (presumably this is where the GAC comes back). The proposal is that packages are supported for 12 months- so when an update comes out, you have a year to update. In most organizations, applications get released and the team disperses, and no updates are ever done. With Asp.net 5, that could be a problem.</p>
 <p>It's bootstrapped just like a classic console- with a public static void Main(string[] args) method. (This was hidden away in IIS before). IIS will now use the static void Main, and more things get done in asp and it's Kestrel server (Kestrel now sits behind IIS, as well as being able to run standalone. HttpListener sounds like it's gone).</p>
-<p>Dependency Injection is built in and pervasive. It's used when configuring your asp.net 5 environment, in preference to base classes or interfaces.&#160; In controllers it's not too bad, but in your startup class and middleware you don't have any way to discover what you can do. You have a Configure method which is magically called with the arguments you specify- say, an IApplicationBuilder or an ILoggerFactory. We're going to be relying on the documentation website (and I hope the docs cover updates and and are versioned.)</p>
+<p>Dependency Injection is built in and pervasive. It's used when configuring your asp.net 5 environment, in preference to base classes or interfaces.&nbsp; In controllers it's not too bad, but in your startup class and middleware you don't have any way to discover what you can do. You have a Configure method which is magically called with the arguments you specify- say, an IApplicationBuilder or an ILoggerFactory. We're going to be relying on the documentation website (and I hope the docs cover updates and and are versioned.)</p>
 </article>
-<ul class="seeAlso">
-<li><a href="../../../2016/01/19/NDCLondonLinkDump.html">NDC London link dump</a> (19 Jan 2016)</li>
-</ul>
+<ul class="categories">
+<li><a href="../../../categories/Aspnet5/">Asp.net 5</a></li></ul>
+
 <p>Previously: <a href="../../../2015/08/04/UpgradingWindows10.html">Upgrading Windows 10</a> (04 Aug 2015)</p>
 </div>
 <div class="Footer">

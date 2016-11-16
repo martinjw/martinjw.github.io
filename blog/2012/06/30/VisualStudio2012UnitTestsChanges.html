@@ -30,7 +30,7 @@
 <p>There's a search with filters ("FullName: Domain.Tests.MyTest"). For solutions with large numbers of tests this might be awkward- I'd like to see more customization of the result tree (by project/folder or namespace), and more filters.</p>
 
 <p>The results at the bottom of the window are summarized, but you can still click through to the test and stack.</p>
-<p>There's a button to make every build (Ctl-Shift-B) also run the tests - "Run Tests After Build". Builds and test are run in the&#160; background so it doesn't stop you coding (well, my underpowered 32bit laptop is less responsive, but it's vastly better than previous versions of VS). Not so good if you include some integration tests, but nice nonetheless.</p>
+<p>There's a button to make every build (Ctl-Shift-B) also run the tests - "Run Tests After Build". Builds and test are run in the&nbsp; background so it doesn't stop you coding (well, my underpowered 32bit laptop is less responsive, but it's vastly better than previous versions of VS). Not so good if you include some integration tests, but nice nonetheless.</p>
 <p><a href="http://www.martinwilley.com/blog/content/binary/Visual-Studio-2012-Test_C071/RunTestsAfterBuild.png"><img style="background-image: none; border-bottom: 0px; border-left: 0px; padding-left: 0px; padding-right: 0px; display: inline; border-top: 0px; border-right: 0px; padding-top: 0px" title="RunTestsAfterBuild" border="0" alt="RunTestsAfterBuild" src="http://www.martinwilley.com/blog/content/binary/Visual-Studio-2012-Test_C071/RunTestsAfterBuild_thumb.png" width="244" height="95" /></a></p>  <h3>Features </h3>
 <p>Unit tests support async tests. And code coverage (in Premium and Ultimate only) is much easier- no .testsettings, no having to select the dlls, just right click the tests (or add /enablecodecoverage on the vstest.console.exe command line).</p>
 <p><a href="http://www.martinwilley.com/blog/content/binary/Visual-Studio-2012-Test_C071/CodeCoverage.png"><img style="background-image: none; border-bottom: 0px; border-left: 0px; padding-left: 0px; padding-right: 0px; display: inline; border-top: 0px; border-right: 0px; padding-top: 0px" title="CodeCoverage" border="0" alt="CodeCoverage" src="http://www.martinwilley.com/blog/content/binary/Visual-Studio-2012-Test_C071/CodeCoverage_thumb.png" width="324" height="215" /></a></p>
@@ -132,14 +132,14 @@
             <span class="kwrd">using</span> (Microsoft.QualityTools.Testing.Fakes.
                 ShimsContext.Create())
             {
-                System.IO.Fakes.ShimFile.ReadAllTextString = (arg) =&gt; <span class="str">&quot;x&quot;</span>;
+                System.IO.Fakes.ShimFile.ReadAllTextString = (arg) =&gt; <span class="str">"x"</span>;
 
                 <span class="rem">//act</span>
-                result = reader.ReadAllText(<span class="str">@&quot;X:\doesnotexist\notThere.txt&quot;</span>);
+                result = reader.ReadAllText(<span class="str">@"X:\doesnotexist\notThere.txt"</span>);
             }
 
             <span class="rem">//assert</span>
-            Assert.That(result, Is.EqualTo(<span class="str">&quot;x&quot;</span>));
+            Assert.That(result, Is.EqualTo(<span class="str">"x"</span>));
         }</pre>
 <style type="text/css">
 .csharpcode, .csharpcode pre
@@ -167,11 +167,9 @@
 }
 .csharpcode .lnum { color: #606060; }</style>
 </article>
-<ul class="seeAlso">
-<li><a href="../../../2012/11/30/TF31003Windows8VsTeamFoundationService.html">TF31003: Windows 8 vs Team Foundation Service</a> (30 Nov 2012)</li>
-<li><a href="../../../2013/05/31/WebapiUpdated30May2013.html">WebAPI updated 30 May 2013</a> (31 May 2013)</li>
-<li><a href="../../../2013/06/13/NugetVsJquery2.html">Nuget vs jQuery 2 </a> (13 Jun 2013)</li>
-</ul>
+<ul class="categories">
+<li><a href="../../../categories/VS2012/">VS2012</a></li></ul>
+
 <p>Previously: <a href="../../../2012/06/29/TechedEurope2012.html">TechEd Europe 2012</a> (29 Jun 2012)</p>
 </div>
 <div class="Footer">

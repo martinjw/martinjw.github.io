@@ -32,13 +32,13 @@ Console.WriteLine(v.ToString()); //shows 2014010110.7383783.38989899.893839893</
 <p>The version attributes are normally in Properties/AssemblyInfo.cs (but could be anywhere).<br />
 You can also access AssemblyVersion and AssemblyFileVersion via the project properties - application - [Assembly Information...] button.</p>
 <p>There are 3:</p>  <pre class="csharpcode"><span class="rem">//CLR uses this as the version </span>
-[assembly: AssemblyVersion(<span class="str">&quot;1.0.0.0&quot;</span>)]
+[assembly: AssemblyVersion(<span class="str">"1.0.0.0"</span>)]
 
 <span class="rem">//Not used by CLR, often the specific build</span>
-[assembly: AssemblyFileVersion(<span class="str">&quot;1.0.0.0&quot;</span>)]
+[assembly: AssemblyFileVersion(<span class="str">"1.0.0.0"</span>)]
 
 <span class="rem">//If not present, == AssemblyVersion. </span>
-[assembly: AssemblyInformationalVersion(<span class="str">&quot;v1.0 RC&quot;</span>)]</pre>
+[assembly: AssemblyInformationalVersion(<span class="str">"v1.0 RC"</span>)]</pre>
 <style type="text/css">
 
 
@@ -68,7 +68,7 @@ You can also access AssemblyVersion and AssemblyFileVersion via the project prop
 .csharpcode .lnum { color: #606060; }</style>
 
 
-<p>AssemblyInformationalVersion used to error if it wasn't a System.Version (all ints). Since Visual Studio 2010, you can put in free-form strings, which is useful for tags like &quot;RC&quot;.</p>
+<p>AssemblyInformationalVersion used to error if it wasn't a System.Version (all ints). Since Visual Studio 2010, you can put in free-form strings, which is useful for tags like "RC".</p>
 
 
 <p>To access these via code:</p>
@@ -115,17 +115,17 @@ Console.WriteLine(fv.ProductVersion); //AssemblyInformationalVersion</pre>
 
 
 
-<p>For AssemblyVersion, you get a CSC Error: &quot;Error emitting 'System.Reflection.AssemblyVersionAttribute' attribute -- 'The version specified '65536.65535.65535.65535' is invalid'&quot;</p>
+<p>For AssemblyVersion, you get a CSC Error: "Error emitting 'System.Reflection.AssemblyVersionAttribute' attribute -- 'The version specified '65536.65535.65535.65535' is invalid'"</p>
 
 
-<p>For AssemblyFileVersion, you get a CSC Warning&#160;&#160;&#160; &quot;Assembly generation -- The version '65536.65535.65535.65535' specified for the 'file version' is not in the normal 'major.minor.build.revision' format&quot;. It will build, at least.</p>
+<p>For AssemblyFileVersion, you get a CSC Warning&nbsp;&nbsp;&nbsp; "Assembly generation -- The version '65536.65535.65535.65535' specified for the 'file version' is not in the normal 'major.minor.build.revision' format". It will build, at least.</p>
 
 <h3>Versioning Strategy</h3>
 
 <ul>
   <li>For all version types major and minor parts should be manually set. </li>
 
-  <li>To simplify CLR versioning, we don't need to increment the AssemblyVersion except once, manually, at final release. For AssemblyVersion, just set major and minor (and perhaps build for semver). Normally build and revision will always be 0.0.&#160; We don't want any version numbers changing during developer builds, or even continuous integration builds unless they are automatically deployed to test. </li>
+  <li>To simplify CLR versioning, we don't need to increment the AssemblyVersion except once, manually, at final release. For AssemblyVersion, just set major and minor (and perhaps build for semver). Normally build and revision will always be 0.0.&nbsp; We don't want any version numbers changing during developer builds, or even continuous integration builds unless they are automatically deployed to test. </li>
 
   <li>When a dll is published/deployed, we should increment the AssemblyFileVersion. </li>
 
@@ -133,12 +133,12 @@ Console.WriteLine(fv.ProductVersion); //AssemblyInformationalVersion</pre>
 </ul>
 
 
-<p>There are several candidates for traceable build and revision numbers, but none are &quot;semver&quot; (both build and revision are significant).</p>
+<p>There are several candidates for traceable build and revision numbers, but none are "semver" (both build and revision are significant).</p>
 
 <ul>
   <li>Increment by date, as in wildcards (below): build is days since a specific date, revision is seconds since midnight. But there is no obvious connection between the dll and the build on the build-server. </li>
 
-  <li>Date, except we can't fit &quot;year-month-day-hour-minute-second&quot; into an int16. You could overflow it: build is mmdd, revision is hhmm. </li>
+  <li>Date, except we can't fit "year-month-day-hour-minute-second" into an int16. You could overflow it: build is mmdd, revision is hhmm. </li>
 
   <li>Build name. TFS uses a buildDef_yyyymmdd.n format for the build name. </li>
 
@@ -183,27 +183,11 @@ CSC : warning CS1607: Assembly generation -- The version '1.2.0.*' specified for
 <p>Another project, <a href="https://tfsbuildextensions.codeplex.com/" target="_blank">Community TFS Build Extensions</a>, made by some of the same people, hooks up into TFS 2012/2013 xaml workflows and includes a <a href="https://tfsbuildextensions.codeplex.com/wikipage?title=How%20to%20integrate%20the%20TfsVersion%20build%20activity&amp;referringTitle=Documentation" target="_blank">TfsVersion build activity</a>.</p>
 
 </article>
-<ul class="seeAlso">
-<li><a href="../../../2010/09/20/FindingAllTFSUsers.html">Finding all TFS users</a> (20 Sep 2010)</li>
-<li><a href="../../../2012/01/05/VisualStudio2010-FindTFSWorkingDirectory.html">Visual Studio 2010 - find TFS working directory</a> (05 Jan 2012)</li>
-<li><a href="../../../2012/11/30/TF31003Windows8VsTeamFoundationService.html">TF31003: Windows 8 vs Team Foundation Service</a> (30 Nov 2012)</li>
-</ul>
-<ul class="seeAlso">
-<li><a href="../../../2010/04/02/CovarianceAndContravarianceIn Net4In2Minutes.html">covariance and contravariance in .net 4 in 2 minutes</a> (02 Apr 2010)</li>
-<li><a href="../../../2010/06/06/SmartPasteIn2010.html">Smart Paste in 2010</a> (06 Jun 2010)</li>
-<li><a href="../../../2010/11/01/DatabaseSchemaReader.html">Database Schema Reader</a> (01 Nov 2010)</li>
-<li><a href="../../../2011/04/07/PublishAndTransformInMsbuildScript.html">Publish and Transform in MSBuild script</a> (07 Apr 2011)</li>
-<li><a href="../../../2011/04/09/DatabaseSchemaReaderNowWithExtraSqlite.html">Database Schema Reader now with extra SQLite</a> (09 Apr 2011)</li>
-<li><a href="../../../2011/05/02/IldasmAndIlasmToSignAnUnsignedAssembly.html">ildasm and ilasm to sign an unsigned assembly</a> (02 May 2011)</li>
-<li><a href="../../../2011/06/10/T4Preprocessing.html">T4 preprocessing</a> (10 Jun 2011)</li>
-<li><a href="../../../2011/07/08/Net4 0Caching-NotJustForAsp.html">.Net 4.0 Caching - not just for Asp</a> (08 Jul 2011)</li>
-<li><a href="../../../2011/12/10/MCPDWebDeveloper Net4.html">MCPD Web Developer .Net 4</a> (10 Dec 2011)</li>
-<li><a href="../../../2012/02/05/EFCodeFirstManyToManyMapping.html">EF Code First Many to Many Mapping</a> (05 Feb 2012)</li>
-<li><a href="../../../2012/02/14/EFCodeFirstTracing-LoggingTheSQL.html">EF Code First tracing - logging the SQL</a> (14 Feb 2012)</li>
-<li><a href="../../../2012/02/22/EFCodeFirst-ReferencesVsValidation.html">EF Code First - references vs validation</a> (22 Feb 2012)</li>
-<li><a href="../../../2013/05/31/WebapiUpdated30May2013.html">WebAPI updated 30 May 2013</a> (31 May 2013)</li>
-<li><a href="../../../2013/08/08/TheJSONRequestWasTooLargeToBeDeserialized.html">The JSON request was too large to be deserialized.</a> (08 Aug 2013)</li>
-</ul>
+<ul class="categories">
+<li><a href="../../../categories/net4/">.net 4</a></li>
+<li><a href="../../../categories/TFS/">TFS</a></li></ul>
+
+
 <p>Previously: <a href="../../../2014/03/07/FormsAuthenticationWithClaims.html">Forms Authentication with claims</a> (07 Mar 2014)</p>
 </div>
 <div class="Footer">

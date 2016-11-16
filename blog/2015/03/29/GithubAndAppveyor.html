@@ -21,21 +21,19 @@
 <p>Published Sunday 29 March 2015</p><article>
 
 <p>I finally moved my project "database schema reader" from <a href="http://dbschemareader.codeplex.com/" target="_blank">Codeplex</a> to <a href="https://github.com/martinjw/dbschemareader" target="_blank">Github</a>.</p>
-<p>Github import was simple and quick. I didn't import the historical issues (the project went on Codeplex in 2010, and it was a couple of years old then). I just added an "upstream" remote so I can still push to Codeplex and keep it updated.&#160;</p>
+<p>Github import was simple and quick. I didn't import the historical issues (the project went on Codeplex in 2010, and it was a couple of years old then). I just added an "upstream" remote so I can still push to Codeplex and keep it updated.&nbsp;</p>
 
 <p>Codeplex comments and discussions are disabled at the moment; "we're anticipating that this functionality will be re-enabled early next week"! The codeplex blog hasn't been updated in 2 years, and the "codeplex" discussions are full of spam (fortunately I've never had spam in the project discussions). There are many third-party services that integrate with Github, but nothing links into Codeplex.</p>
 
 <p>The main advantage of the move to Github was hooking into Appveyor for CI builds. It took a few builds to experiment with things. I'm using database integration tests with SqlServer, SQLite, PostgreSql and MySql. Now these are working, the tests are more portable - I can easily recreate the databases. The packaging of the builds (dlls into a zip, plus a nuget packages) was also easy, and can create releases within Github. The appveyor.yml file isn't the easiest way to configure builds, and I soon figured out it's better to use the website UI.</p>
 <p>Overall, much better than TFS (ugh!) and TeamCity builds. I played a little with Travis CI (building in Mono), but for now it's not worth pursuing.</p>
 <p>I tried Coverity for code analysis, which flagged a few (minor) things, but didn't seem to add a lot more than FxCop.</p>
-<p>I looked at Coveralls,&#160; a code coverage service. Code coverage is 77%, incidentally, which I think is quite good for something that includes code to support Oracle, DB2, Ingres, 3 different Sybase databases, VistaDb, Firebird and Intersystems Cache (for now, these must continue to be tested on my machine only.). I don't believe code coverage is very useful, so for now I won't include this into the Appveyor build.</p>
+<p>I looked at Coveralls,&nbsp; a code coverage service. Code coverage is 77%, incidentally, which I think is quite good for something that includes code to support Oracle, DB2, Ingres, 3 different Sybase databases, VistaDb, Firebird and Intersystems Cache (for now, these must continue to be tested on my machine only.). I don't believe code coverage is very useful, so for now I won't include this into the Appveyor build.</p>
 <p>I'm very impressed, and very happy with Appveyor.</p>
 </article>
-<ul class="seeAlso">
-<li><a href="../../../2011/02/14/DatabaseSchemaReader.html">Database Schema Reader</a> (14 Feb 2011)</li>
-<li><a href="../../../2011/04/09/DatabaseSchemaReaderNowWithExtraSqlite.html">Database Schema Reader now with extra SQLite</a> (09 Apr 2011)</li>
-<li><a href="../../../2011/04/25/DatabaseSchemaReaderWithMoreSqlserverce4 0Love.html">Database Schema Reader with more SqlServerCE 4.0 love</a> (25 Apr 2011)</li>
-</ul>
+<ul class="categories">
+<li><a href="../../../categories/DatabaseSchemaReader/">Database Schema Reader</a></li></ul>
+
 <p>Previously: <a href="../../../2014/07/23/NetVersioning.html">.Net Versioning</a> (23 Jul 2014)</p>
 </div>
 <div class="Footer">

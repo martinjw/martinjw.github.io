@@ -23,7 +23,7 @@
 <p>Shortly after the last release of <a href="http://dbschemareader.codeplex.com/" target="_blank">Database Schema Reader</a>, here's another release.</p>
 <p><a href="http://martinwilley.com/blog/2011/04/09/DatabaseSchemaReaderNowWithExtraSQLite.html" target="_blank">Last time</a> I added a CopyToSQLite tool, which reads (almost) any database and creates a SQLite clone. I also added experimental support for SQLServer CE 4.0, but it had some big limitations.</p>
 
-<p>So the obvious next step was to fix some of those limitations, and that's what this release focuses on. Unfortunately CopyToSQLite.exe is now a little misnamed. <img style="border-bottom-style: none; border-left-style: none; border-top-style: none; border-right-style: none" class="wlEmoticon wlEmoticon-winkingsmile" alt="Winking smile" src="http://www.martinwilley.com/blog/content/binary/Database-Schema-Reader-with-more-.0-love_9CD7/wlEmoticon-winkingsmile.png"></p>
+<p>So the obvious next step was to fix some of those limitations, and that's what this release focuses on. Unfortunately CopyToSQLite.exe is now a little misnamed. <img style="border-bottom-style: none; border-left-style: none; border-top-style: none; border-right-style: none" class="wlEmoticon wlEmoticon-winkingsmile" alt="Winking smile" src="http://www.martinwilley.com/blog/content/binary/Database-Schema-Reader-with-more-.0-love_9CD7/wlEmoticon-winkingsmile.png" /></p>
 <p>I added a little bit of conversion code so VARCHAR(MAX) found in the origin database gets converted to NTEXT (and VARBINARY to IMAGE). The reading of SQLServer CE 4 databases got improved too (capturing the&nbsp; foreign and unique keys and identity columns).</p>
 <p>SQLServer allows an integer column to be marked as "Identity" so it will be auto-generated (the equivalent in Oracle is to create a sequence and an insert trigger). But you can't include the identity column when you insert a row. So, when cloning data, SQLServer also allows identity-inserts with SET IDENTITY_INSERT [MyTable] ON/OFF. When you've done that, you should reset the identity seed with DBCC CHECKIDENT.</p>
 <p>But in SQLServer CE 4, there is no DBCC CHECKIDENT. You have to do an ALTER TABLE [MyTable] ALTER COLUMN [IdentityColumn] IDENTITY (999,1) (where 999 is the new max(IdentityColumn)). It's another of those little gotchas between SQLServer and SQLServer CE.</p>
@@ -43,13 +43,11 @@ FETCH NEXT @EndingRowNumber - @StartingRowNumber + 1 ROWS ONLY</p>
 <p>Overall, the "CopyToSQLite" to SQLServer CE 4 seems to work well. Using easily deployable file databases like SQLServer CE and SQLite is simple and powerful.</p>
 
 </article>
-<ul class="seeAlso">
-<li><a href="../../../2011/02/14/DatabaseSchemaReader.html">Database Schema Reader</a> (14 Feb 2011)</li>
-<li><a href="../../../2015/03/29/GithubAndAppveyor.html">Github and Appveyor</a> (29 Mar 2015)</li>
-</ul>
-<ul class="seeAlso">
-<li><a href="../../../2010/11/01/DatabaseSchemaReader.html">Database Schema Reader</a> (01 Nov 2010)</li>
-</ul>
+<ul class="categories">
+<li><a href="../../../categories/Codeplex/">Codeplex</a></li>
+<li><a href="../../../categories/DatabaseSchemaReader/">Database Schema Reader</a></li></ul>
+
+
 <p>Previously: <a href="../../../2011/04/09/DatabaseSchemaReaderNowWithExtraSqlite.html">Database Schema Reader now with extra SQLite</a> (09 Apr 2011)</p>
 </div>
 <div class="Footer">
