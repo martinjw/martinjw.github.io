@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Porting to Dotnet Core</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Porting to Dotnet Core</h2>
+<p>Published Saturday 19 November 2016</p><article>
+
+<p>.net Core is new and shiny. It discards a lot of the historical cruft that has built up in the full .net framework. It is fast and simple, but the downside is that many existing projects cannot practically be updated. Library projects with pure business logic are likely to be upgradable, but you'll soon hit problems with dependencies like data access or WCF. I've got an old data access helper library which would be very useful in .net Core. It provides functionality that .net Core misses- accessing database schema metadata (names of tables and columns). The problem is that it uses ADO dataTables, and those have been purged from Core. So this is how I upgraded it...</p>
+
+<h3>A long time ago in a galaxy far far away...</h3>
+
+<p>Back in 2005 Microsoft released .net 2.0. One of the nice new features was <a href="https://msdn.microsoft.com/en-us/library/wda6c36e(v=vs.110).aspx">ADO DbProviderFactories</a>. You could write generic ADO code where the actual database and driver was decided purely by configuration. It also provided schema information about the database (tables, columns etc). Good idea, but it was all in ugly DataTables and each database was different- Oracle had different columns to SqlServer. </p>
+
+<p>So I created a little library which read the datatables into a standard model of plain .net objects (original 2006-vintage code <a href="http://martinwilley.com/net/code/dbschema/dbschema.html">here</a> - there were just 5 classes). Over the years it evolved, adding more databases as I encountered them- some pretty rare stuff like Sybase, Intersystems Cache and VistaDb. Eventually, in 2010, I put it on Codeplex as the <a href="http://dbschemareader.codeplex.com/">DatabaseSchemaReader</a> (now on <a href="https://github.com/martinjw/dbschemareader">Github</a>). The <a href="https://www.nuget.org/packages/DatabaseSchemaReader/">nuget package</a> is nearly 10,000 downloads now, so it's not just me who finds it useful. </p>
+
+<p>Now in 2016, Microsoft has released .net Core 1.0. Core is a complete rewrite of .net framework. DataTables are gone (good), but the DbProviderFactories are gone too (not so good). Sometime in the future there will be a replacement for GetSchema (see issue <a href="https://github.com/dotnet/corefx/issues/5024">https://github.com/dotnet/corefx/issues/5024</a>), but it's not in the RTM, and the proposal is very limited.</p>
+
+<p>DatabaseSchemaReader to the rescue.</p>
+
+<h3>Step 1- Refactor</h3>
+
+<p>The first step was a thorough refactoring, not looking at .net Core at all.  Fortunately a large number of unit and integration tests was a huge help here.</p>
+
+<p>Some of the code was 10 years old, so I could clear up a lot of legacy. I had obsolete properties that I could get rid off. There were parallel VS2008 and VS2010 solutions/projects, so goodbye 2008 and welcome VS2015 by default. The unit tests were MsTest/NUnit switchable, which had seemed like a good idea at the time (what was I thinking?). </p>
+
+<p>The major refactoring was re-structuring the database reading. I have to remove (or at least move) the DataTables and DbProviderFactories under the covers. The GetSchema implementations in database clients tend to be slow and inefficient, so for the most common databases I could replace entirely with my own, more efficient code.</p>
+
+<p>After the refactoring, I still had DataTables and the provider factories for the less common databases. Now they had been moved into specific folders/namespaces. These would be included only for the .net 4.6 and older frameworks; .net Core would not use them. It is pretty unlikely we'll see an Intersystems Cache or Informix client for .net Core any time soon, and we can safely leave them on the full .net framework.</p>
+
+<p>Meanwhile, I wrote simple ADO queries for SqlServer, Oracle, MySql, PostgreSql and SQLite. The integration tests proved they worked (a few bugs sneaked through). Only SqlServer, SQLite and PostgreSql had .net Core clients at the time, but I would be ready for MySql and Oracle whenever they released.</p>
+
+<h3>Creating a .net Core project</h3>
+
+<p>There is a guide to "<a href="https://docs.microsoft.com/en-us/dotnet/articles/core/porting/index">porting from .net framework to .net core</a>". The "<a href="https://visualstudiogallery.msdn.microsoft.com/1177943e-cfb7-4822-a8a6-e56c7905292b">.net portability analyzer</a>" is a useful Visual Studio plugin for checking compatibility.</p>
+
+<p>The easiest upgrade path is to create a project.json and a {project}.xproj in the same directory as the {project}.csproj (see <a href="http://martinwilley.com/blog/2016/05/18/UpdatingAClassLibraryToDotnetCoreRC2.html">my post from May</a>). A simple library can have a very simple project.json, although getting the format right is still a challenge (too many RC1-RC2 examples on the web, little up-to-date documentation). You can even make it multi-target, from .net framework 3.5 up to .net Core's netstandard1.6.</p>
+
+<div style="float:right;padding:10px;background-color:#f4f142;max-width:30em">
+<p>Note that from Visual Studio 2017 (<a href="https://www.visualstudio.com/vs/visual-studio-2017-rc/">now in RC1</a> as from 16 November 2016), project.json will disappear and we'll go back to msbuild (that tooling is also <a href="https://blogs.msdn.microsoft.com/dotnet/2016/11/16/announcing-net-core-tools-msbuild-alpha/">just released in alpha-quality</a>). There's even automaic migration from json to xml. I'll look at this again, at RTM or what looks like a stable beta. </p>
+<p>Since VS2010, solution and csproj files have been mostly forward and backward compatible. VS2008 wasn't, which is why I kept the shadow 2008 projects around for so long. Unfortunately the new msbuild is a breaking change, so VS 2017 only. It takes years for Visual Studio versions to be adopted- there are plenty of companies still on 2012 or 2013 as a corporate policy. They can use the library (via nuget), but they can't take the source.</p>
+</div>
+
+<pre>
+{
+    "version": "1.0.0",
+    "packOptions": {
+        "summary": "..."
+        //all the nuspec stuff
+    },
+    "buildOptions": {
+        "xmlDoc": true
+    },
+    "frameworks": {
+        "netstandard1.5": {
+            "dependencies": {
+                "NETStandard.Library": "1.6.0"
+            }
+        },
+        "net35": { },
+        "net40": { },
+        "net46": { }
+    }
+}
+</pre>
+
+<p>Here we target netstandard1.5. netstandard1.6 is the fullest API at RTM (June 2016). Lower numbers (down to 1.0) reach more platforms (Windows Phone! Silverlight!), but have less API. I made the first version during RC2, which was netstandard1.5. There were a handful of issues when I tried 1.3, which supports the Universal Windows Platform. As all UWP can access is SQLite, it didn't seem worth the effort, so it's still 1.5. </p>
+<p>The dependency "NETStandard.Library" here is the nuget package containing the APIs for netstandard1.0+. It's a little confusing that netstandard1.0 - netstandard1.5 are in library 1.6 (don't even look at the old dnx stuff).</p>
+
+<h3>Hiding the old stuff</h3>
+<p>By default, project.json compiles all .cs files. But you can exclude folders and code files from specific frameworks.</p>
+
+<pre>
+    "frameworks": {
+        "netstandard1.5": {
+            "buildOptions": {
+                "define": [ "COREFX" ],
+                "compile": {
+                    "exclude": [
+                        "FullFrameworkStuff/**/*.cs"
+                    ]
+                }
+            },
+            "dependencies": { ...
+</pre>
+<p>Previously I'd refactored the project so all the old dataTable stuff was in specific folders. They are still there, but .net Core doesn't see them any more, thanks to these exclusions.</p> 
+
+<h3>Test projects</h3>
+
+<p>Test projects are a little different in Core- they are actually consoles, not libraries (so framework is netcoreapp1.0, not netstandard). Your choice of test frameworks include XUnit, NUnit and MsTest. I had a boring old MsTest project, but since RTM I had not been able to get Visual Studio to discover tests (even though the project builds). Command line works ("dotnet test"). Converting to XUnit or NUnit is yak shaving. Resharper didn't recognise Core at all. With the immature tooling (we're still in "preview2"), I could not do test driven development for .net core in Visual Studio. I only started to see usable test projects in August, after several updates to the Visual Studio tooling (almost weekly at one stage...) and Resharper's 2016.2 update.</p>
+<p>For development, I decided to stay in .net full framework, where I had literally hundreds of tests. I kept the separate Core solution with a minimal MsTest project, which I ran only in command line. For the continuous integration build script (on AppVeyor), I built the full framework solution and ran the tests, then added an "After build" step for the "dotnet pack" command, which would build Core from the project.json. </p>
+
+<h3>Compiler directive hell</h3>
+
+<p>The main API of DatabaseSchemaReader follows the underlying DbProviderFactories in taking a provider name, ultimately defined in configuration. The factories then instantiate the ADO connection object for the database. </p>
+
+<p class="code"><span style="color:blue;">var</span>&nbsp;dr&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">DatabaseReader</span>(connectionString,&nbsp;<span style="color:#a31515;">&quot;System.Data.SqlClient&quot;</span>);<br />
+<span style="color:blue;">var</span>&nbsp;schema&nbsp;=&nbsp;dr.ReadAll();</p>
+
+<p>That's not possible in .net Core, and the philosophy is now dependency injection and configuration in code, not xml. To get the ADO connection, we should pass it in, not try to create it.</p>
+
+<p class="code">
+<span style="color:blue;">var</span>&nbsp;dbConnection&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">SqlConnection</span>(connectionString);&nbsp;<span style="color:green;">//could&nbsp;also&nbsp;be&nbsp;Sqlite&nbsp;etc</span><br />
+<span style="color:blue;">var</span>&nbsp;dr&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">DatabaseReader</span>(dbConnection);<br />
+<span style="color:blue;">var</span>&nbsp;schema&nbsp;=&nbsp;dr.ReadAll();
+</p>
+<p>For .net 4.5 and below, we want to see the old-style constructors. For .net Core, we want the new constructors. We can use pre-compiler directives.</p>
+<p class="code"><span style="color:gray;">#if</span>&nbsp;NEW<br />
+<span style="color:blue;">public</span>&nbsp;DatabaseReader(<span style="color:#2b91af;">DbConnection</span>&nbsp;dbConnection)&nbsp;{&nbsp;...}<br />
+<span style="color:blue;">public</span>&nbsp;DatabaseReader(<span style="color:blue;">string</span>&nbsp;connectionString,&nbsp;<span style="color:blue;">string</span>&nbsp;providerName)&nbsp;{&nbsp;...}<br />
+<span style="color:gray;">#endif</span>
+</p>
+<p>The new dotnet compiler automatically creates directives with the name of the framework, upper-cased, underscores for dots (net35 is NET35, netstandard1.5 is NETSTANDARD1_5). You can also define directives in project.json; rather than refer to a specific NetStandard, I assigned "COREFX". </p>
+
+<p>Sometimes a quick shim solves a problem. I used a lot of [Serializable] attributes all over to explicitly mark classes as binary serializable. .net Core doesn't have binary serialization (yet) or the SerializableAttribute. An empty class wrapper in compiler directives solves the problem.</p>
+
+<p class="code">
+<span style="color:gray;">#if</span>&nbsp;NETSTANDARD1_5<br />
+<span style="color:blue;">using</span>&nbsp;System;<br /> 
+<span style="color:blue;">namespace</span>&nbsp;MyLibrary<br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">SerializableAttribute</span>&nbsp;:&nbsp;<span style="color:#2b91af;">Attribute</span>&nbsp;{&nbsp;}<br />
+}<br />
+<span style="color:blue;">namespace</span>&nbsp;System.Runtime.Serialization&nbsp;{&nbsp;}<br />
+<span style="color:gray;">#endif</span>
+</p>
+<p>One of the big annoyances is how accessing type properties has been changed. You have to do things like this:</p>
+
+<p class="code">
+<span style="color:gray;">#if</span>&nbsp;NETSTANDARD1_5<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;typeInfo&nbsp;=&nbsp;type.GetTypeInfo();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;isValue&nbsp;=&nbsp;typeInfo.IsValueType;<br />
+<span style="color:gray;">#else</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;isValue&nbsp;=&nbsp;type.IsValueType;<br />
+<span style="color:gray;">#endif</span>
+</p>
+<p>Or this:</p>
+<p class="code">
+<span style="color:gray;">#if</span>&nbsp;!COREFX<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;bindByName&nbsp;=&nbsp;command.GetType().GetProperty(<span style="color:#a31515;">&quot;BindByName&quot;</span>);<br />
+<span style="color:gray;">#else</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;bindByName&nbsp;=&nbsp;command.GetType().GetTypeInfo().GetDeclaredProperty(<span style="color:#a31515;">&quot;BindByName&quot;</span>);<br />
+<span style="color:gray;">#endif</span></p>
+
+<p>It can take a bit of refactoring to get these directives manageable.</p>
+
+<h3>The Stored Procedure Problem</h3>
+<p>Databases don't give you metadata on the output of a stored procedure- what column names and what types? While GetSchema gives you metadata for the database tables and columns, what we need here is the result set of an arbitary query. In .net full framework, the DataTable gives you that information (see also dbDataReader.GetSchemaTable()). </p>
+<p>In .net Core <a href="https://github.com/dotnet/corefx/src/System.Data.Common/src/System/Data/Common/DbDataReader.cs">DbDataReader</a> has GetSchemaTable exists but throws a NotSupportedExtension (and the DataTable type is an empty stub). There's <a href="https://github.com/dotnet/corefx/issues/5915">a proposal to have a dbDataReader.GetColumnSchema()</a> which gives a readonly collection of DbColumns with strongly typed metadata about column names and types. Nice, but the issue is closed and was never released (and if it doesn't get ported into the full framework, it will be awkward). It looks like the decision has been made to bring back the DataTable for .netStandard 2.0. </p>
+<p>Without these bits, I can't determine what stored procedures return in .net Core. </p>
+
+
+<h3>The Future Is Fantastic</h3>
+
+<p>The <a href="https://blogs.msdn.microsoft.com/dotnet/2016/07/15/net-core-roadmap/">.net core roadmap from July 2016</a> seems to be accurate, with <a href="https://blogs.msdn.microsoft.com/visualstudio/2016/11/16/visual-studio-2017-rc/">Visual Studio 2017 RC1 out in November 2016</a>  and the <a href="https://blogs.msdn.microsoft.com/dotnet/2016/11/16/announcing-net-core-tools-msbuild-alpha/">MsBuild Alpha</a> which replaces project.json with an improved csproj. Visual Studio 2017 RC has preview support, and should RTM with full support. VS2015 may be a dead-end for Core development after VS2017 RTMs early next year.</p>
+<p>There was a lot to like about project.json, especially compared to the ugly and verbose msbuild xml. But json is tricky to edit, and documentation is sparce and confused by lots of versions. An improved, more concise msbuild syntax isn't necessarily a step back.</p>
+<p>A lot of the missing APIs (such as the type stuff and binary serialization) will get into Core as "netstandard2.0" around "Q1/Q2 2017". These will make porting to .net core a more practical possibility.</p>
+
+
+</article>
+<ul class="categories">
+<li><a href="../../../categories/dotnetCore/">dotnet Core</a></li>
+<li><a href="../../../categories/DatabaseSchemaReader/">Database Schema Reader</a></li>
+</ul>
+<p>Previously: <a href="../../../2016/11/14/CloudflareAndGithubPages.html">Cloudflare And Github Pages</a> (14 November 2016)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

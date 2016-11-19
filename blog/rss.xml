@@ -5,14 +5,14 @@
     <link>https://martinwilley.com/</link>
     <description>Static void - martinwilley.com</description>
     <language>en-gb</language>
-    <pubDate>Mon, 14 Nov 2016 10:53:48 GMT</pubDate>
-    <lastBuildDate>Mon, 14 Nov 2016 10:53:48 GMT</lastBuildDate>
+    <pubDate>Sat, 19 Nov 2016 11:53:48 GMT</pubDate>
+    <lastBuildDate>Sat, 19 Nov 2016 11:53:48 GMT</lastBuildDate>
     <ttl>600</ttl>
     <item>
-      <description>Cloudflare and Github Pages</description>
-      <title>Cloudflare and Github Pages</title>
-      <link>https://martinwilley.com/blog/2016/11/14/CloudflareAndGithubPages.html</link>
-      <pubDate>Mon, 14 Nov 2016 10:53:48 GMT</pubDate>
+      <description>Porting to dotnet Core</description>
+      <title>Porting to dotnet Core</title>
+      <link>https://martinwilley.com/blog/2016/11/19/PortingToDotnetCore.html</link>
+      <pubDate>Sat, 19 Nov 2016 11:53:48 GMT</pubDate>
     </item>
   </channel>
 </rss>
