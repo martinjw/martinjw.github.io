@@ -126,7 +126,7 @@ June 2016</th>
 &nbsp;&nbsp;}<br/>
 }</div>
 
-<h4>Consoles (incl ASP): netcoreapp1.0</h4>
+<h4>Consoles (incl ASP, Tests): netcoreapp1.0</h4>
 <p>Executables (consoles and ASP websites) need a concrete framework to run them, not an API. A simple console looks like this (ASP has more specific dependencies)</p>
 <p>This is the standard console project.json at RTM. In consoles, the framework import "dnxcore50" allows old RC1 packages to be used; the ASP template imports "dotnet5.6" for RC2 packages.</p>
 <div class="code">{<br/>
@@ -148,6 +148,21 @@ June 2016</th>
 &nbsp;&nbsp;&nbsp;&nbsp;}<br/>
 &nbsp;&nbsp;}<br/>
 }</div>
+
+<h4>netcoreapp1.1 (Nov 2016)</h4>
+
+<p>A version bump- netcoreapp1.0 to 1.1, dependency <span style="color:#147fc8;">Microsoft.NETCore.App</span> goes to 1.1.0</p>
+<div class="code">
+&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">frameworks</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">netcoreapp1.1</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">dependencies</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">Microsoft.NETCore.App</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">type</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;platform&quot;</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">version</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;1.1.0&quot;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;}<br />
+}
+</div>
 
 <h4>Tooling: 1.0.0-preview2-003121</h4>
 <p>DotNet Tooling (the Visual Studio MSI from <a href="http://dot.net">http://dot.net</a>) is still "Preview 2" and requires VS2015 Update 3.</p>
