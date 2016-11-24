@@ -31,7 +31,7 @@
 <li><a href="http://xunit.github.io/">XUnit</a> - since 2007, including .net 3.5 and widely used inside Microsoft.</li>
 </ul>
 <p>MsTest is the most used. While it may not be the most modern (the core framework is basically unchanged since 2005), it is reliable and easy. Instead of adding richer APIs like NUnit, Microsoft invested into little used things like asp.net unit tests, Coded UI tests, private method accessors and fakes. Both NUnit and XUnit have more "modern" features and are important in open-source, but less so within large companies. </p>
-<p>Since Visual Studio 2012, Visual Studio has test adapters, so can easily run NUnit, XUnit and others (before you used to need special runners like Resharper or TestDriven).</p>
+<p>Since Visual Studio 2012, Visual Studio has test adapters, so can easily run NUnit, XUnit and others (before you used to need special runners like Resharper or TestDriven). Originally the adapters were Visual Studio extensions (vsix); now nuget packages are prefered (<strong>xunit.runner.visualstudio</strong> or <strong>NUnit3TestAdapter</strong> added to one test project; it automatically applies to the entire solution).</p>
 <p>The popularity of Behavior Driven Development has led to some "specification" frameworks like Ruby's Cucumber with its Gherkin language (Scenario/Given/When/Then). Some, like Specflow, are intended used for acceptance tests while retaining *unit for unit tests. More common is simply to name the tests as "Given_x_When_y_Then_z" (with underscores or just capitalization). </p>
 <ul>
 <li><a href="http://www.specflow.org/">SpecFlow</a></li>
