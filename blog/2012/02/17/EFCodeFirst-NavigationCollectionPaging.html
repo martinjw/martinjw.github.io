@@ -49,7 +49,7 @@ You can specify the mapping in an EntityTypeConfiguration&lt;Product&gt; class m
 <pre style="font-family:Consolas;font-size:13;color:black;background:white;">HasOptional(x&nbsp;=&gt;&nbsp;x.Category)
 &nbsp;&nbsp;&nbsp;&nbsp;.WithMany()&nbsp;<span style="color:green;">//.WithMany(c&nbsp;=&gt;&nbsp;c.Products)</span>
 &nbsp;&nbsp;&nbsp;&nbsp;.Map(m&nbsp;=&gt;&nbsp;m.MapKey(<span style="color:#a31515;">"CategoryID"</span>));</pre><br />
-Remember you can (and should) be profiling your generated SQL, for instance with the EFTracingProvder <a href="http://martinwilley.com/blog/2012/02/14/EFCodeFirstTracingLoggingTheSQL.html">as shown here</a>.<br />
+Remember you can (and should) be profiling your generated SQL, for instance with the EFTracingProvder <a href="http://martinwilley.com/blog/2012/02/14/EFCodeFirstTracing-LoggingTheSQL.html">as shown here</a>.<br />
 <br />
 <br />
 <br />
