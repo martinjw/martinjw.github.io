@@ -21,7 +21,7 @@
 <p>Published Monday 25 April 2011</p><article>
 
 <p>Shortly after the last release of <a href="http://dbschemareader.codeplex.com/" target="_blank">Database Schema Reader</a>, here's another release.</p>
-<p><a href="http://martinwilley.com/blog/2011/04/09/DatabaseSchemaReaderNowWithExtraSQLite.html" target="_blank">Last time</a> I added a CopyToSQLite tool, which reads (almost) any database and creates a SQLite clone. I also added experimental support for SQLServer CE 4.0, but it had some big limitations.</p>
+<p><a href="http://martinwilley.com/blog/2011/04/09/DatabaseSchemaReaderNowWithExtraSqlite.html" target="_blank">Last time</a> I added a CopyToSQLite tool, which reads (almost) any database and creates a SQLite clone. I also added experimental support for SQLServer CE 4.0, but it had some big limitations.</p>
 
 <p>So the obvious next step was to fix some of those limitations, and that's what this release focuses on. Unfortunately CopyToSQLite.exe is now a little misnamed. <img style="border-bottom-style: none; border-left-style: none; border-top-style: none; border-right-style: none" class="wlEmoticon wlEmoticon-winkingsmile" alt="Winking smile" src="http://www.martinwilley.com/blog/content/binary/Database-Schema-Reader-with-more-.0-love_9CD7/wlEmoticon-winkingsmile.png" /></p>
 <p>I added a little bit of conversion code so VARCHAR(MAX) found in the origin database gets converted to NTEXT (and VARBINARY to IMAGE). The reading of SQLServer CE 4 databases got improved too (capturing the&nbsp; foreign and unique keys and identity columns).</p>
