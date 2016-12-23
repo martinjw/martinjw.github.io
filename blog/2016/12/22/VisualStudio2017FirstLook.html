@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Visual Studio 2017 First Look</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Visual Studio 2017 First Look</h2>
+<p>Published Friday 22 December 2016</p>
+
+<article>
+<p>We first had a "Visual Studio 15" preview back in March 2016, with a different installer and not much else changed. After several previews, Visual Studio 2017 Release Candidate was released on <a href="https://blogs.msdn.microsoft.com/visualstudio/2016/11/16/visual-studio-2017-rc/">16 November 2016</a>. An updated version (not called RC2 or any other sensible version number) was released <a href="https://blogs.msdn.microsoft.com/visualstudio/2016/12/12/updating-visual-studio-2017-release-candidate/">12 December 2016</a>. </p>
+
+
+<h3>Installation</h3>
+
+<p>We have a nice new menu for installation. With nothing checked, it's a nice 748 Mb. That's deceptive; once you start picking anything, it's always around 5Gb. Click web development, and you suddenly jump to 4.86 Gb. .Net Core and Docker is 4.6 Gb - Core + web development, you're at 5.23 Gb.  </p>
+<a href="https://martinwilley.com/blog/content/binary/VS2017/VS2017_installation.png">
+<img src="https://martinwilley.com/blog/content/binary/VS2017/VS2017_installation.png" width="100%" alt="VS2017 Installation" /></a>
+
+<p>There's still no way of skipping VB if you just use C#. In "Individual Components", development tools for 3.5 are unchecked but available.
+</p>
+
+<p>The installation time wasn't fast- it's hard to say if it was really any faster than previous Visual Studio installations.</p>
+<a href="https://martinwilley.com/blog/content/binary/VS2017/VS2017_installing.png">
+<img src="https://martinwilley.com/blog/content/binary/VS2017/VS2017_installing.png" width="100%" alt="VS2017 Installing" /></a>
+
+<h3>In Use</h3>
+
+<p>See the <a href="https://www.visualstudio.com/en-us/news/releasenotes/vs2017-relnotes">release notes</a></p>
+
+<p>It looks pretty similar. In Solution Explorer, each project has a "Service Capabilities" node at the top. This is apparently the new "Service References" crossed with Azure stuff. If you're not using Azure, there doesn't seem to be a way of hiding it ("Add Service Reference" is still there when you right click "References").</p>
+<img src="VS2017_servicecaps.png" width="465" height="120" alt="Service Capabilities" />
+
+<p>I'm using it without resharper (although RS does support the VS RC). Visual Studio is definitely more usable without RS. Intellisense selects with camel-humps (just type the capital letters), and auto-selects by expected type.</p>
+
+<p>"Find All References" now nearly matches RS's "Find Usages"/Shift-F12. The default "Group by" setting is "Project then Definition", which isn't ideal - in the screen-shot 4 of the references are in one class, but they are mixed up with other classes. "Definition, Project then Path" is closer to RS, but too verbose with full paths. There's no match to RS's default view "Project Structure", which is exactly how I want to drill through big result sets.</p>
+<a href="https://martinwilley.com/blog/content/binary/VS2017/VS2017_findallrefs.png">
+<img src="https://martinwilley.com/blog/content/binary/VS2017/VS2017_findallrefs.png" style="max-width:100%" alt="Find All References - Resharper (left), VS2017 (right)" /></a>
+
+<p>Ctrl-T "find all" is just like the same RS shortcut. RS is compact but readable, VS2017 tales a second line for each entry. Useable, but not quite as nice.</p>
+<a hrefc="https://martinwilley.com/blog/content/binary/VS2017/VS2017_ctrlt.png">
+<img src="https://martinwilley.com/blog/content/binary/VS2017/VS2017_ctrlt.png" style="max-width:100%" alt="VS2017 Control-T" /></a>
+<a href="https://martinwilley.com/blog/content/binary/VS2017/VS2017_ctrlt_rs.png">
+<img src="https://martinwilley.com/blog/content/binary/VS2017/VS2017_ctrlt_rs.png" style="max-width:100%" alt="Resharper Control-T" /></a>
+
+<p>There are more refactorings, including some common ones from RS (matching file and type name, object initializer).</p>
+
+<p>The unit-testing side has "live unit testing", a background test-runner, like NCrunch. But it's only in Enterprise and doesn't show up in my lowly Community install. Also CodeLens (from VS2013) is still at Enterprise level only, and I really miss that. The CodeLens references links are great, much better than "Find Usages" in Resharper. I also prefer the CodeLens buttons for running unit tests to Resharper.</p>
+
+<h3>Under construction</h3>
+
+<p>Be prepared for some bugs, it's only a release candidate. I got it into a persistent freeze whenever it tried to open one project (workaround was deleting the .user files). As normal with Microsoft RCs, your best bet is to skip the first one or two. or better still, wait for the RTM.</p>
+
+<p>A "release candidate" implies feature complete, but the Core side is more immature than the rest. This is the first step of the conversion of project.json to project.csproj. It's really a public alpha, and it feels like it, so prepare for some frustration. They released <a href="https://blogs.msdn.microsoft.com/dotnet/2016/12/12/updating-visual-studio-2017-rc-net-core-tooling-improvements/">an "update" on 12 December</a>, which is not called "RC2", has big breaking changes, and no automatic upgrade from the original RC.</p>
+
+<p>Upgrading a simple class library with test project created an unusable solution. I did a command line "dotnet restore" and "build" on the class library, which worked after Visual Studio was unable to cope. The test project failed to convert, but again the command line "dotnet migrate" worked. The tests weren't recognized. </p>
+
+<p>The dotnet Core in VS 2017 seems to be too unstable to play with, let alone try to do real work. </p>
+
+<h3>Fin</h3>
+
+<p>For general development, Visual Studio is catching up with Resharper, but it'll be a few more years before you can really do without it. Dotnet Core is changing fast, and this aspect of the tooling is too flakey to use for now. </p>
+
+</article>
+<p>Previously: <a href="../../../2016/11/19/PortingToDotnetCore.html">Porting to dotnet Core</a> (19 November 2016)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>
