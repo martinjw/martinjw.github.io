@@ -31,6 +31,14 @@
 <li>/fl is file logger, by default writes to "msbuild.log". Change that by adding /flp:LogFile=myproj.log</li>
 <li>Add /p for properties such as configuration:  /p:Configuration=Acc</li>
 </ul>
+<p>For C#6 (string interpolation, null conditionals etc) or C#7 (pattern matching, out variables and return tuples) you need the Roslyn, with alternative MSBuild locations:</p>
+<ul>
+<li>v4: "%systemroot%\Microsoft.Net\Framework\v4.0.30319\MSBuild.exe"</li>
+<li>VS2015/C#6: "%PROGRAMFILES(X86)%\MSBuild\14.0\Bin\MsBuild.exe"</li>
+<li>VS2017/C#7: "%PROGRAMFILES(X86)%\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\MsBuild.exe" (check VS edition) or<br />
+(if applicable) "install-package Microsoft.NET.Sdk" or "dotnet msbuild" </li>
+</ul>
+
 <h3>Build script</h3>
 <p>This is a command line build script, which could be used locally or on a build server. It does a "publish" (as in Visual Studio "Publish..." with a file target, for XCopy deployment).</p>
 <ul>
