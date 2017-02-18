@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>VS2017 and .net versions</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>VS2017 and .net versions</h2>
+<p>Published Saturday 18 February 2017</p><article>
+<h3>VS2017 and .net frameworks</h3>
+<p>Once upon a time, each new Visual Studio brought a new .net framework. You couldn't use the new framework without the new Visual Studio.</p>
+<ul>
+<li>Visual Studio 2002 came with .net framework 1.0</li>
+<li>Visual Studio 2003 came with .net framework 1.1</li>
+<li>Visual Studio 2005 came with .net framework 2.0</li>
+<li>Visual Studio 2008 came with .net framework 3.5</li>
+<li>Visual Studio 2010 came with .net framework 4.0</li>
+<li>Visual Studio 2012 came with .net framework 4.5</li>
+<li>Visual Studio 2013 came with .net framework 4.5.1</li>
+<li>Visual Studio 2015 came with .net framework 4.6<br />
+(Update 1 was .net framework 4.6.1)</li>
+<li>Visual Studio 2017 comes with .net... framework 4.6.1</li>
+</ul>
+<p>Yes, even though 4.6.2 came out in mid-2016, the base 2017 is still 4.6.1. If you installed 4.6.2, it appears in the dropdowns, but if you haven't, you get 4.6.1. Exactly the same as VS2015.</p>
+<p>However, you can write code in VS2017 that won't compile in VS2015, even though it targets the same .net framewok. The reason is that VS2017 comes with a new version of C#.</p>
+
+<h3>VS2017 and C# 7</h3>
+<p>C# (and the csc.exe compiler) isn't the same thing as the .net framework. You may have noticed this with C#6 in VS2015, when you could write null conditionals (x?.property), string interpolation ($"Hello {x}") and auto-property initializers (public string X {get;set;}=&lt; 1) even if you targeted .net 3.5.</p>
+<p>For C#7, the new features are pattern matching (switch based on types), not declaring out variables, returning tuples (without System.Tuple), local functions and others. They will work fine in VS2017, but VS2015 will choke on them.</p>
+<p>Visual Studio build is just calling MsBuild (as you can see in the Output window). Let's look under the covers at what's happening.</p>
+
+<h3>VS2017 and MsBuild/Command Line building</h3>
+<p>Visual Studio used to use the msbuild and csc.exe in C:\windows\Microsoft.NET\Framework\v4.0.30319\ (or the previous .net framework locations)</p>
+<p>With VS2015 and the new roslyn compiler, MsBuild and csc moved to Program Files/MsBuild, specifically C:\Program Files (x86)\MSBuild\14.0\bin\ (14.0 indicating Visual Studio 14, which is VS2015). Note the compiler isn't just .net 4.6, it compiles any project targeting 2.0, 3.5, 4, 4.5.* and 4.6.*</p>
+<p>With VS2017, it's moved again. And it's in 2 places. Or more. </p>
+<ol>
+<li>Firstly there's a Program Files/Visual Studio, specifically (for Community) C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\ (csc is under Roslyn\)<br />
+This is the only version used by Visual Studio, and supports all project types.</li>
+<li>There's another copy (NOT used by Visual Studio, but used by the "dotnet build" command line) at C:\Program Files\dotnet\sdk\. For the VS2017 RC4 version, the matching sdk is at C:\Program Files\dotnet\sdk\1.0.0-rc4-004771\.<br />
+If you update the dotnet sdk, C:\Program Files\dotnet\sdk\ is updated but Visual Studio won't be.</li>
+<li>You can install a local version through nuget using "install-package Microsoft.NET.Sdk"</li>
+</ol>
+<p>Confused yet?</p>
+<p>Most projects I build have a "build.cmd" file which runs an msbuild script called "build.xml" (or .csproj). It's an easy way to generate a clean "publish" folder (<a href="http://martinwilley.com/net/code/msbuild/msbuild.html">see here</a>). The .cmd file requires the path to msbuild, which now becomes difficult.  </p>
+<p>The new "dotnet" command (and the sdk package) works on <strong>some</strong> classic full framework projects with traditional csproj files - a class library and a console (even if built in VS2015). It doesn't work against a "classic" mvc 5 web application, even one built in VS2017. The msbuild that "dotnet build" runs is a dotnet Core version of msbuild, not the full Visual Studio one. It works against a simple "non-core" csproj, but it's really a different, more limited, pipeline to the full msbuild. Note that in addition to "dotnet build", RC4+ has <a href="https://docs.microsoft.com/en-us/dotnet/articles/core/preview3/tools/dotnet-msbuild">dotnet msbuild</a> to access msbuild directly.</p>
+
+<h3>VS2017 and .net Core</h3>
+<p>The .net Core tooling/build system (SDK) has changed, but VS2017 doesn't bring a new Core version (which makes sense - it is updated through muget). NetStandard 2.0 is coming, but not for a while- it seems to have been delayed until 2017 Q3, perhaps a 6 month delay.</p>
+<ul>
+<li>If you open VS2015 Core projects in VS2017, you get an automatic upgrade from project.json to csproj.</li>
+<li>You can't open VS2017 csproj core projects in VS2015. It only understands the now obsolete project.json</li>
+</ul>
+<p>Between VS2010 and VS2015, csproj was forward and backward compatible, so life in a typical company with mixed versions of Visual Studio was remarkably uneventful. With VS2017, at least for Core, all developers must upgrade at the same time. It could be awkward for larger open source projects, although VS2017 Community makes upgrading free. Most companies take their time rolling out new Visual Studio versions too.</p>
+
+<h3>Upgrade</h3>
+<p>Since 2010, new Visual Studio versions have come with new .net framework versions, but we've been backwards compatible. Back compatibility started to break with VS2015 and C#6 and breaks again with VS2017 and C#7. Worse, Core is a big breaking change, and teams with a Core project must upgrade at the same time.</p>
+
+</article>
+<ul class="categories">
+<li><a href="../../../categories/dotnetCore/">dotnet Core</a></li>
+<li><a href="../../../categories/VS2017/">VS2017</a></li>
+</ul>
+<p>Previously: <a href="../../../2016/12/22/VisualStudio2017FirstLook.html">Visual Studio 2017 First Look</a> (22 December 2016)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>
