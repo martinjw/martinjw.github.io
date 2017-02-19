@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>C#7 Pattern Matching</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>C#7 Pattern Matching</h2>
+<p>Published Sunday 19 February 2017</p><article>
+<p>Pattern matching is new in C#7 / Visual Studio 2017. Remember C#7 isn't the same a <a href="https://www.martinwilley.com/blog/2017/02/18/VS2017NetVersions.html">.Net version upgrade</a> - you can use these language features in projects targeting .net Core, .net 4.6, 4.5, 4.0 and even 3.5.</p>
+<p>Pattern matching is essentially a better syntax to test types. </p>
+<h3>"is" better</h3>
+<p>This is the existing (C# 1-6) "is" syntax.</p>
+<div class="code"><span style="color:blue;">if</span>&nbsp;(o&nbsp;<span style="color:blue;">is</span>&nbsp;<span style="color:#2b91af;">Person</span>)<br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;person&nbsp;=&nbsp;(<span style="color:#2b91af;">Person</span>)&nbsp;o;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;UpdatePerson(person);<br />
+}</div>
+<p>You can make a slightly more efficient version with "as"</p>
+<div class="code"><span style="color:blue;">var</span>&nbsp;person&nbsp;=&nbsp;o&nbsp;<span style="color:blue;">as</span>&nbsp;<span style="color:#2b91af;">Person</span>;<br />
+<span style="color:blue;">if</span>&nbsp;(person&nbsp;!=&nbsp;<span style="color:blue;">null</span>)<br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;UpdatePerson(person);<br />
+}</div>
+<p>In C#7 the "is" syntax can have a variable name afterwards - so it's a test and assignment in one syntax.</p>
+<div class="code"><span style="color:blue;">if</span>&nbsp;(o&nbsp;<span style="color:blue;">is</span>&nbsp;<span style="color:#2b91af;">Person</span>&nbsp;person)<br />
+&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;UpdatePerson(person);<br />
+&nbsp;}</div>
+<p>One complication is that the variable "person" has method scope. If you re-use "person" below the closing "if" braces, you'll get the "Use of unassigned local variable" compilation error.</p>
+<h3>"case" better</h3>
+<p>More useful is the updated "switch" statement. Previously the "case" tests had to be constants. Now they can be types with assignment.</p>
+<div class="code"><span style="color:blue;">switch</span>&nbsp;(o)<br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">case</span>&nbsp;<span style="color:#2b91af;">Person</span>&nbsp;person:<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;UpdatePerson(person);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">break</span>;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">case</span>&nbsp;<span style="color:#2b91af;">Cat</span>&nbsp;cat:<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;UpdateCat(cat);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">break</span>;<br />
+}</div>
+<p>Unlike old-style switches, order is important! (Except the "default" case, which is always last, even if you write it first...)</p>
+<p>The case test can be extended with a "when" (not "where" like in linq). Now you can do ranges in switch statements.</p>
+<div class="code"><span style="color:blue;">switch</span>&nbsp;(i)<br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">case</span>&nbsp;1:<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Console</span>.WriteLine(<span style="color:#a31515;">&quot;One&quot;</span>);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">break</span>;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">case</span>&nbsp;<span style="color:blue;">int</span>&nbsp;j&nbsp;<span style="color:blue;">when</span>&nbsp;j&nbsp;&gt;&nbsp;1:<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Console</span>.WriteLine(<span style="color:#a31515;">&quot;More&nbsp;than&nbsp;one&quot;</span>);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">break</span>;<br />
+}</div>
+<p>Note that variable scope is now within the "case" block (unlike "if").</p>
+<div class="code"><span style="color:blue;">switch</span>&nbsp;(o)<br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">case</span>&nbsp;<span style="color:#2b91af;">Person</span>&nbsp;person&nbsp;<span style="color:blue;">when</span>&nbsp;person.Name&nbsp;!=&nbsp;<span style="color:blue;">null</span>:<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;UpdateUnknownPerson(person);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">break</span>;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">case</span>&nbsp;<span style="color:#2b91af;">Person</span>&nbsp;person:<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;UpdatePerson(person);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">break</span>;<br />
+}</div>
+
+</article>
+<ul class="categories">
+<li><a href="../../../categories/dotnetCore/">dotnet Core</a></li>
+<li><a href="../../../categories/VS2017/">VS2017</a></li>
+</ul>
+<p>Previously: <a href="../../../2017/02/18/VS2017NetVersions.html">Visual Studio 2017 Net Versions</a> (18 February 2017)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>
