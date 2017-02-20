@@ -5,14 +5,14 @@
     <link>https://martinwilley.com/</link>
     <description>Static void - martinwilley.com</description>
     <language>en-gb</language>
-    <pubDate>Sun, 19 Feb 2017 11:53:48 GMT</pubDate>
-    <lastBuildDate>Sun, 19 Feb 2017 11:53:48 GMT</lastBuildDate>
+    <pubDate>Mon, 20 Feb 2017 11:53:48 GMT</pubDate>
+    <lastBuildDate>Mon, 20 Feb 2017 11:53:48 GMT</lastBuildDate>
     <ttl>600</ttl>
     <item>
-      <description>C#7 Pattern Matching</description>
-      <title>C#7 Pattern Matching</title>
-      <link>https://martinwilley.com/blog/2017/02/19/Cs7PatternMatching.html</link>
-      <pubDate>Sun, 19 Feb 2017 11:53:48 GMT</pubDate>
+      <description>Returning more than one value from a method...</description>
+      <title>C#7 Value Tuples</title>
+      <link>https://martinwilley.com/blog/2017/02/20/Cs7ValueTuples.html</link>
+      <pubDate>Mon, 20 Feb 2017 11:53:48 GMT</pubDate>
     </item>
   </channel>
 </rss>

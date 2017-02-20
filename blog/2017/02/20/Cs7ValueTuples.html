@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>C#7 ValueTuples</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>C#7 ValueTuples</h2>
+<p>Published Monday 20 February 2017</p><article>
+<p>More new things in C#7 / Visual Studio 2017 (see <a href="https://martinwilley.com/blog/2017/02/19/Cs7PatternMatching.html">yesterday on pattern matching</a>). Remember C#7 isn't the same a <a href="https://www.martinwilley.com/blog/2017/02/18/VS2017NetVersions.html">.Net version upgrade</a> - you can use these language features in projects targeting .net Core, .net 4.6, 4.5 and even 4.0 (and sometimes in v2/v3.5).</p>
+<p>Normally a method can return only one value. It can return an int, or a string, or a custom class.</p>
+<div class="code"><span style="color:blue;">public</span>&nbsp;<span style="color:blue;">int</span>&nbsp;Process(<span style="color:#2b91af;">Product</span>&nbsp;p)
+</div>
+<div class="code"><span style="color:blue;">public</span>&nbsp;<span style="color:blue;">string</span>&nbsp;Process(<span style="color:#2b91af;">Order</span>&nbsp;o)
+</div>
+<div class="code"><span style="color:blue;">public</span>&nbsp;<span style="color:#2b91af;">List</span>&lt;<span style="color:#2b91af;">Product</span>&gt;&nbsp;ProcessOrders(<span style="color:#2b91af;">Order</span>&nbsp;o)
+</div>
+<p>Creating a new class may be overkill just to return a few values. The classic example is TryParse, when you want a boolean result, and the parsed value if available. The framework solves this with the awkward "out" parameter.</p>
+<div class="code"><span style="color:blue;">int</span>&nbsp;i;<br />
+<span style="color:blue;">if</span>&nbsp;(<span style="color:blue;">int</span>.TryParse(s,&nbsp;<span style="color:blue;">out</span>&nbsp;i))<br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;AddToTotal(i);<br />
+}</div>
+<p>Since .net 4.0, we had Tuples as a "bucket" for returning simple values, but the "Item1"/"Item2" properties aren't very helpful.</p>
+<div class="code">
+<span style="color:blue;">public</span>&nbsp;<span style="color:#2b91af;">Tuple</span>&lt;<span style="color:blue;">string</span>,&nbsp;<span style="color:blue;">int</span>&gt;&nbsp;ParseCat(<span style="color:#2b91af;">Cat</span>&nbsp;cat)</div>
+<div class="code">
+<span style="color:#2b91af;">Tuple</span>&lt;<span style="color:blue;">string</span>,&nbsp;<span style="color:blue;">int</span>&gt;&nbsp;tuple&nbsp;=&nbsp;ParseCat(cat);<br />
+<span style="color:blue;">var</span>&nbsp;name&nbsp;=&nbsp;tuple.Item1;<br />
+<span style="color:blue;">var</span>&nbsp;age&nbsp;=&nbsp;tuple.Item2;<br />
+</div>
+<p>If you're really desperate you can use dynamic types, with a performance hit.</p>
+<p>C#7 provides two different improvements which help.</p>
+
+<h3>"out" paramters</h3>
+<p>In C#7 you no longer have to stick the variable declaration above the method call.</p>
+<div class="code"><span style="color:green;">//int&nbsp;i;&nbsp;no&nbsp;longer&nbsp;needed!!</span><br />
+<span style="color:blue;">if</span>&nbsp;(<span style="color:blue;">int</span>.TryParse(s,&nbsp;<span style="color:blue;">out</span>&nbsp;<span style="color:blue;">int</span>&nbsp;i))<br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;AddToTotal(i);<br />
+}</div>
+<p>It's a small change, but probably the most useful one in C#7. This one works in .net 2.0 projects too.</p>
+
+<h3>TupleValue</h3>
+<p>There's a new package called System.ValueTuple which is required for this. It works for .net 4.0, 4.5 and later. Ignoring the language features, this is what it looks like if you were coding in VS2015.</p>
+<div class="code"><span style="color:blue;">public</span>&nbsp;System.<span style="color:#2b91af;">ValueTuple</span>&lt;<span style="color:blue;">bool</span>,&nbsp;<span style="color:blue;">int</span>&gt;&nbsp;TryParse(<span style="color:blue;">string</span>&nbsp;s)<br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;b&nbsp;=&nbsp;<span style="color:blue;">int</span>.TryParse(s,&nbsp;<span style="color:blue;">out</span>&nbsp;<span style="color:blue;">int</span>&nbsp;i);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">return</span>&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">ValueTuple</span>&lt;<span style="color:blue;">bool</span>,&nbsp;<span style="color:blue;">int</span>&gt;(b,&nbsp;i);<br />
+}</div>
+<p>So this is a TryParse without the "out" parameter, and it looks a lot like the old Tuple.</p>
+<div class="code"><span style="color:blue;">var</span>&nbsp;result&nbsp;=&nbsp;TryParse(<span style="color:#a31515;">&quot;123&quot;</span>);<br />
+<span style="color:blue;">if</span>&nbsp;(result.Item1)<br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;AddToTotal(result.Item2);<br />
+}</div>
+<p>The magic happens because C#7 internalizes the System.ValueTuple, so what you write in VS2017 looks like this:</p>
+<div class="code"><span style="color:blue;">public</span>&nbsp;(<span style="color:blue;">bool</span>,&nbsp;<span style="color:blue;">int</span>)&nbsp;TryParse(<span style="color:blue;">string</span>&nbsp;s)<br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;b&nbsp;=&nbsp;<span style="color:blue;">int</span>.TryParse(s,&nbsp;<span style="color:blue;">out</span>&nbsp;<span style="color:blue;">int</span>&nbsp;i);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">return</span>&nbsp;(b,&nbsp;i);<br />
+}</div>
+<p>"ValueTuple" has disappeared, and we just see the types, within brackets. Now, you can name the return values. </p>
+<div class="code"><span style="color:blue;">public</span>&nbsp;(<span style="color:blue;">bool</span>&nbsp;IsOk,&nbsp;<span style="color:blue;">int</span>&nbsp;Value)&nbsp;TryParse(<span style="color:blue;">string</span>&nbsp;s)<br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;b&nbsp;=&nbsp;<span style="color:blue;">int</span>.TryParse(s,&nbsp;<span style="color:blue;">out</span>&nbsp;<span style="color:blue;">int</span>&nbsp;i);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">return</span>&nbsp;(b,&nbsp;i);<br />
+}</div>
+<p>Calling code can still use the obscure "Item1"/"Item2" names, but in VS2017 you can use the defined names.</p>
+<div class="code"><span style="color:blue;">var</span>&nbsp;result&nbsp;=&nbsp;TryParse(<span style="color:#a31515;">&quot;123&quot;</span>);<br />
+<span style="color:blue;">if</span>&nbsp;(result.IsOk)<br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;AddToTotal(result.Value);<br />
+}</div>
+<p>The calling code can also use the bracket syntax so the hidden tuple disappears completely. </p>
+<div class="code">(<span style="color:blue;">bool</span>&nbsp;isOk,&nbsp;<span style="color:blue;">int</span>&nbsp;value)&nbsp;=&nbsp;TryParse(<span style="color:#a31515;">&quot;123&quot;</span>);<br />
+<span style="color:blue;">if</span>&nbsp;(isOk)<br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;AddToTotal(value);<br />
+}</div>
+<p>Or just use "var" around the whole result.</p>
+<div class="code"><span style="color:blue;">var</span>&nbsp;(isOk,&nbsp;value)&nbsp;=&nbsp;TryParse(<span style="color:#a31515;">&quot;123&quot;</span>);<br />
+<span style="color:blue;">if</span>&nbsp;(isOk)<br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;AddToTotal(value);<br />
+}</div>
+<p>All the awkward details of the underlying tuple are invisible, and the code is clean and readable.</p>
+
+<h3>Use with caution</h3>
+<p>Obviously if you're returning more than one value and you really don't want to return a class, check your design. "TryParse" or "TryLoad" methods are a good example where the pattern can make sense.</p>
+
+</article>
+<ul class="categories">
+<li><a href="../../../categories/VS2017/">VS2017</a></li>
+</ul>
+<p>Previously: <a href="../19/Cs7PatternMatching.html">C#7 Pattern Matching</a> (19 February 2017)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>
