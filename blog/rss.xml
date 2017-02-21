@@ -5,14 +5,14 @@
     <link>https://martinwilley.com/</link>
     <description>Static void - martinwilley.com</description>
     <language>en-gb</language>
-    <pubDate>Mon, 20 Feb 2017 11:53:48 GMT</pubDate>
-    <lastBuildDate>Mon, 20 Feb 2017 11:53:48 GMT</lastBuildDate>
+    <pubDate>Tue, 21 Feb 2017 11:53:48 GMT</pubDate>
+    <lastBuildDate>Tue, 21 Feb 2017 11:53:48 GMT</lastBuildDate>
     <ttl>600</ttl>
     <item>
-      <description>Returning more than one value from a method...</description>
-      <title>C#7 Value Tuples</title>
-      <link>https://martinwilley.com/blog/2017/02/20/Cs7ValueTuples.html</link>
-      <pubDate>Mon, 20 Feb 2017 11:53:48 GMT</pubDate>
+      <description>More new features in C# 7</description>
+      <title>C#7 Extras</title>
+      <link>https://martinwilley.com/blog/2017/02/21/Cs7Extra.html</link>
+      <pubDate>Tue, 21 Feb 2017 11:53:48 GMT</pubDate>
     </item>
   </channel>
 </rss>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>C#7 Extras</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>C#7 Extras</h2>
+<p>Published Tuesday 21 February 2017</p><article>
+<p>We've discussed <a href="https://martinwilley.com/blog/2017/02/19/Cs7PatternMatching.html">pattern matching</a> and <a href="https://martinwilley.com/blog/2017/02/20/Cs7ValueTuples.html">value tuples</a>, the major new features in C#7 / Visual Studio 2017. What else is new?</p>
+<p>Remember C#7 isn't the same a <a href="https://www.martinwilley.com/blog/2017/02/18/VS2017NetVersions.html">.Net version upgrade</a> - you can use these language features in projects targeting .net Core, .net 4.6, 4.5 and even 4.0 (even, sometimes, v2/v3.5).</p>
+<h3>Deconstruct</h3>
+<p>You can add a "Deconstruct" method to a class that returns multiple values. It's not an interface (like Dispose), and you can even use an extension method - the Roslyn compiler will find and use it.</p>
+<div class="code"><span style="color:blue;">public</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">PagedResult</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:#2b91af;">List</span>&lt;<span style="color:#2b91af;">Product</span>&gt;&nbsp;Products&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;<span style="color:blue;">set</span>;&nbsp;}<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">int</span>&nbsp;Count&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;<span style="color:blue;">set</span>;&nbsp;}<br />
+ <br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">void</span>&nbsp;Deconstruct(<span style="color:blue;">out</span>&nbsp;<span style="color:#2b91af;">List</span>&lt;<span style="color:#2b91af;">Product</span>&gt;&nbsp;products,&nbsp;<span style="color:blue;">out</span>&nbsp;<span style="color:blue;">int</span>&nbsp;count)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;products&nbsp;=&nbsp;Products;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;count&nbsp;=&nbsp;Count;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+}</div>
+<p>Then you can pull out the values in one line.</p>
+<div class="code"><span style="color:blue;">var</span>&nbsp;(list,&nbsp;count)&nbsp;=&nbsp;page;</div>
+<p>This is actually how <a href="https://martinwilley.com/blog/2017/02/20/Cs7ValueTuples.html">value tuples</a> work.</p>
+<p>It's nice for "hiding" a few simple types - KeyValuePair in a dictionary is a great candidate for Deconstrust. Otherwise, I can't see it being useful for most business classes.</p>
+<h3>Local functions</h3>
+<p>Simply, these are methods within methods. </p>
+<div class="code"><span style="color:blue;">public</span>&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:blue;">void</span>&nbsp;CreateFile(<span style="color:blue;">string</span>&nbsp;folder,&nbsp;<span style="color:blue;">string</span>&nbsp;name)<br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EnsureFolderExists(folder);&nbsp;<span style="color:green;">//call&nbsp;local&nbsp;function</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;file&nbsp;=&nbsp;<span style="color:#2b91af;">Path</span>.Combine(folder,&nbsp;name);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">File</span>.WriteAllText(file,&nbsp;<span style="color:blue;">string</span>.Empty);<br />
+ <br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//the&nbsp;local&nbsp;function&nbsp;-&nbsp;never&nbsp;called&nbsp;by&nbsp;anything&nbsp;else</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">void</span>&nbsp;EnsureFolderExists(<span style="color:blue;">string</span>&nbsp;f)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(!<span style="color:#2b91af;">Directory</span>.Exists(folder))<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Directory</span>.CreateDirectory(folder);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+}</div>
+<p>There's no public/private modifier, obviously. Local functions may be useful somewhere in the middle ground between lambdas - which can get unreadably complex quickly - and regular "top level" private methods.</p>
+<h3>Number literals with separator</h3>
+<p>Number literals can have a "_" separator to make them a little more readable.</p>
+<div class="code"><span style="color:blue;">var</span>&nbsp;million&nbsp;=&nbsp;1_000_000;</div>
+<p>The underscore doesn't have to be in the conventional 3 digit positions. Once you use the variable, they are gone and to display it you have to format as normal. Obviously you can't load numbers like that from settings files. I'm struggling to think of a real-life use for this.</p>
+<h3>More expression-bodies</h3>
+<p>In C#6 we had "expression-bodied members", using lambdas for simple one-liner properties and methods.</p>
+<div class="code"><span style="color:green;">//c#6&nbsp;expression&nbsp;bodied&nbsp;property</span><br />
+<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">string</span>&nbsp;Name&nbsp;=&gt;&nbsp;FirstName&nbsp;+&nbsp;<span style="color:#a31515;">&quot;&nbsp;&quot;</span>&nbsp;+&nbsp;LastName;<br />
+<span style="color:green;">//c#6&nbsp;expression&nbsp;bodied&nbsp;method</span><br />
+<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">string</span>&nbsp;FullName()&nbsp;=&gt;&nbsp;FirstName&nbsp;+&nbsp;<span style="color:#a31515;">&quot;&nbsp;&quot;</span>&nbsp;+&nbsp;LastName;</div>
+<p>Now we have constructors and accessors.</p>
+<div class="code"><span style="color:green;">//c#7&nbsp;expression&nbsp;bodied&nbsp;ctor</span><br />
+<span style="color:blue;">public</span>&nbsp;Person(<span style="color:blue;">string</span>&nbsp;lastName)&nbsp;=&gt;&nbsp;LastName&nbsp;=&nbsp;lastName;<br />
+ <br />
+<span style="color:green;">//c#7&nbsp;expression&nbsp;bodied&nbsp;accessors</span><br />
+<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">int</span>&nbsp;Age<br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">get</span>&nbsp;=&gt;&nbsp;_age;&nbsp;<span style="color:green;">//no&nbsp;&quot;return&nbsp;&quot;</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">set</span>&nbsp;=&gt;&nbsp;{&nbsp;_age&nbsp;=&nbsp;value;&nbsp;NotifyPropertyChanged();&nbsp;}<br />
+}</div>
+<p>You can also throw directly within the expression (and more generally in other places too).</p>
+<div class="code"><span style="color:green;">//c#7&nbsp;expression&nbsp;bodied&nbsp;method&nbsp;with&nbsp;throw</span><br />
+<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">string</span>&nbsp;Init(<span style="color:blue;">string</span>&nbsp;name)&nbsp;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;=&gt;&nbsp;LastName&nbsp;=&nbsp;name&nbsp;??&nbsp;<span style="color:blue;">throw</span>&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">ArgumentNullException</span>(<span style="color:blue;">nameof</span>(name));
+</div>
+<p>I'm a little wary of expression-bodies. I'm not sure the lambda syntax is easier to read than a couple of braces and line breaks. If the body isn't dead-simple, the temptation is to make unreadable, complex one-liners instead of refactoring to a regular method or property. That said, the constructors syntax is likely to be useful.</p>
+<h3>Wrap-Up</h3>
+<p>There are other features like ref returns and binary literals. Overall, most of the features I cover above aren't things you'll use or see every day - or even every week. You can expect to use <a href="https://martinwilley.com/blog/2017/02/19/Cs7PatternMatching.html">pattern matching</a> fairly regularly, and <a href="https://martinwilley.com/blog/2017/02/20/Cs7ValueTuples.html">value tuples</a> will be useful - in moderation.</p>
+<p>C#6 introduced string interpolation, which I find myself using every day. C#7 doesn't have a killer feature of the same calibre, but it's a mixed bag of solid improvements and minor changes.</p>
+
+</article>
+<ul class="categories">
+<li><a href="../../../categories/VS2017/">VS2017</a></li>
+</ul>
+<p>Previously: <a href="../20/Cs7ValueTuples.html">C#7 Value Tuples</a> (20 February 2017)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>
