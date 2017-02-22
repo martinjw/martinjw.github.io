@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>VS2017 Unit Tests</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>VS2017 Unit Tests</h2>
+<p>Published Wednesday 22 February 2017</p><article>
+<p>Test projects have changed a little in Visual Studio 2017. There are several new parts, including a new MsTest, in-the-box xunit (just for Core), and a new underlying test platform for mstest, xunit etc. </p>
+<p>This post is written before the Visual Studio 2017 RTM (7 March 2017), and the core parts aren't working in Visual Studio. I guess they'll work at RTM, but in the meantime it's worthwhile pointing out the packages that make a unit test project.</p>
+
+<ul>
+<li>At the code level, the [TestMethod] or [Fact] attributes and Asserts in a unit test are part of the test library. Either <a href="https://www.nuget.org/packages/MSTest.TestFramework/">MSTest.TestFramework</a> or <a href="https://www.nuget.org/packages/xunit/">xunit</a>.</li>
+<li>In the middle are test adapters. They allow tests to be discovered and called. For MsTest this is <a href="https://www.nuget.org/packages/MSTest.TestAdapter/">MSTest.TestAdapter</a>. You can use the XUnit <a href="https://www.nuget.org/packages/xunit.runner.visualstudio/">xunit.runner.visualstudio</a></li>
+<li>Visual Studio runs <a href="https://github.com/Microsoft/vstest">VSTest</a> (aka package <a href="https://www.nuget.org/packages/Microsoft.NET.Test.Sdk/">Microsoft.NET.Test.Sdk</a>, still -pre for now). It's can also be used outside Visual Studio as a top-level runner. The command line way to call it is vstest.console.exe (which has actually existed since VS2012, although most of us just used <a href="https://msdn.microsoft.com/en-us/library/ms182486.aspx">MsTest.exe</a>) </li>
+</ul>
+<h3>.net Framework</h3>
+<p>Under Add new project / Visual C# / test we have "Unit Test Project (.NET Framework)". This is the "classic" csproj with a packages.config pointing to the adapter and framework. </p>
+<div class="code"><span style="color:blue;">&lt;</span><span style="color:#a31515;">packages</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">package</span><span style="color:blue;">&nbsp;</span><span style="color:red;">id</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">MSTest.TestAdapter</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">version</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">1.1.10-rc2</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">targetFramework</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">net461</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">package</span><span style="color:blue;">&nbsp;</span><span style="color:red;">id</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">MSTest.TestFramework</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">version</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">1.0.8-rc2</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">targetFramework</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">net461</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br />
+<span style="color:blue;">&lt;/</span><span style="color:#a31515;">packages</span><span style="color:blue;">&gt;</span></div>
+<p>The SDK is part of Visual Studio, so it's not referenced here.</p>
+<p>This works pretty much exactly as it did before. </p>
+<p>Remember with VS2015, we had a reference to Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll and no packages.config. Incidentally, if you open a VS2015 test project in VS2017, it doesn't do a conversion. It still references and runs against QualityTools dll (v10 for both VS2015 and VS2017, living in ...\Common7\IDE\PublicAssemblies\ for each visual studio).</p>
+
+<h3>Core</h3>
+<p>In Visual Studio, we now have "Unit test project (.NET Core)" and the slightly differently named "xUnit test project (.NET Core)". The first is MsTest, the second is Xunit. These are the new csproj formats. First thing you can do is update the nuget packages to the latest versions. </p>
+<p>The MsUnit csproj looks like this:</p>
+<div class="code"><span style="color:blue;">&lt;</span><span style="color:#a31515;">Project</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Sdk</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">Microsoft.NET.Sdk</span>&quot;<span style="color:blue;">&gt;</span><br />
+ <br />
+<span style="color:blue;">&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PropertyGroup</span><span style="color:blue;">&gt;&nbsp;&nbsp;&nbsp;&nbsp;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">TargetFramework</span><span style="color:blue;">&gt;</span>netcoreapp1.0<span style="color:blue;">&lt;/</span><span style="color:#a31515;">TargetFramework</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&lt;/</span><span style="color:#a31515;">PropertyGroup</span><span style="color:blue;">&gt;</span><br />
+ <br />
+<span style="color:blue;">&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">ItemGroup</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PackageReference</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Include</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">Microsoft.NET.Test.Sdk</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">Version</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">15.0.0-preview-20170217-05</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PackageReference</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Include</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">MSTest.TestAdapter</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">Version</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">1.1.11</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PackageReference</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Include</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">MSTest.TestFramework</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">Version</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">1.1.11</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&lt;/</span><span style="color:#a31515;">ItemGroup</span><span style="color:blue;">&gt;</span><br />
+ <br />
+<span style="color:blue;">&lt;/</span><span style="color:#a31515;">Project</span><span style="color:blue;">&gt;</span></div>
+
+<p>The Xunit csproj is like this:</p>
+<div class="code"><span style="color:blue;">&lt;</span><span style="color:#a31515;">Project</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Sdk</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">Microsoft.NET.Sdk</span>&quot;<span style="color:blue;">&gt;</span><br />
+ <br />
+<span style="color:blue;">&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PropertyGroup</span><span style="color:blue;">&gt;&nbsp;&nbsp;&nbsp;&nbsp;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">TargetFramework</span><span style="color:blue;">&gt;</span>netcoreapp1.0<span style="color:blue;">&lt;/</span><span style="color:#a31515;">TargetFramework</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&lt;/</span><span style="color:#a31515;">PropertyGroup</span><span style="color:blue;">&gt;</span><br />
+ <br />
+<span style="color:blue;">&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">ItemGroup</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PackageReference</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Include</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">Microsoft.NET.Test.Sdk</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">Version</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">15.0.0-preview-20170217-05</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PackageReference</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Include</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">xunit</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">Version</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">2.2.0</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PackageReference</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Include</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">xunit.runner.visualstudio</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">Version</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">2.2.0</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&lt;/</span><span style="color:#a31515;">ItemGroup</span><span style="color:blue;">&gt;</span><br />
+ <br />
+<span style="color:blue;">&lt;/</span><span style="color:#a31515;">Project</span><span style="color:blue;">&gt;</span></div>
+
+<p>Unfortunately... it doesn't work in Visual Studio 2017 RC4. The xunit and mstest tests don't appear in the test explorer window, they don't get run from the VS menu commands, and there's an obscure "The active Tests Discovery was aborted" message in the output window. The sdk is still in -pre mode, so I guess we'll get a working version eventually... before VS2017 RTM in March I hope!</p>
+<p>The problem is definitely within Visual Studio, because the command line works fine. The new command is <a href="https://docs.microsoft.com/en-us/dotnet/articles/core/preview3/tools/dotnet-test">dotnet test</a>. Tests are found and run. This is actually very nice.</p>
+<h3>Wrap up</h3>
+<p>Apart from .net Core tests not working in VS2017, this is a good direction for tests. Using nuget means the framework can evolve a little (mstest hasn't really moved since VS2010). The new csproj xml is very nice, even more concise than project.json/xproj. "dotnet test" is great. </p>
+
+</article>
+<ul class="categories">
+<li><a href="../../../categories/VS2017/">VS2017</a></li>
+</ul>
+<p>Previously: <a href="../21/Cs7Extra.html">C#7 More features</a> (21 February 2017)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>

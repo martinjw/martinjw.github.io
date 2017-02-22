@@ -5,14 +5,14 @@
     <link>https://martinwilley.com/</link>
     <description>Static void - martinwilley.com</description>
     <language>en-gb</language>
-    <pubDate>Tue, 21 Feb 2017 11:53:48 GMT</pubDate>
-    <lastBuildDate>Tue, 21 Feb 2017 11:53:48 GMT</lastBuildDate>
+    <pubDate>Wed, 22 Feb 2017 11:53:48 GMT</pubDate>
+    <lastBuildDate>Wed, 22 Feb 2017 11:53:48 GMT</lastBuildDate>
     <ttl>600</ttl>
     <item>
-      <description>More new features in C# 7</description>
-      <title>C#7 Extras</title>
-      <link>https://martinwilley.com/blog/2017/02/21/Cs7Extra.html</link>
-      <pubDate>Tue, 21 Feb 2017 11:53:48 GMT</pubDate>
+      <description>Unit testing in VS2017</description>
+      <title>VS2017 unit tests</title>
+      <link>https://martinwilley.com/blog/2017/02/22/VS2017UnitTests.html</link>
+      <pubDate>Wed, 22 Feb 2017 11:53:48 GMT</pubDate>
     </item>
   </channel>
 </rss>
