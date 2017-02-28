@@ -35,19 +35,10 @@
 <h3>The Essentials</h3>
 <ul>
 <li><a href="http://www.jetbrains.com/resharper/download/">Resharper</a></li>
-<li>Alternative: <a href="http://www.devexpress.com/Downloads/NET/IDETools/Refactor/">Refactor Pro</a> (free versions: <a href="http://www.devexpress.com/Products/NET/IDETools/RefactorASP/">Refactor ASP</a>, <a href="http://www.devexpress.com/Products/Visual_Studio_Add-in/CodeRushX/">CodeRush Xpress</a>)
-<ul>
-<li><a href="http://joel.fjorden.se/static.php?page=CodeStyleEnforcer">Code style enforcer</a></li>
-<li><a href="http://code.google.com/p/cr-documentor/">Cr_Documentor (xml comments viewer)</a></li>
-<li>In Xpress the options are accessible by the cryptic Ctrl+Shift+ALT+O or set a registry key (x64: in SOFTWARE\Wow6432Node)<span style="font-size:x-small"><br />
-[HKEY_LOCAL_MACHINE\SOFTWARE\Developer Express\CodeRush for VS\9.3]<br />
-"HideMenu"=dword:00000000</span></li>
-</ul>
-</li>
+<li>Alternative: <a href="http://www.devexpress.com/Products/Visual_Studio_Add-in/CodeRushX/">CodeRush</a></li>
 <li>Unit testing
 <ul>
-<li><a href="http://www.nunit.org/">Nunit</a>. See also: <a href="http://www.mbunit.com/">MBUnit</a> a Nunit rival; <a href="http://www.testdriven.net/">Test Driven.Net</a> test runner.</li>
-<li><a href="http://watin.org/">Watin</a> for IE testing.</li>
+<li><a href="http://www.nunit.org/">Nunit</a> or <a href="https://xunit.github.io/">XUnit</a></li>
 </ul>
 </li>
 <li>Documentation
@@ -65,6 +56,7 @@
 <li>Free alternatives: <a href="http://www.jetbrains.com/decompiler/">Resharper's DotPeek</a></li>
 </ul></li>
 <li>Managing string resources: <a href="http://www.zeta-resource-editor.com/index.html">Zeta Resource Editor</a></li>
+</ul></li>
 </ul>
 
 
@@ -73,7 +65,7 @@
 <li><a href="http://code.google.com/p/elmah/">Elmah- error logging modules and handlers</a></li>
 <li><a href="http://www.codeplex.com/entlib">Enterprise Library</a></li>
 <li><a href="http://htmlagilitypack.codeplex.com/">HTML Agility pack</a> - use malformed html with xpath (well formed xhtml can be loaded with <a href="code/xhtmldoc.html">my helper class</a>)</li>
-<li><a href="http://ajaxcontroltoolkit.codeplex.com/">Ajax Toolkit</a>. Mostly superceded by jQuery UI.</li>
+<li><a href="http://ajaxcontroltoolkit.codeplex.com/">Ajax Toolkit</a>. Mostly superceded.</li>
 </ul>
 
 <h3>AddIns</h3>
@@ -81,28 +73,11 @@
 
 <li><a href="http://copysourceashtml.codeplex.com/">Copy Source As Html</a>; </li>
 <li><a href="http://weblogs.asp.net/alex_papadimoulis/archive/2004/05/25/Smart-Paster-1.1-Add-In---StringBuilder-and-Better-C_2300_-Handling.aspx">Smart Paste-As (vs2005-2008)</a> (see <a href="http://smartpaster2010.codeplex.com/">my version for vs2010</a> and <a href="http://visualstudiogallery.msdn.microsoft.com/0611a238-7405-4d5f-ace0-5b3d5cf325e0">my version for vs2013</a>)</li>
-<!--<li><a href="http://www.neovolve.com/post/2007/06/19/using-winmerge-with-tfs.aspx">Using Winmerge with TFS</a> (Tools-Options-SourceControl-TFS-User Tools, add Compare with arguments /x /e /ub /wl /dl %6 /dr %7 %1 %2 and Merge with arguments /x /e /ub /wl /dl %6 /dr %7 %1 %2 %4, OK, Save)</li>
-<li>Older VS versions<ul>
-<li><a href="http://code.msdn.microsoft.com/PowerCommands">VS2008 Power Commands</a>. VS2010 Power Tools can be found in the Extensions Gallery</li>
-<li><a href="http://www.csharper.net/blog/visual_studio_2008_add_in_compatibility.aspx">Clean up Visual Studio MRU</a></li>
-<li><a href="http://www.asp.net/cssadapters/">CSS friendly adapters for asp 2 (2005!)</a></li>
-</ul></li>-->
 </ul>
 
-<h3>Useful links</h3>
-<ul>
-<li><a href="http://www.icsharpcode.net/opensource/sd/">Sharp Develop</a></li>
-<li>See also
-<ul><li><a href="http://msdn.microsoft.com/en-us/library/ms229042(v=vs.110).aspx">.net Framework Design Guidelines</a></li>
-<li><a href="http://msdn.microsoft.com/en-us/library/eehb4faa.aspx">Modify VS templates</a></li>
-</ul>
-</li>
-</ul>
 <h3>Patterns</h3>
 <ul>
-<!--<li><a href="http://www.foundationsof.com/FoundationsOfProgramming.pdf">Foundations of programming ebook</a>. Really good introduction for novice programmers, worth reviewing for experienced coders.</li>-->
 <li><a href="http://www.microsoft.com/resources/practices/default.mspx">Microsoft Patterns &amp; Practices</a>.</li>
-<!--<li><a href="http://www.dofactory.com/Patterns/Patterns.aspx">Patterns description with C# examples</a> and <a href="http://www.primos.com.au/primos/Articles/tabid/56/Default.aspx">another one</a></li>-->
 <li><a href="http://csharpindepth.com/Articles/General/Singleton.aspx">Jon Skeet's Thread Safe Singleton</a> - Easy to forget thread safety, and there's a better solution than Lock</li>
 </ul>
 

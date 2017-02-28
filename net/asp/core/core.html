@@ -57,24 +57,48 @@
 </ul>
 <p>NB: Core is intended for servers (incl. Asp and consoles), not for clients (so no Winforms/WPF) or old webforms.</p>
 
-<h3>Project.json</h3>
-<p>Project.json includes parts that were originally in the csproj, packages.config, and project.nuspec. </p>
+<h3>dotnet tooling/SDK</h3>
+<p>The 2016/VS2015 tooling was preview; it is only RTM with VS2017.</p>
 <ul>
-<li><strong>buildOptions</strong> with "emitEntryPoint" means it is runnable (by calling static void Main), not a library</li>
-<li>The dependency and framework change from an abstract API (netstandard.Library/netstandard) to an implementation (Microsoft.NETCore.App /netcoreapp). See about versions below.</li>
-<li>Dependencies and frameworks:<ul>
-<li><strong>dependencies</strong>: other nuget packages<br />
-In old .net this was &lt;Reference /&gt; in csproj and the list in packages.config</li>
-<li><strong>frameworks</strong>: what runs the code<br />
-In old .csproj this was &lt;TargetFrameworkVersion&gt;v4.5&lt;/TargetFrameworkVersion&gt;</li>
+<li>View the current version with "dotnet --version"; runtime version can be seen in "dotnet"</li>
+<li>there can be multiple runtimes and sdks installed- see %PROGRAMFILES%\dotnet\<ul>
+<li>runtimes: %PROGRAMFILES%\dotnet\shared\Microsoft.NETCore.App\</li>
+<li>tooling: %PROGRAMFILES%\dotnet\sdk</li>
 </ul></li>
+<li><a href="https://www.microsoft.com/net/download/core">Downloads</a> - <strong>L</strong>ong<strong>T</strong>erm<strong>S</strong>upport + "Current" (latest)</li>
+<li><a href="https://github.com/dotnet/core/blob/master/release-notes/download-archive.md#net-core-runtime-and-sdk-download-archive">.NET Core Runtime and SDK download archive</a></li>
 </ul>
-<p>With VS 2017, this changes to csproj (NB: VS 2015= only project.json, VS 2017= only project.csproj)</p>
+<table>
+<tr>
+<th>Core runtime/ VS</th>
+<th>Tooling version (SDK)</th>
+</tr>
+<tr>
+<td>1.0 / VS2015 Update 3</td>
+<td>1.0.0-preview2-003121</td>
+</tr>
+<tr>
+<td>1.1.0 / VS2017 RC4</td>
+<td>1.0.0-rc4-004771</td>
+</tr>
+</table>
+
+<h4>Project-specific tooling</h4>
 <ul>
-<li><a href="http://www.natemcmaster.com/blog/2017/01/19/project-json-to-csproj/">Project.json to MSBuild conversion guide (Jan 2017)</a></li>
-<li><a href="http://www.natemcmaster.com/blog/2017/02/01/project-json-to-csproj-part2/">Caveats of project.json to MSBuild conversion (Feb 2017)</a></li>
+<li>The tooling version can be specified in the solution file global.json (as from VS2017, the "projects" is obsolete).</li>
+<li>If you don't set this, the latest installed version of the sdk is used. This will break older projects (eg VS2015 projects after you installed VS2017)</li>
 </ul>
-<h3>Versions</h3>
+
+<p></p>
+<div class="code">{<br/>
+&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">projects</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;[&nbsp;<span style="color:#a31515;">&quot;src&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;test&quot;</span>&nbsp;],<br/>
+&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">sdk</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">version</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;1.0.0-preview2-003121&quot;</span><br/>
+&nbsp;&nbsp;}<br/>
+}</div>
+
+
+<h3>Multi-targeting</h3>
 <p>Frameworks run .net code, and there can be several in the same project (multi-targeting):</p>
 <ul>
 <li><strong>net4.6</strong> The full ("classic") framework.</li>
@@ -172,15 +196,6 @@ In old .csproj this was &lt;TargetFrameworkVersion&gt;v4.5&lt;/TargetFrameworkVe
 }
 </div>
 
-<h4>Tooling: 1.0.0-preview2-003121</h4>
-<p>DotNet Tooling (the Visual Studio MSI from <a href="http://dot.net">http://dot.net</a>) is still "Preview 2" and requires VS2015 Update 3.</p>
-<p>The tooling version is reported by "dotnet -version" and is specified in the solution file global.json</p>
-<div class="code">{<br/>
-&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">projects</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;[&nbsp;<span style="color:#a31515;">&quot;src&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;test&quot;</span>&nbsp;],<br/>
-&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">sdk</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">version</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;1.0.0-preview2-003121&quot;</span><br/>
-&nbsp;&nbsp;}<br/>
-}</div>
 
 
 

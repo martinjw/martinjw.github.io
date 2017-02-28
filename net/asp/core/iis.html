@@ -34,15 +34,30 @@
 <h2>ASP.Net Core in IIS</h2>
 
 <p><a href="https://docs.asp.net/en/latest/fundamentals/servers.html">docs.asp.net</a></p>
-<div class="alert">References to "Dnx" in the web.config will change in RC2</div>
 
 <p>Asp.net Core always runs using it's own web server, Kestrel. It can then be self-hosted, or run on Linux, but for most windows servers, you'll probably run it with IIS, as asp.net always has been.</p>
+<p>Hence, in Program.cs, you see <em>both</em> .UseKestrel and .UseIISIntegration.</p>
 <p>See <a href="http://www.strathweb.com/2015/12/running-asp-net-5-website-on-iis/">Strathweb.com for details and potential errors</a></p>
 <h3>Installation</h3>
 <ul>
-<li>On server, <strong>you must install ASP.NET Core Module for IIS</strong> (the module in the web.config below). It's not part of the standard windows or standard .net install (but it is installed in the .net Core SDK/Visual Studio). <a href="https://www.microsoft.com/net/download">Downloads</a></li>
-<li>Nuget package is <strong>Microsoft.AspNetCore.Server.IISIntegration</strong></li>
-<li>In Startup.<strong>Configure</strong> add app.UseIISIntegration() to allow windows authentication to be passed through from IIS.<ul>
+<li>On server, <strong>you must install ASP.NET Core Module for IIS</strong> (the module in the web.config below). It's not part of the standard windows or standard .net install (but it is installed in the .net Core SDK/Visual Studio). 
+<ul>
+<li>You also need the <a href="https://www.microsoft.com/en-us/download/details.aspx?id=48145">Visual C++ Redistributable for Visual Studio 2015</a> (you probably have earlier versions, not 2015).</li>
+<li><a href="https://www.microsoft.com/net/download/core">Downloads</a></li>
+</ul>
+</li>
+<li>Nuget package <strong>Microsoft.AspNetCore.Server.IISIntegration</strong> is a dependency of <strong>microsoft.aspnetcore</strong></li>
+<li>Windows authentication is configured in Properties/launchSettings.json (and then ultimately in web.config)<br />
+<span style="color:#2e75b6;">&quot;iisSettings&quot;</span>:&nbsp;{
+&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;windowsAuthentication&quot;</span>:&nbsp;<span style="color:blue;">true</span>,
+&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;anonymousAuthentication&quot;</span>:&nbsp;<span style="color:blue;">false</span>,
+&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;iisExpress&quot;</span>:&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;applicationUrl&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;http://localhost:41000/&quot;</span>,
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;sslPort&quot;</span>:&nbsp;0
+&nbsp;&nbsp;}
+}
+<ul>
+<li>Older versions: In Startup.<strong>Configure</strong> add app.UseIISIntegration() to allow windows authentication to be passed through from IIS.</li>
 <li>in rc1 it was UseIISPlatformHandlerUrl()</li>
 </ul></li>
 </ul>
@@ -63,10 +78,10 @@
 <h3>IIS</h3>
 <ul>
 <li>IIS becomes a reverse proxy, using the IIS native module <strong>AspNetCoreModule</strong> (min:  IIS 7.5- Windows Server 2008 R2/Windows 7)</li>
-<li>AspNetCoreModule is a fork of HttpPlatformHandler, which was created for Azure to run Node, and now is part of IIS. It just calls an .exe in a child process (in this case, .net Core running the Kestrel webserver).</li>
+<li>AspNetCoreModule is a fork of HttpPlatformHandler, which was created for Azure to run Node, and from WinServer2016 is part of IIS. It just calls an .exe in a child process (in this case, .net Core running the Kestrel webserver).</li>
 <li>AspNetCoreModule is in the package <strong>Microsoft.AspNetCore.Server.IISIntegration</strong></li>
 <li>Asp.Net always runs in Kestrel, either behind IIS, or run directly, in a console or windows service, or on Linux. </li>
-<li>There is still a minimal xml web.config, which tells IIS to hand over to the platform handler.
+<li>There is still a minimal xml web.config, which tells IIS to hand over to the platform handler - but in VS2017+ it only appears on "Publish".
 <div class="code">
 <p><span style="color:blue;">&lt;</span><span style="color:#a31515;">configuration</span><span style="color:blue;">&gt;</span><br/>
 <span style="color:blue;">&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">system.webServer</span><span style="color:blue;">&gt;</span><br/>
@@ -79,7 +94,7 @@
 <span style="color:blue;">&nbsp;&nbsp;&lt;/</span><span style="color:#a31515;">system.webServer</span><span style="color:blue;">&gt;</span><br/>
 <span style="color:blue;">&lt;/</span><span style="color:#a31515;">configuration</span><span style="color:blue;">&gt;</span></p>
 </div> 
-<p>When you deploy, the aspnetCore line is changed:</p>
+<p>When you publish, the aspnetCore line is changed:</p>
 <div class="core">
 <p><span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">aspNetCore</span>&nbsp;<span style="color:red;">processPath</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">dotnet</span>&quot;&nbsp;<span style="color:red;">arguments</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">.\MyWebProject.dll</span>&quot;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:red;">stdoutLogEnabled</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">false</span>&quot;&nbsp;<span style="color:red;">forwardWindowsAuthToken</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">false</span>&quot;<span style="color:blue;">/&gt;</span><br/>
@@ -91,6 +106,7 @@
 <li>See announcements <a href="https://github.com/aspnet/Announcements/issues/69">69</a> and <a href="https://github.com/aspnet/Announcements/issues/164">164</a><ul>
 <li>In RC1, web.config lived in wwwroot only (and publishing was to \artifacts)</li>
 <li>From RC2, web.config lives in the project folder. Publishing is to /bin/Release/PublishOutputs/, with wwwroot as a subfolder. </li>
+<li>From VS2017, web.config disappears, and is only generated in Publish.</li>
 </ul></li>
 </ul>
 

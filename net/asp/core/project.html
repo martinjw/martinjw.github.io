@@ -32,60 +32,52 @@
 </div>
 <div class="content">
 <h2>Projects</h2>
-<div class="alert">After Core RTM (June 2016), the project system will change from xproj/project.json to .csproj, probably with Visual Studio 2017. The concepts for Core RC2/RTM described here will change from json into msbuild xml.</div>
-<ul>
-<li>As of June 2016, most descriptions of project.json are out of date. The following one in docs should be updated (I hope)</li>
-<li><a href="https://docs.microsoft.com/en-us/dotnet/articles/core/tools/project-json">Project.json reference</a></li>
-</ul>
+
 
 <h3>Project structure</h3>
 <ul>
 <li>Solution/<ul>
 <li>.sln</li>
-<li>global.json - lists folders containing projects (default: src and test)<br/>
-{ "projects": [ "src", "test" ] }
-</li>
+<li>global.json - lists sdk (eg 1.0.0-preview2-003121)</li>
 <li>test\ <ul>
-<li>Test Projects (or or more)</li>
+<li>Test Projects (one or more)</li>
 </ul></li>
 <li>src - source<ul>
 <li>{Project}\ -NB: folder name==assembly name<ul>
-<li>Controllers\</li>
-<li>node_modules\</li>
-<li>Properties\<ul>
-<li>launchSettings.json - iis config, environment variables</li>
+<li>bin\Debug\netcoreapp1.0 - compiled dlls
+<ul>
+<li>publish\ - </li>
 </ul></li>
-<li>Views\</li>
-<li>wwwroot\ - static files for deployment (gulp publishes here)<ul>
-<li>css\ images/ js/ lib/ -gulp and bower publish here</li>
+<li>Controllers\</li>
+<li>Views\ - only MVC, not webapi, obviously</li>
+<li>wwwroot\ - static files for deployment<ul>
+<li>css\ images\ js\ as applicable</li>
 <li>web.config - tells IIS to launch dotnet</li>
 </ul></li>
-<li>gulpfile.js</li>
-<li>package.json - npm to run bower/gulp</li>
-<li>{project}.xproj - msbuild xml for Visual Studio. Not used by "dotnet" command.<br />
-For Visual Studio 2017, this will change back to .csproj, and much of project.json will move into here</li>
-<li>project.json - project settings and dependencies
+<li>appsettings.json</li>
+<li>bower.json - for jquery/bootstrap etc</li>
+<li>bundleconfig.json - for bundling and minification. <a href="https://github.com/madskristensen/BundlerMinifier/wiki">this one</a>, or use gulp or grunt</li>
+<li>Program.cs - static vod Main that calls startup (below)</li>
+<li>Startup.cs - startup file (like global.asax)</li>
+<li>{project}.csproj - msbuild. <br />
+VS2015: {project}.xproj - msbuild xml for Visual Studio and project.json</li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul>
+<p>Main changes:</p>
 <ul>
-<li>Old ASP.Net had a {project}.csproj (msbuild xml) + packages.config (nuget dependencies) + .nuspec (nuget definition)</li>
-<li>In RC1-RC2-RTM, the "project" information is split between a Project.xproj (xml for Visual Studio) and project.json (dependencies, most project stuff, nuspec)</li>
-<li>For Visual Studio 2017 (probably), we will have:<ul>
-<li>{project}.csproj - msbuild xml, most project settings</li>
-<li>nuget.json (name to be confirmed)- nuget dependencies, basically packages.config again</li>
-</ul></li>
+<li>There's a wwwroot folder for the static javascript/css/images</li>
+<li>There's no web.config. It only appears when you publish.</li>
+<li>The global.asax is gone; now there's Program.cs and Startup.cs - <a href="startup.html">see more</a></li>
 </ul>
-</li>
-<li>Startup.cs - <a href="startup.html">startup file</a> (like global.asax)</li>
-</ul></li>
-</ul></li>
-</ul></li>
-</ul>
-
 
 <h3>Publishing</h3>
-<p>You can "Publish" from VS as before.</p>
+<p>You can "Publish" from VS as before, or "dotnet publish".</p>
 <ul>
 <li>The RC1 approot/wwwwroot structure has gone (it allowed the binaries to be completely outside the web path)</li>
-<li>You publish to (default) /bin/Release/PublishOutputs/</li>
+<li>You publish to (default) /bin/Release/PublishOutputs/<br />
+dotnet publish default is Debug\netcoreapp1.0\publish\, so add "-c release" for a release build!</li>
 <li>Unlike classic asp.net, there is no "bin" folder- the dlls are toplevel, the static files ("wwwroot") are below.</li>
 </ul>
 <p>The structure (reverse alphabetic order, to explain it better):</p>
@@ -95,9 +87,32 @@ For Visual Studio 2017, this will change back to .csproj, and much of project.js
 <li>wwwroot\ - static files.</li>
 <li>Views\ - standard view structure</li>
 <li>runtimes\ - the native dll <strong>libuv.dll</strong> (used by Kestrel) for different environments (for Windows it's win7-x64) </li>
-<li>refs\ - Not sure. They are .net 4.6 dlls (Microsoft.CSharp.dll, System.Console.dll etc).</li>
+<li>refs\ - Reference assemblies (contracts, not implementations). Used, I think, for Razor compilation.</li>
 </ul>
+<p>Normally it's a FDD-framework dependent deployment, using an installed version of dotnet, It can be a SCD-self-contained deployment, including the .net Core runtime, by specifying the RuntimeIdentifiers (eg "Win10-x64") in csproj and your "dotnet publish -r win10-x64".</p>
 
+
+<h3>Project.json + csproj</h3>
+<p>VS2015's project.json includes parts that were originally in the csproj, packages.config, and project.nuspec (but other bits were in project.xproj).<br />
+In VS2017, we have csproj.</p>
+<ul>
+<li><strong>buildOptions</strong> with "emitEntryPoint" means it is runnable (by calling static void Main), not a library</li>
+<li>The dependency and framework change from an abstract API (netstandard.Library/netstandard) to an implementation (Microsoft.NETCore.App /netcoreapp). See about versions below.</li>
+<li>Dependencies and frameworks:<ul>
+<li><strong>dependencies</strong>: other nuget packages<br />
+In old .net this was &lt;Reference /&gt; in csproj and the list in packages.config</li>
+<li><strong>frameworks</strong>: what runs the code<br />
+In old .csproj this was &lt;TargetFrameworkVersion&gt;v4.5&lt;/TargetFrameworkVersion&gt;</li>
+</ul></li>
+</ul>
+<p>With VS 2017, this changes to csproj (NB: VS 2015= only project.json, VS 2017= only project.csproj)</p>
+<ul>
+<ul>
+<li>VS2015: <a href="https://docs.microsoft.com/en-us/dotnet/articles/core/tools/project-json">Project.json reference</a></li>
+</ul><li><a href="http://www.natemcmaster.com/blog/2017/01/19/project-json-to-csproj/">Project.json to MSBuild conversion guide (Jan 2017)</a>/<br />
+<a href="https://docs.microsoft.com/en-us/dotnet/articles/core/tools/project-json-to-csproj">Same article in docs.microsoft.com</a></li>
+<li><a href="http://www.natemcmaster.com/blog/2017/02/01/project-json-to-csproj-part2/">Caveats of project.json to MSBuild conversion (Feb 2017)</a></li>
+</ul>
 
 </div>
 <div class="Footer"></div>
