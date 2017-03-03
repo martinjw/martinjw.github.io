@@ -1,0 +1,100 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>project.json</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="core.html">DotNet Core</a></li>
+<li><a href="mvc.html">MVC</a></li>
+<li><a href="project.html">Core Project</a></li>
+<li><a href="startup.html">Startup</a></li>
+<li><a href="config.html">Config Settings</a></li>
+<li><a href="iis.html">IIS</a></li>
+<li><a href="controllers.html">Controllers</a></li>
+<li><a href="views.html">Views</a></li>
+<li><a href="di.html">Dependency Injection</a></li>
+<li><a href="security.html">Security</a></li>
+<li><a href="logging.html">Logging</a></li>
+<li><a href="localization.html">Localization</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>ASP.Net Core project.json</h2>
+<div class="alert">project.json is tooling for VS2015-Update 3 (2016). From VS2017 onwards (March 2017+), use <a href="core.html">csproj</a></div>
+
+
+<h3>Class Libraries: netstandard1.6</h3>
+<p>Libraries are based on a standard .net API (does not apply to Consoles and ASP/MVC, which are also consoles)</p>
+<p>The standard .net API at release is 1.6.0 (there is a 1.6.1 but "<a href="https://blogs.msdn.microsoft.com/dotnet/2016/11/16/announcing-net-core-1-1/">there is no benefit in referencing it for libraries</a>")</p>
+<div class="code">{<br/>
+&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">version</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;1.0.0-*&quot;</span>,<br/>
+ &nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">dependencies</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">NETStandard.Library</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;1.6.0&quot;</span><br/>
+&nbsp;&nbsp;},<br/>
+ &nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">frameworks</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">netstandard1.6</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">imports</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;dnxcore50&quot;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;}<br/>
+}</div>
+
+<h3>Consoles (incl ASP, Tests): netcoreapp1.0</h3>
+<p>Executables (consoles and ASP websites) need a concrete framework to run them, not an API. A simple console looks like this (ASP has more specific dependencies)</p>
+<p>This is the standard console project.json at RTM. In consoles, the framework import "dnxcore50" allows old RC1 packages to be used; the ASP template imports "dotnet5.6" for RC2 packages.</p>
+<div class="code">{<br/>
+&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">version</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;1.0.0-*&quot;</span>,<br/>
+&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">buildOptions</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">emitEntryPoint</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:blue;">true</span><br/>
+&nbsp;&nbsp;},<br/>
+ 
+&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">dependencies</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">Microsoft.NETCore.App</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">type</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;platform&quot;</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">version</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;1.0.0&quot;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;},<br/>
+ 
+&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">frameworks</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">netcoreapp1.0</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">imports</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;dnxcore50&quot;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;}<br/>
+}</div>
+
+<h3>netcoreapp1.1 (Nov 2016)</h3>
+
+<p>A version bump- netcoreapp1.0 to 1.1, dependency <span style="color:#147fc8;">Microsoft.NETCore.App</span> goes to 1.1.0</p>
+<div class="code">
+&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">frameworks</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">netcoreapp1.1</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">dependencies</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">Microsoft.NETCore.App</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">type</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;platform&quot;</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">version</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;1.1.0&quot;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;}<br />
+}
+</div>
+
+<p>If you multi-target (net4.6 and Core 1.0, for instance), you'll need to push the core dependency (Microsoft.NETCore.App) under the core framework (netcoreapp1.0). If you have older code (not netstandard1.6), you quickly run into conflicts and have to start #if /#endif through your code.</p>
+
+
+
+
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

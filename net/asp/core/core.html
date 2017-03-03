@@ -36,8 +36,11 @@
 
 <ul>
 <li><a href="https://www.microsoft.com/net/download">Downloads</a></li>
-<li><a href="https://docs.asp.net/en/latest/">Documentation (docs.asp.net)</a> and <a href="https://docs.microsoft.com/en-us/dotnet/articles/core/index">Tutorial (docs.microsoft.com)</a><ul>
-<li><a href="https://docs.asp.net/en/latest/mvc/index.html">MVC</a></li>
+<li>Documentation (mostly <a href="https://docs.microsoft.com/en-us/">docs.microsoft.com</a>): <ul>
+<li><a href="https://docs.microsoft.com/en-us/dotnet/articles/core/">Core docs</a></li>
+<li><a href="https://docs.microsoft.com/en-us/aspnet/core/">Asp.net</a></li>
+<li><a href="https://docs.microsoft.com/en-us/dotnet/articles/core/index">Tutorial</a></li>
+<li><a href="https://docs.microsoft.com/en-us/aspnet/core/mvc/overview">MVC</a></li>
 <li><a href="https://packagesearch.azurewebsites.net/">Package search - find which nuget package contains which api</a></li>
 </ul></li>
 </ul>
@@ -67,6 +70,7 @@
 </ul></li>
 <li><a href="https://www.microsoft.com/net/download/core">Downloads</a> - <strong>L</strong>ong<strong>T</strong>erm<strong>S</strong>upport + "Current" (latest)</li>
 <li><a href="https://github.com/dotnet/core/blob/master/release-notes/download-archive.md#net-core-runtime-and-sdk-download-archive">.NET Core Runtime and SDK download archive</a></li>
+<li><a href="projectjson.html">Notes on the obsolete VS2015 project.json format</a></li>
 </ul>
 <table>
 <tr>
@@ -83,9 +87,9 @@
 </tr>
 </table>
 
-<h4>Project-specific tooling</h4>
+<h4>Project-specific tooling: global.json</h4>
 <ul>
-<li>The tooling version can be specified in the solution file global.json (as from VS2017, the "projects" is obsolete).</li>
+<li>The tooling version can be specified in the solution file <strong>global.json</strong> (as from VS2017, the "projects" is obsolete).</li>
 <li>If you don't set this, the latest installed version of the sdk is used. This will break older projects (eg VS2015 projects after you installed VS2017)</li>
 </ul>
 
@@ -97,17 +101,85 @@
 &nbsp;&nbsp;}<br/>
 }</div>
 
-
-<h3>Multi-targeting</h3>
-<p>Frameworks run .net code, and there can be several in the same project (multi-targeting):</p>
+<h3>Project types</h3>
+<p>Projects have a &lt;<span style="color:#a31515;">TargetFramework</span>&gt; (in full framework we had &lt;<span style="color:#a31515;">TargetFrameworkVersion</span>&gt;v4.5&lt;<span style="color:#a31515;">/TargetFrameworkVersion</span>&gt;).<br />
+NB: for multi-targeting, it's plural &lt;<span style="color:#a31515;">TargetFramework</span><span style="color:#ff0000;">s</span>&gt; with a semicolon delimiter.</p>
 <ul>
-<li><strong>net4.6</strong> The full ("classic") framework.</li>
-<li><strong>netcoreapp1.0</strong> .Net Core. <ul>
-<li><strong>imports</strong> state that the framework also allows packages that aren't specifically Core- PCLs and (older, pre-release) core packages- which is why you see "dnxcore50" and "dotnet5.6" (we should use "netstandard1.6" now, but older packages won't be updated)</li>
+<li>Executables (consoles and web, with a static void Main) need a runtime - &lt;<span style="color:#a31515;">TargetFramework</span><span style="color:blue;">&gt;</span>netcoreapp1.0<span style="color:blue;">&lt;/</span><span style="color:#a31515;">TargetFramework</span><span style="color:blue;">&gt;</span><ul>
+<li>NB: ASP.net Core web projects have a Program.cs </li>
+</ul></li>
+<li>Class libraries only need an API - &lt;<span style="color:#a31515;">TargetFramework</span><span style="color:blue;">&gt;</span>netstandard1.4<span style="color:blue;">&lt;/</span><span style="color:#a31515;">TargetFramework</span><span style="color:blue;">&gt;</span><ul>
+<li>VS2017 Add new project has ".NET Core"/"Class Library (.NET Core)" (netcoreapp1.0)<br />
+AND ".NET Standard"/"Class Library (.NET Standard)" (netstandard1.4)</li></li></li>
 </ul></li>
 </ul>
+<p>Netstandard class libraries can be called by "classic" framework .net as well as Core.</p>
+<div class="code"><span style="color:blue;">&lt;</span><span style="color:#a31515;">Project</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Sdk</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">Microsoft.NET.Sdk</span>&quot;<span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PropertyGroup</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">TargetFramework</span><span style="color:blue;">&gt;</span>netstandard1.4<span style="color:blue;">&lt;/</span><span style="color:#a31515;">TargetFramework</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&lt;/</span><span style="color:#a31515;">PropertyGroup</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&lt;/</span><span style="color:#a31515;">Project</span><span style="color:blue;">&gt;</span></div>
+<p>Core class libraries can only be called from Core projects, not full framework.</p>
+<div class="code"><span style="color:blue;">&lt;</span><span style="color:#a31515;">Project</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Sdk</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">Microsoft.NET.Sdk</span>&quot;<span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PropertyGroup</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">TargetFramework</span><span style="color:blue;">&gt;</span>netcoreapp1.0<span style="color:blue;">&lt;/</span><span style="color:#a31515;">TargetFramework</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&lt;/</span><span style="color:#a31515;">PropertyGroup</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&lt;/</span><span style="color:#a31515;">Project</span><span style="color:blue;">&gt;</span></div>
+<p>Asp.net Core websites can also target full framework (note the sdk for web is <span style="color:blue;">Microsoft.NET.Sdk.Web</span>; otherwise it's <span style="color:blue;">Microsoft.NET.Sdk</span>)</p>
+<div class="code"><span style="color:blue;">&lt;</span><span style="color:#a31515;">Project</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Sdk</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">Microsoft.NET.Sdk.Web</span>&quot;<span style="color:blue;">&gt;</span><br />
+ 
+<span style="color:blue;">&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PropertyGroup</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">TargetFramework</span><span style="color:blue;">&gt;</span>net461<span style="color:blue;">&lt;/</span><span style="color:#a31515;">TargetFramework</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">RuntimeIdentifier</span><span style="color:blue;">&gt;</span>win7-x86<span style="color:blue;">&lt;/</span><span style="color:#a31515;">RuntimeIdentifier</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&lt;/</span><span style="color:#a31515;">PropertyGroup</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">ItemGroup</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PackageReference</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Include</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">Microsoft.AspNetCore</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">Version</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">1.0.3</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PackageReference</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Include</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">Microsoft.AspNetCore.Mvc</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">Version</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">1.0.2</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PackageReference</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Include</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">Microsoft.AspNetCore.StaticFiles</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">Version</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">1.0.1</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PackageReference</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Include</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">Microsoft.Extensions.Logging.Debug</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">Version</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">1.0.1</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&lt;/</span><span style="color:#a31515;">ItemGroup</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">ItemGroup</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">DotNetCliToolReference</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Include</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">Microsoft.VisualStudio.Web.CodeGeneration.Tools</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">Version</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">1.0.0-msbuild3-final</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&lt;/</span><span style="color:#a31515;">ItemGroup</span><span style="color:blue;">&gt;</span><br />
+ 
+<span style="color:blue;">&lt;/</span><span style="color:#a31515;">Project</span><span style="color:blue;">&gt;</span></div>
+<p>A console app just has an OutputType of "Exe"</p>
+<div class="code"><span style="color:blue;">&lt;</span><span style="color:#a31515;">Project</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Sdk</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">Microsoft.NET.Sdk</span>&quot;<span style="color:blue;">&gt;</span><br />
+ 
+<span style="color:blue;">&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PropertyGroup</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">OutputType</span><span style="color:blue;">&gt;</span>Exe<span style="color:blue;">&lt;/</span><span style="color:#a31515;">OutputType</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">TargetFramework</span><span style="color:blue;">&gt;</span>netcoreapp1.0<span style="color:blue;">&lt;/</span><span style="color:#a31515;">TargetFramework</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&lt;/</span><span style="color:#a31515;">PropertyGroup</span><span style="color:blue;">&gt;</span><br />
+ 
+<span style="color:blue;">&lt;/</span><span style="color:#a31515;">Project</span><span style="color:blue;">&gt;</span></div>
+
+
+<h3>Multi-targeting</h3>
+<p>Frameworks run .net code, and there can be several in the same project (multi-targeting). Note <span style="color:#a31515;">TargetFrameworks</span> is plural!</p>
+<div class="code"><span style="color:blue;">&lt;</span><span style="color:#a31515;">Project</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Sdk</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">Microsoft.NET.Sdk</span>&quot;<span style="color:blue;">&gt;</span><br />
+ 
+<span style="color:blue;">&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PropertyGroup</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">TargetFrameworks</span><span style="color:blue;">&gt;</span>netcoreapp1.0;net451<span style="color:blue;">&lt;/</span><span style="color:#a31515;">TargetFrameworks</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&lt;/</span><span style="color:#a31515;">PropertyGroup</span><span style="color:blue;">&gt;</span><br />
+ 
+<span style="color:blue;">&lt;/</span><span style="color:#a31515;">Project</span><span style="color:blue;">&gt;</span></div>
+<p>For references/packages add them with msbuild conditionals.</p>
+<div class="code"><span style="color:blue;">&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">ItemGroup</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Condition</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">&nbsp;&#39;$(TargetFramework)&#39;&nbsp;==&nbsp;&#39;netstandard1.5&#39;&nbsp;</span>&quot;<span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PackageReference</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Include</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">System.Data.Common</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">Version</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">4.1.0</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PackageReference</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Include</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">System.Xml.XmlSerializer</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">Version</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">4.0.11</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&lt;/</span><span style="color:#a31515;">ItemGroup</span><span style="color:blue;">&gt;</span><br />
+ <br />
+<span style="color:blue;">&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">ItemGroup</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Condition</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">&nbsp;&#39;$(TargetFramework)&#39;&nbsp;==&nbsp;&#39;net45&#39;&nbsp;</span>&quot;<span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">Reference</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Include</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">System.Data</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">Reference</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Include</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">System.Xml</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">Reference</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Include</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">System.Xml.Linq</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">Reference</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Include</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">System.Data.DataSetExtensions</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">Reference</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Include</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">System</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">Reference</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Include</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">Microsoft.CSharp</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&lt;/</span><span style="color:#a31515;">ItemGroup</span><span style="color:blue;">&gt;</span></div>
+
+
 <p>The framework moniker (.net 4.6 is "net46") is the same label used in Nuget packages. It's also available (uppercased to NET46) as a conditional compilation symbol when you build.</p>
-<p>If you multi-target (net4.6 and Core 1.0, for instance), you'll need to push the core dependency (Microsoft.NETCore.App) under the core framework (netcoreapp1.0). If you have older code (not netstandard1.6), you quickly run into conflicts and have to start #if /#endif through your code.</p>
 
 <table>
 <tr>
@@ -141,62 +213,6 @@
 <td>Microsoft.NETCore.App 1.1.0</td>
 </tr>
 </table>
-
-
-<h4>Class Libraries: netstandard1.6</h4>
-<p>Libraries are based on a standard .net API (does not apply to Consoles and ASP/MVC, which are also consoles)</p>
-<p>The standard .net API at release is 1.6.0 (there is a 1.6.1 but "<a href="https://blogs.msdn.microsoft.com/dotnet/2016/11/16/announcing-net-core-1-1/">there is no benefit in referencing it for libraries</a>")</p>
-<div class="code">{<br/>
-&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">version</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;1.0.0-*&quot;</span>,<br/>
- &nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">dependencies</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">NETStandard.Library</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;1.6.0&quot;</span><br/>
-&nbsp;&nbsp;},<br/>
- &nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">frameworks</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">netstandard1.6</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">imports</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;dnxcore50&quot;</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
-&nbsp;&nbsp;}<br/>
-}</div>
-
-<h4>Consoles (incl ASP, Tests): netcoreapp1.0</h4>
-<p>Executables (consoles and ASP websites) need a concrete framework to run them, not an API. A simple console looks like this (ASP has more specific dependencies)</p>
-<p>This is the standard console project.json at RTM. In consoles, the framework import "dnxcore50" allows old RC1 packages to be used; the ASP template imports "dotnet5.6" for RC2 packages.</p>
-<div class="code">{<br/>
-&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">version</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;1.0.0-*&quot;</span>,<br/>
-&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">buildOptions</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">emitEntryPoint</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:blue;">true</span><br/>
-&nbsp;&nbsp;},<br/>
- 
-&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">dependencies</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">Microsoft.NETCore.App</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">type</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;platform&quot;</span>,<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">version</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;1.0.0&quot;</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
-&nbsp;&nbsp;},<br/>
- 
-&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">frameworks</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">netcoreapp1.0</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">imports</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;dnxcore50&quot;</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
-&nbsp;&nbsp;}<br/>
-}</div>
-
-<h4>netcoreapp1.1 (Nov 2016)</h4>
-
-<p>A version bump- netcoreapp1.0 to 1.1, dependency <span style="color:#147fc8;">Microsoft.NETCore.App</span> goes to 1.1.0</p>
-<div class="code">
-&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">frameworks</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
-&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">netcoreapp1.1</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">dependencies</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">Microsoft.NETCore.App</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">type</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;platform&quot;</span>,<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">version</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;1.1.0&quot;</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
-&nbsp;&nbsp;}<br />
-}
-</div>
-
-
 
 
 </div>
