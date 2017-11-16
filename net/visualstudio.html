@@ -36,7 +36,8 @@
 <ul>
 <li>v4: "%systemroot%\Microsoft.Net\Framework\v4.0.30319\MSBuild.exe"</li>
 <li>VS2015/C#6: "%PROGRAMFILES(X86)%\MSBuild\14.0\Bin\MsBuild.exe"</li>
-<li>VS2017/C#7: "%PROGRAMFILES(X86)%\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\MsBuild.exe" (check VS edition) or<br />
+<li>VS2017/C#7: "%PROGRAMFILES(X86)%\Microsoft Visual Studio\2017\<span id="ed">Community</span>\MSBuild\15.0\Bin\MsBuild.exe" (check VS edition eg<br />
+<span id="chgEnt">Enterprise</span>, <span id="chgBt">BuildTools</span>, <span id="chgC">Community</span>) or<br />
 (if applicable) "install-package Microsoft.NET.Sdk" or "dotnet msbuild" </li>
 </ul>
 <p>Example command line build:</p>
@@ -124,6 +125,18 @@ C# has indexers: <code>public int this[int index]</code></p>
 </ul>
 </div>
 <div class="Footer">
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var bt = document.querySelector("span#chgBt");
+  var ce = document.querySelector("span#chgEnt");
+  var cc = document.querySelector("span#chgC");
+  var ed = document.querySelector("span#ed");
+  cc.addEventListener("click", function() {	ed.innerHTML = "Community";  });
+  ce.addEventListener("click", function() {	ed.innerHTML = "Enterprise";  });
+  bt.addEventListener("click", function() {	ed.innerHTML = "BuildTools";  });
+})
+</script>
 
 </div></body>
 </html>

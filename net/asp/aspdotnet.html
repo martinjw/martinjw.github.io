@@ -32,6 +32,22 @@ column-width:30em;
 </div>
 <div class="content">
 <h2>ASP.Net</h2>
+<h3>History</h3>
+<ul>
+<li>2002: .net 1.0 webforms. ASPX pages with controls (absolutely positioned in this first version)</li>
+<li>2005: .net 2.0 webforms. Master pages, GridView, themes. The first usable version.<br />
+There was a large amount of cruft added. Asp Ajax (2007) had UpdatePanels, which were sorta ok before jquery. Some real ugly stuff like SqlDataSource, Dynamic Data </li>
+<li>2009: MVC 1, but the first usable MVC, with Razor views, was MVC3 (2011). MVC 5 arrived in 2013. </li>
+<li>2012: WebApi 1 broke from the old WCF RESTful services (ugh). It got usable with WebApi 2 in 2013, which was OWIN based (and a different pipeline to MVC 5) and had Cors, IHttpActionResult and attribute routing.</li>
+<li>2016: .net Core with Asp Core 1 (previously known as MVC 6). Middleware-based (similar to OWIN), MVC/Razor and WebApi integrated, and cross platform. There are some missing pieces: back-compatibility (esp. in netstandard 1), and corporate bits like WsFed support for ADFS</li>
+</ul>
+
+
+<h3>Nuget vs jQuery</h3>
+<p>jQuery v2+ (2013) is not compatible with IE 6-8. Most corporate environments should be on Windows 7 with IE11 (2013), but WinXP users are stuck on IE8.  In packages.config you can limit jQuery to the last IE8 comaptible version.</p>
+<div class="code"><span style="color:blue;">&lt;</span><span style="color:#a31515;">package</span><span style="color:blue;">&nbsp;</span><span style="color:red;">id</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">jQuery</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">version</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">1.12.4</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">targetFramework</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">net461</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">allowedVersions</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">[1.10.1,2)</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br/>
+</div>
+
 <div class="contents">
 <h3>General ASP.net v2-v4.6 (2005-2016)</h3>
 <ul>

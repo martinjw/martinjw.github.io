@@ -105,7 +105,15 @@ add <span style="color: blue;">&lt;</span><span style="color: #a31515;">system.w
 </div>
 
 <p>Note it doesn't work with <span style="background: yellow;">@</span>Html.EditorFor - you have to use the specific input type like <span style="background: yellow;">@</span>Html.TextBoxFor.</p>
-
+<p>From MVC 5.1 (January 2014) you can use <em>nested</em> anonymous objects for Html.EditorFor(). If you change between TextFor and EditorFor, it won't work.</p>
+<div class="code"><span style="background:yellow;">@</span>Html.EditorFor(model&nbsp;=&gt;&nbsp;model.RequestDate,&nbsp;<br />
+&nbsp;&nbsp;&nbsp;<span style="color:blue;">new</span>&nbsp;{&nbsp;htmlAttributes&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;{&nbsp;@class&nbsp;=&nbsp;<span style="color:#a31515;">&quot;form-control&quot;</span>,&nbsp;type=<span style="color:#a31515;">&quot;date&quot;</span>&nbsp;}&nbsp;})<br/>
+<span style="background:yellow;">@</span>Html.TextBoxFor(model&nbsp;=&gt;&nbsp;model.RequestDate,&nbsp;<br />
+&nbsp;&nbsp;&nbsp;<span style="color:blue;">new</span>&nbsp;{&nbsp;@class&nbsp;=&nbsp;<span style="color:#a31515;">&quot;form-control&quot;</span>,&nbsp;type&nbsp;=&nbsp;<span style="color:#a31515;">&quot;date&quot;</span>&nbsp;}&nbsp;)<br/></div>
+<p>If you're using the HTML5 date input, you need to use yymmdd format, so easiest is to add data annotations. You'll need ApplyFormatInEditMode so it can bind the posted value too.</p>
+<div class="code">[<span style="color:#2b91af;">DataType</span>(<span style="color:#2b91af;">DataType</span>.Date)]<br/>
+[<span style="color:#2b91af;">DisplayFormat</span>(DataFormatString&nbsp;=&nbsp;<span style="color:#a31515;">&quot;{0:yyyy-MM-dd}&quot;</span>,&nbsp;ApplyFormatInEditMode&nbsp;=&nbsp;<span style="color:blue;">true</span>)]<br/>
+<span style="color:blue;">public</span>&nbsp;<span style="color:#2b91af;">DateTime</span>?&nbsp;RequestDate&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;<span style="color:blue;">set</span>;&nbsp;}</div>
 <div class="alert">
 View HtmlHelpers use the POSTed values by preference (not the Model). Setting a model.Property in a postback does nothing. To make it work, do this:
 <div class="code">

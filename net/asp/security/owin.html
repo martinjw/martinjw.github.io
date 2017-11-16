@@ -29,13 +29,13 @@
 <h2>Owin</h2>
 <p>Owin is an abstraction layer for web hosting, with Katana being Microsoft's Owin wrapper for IIS/System.Web. You can also self-host with Owin (for webApi - MVC 5 still depends on system.web, but can use Owin middleware). </p>
 
-<p>Owin was introduced with Visual Studio 2013/MVC 5/webApi 2/.net 4.5.1 (Oct 2013). WebApi 2 can entirely use Owin, but MVC5 just uses Owin middleware for authentication. Asp.Net 5 (2015) depends entirely on Owin (System.Web is no longer used), and looks a little different.</p>
+<p>Owin was introduced with Visual Studio 2013/MVC 5/webApi 2/.net 4.5.1 (Oct 2013). WebApi 2 can entirely use Owin, but MVC5 just uses Owin middleware for authentication. <a href="../core/core.html">.net Core</a> depends entirely on an Owin-compatible stack (System.Web is no longer used)</p>
 <p>Unlike System.Web, Owin is modular by design (and constructed from nuget packages). There are no interfaces or base classes- Startup.Configuration and Middleware.Invoke are by convention and are discovered by reflection.</p>
 
 
 <div class="alert">
 ASP.Net 4.5/MVC5: Install-package Microsoft.Owin.Host.SystemWeb<br/>
-ASP.Net 5/MVC6: All Microsoft.AspNet.* packages depend on Owin.
+The error if you forget is that HttpContext has no extension GetOwinContext().
 </div>
 
 <h3>Startup</h3>
@@ -43,7 +43,7 @@ ASP.Net 5/MVC6: All Microsoft.AspNet.* packages depend on Owin.
 but you can have both (necessary for WebApi/MVC as MVC5 can't use OWIN)- Application_Start() runs first, then Startup.Configur[e|ation]().</p>
 <ul>
 <li>Owin looks for a class called "Startup" in the assembly namespace or</li>
-<li>(NOT ASP.Net 5) [assembly: OwinStartup(typeof(MyNameSpace.MyStartup))] or</li>
+<li>[assembly: OwinStartup(typeof(MyNameSpace.MyStartup))] or</li>
 <li>appSettings/add key="owin:appStartup" value="NamedConfiguration" allows you to have named OwinStartupAttributes.   </li>
 </ul>
 <p>In ASP.Net 4.5 it uses method Configuration(<span style="color: #2b91af;">IAppBuilder</span> app)<br/>
