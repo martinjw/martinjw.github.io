@@ -43,6 +43,21 @@
 <p>Example command line build:</p>
 <p>"%PROGRAMFILES(X86)%\MSBuild\14.0\Bin\MSBuild.exe" ..\MyProject.csproj /p:Configuration=Release /p:OutputPath=..\MyPackage\lib\net20</p>
 
+<p>For VS2017/MSBuild v15, msbuild could be in multiple locations, so from VS2017 update 2, you can use "%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\<strong>vswhere</strong>" (or <a href="https://github.com/Microsoft/vswhere/wiki/Installing">get the vswhere binary</a>)</p>
+<p>Below is from <a href="https://github.com/Microsoft/vswhere/wiki/Find-MSBuild">the example</a></p>
+<div class="code">
+@echo off<br />
+for /f "usebackq tokens=*" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere" -latest -products * -requires Microsoft.Component.MSBuild -property installationPath`) do (<br />
+  set InstallDir=%%i<br />
+)<br />
+ <br />
+if exist "%InstallDir%\MSBuild\15.0\Bin\MSBuild.exe" (<br />
+  "%InstallDir%\MSBuild\15.0\Bin\MSBuild.exe" build.xml /t:PublishAll /fl & pause<br />
+) else (<br />
+  echo "Must install VS2017 update 2 or greater"<br />
+)
+</div>
+
 <h3>Visual Studio Keys</h3>
 <p>When resharper isn't available... (you should at least use CodeRush Xpress!)</p>
 <table>

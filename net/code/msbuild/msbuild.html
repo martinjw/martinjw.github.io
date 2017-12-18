@@ -39,6 +39,21 @@
 (if applicable) "install-package Microsoft.NET.Sdk" or "dotnet msbuild" </li>
 </ul>
 
+<p>VS2017 puts msbuild in a variable location, but from VS2017 update 2 you can use "%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\<strong>vswhere</strong>" to find it again. (For older VS2017, <a href="https://github.com/Microsoft/vswhere/wiki/Installing">get the vswhere binary</a>)</p>
+<p>Below is from <a href="https://github.com/Microsoft/vswhere/wiki/Find-MSBuild">the example</a></p>
+<div class="code">
+@echo off<br />
+for /f "usebackq tokens=*" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere" -latest -products * -requires Microsoft.Component.MSBuild -property installationPath`) do (<br />
+  set InstallDir=%%i<br />
+)<br />
+ <br />
+if exist "%InstallDir%\MSBuild\15.0\Bin\MSBuild.exe" (<br />
+  "%InstallDir%\MSBuild\15.0\Bin\MSBuild.exe" build.xml /t:PublishAll /fl & pause<br />
+) else (<br />
+  echo "Must install VS2017 update 2 or greater"<br />
+)
+</div>
+
 <h3>Build script</h3>
 <p>This is a command line build script, which could be used locally or on a build server. It does a "publish" (as in Visual Studio "Publish..." with a file target, for XCopy deployment).</p>
 <ul>
