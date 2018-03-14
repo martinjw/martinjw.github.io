@@ -141,6 +141,10 @@ Escaped "\(", group "()", digit shorthand "\d", repeated one or more "+", litera
 <p><span style="color: blue;">var</span> txt = System.Text.<span style="color: #2b91af;">Encoding</span>.UTF8.GetString(bytes);</p>
 <p><span style="color: blue;">var</span> bytes = System.Text.<span style="color: #2b91af;">Encoding</span>.UTF8.GetBytes(mySteing);</p>
 <p>BitConverter can only turn byte arrays to strings, not the other way (it just takes numeric types): <span style="color: blue;">var</span> bytes = <span style="color: #2b91af;">BitConverter</span>.GetBytes(myInt);</p>
+<p>You may have BOM (byte order mark) errors ("Data at the root level is invalid. Line 1, position 1"), in which case use a StreamReader:</p>
+<div class="code">
+<span style="color:blue;">var</span>&nbsp;ms&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">MemoryStream</span>(qm.Data);<br/><span style="color:green;">//3rd&nbsp;ctor&nbsp;param&nbsp;is&nbsp;&quot;detectEncodingFromByteOrderMarks&quot;</span><br/><span style="color:blue;">var</span>&nbsp;xml&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">StreamReader</span>(ms,&nbsp;<span style="color:#2b91af;">Encoding</span>.UTF8,&nbsp;<span style="color:blue;">true</span>).ReadToEnd();
+</div>
 
 <h3>String to lines</h3>
 <div class="code">
