@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>TeamCity MsTest</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>TeamCity MsTest</h2>
+<p>Published Wednesday 8 August 2018</p><article>
+<p>When you create a TeamCity Build Server, you install the <a href="https://visualstudio.microsoft.com/downloads/">Build Tools for Visual Studio</a> rather than a full ($$) version of Visual Studio. That contains enough to build, but not to test. TeamCity has VSTest and MSTest drivers built in, but they won't find a suitable agent (the message is "teamcity.dotnet.vstest.15.0 defined in Build step: Run Tests")</p>
+<p>From the <a href="https://visualstudio.microsoft.com/downloads/">Visual Studio Downloads</a> / Tools download the "Agents for Visual Studio 2017", type "agent", and install. This puts MsTest on the server (in C:\Program Files (x86)\Microsoft Visual Studio\2017\TestAgent\Common7\IDE )</p>
+<p>Next, configure the team city agent to tell it where to find MsTest. The <a href="https://confluence.jetbrains.com/display/TCD18/MSTest+Support">instructions</a> don't explain what you actually have to do. In the TeamCity install directory, open the buildAgent\conf folder. Edit the buildAgent.properties file and add the line <strong>teamcity.dotnet.mstest.15.0=C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\TestAgent\\Common7\\IDE\\MsTest.exe</strong>. The escaped slashes are needed as this is a java properties file. </p>
+
+
+</article>
+<ul class="categories">
+<li><a href="../../../categories/VS2017/">VS2017</a></li>
+</ul>
+<p>Previously: <a href="../../../2017/02/22/VS2017UnitTests.html">VS2017 Unit Tests</a> (22 February 2017)</p>
+</div>
+<div class="Footer">
+
+</div>
+</body>
+</html>
