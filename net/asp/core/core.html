@@ -58,7 +58,33 @@
 </ul>
 </li>
 </ul>
-<p>NB: Core is intended for servers (incl. Asp and consoles), not for clients (so no Winforms/WPF) or old webforms.</p>
+<p>NB: Core 1-2 is intended for servers (incl. Asp and consoles), not for clients (so no Winforms/WPF) or old webforms. Core 3.0 supports winforms and WPF.</p>
+
+<h3>.Net Standard</h3>
+<p>.Net Core (1-2) can run on .Net full framework, or by itself.</p>
+<p>To support either .Net Core or .net framework (or one of the rarer platforms- Xamarin, Windows Phone, UWP), create a <a href="https://docs.microsoft.com/en-us/dotnet/standard/net-standard">.Net Standard</a> class library, which is binary compatible.</p>
+<table>
+<tr>
+<th>.Net Standard</th>
+<th>.Net Framework</th>
+<th>.Net Core</th>
+</tr>
+<tr>
+<td>netstandard1.0</td>
+<td>net 4.5 (net45)</td>
+<td>Core 1.0 (netcoreapp1.0)</td>
+</tr>
+<tr>
+<td>netstandard2.0</td>
+<td>net 4.6.1 (net461)</td>
+<td>Core 2.0 (netcoreapp2.0)</td>
+</tr>
+<tr>
+<td>netstandard2.1</td>
+<td>- (Not supported!)</td>
+<td>Core 3.0</td>
+</tr>
+</table>
 
 <h3>dotnet tooling/SDK</h3>
 <p>The 2016/VS2015 tooling was preview; it is only RTM with VS2017.</p>

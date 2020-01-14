@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Security</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+<link rel="stylesheet" type="text/css" href="../js/prettify.css" />
+<script type="text/javascript" src="../utilities.js">
+</script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../index.html">Home &gt;</a></li>
+<li><a href="index.html">HTML5</a></li>
+<li><a href="forms.html">Forms</a></li>
+<li><a href="offline.html">AppCache</a></li>
+<li><a href="storage.html">LocalStorage and IndexedDB</a></li>
+<li><a href="webworkers.html">WebWorkers</a></li>
+<li><a href="fileapi.html">File API</a></li>
+<li><a href="canvas.html">Canvas</a></li>
+<li><a href="css3effects.html">CSS3 Visual Effects</a></li>
+<li><a href="css3layout.html">CSS3 Layout</a></li>
+<li><a href="flexbox.html">CSS3 Flexbox</a></li>
+<li><a href="security.html">Security</a></li>
+<li><a href="vanillajs.html">Vanilla JS</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Security</h2>
+
+<h3>HTTP Strict-Transport-Security (HSTS)</h3>
+<p>Makes the site HTTPS only.</p>
+<p>HTTP header <code>Strict-Transport-Security: max-age=31536000; includeSubDomains</code> (units in seconds; this is a year).</p>
+<p>It is ignored in an HTTP site. The setting is saved when you use HTTPS, and is enforced until the age expires.</p>
+<p>If you have never visited https://site and go to http://site, the header is ignored. You have to redirect to https in server code. Google has a preload service, so you can the initial HTTP vulnerability.</p>
+<div class="alert">
+You can also use a CSP (see next): <code>Content-Security-Policy: upgrade-insecure-requests;</code>. Note all links, including third party links, become https and will fail if they're not...
+</div>
+
+
+<h3>Content Security Policy (CSP)</h3>
+<p>Stops <abbr title="cross-site scripting">XSS</abbr> by whitelisting script sources.</p>
+<p><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP">ref</a> Http header <strong>Content-Security-Policy</strong> or &lt;meta http-equiv="Content-Security-Policy"</p>
+<p><code>Content-Security-Policy: default-src 'self' *.mysite.com</code> All img/script/frame/style from same source (can be a url) plus subdomains </p>
+<p>After the default, add whitelisted script-src; img-src; style-src</p>
+<p>Inline script/css will be blocked. If you can't remove them, use the workarounds: <code>script-src 'unsafe-inline'; style-src 'unsafe-inline'</code></p>
+<p>Note inline events are blocked as well <code>&ltbutton onclick="alert('hi')" &gt;</code></p>
+
+<h3>Subresource Integrity (SRI)</h3>
+<p>Add a secure hash for scripts/styles, particularly from a CDN, so you are sure they are unaltered.</p>
+<p><a href="https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity">Ref</a>. </p>
+<ul>
+<li>Add a CSP (see above) <code>Content-Security-Policy: require-sri-for script; require-sri-for style;</code></li>
+<li>Add "integrity" attribute to &lt;script&gt; and &lt;link&gt; tags: <code>&lt;script src="https://cdn/jquery.js" integrity="sha384-h2..." &gt; </code></li>
+</ul>
+
+<h3>Cross-Origin Resource Sharing (CORS)</h3>
+<p>Ajax (XMLHttpRequest and Fetch) have a same-origin policy; CORS relaxes it (so http://website/ can get data from http://api/).</p>
+<p><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS">Ref</a>. Note the browser (not your javascript) is doing the process in ajax calls.</p>
+<ul>
+<li>If simple GET or POST with standard HTTP headers<ul>
+<li>The browser ajax automatically adds HTTP header "Origin" with the current site.</li>
+<li>The server returns "Access-Control-Allow-Origin" with the allowed site. If it's not "*" and doesn't match the current site, the browser errors. </li>
+</ul></li>
+<li>If custom headers (eg authentication) do a "preflight request"<ul>
+<li>Browser sends HTTP OPTIONS with Origin, Access-Control-Request-Method (http method) and Access-Control-Request-Headers.</li>
+<li>Server responds with Access-Control-Allow-Origin, Access-Control-Allow-Headers and -Methods, all of which must match.</li>
+</ul></li>
+</ul>
+<p>The server must know what specific calling sites, methods and headers (or use "*", for non-secure access).</p>
+<p>By default, no credentials are passed cross-origin. To send credentials:</p>
+<ul>
+<li>JavaScript: xhr.withCredentials = true; or jQuery xhrFields: {withCredentials: true }</li>
+<li>Configure server.<ul>
+<li>For .net webapi, indicate in attribute- [EnableCors(origins: "...", SupportsCredentials = true)] Origin of "*" is not allowed.</li>
+<li>For .net Core, in ConfigureServices services.AddCors(o=&gt; o.AddPolicy("name", b=&gt;b.WithOrigins("...").AllowCredentials()))</li>
+</ul></li>
+<li>Server responds with Access-Control-Allow-Credentials.</li>
+</ul>
+
+
+</div>
+<div class="Footer"><script type="text/javascript" src="../js/prettify.js">
+</script>
+<script type="text/javascript">
+prettyPrint();
+</script>
+</div>
+</body>
+</html>

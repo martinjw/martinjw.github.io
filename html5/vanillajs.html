@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Vanilla JS</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+<link rel="stylesheet" type="text/css" href="../js/prettify.css" />
+<script type="text/javascript" src="../utilities.js">
+</script>
+<style>
+pre {max-height:none;width:auto;}
+table {background-color:#fff;}
+</style>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../index.html">Home &gt;</a></li>
+<li><a href="index.html">HTML5</a></li>
+<li><a href="forms.html">Forms</a></li>
+<li><a href="offline.html">AppCache</a></li>
+<li><a href="storage.html">LocalStorage and IndexedDB</a></li>
+<li><a href="webworkers.html">WebWorkers</a></li>
+<li><a href="fileapi.html">File API</a></li>
+<li><a href="canvas.html">Canvas</a></li>
+<li><a href="css3effects.html">CSS3 Visual Effects</a></li>
+<li><a href="css3layout.html">CSS3 Layout</a></li>
+<li><a href="flexbox.html">CSS3 Flexbox</a></li>
+<li><a href="security.html">Security</a></li>
+<li><a href="vanillajs.html">Vanilla JS</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Vanilla js</h2>
+<p>Standard javascript (for IE9+ and all other browsers) can match most jQuery.</p>
+<table>
+<tr>
+<th>jQuery</th>
+<th>Vanilla js</th>
+</tr>
+<tr>
+<td>
+<p>Document ready</p>
+<pre class="prettyprint">
+$(document).ready(function () {
+        //document is ready
+}
+//and
+$(function(){
+   //document is ready
+ });
+</pre>
+</td>
+<td>
+<pre class="prettyprint">
+document.addEventListener("DOMContentLoaded", function(){
+  //
+});
+</pre>
+</td>
+</tr>
+<tr>
+<td>
+<pre>
+//by id
+$('#myId').onclick(function(e) {});
+//by class
+$('.myClass').hide();
+</pre>
+</td>
+<td>
+<pre class="prettyprint">
+//by id
+document.getElementById('myId').addEventListener("click", function() {});
+document.querySelector('#myId'); //also works
+//by class - first only
+document.querySelector('.myClass');
+//by class - nodeList
+var list = document.querySelectorAll('.myClass');
+for ( var i = 0, var len = list.length; i < len; i++ ) {
+    console.log(list[i]);
+}
+//pseudo selectors - find which radio checked
+var value = document.querySelector('input[name="pick"]:checked').value;
+</pre>
+</td>
+</tr>
+<tr>
+<td>
+<pre class="prettyprint">
+//classes
+$('#id').addClass('red');
+$('#id').removeClass('green');
+$('#id').toggleClass('yellow');
+</pre>
+</td>
+<td>
+<pre class="prettyprint">
+//IE10+
+document.querySelector('#myId').classList.add('red');
+document.querySelector('#myId').classList.remove('green');
+document.querySelector('#myId').classList.toggle('yellow');
+</pre>
+</td>
+</tr>
+<tr>
+<td>
+<pre class="prettyprint">
+//events can be added to a group
+$('.allButtons').onclick(function(e) {});
+</pre>
+</td>
+<td>
+<pre class="prettyprint">
+//add events individually (or parent)
+document.querySelector('#myId').addEventListener('click', function(e) {});
+//or parent
+var ehandler= function(e) {
+	var target = event.target;
+	if (target.hasAttribute('x')) {
+		e.preventDefault();
+		//do something
+	}
+};
+document.addEventListener('click', ehandler);
+</pre>
+</td>
+</tr>
+<tr>
+<td>
+<pre class="prettyprint">
+//using XMLHttpRequest
+$.ajax({
+	url: "/Notifications",
+	method:"POST",
+	data: JSON.stringify({ href: location.href}),
+	contentType: "application/json; charset=utf-8",
+	success: function (data) {
+		console.log(data.Count.length);
+	},
+	error: function (e, textStatus, errorThrown) {
+		//500 etc
+		console.log(e.status + " status text=" + 
+			e.statusText + " error=" + errorThrown);
+	}
+});
+</pre>
+</td>
+<td>
+<pre class="prettyprint">
+fetch("/Notifications",
+		{
+			method: 'POST',
+			mode: 'cors',
+			credentials: 'include', //by default it doesn't send auth cookies... 
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({ href: location.href }) //matching header
+		})
+	//returns a response stream, so turn it into .json()
+	.then((response) => {
+		if (!response.ok) {
+			throw new Error(response.url + 
+				" returned " + response.status);
+		}
+		 return response.json();
+	})
+	.then((json) => {
+		console.log(json.Count.length);
+	})
+	.catch ((e) => {
+		console.log(e.message);
+	});
+</pre>
+<p>NOT any version of IE!</p>
+<p><a href="https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch">MDN</a></p>
+</td>
+</tr>
+</table>
+</div>
+<script type="text/javascript" src="../js/prettify.js">
+</script>
+<script>
+prettyPrint();
+</script>
+</body>
+</html>

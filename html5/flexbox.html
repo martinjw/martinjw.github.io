@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Flexbox</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+<link rel="stylesheet" type="text/css" href="../js/prettify.css" />
+<script type="text/javascript" src="../utilities.js">
+</script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../index.html">Home &gt;</a></li>
+<li><a href="index.html">HTML5</a></li>
+<li><a href="forms.html">Forms</a></li>
+<li><a href="offline.html">AppCache</a></li>
+<li><a href="storage.html">LocalStorage and IndexedDB</a></li>
+<li><a href="webworkers.html">WebWorkers</a></li>
+<li><a href="fileapi.html">File API</a></li>
+<li><a href="canvas.html">Canvas</a></li>
+<li><a href="css3effects.html">CSS3 Visual Effects</a></li>
+<li><a href="css3layout.html">CSS3 Layout</a></li>
+<li><a href="flexbox.html">CSS3 Flexbox</a></li>
+<li><a href="security.html">Security</a></li>
+<li><a href="vanillajs.html">Vanilla JS</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Flexbox</h2>
+<p><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Flexible_Box_Layout">MDN reference</a></p>
+<style>
+.demo { 
+	display: flex;
+	border: 1px solid red;
+	border-radius: 15px;
+	max-width: 190px;
+}
+#wrap2 {
+	max-width: 450px;
+}
+.demo div {
+	padding: 0 5px;
+	border-radius: 15px;
+	background-color:#004080;
+	color:#fff;
+	margin:2px;
+	text-align: center;
+	flex: 0 1 auto;
+}
+.ab {
+	min-width:80px;	
+}
+#flexOutput { font-weight: bold; color: blue; }
+</style>
+<p>flex-direction: <select id="chFlexDir"><option>row</option>
+<option>row-reverse</option>
+<option>column</option>
+<option>column-reverse</option></select></p>
+<p>flex-wrap: <select id="chFlexWrap"><option>nowrap</option>
+<option>wrap</option>
+<option>wrap-reverse</option></select> Default is nowrap. If you're wrapping, css-grid may be better.</p>
+<p>flex-flow is a shorthand for flex-direction and flex-wrap</p>
+<p>#c flex: <span id="flexOutput"></span> Default is "0 1 auto" = "initial". "auto" is "1 1 auto", which will fill space<br />
+flex-grow: <input type="number" id="flexGrow" min="0" max="3" step="1" value="0" /> 0=leaves space 1+= fills space, with fractional size<br/>
+flex-shrink: <input type="number" id="flexShrink" min="0" max="3" step="1" value="1" /> >1 shrinks more<br/>
+flex-basis: <select id="chFlexBasis"><option>auto</option>
+<option>200px</option></select> The initial size of the item. Default "auto"
+</p>
+<div id="wrap" class="demo">
+<div class="ab">A</div>
+<div class="ab">B</div>
+<div class="c">C</div>
+</div>
+<div id="wrap2" class="demo">
+<div class="ab">A</div>
+<div class="ab">B</div>
+<div class="c">C</div>
+</div>
+
+
+</div>
+<div class="Footer"><script type="text/javascript" src="../js/prettify.js">
+</script>
+<script type="text/javascript">
+prettyPrint();
+$(function(){
+   $("#chFlexDir").change(function() {
+	var v = $(this).val();
+	$(".demo").css("flex-direction", v);
+   });
+   $("#chFlexWrap").change(function() {
+	var v = $(this).val();
+	$(".demo").css("flex-wrap", v);
+   });
+   function sizer() {
+	var grow = $("#flexGrow").val();
+	var shrink = $("#flexShrink").val();
+	var basis = $("#chFlexBasis").val();
+	var flex = grow + " " + shrink + " " + basis;
+	$("#flexOutput").text(flex);
+	$(".c").css("flex", flex);   
+   }
+   $("#flexGrow,#flexShrink,#chFlexBasis" ).change(function() {
+		sizer();
+   });
+   /*$("#flexShrink").change(function() {
+		sizer();
+   });
+   $("#chFlexBasis").change(function() {
+		sizer();
+   });*/
+   sizer();
+ });
+</script>
+</div>
+</body>
+</html>
