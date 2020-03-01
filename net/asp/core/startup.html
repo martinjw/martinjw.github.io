@@ -8,6 +8,10 @@
 <link rel="stylesheet" type="text/css" href="../../../style.css" />
 <script type="text/javascript" src="../../../utilities.js">
 </script>
+<style>
+.old { background-color:#ccc; font-size:x-small;padding: 0 20px; }
+.core1
+</style>
 </head>
 <body>
 <h1>static void</h1>
@@ -35,6 +39,26 @@
 
 <h3>static void Main</h3>
 <p>Asp.Net Core is a true console application, with a <span style="color:blue;">public</span>&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:darkcyan;">Main</span>(<span style="color:blue;">string</span>[]&nbsp;args)</p>
+<p>In .net 3.1 it looks like this:</p>
+<div class="code">
+<p><span style="color:blue;">public</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">Program</span><br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:#74531f;">Main</span>(<span style="color:blue;">string</span>[]&nbsp;<span style="color:#1f377f;">args</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#74531f;">CreateHostBuilder</span>(<span style="color:#1f377f;">args</span>).<span style="color:#74531f;">Build</span>().<span style="color:#74531f;">Run</span>();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:#2b91af;">IHostBuilder</span>&nbsp;<span style="color:#74531f;">CreateHostBuilder</span>(<span style="color:blue;">string</span>[]&nbsp;<span style="color:#1f377f;">args</span>)&nbsp;=&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Host</span>.<span style="color:#74531f;">CreateDefaultBuilder</span>(<span style="color:#1f377f;">args</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.<span style="color:#74531f;">ConfigureWebHostDefaults</span>(<span style="color:#1f377f;">webBuilder</span>&nbsp;=&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#1f377f;">webBuilder</span>.<span style="color:#74531f;">UseStartup</span>&lt;<span style="color:#2b91af;">Startup</span>&gt;();><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});<br/>
+}</p>
+</div>
+<p>See configuration for <a href="https://github.com/serilog/serilog-aspnetcore">Serilog logging</a> and <a href="https://github.com/NLog/NLog/wiki/Getting-started-with-ASP.NET-Core-3">NLog logging</a></p>
+<details>
+<summary>.Net Core 1</summary>
 <p>In RC1 it was in Startup.cs; from RC2 it is in Program.cs</p>
 <div class="code">
 <p><span style="color:blue;">public</span>&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:darkcyan;">Main</span>(<span style="color:blue;">string</span>[]&nbsp;args)<br/>
@@ -49,10 +73,13 @@
 }</p>
 </div>
 <p>For Windows/IIS, you don't need to change this.</p>
+</details>
+
+
 
 <h3>Startup.cs</h3>
 <p>In classic Asp.net, you configured things in Global.asax. In Core, you use Startup.cs</p>
-<p>There is no base class or interface. The name and standard methods are conventions. You can have multiple "Startup" classes, but only one is used (either the project namespace, or it uses namespace alphabetical order(!)).</p>
+<p>There is no base class or interface. The name and standard methods are conventions. You can have multiple "Startup" classes, but only one is used... either the project namespace, or it uses namespace alphabetical order(!).</p>
 
 
 <h3>Structure</h3>
@@ -76,74 +103,70 @@
 <tr><td>Startup.<strong>Configure</strong>(IApplicationBuilder&nbsp;app, ...)</td>
 <td>Required. Normally app.UseMvc()</td>
 <td>IApplicationBuilder (required),<br/>
-IHostingEnvironment, <br/>
-ILoggerFactory</td>
+IWebHostEnvironment</td>
 </tr>
 <tr><td>Startup.<strong>ConfigureServices</strong></td><td>(optional) build dependency injection</td>
 <td>IServiceCollection (required, only input)</td></tr>
 <tr><td>Constructor</td><td>Initial configuration, initialize "application" variables such as configuration</td>
-<td>IHostingEnvironment, <br/>
-ILoggerFactory</td>
+<td>IConfiguration,<br />
+IWebHostEnvironment</td>
 </tr>
 </table>
 <p>IApplicationBuilder must only be used for Configure, and IServiceCollection must only be used for ConfigureServices</p>
 <ul>
-<li>IHostingEnvironment - EnvironmentName, WebRootPath, ContentRootPath</li>
-<li>ILoggerFactory - used to hook up loggers</li>
+<li>IWebHostEnvironment or IHostEnvironment (in .net 1/2 this was IHostingEnvironment) - EnvironmentName, WebRootPath, ContentRootPath</li>
+<li>In .net 1/2 you could inject a ILoggerFactory but that's not possible in .net 3 (initialize the logger in Program.cs)</li>
 </ul>
 
 <div class="code">
-<p><span style="color:blue;">public</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">Startup</span><br/>
-{<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//keep&nbsp;thread-safe&nbsp;fields&nbsp;eg&nbsp;config</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">readonly</span>&nbsp;IConfiguration&nbsp;<span style="color:purple;">_configuration</span>;<br/>
- <br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//constructor-&nbsp;eg&nbsp;reading&nbsp;config</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;Startup(IHostingEnvironment&nbsp;appEnv)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_configuration&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;ConfigurationBuilder()<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.AddJsonFile(<span style="color:#a31515;">&quot;config.json&quot;</span>)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.Build();<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
- <br/>
- <br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Configure&nbsp;Dependency&nbsp;Injection</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:darkcyan;">ConfigureServices</span>(IServiceCollection&nbsp;services)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//EF</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;services.AddEntityFramework().AddSqlServer();<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//MVC</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;services.AddMvc();<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//local</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;services.AddTransient&lt;<span style="color:#2b91af;">IBusinessThing</span>,&nbsp;<span style="color:#2b91af;">BusinessThing</span>&gt;();<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
- <br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//REQUIRED:&nbsp;configure&nbsp;the&nbsp;HTTP&nbsp;request&nbsp;pipeline.</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:darkcyan;">Configure</span>(IApplicationBuilder&nbsp;app,&nbsp;IHostingEnvironment&nbsp;env,&nbsp;ILoggerFactory&nbsp;loggerFactory)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//order&nbsp;is&nbsp;important-&nbsp;first&nbsp;is&nbsp;outermost&nbsp;(first/last),&nbsp;then&nbsp;we&nbsp;move&nbsp;in</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;loggerFactory.AddConsole();<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">if</span>&nbsp;(env.IsDevelopment())<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;app.UseDeveloperExceptionPage();<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;app.UseDatabaseErrorPage();<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">else</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;app.UseExceptionHandler(<span style="color:#a31515;">&quot;/Home/Error&quot;</span>);<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;app.UseIISIntegration();<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;app.UseStaticFiles();<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//if&nbsp;you&nbsp;don&#39;t&nbsp;configure&nbsp;routes,&nbsp;use&nbsp;attribute&nbsp;routing</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;app.UseMvc(routes&nbsp;=&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;routes.MapRoute(<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:darkblue;">name</span>:&nbsp;<span style="color:#a31515;">&quot;default&quot;</span>,<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:darkblue;">template</span>:&nbsp;<span style="color:#a31515;">&quot;{controller=Home}/{action=Index}/{id?}&quot;</span>);<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
-}</p>
-</div>
+<span style="color:blue;">using</span>&nbsp;Microsoft.AspNetCore.Builder;<br />
+<span style="color:blue;">using</span>&nbsp;Microsoft.AspNetCore.Hosting;<br />
+<span style="color:blue;">using</span>&nbsp;Microsoft.Extensions.Configuration;<br />
+<span style="color:blue;">using</span>&nbsp;Microsoft.Extensions.DependencyInjection;<br />
+<span style="color:blue;">using</span>&nbsp;Microsoft.Extensions.Hosting;<br />
+ <br />
+<span style="color:blue;">namespace</span>&nbsp;CoreWeb<br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">Startup</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:#2b91af;">Startup</span>(<span style="color:#2b91af;">IConfiguration</span>&nbsp;<span style="color:#1f377f;">configuration</span>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Configuration&nbsp;=&nbsp;<span style="color:#1f377f;">configuration</span>;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+ <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:#2b91af;">IConfiguration</span>&nbsp;Configuration&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;}<br />
+ <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;This&nbsp;method&nbsp;gets&nbsp;called&nbsp;by&nbsp;the&nbsp;runtime.&nbsp;Use&nbsp;this&nbsp;method&nbsp;to&nbsp;add&nbsp;services&nbsp;to&nbsp;the&nbsp;container.</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:#74531f;">ConfigureServices</span>(<span style="color:#2b91af;">IServiceCollection</span>&nbsp;<span style="color:#1f377f;">services</span>)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#1f377f;">services</span>.<span style="color:#74531f;">AddMvc</span>();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#1f377f;">services</span>.<span style="color:#74531f;">AddControllers</span>();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+ <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;This&nbsp;method&nbsp;gets&nbsp;called&nbsp;by&nbsp;the&nbsp;runtime.&nbsp;Use&nbsp;this&nbsp;method&nbsp;to&nbsp;configure&nbsp;the&nbsp;HTTP&nbsp;request&nbsp;pipeline.</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:#74531f;">Configure</span>(<span style="color:#2b91af;">IApplicationBuilder</span>&nbsp;<span style="color:#1f377f;">app</span>,&nbsp;<span style="color:#2b91af;">IWebHostEnvironment</span>&nbsp;<span style="color:#1f377f;">env</span>)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#8f08c4;">if</span>&nbsp;(<span style="color:#1f377f;">env</span>.<span style="color:#74531f;">IsDevelopment</span>())<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#1f377f;">app</span>.<span style="color:#74531f;">UseDeveloperExceptionPage</span>();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+ <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#1f377f;">app</span>.<span style="color:#74531f;">UseHttpsRedirection</span>();<br />
+ <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#1f377f;">app</span>.<span style="color:#74531f;">UseRouting</span>();<br />
+ <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#1f377f;">app</span>.<span style="color:#74531f;">UseAuthorization</span>();<br />
+ <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#1f377f;">app</span>.<span style="color:#74531f;">UseEndpoints</span>(<span style="color:#1f377f;">endpoints</span>&nbsp;=&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#1f377f;">endpoints</span>.<span style="color:#74531f;">MapControllers</span>();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+}
+</div
+
+
 
 </div>
 <div class="Footer"></div>

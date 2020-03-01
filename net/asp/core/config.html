@@ -38,35 +38,65 @@
 </ul>
 <p>Web.config no longer exists, so connection strings and other settings must be stored in other files- json or xml or environmental variables.</p>
 <h3>ConfigurationBuilder</h3>
-<p>This is normally done in the Startup constructor. ConfigurationBuilder creates an IConfiguration object, a bag containing all your settings.</p>
+
+<p>In a web application, it is done automatically by <span style="color:#2b91af;">Host</span>.<span style="color:#74531f;">CreateDefaultBuilder</span>(<span style="color:#1f377f;">args</span>). The default order is (later ones override earlier ones): </p>
+<ul>
+<li>Environment variables</li>
+<li>appsettings.json in local directory</li>
+<li>app.{EnvironmentName}.settings.json in local directory </li>
+<li>Command line arguments</li>
+</ul>
+<p>You can customise it in the Program.cs </p>
 <div class="code">
-<p><span style="color:blue;">public</span>&nbsp;IConfiguration&nbsp;<span style="color:purple;">_configuration</span>;<br/>
- <br/>
-<span style="color:blue;">public</span>&nbsp;Startup()<br/>
-{<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;builder&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;ConfigurationBuilder()<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.AddJsonFile(<span style="color:#a31515;">&quot;Settings.json&quot;</span>)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//later&nbsp;settings&nbsp;override&nbsp;earlier&nbsp;ones</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.AddEnvironmentalVariables();<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;config&nbsp;=&nbsp;builder.Build();<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//you&nbsp;can&nbsp;set&nbsp;things&nbsp;manually&nbsp;too</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;config.Set(<span style="color:#a31515;">&quot;key&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;value&quot;</span>);<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;_configuration&nbsp;=&nbsp;config;<br/>
-}</p>
+<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:#2b91af;">IHostBuilder</span>&nbsp;<span style="color:#74531f;">CreateHostBuilder</span>(<span style="color:blue;">string</span>[]&nbsp;<span style="color:#1f377f;">args</span>)&nbsp;=&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Host</span>.<span style="color:#74531f;">CreateDefaultBuilder</span>(<span style="color:#1f377f;">args</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.<span style="color:#74531f;">ConfigureHostConfiguration</span>(<span style="color:#1f377f;">builder</span>&nbsp;=&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//intended to set environment&nbsp;(DEV,&nbsp;PROD)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//optional,&nbsp;but&nbsp;if&nbsp;used,&nbsp;call&nbsp;this&nbsp;BEFORE&nbsp;ConfigureAppConfiguration</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#1f377f;">builder</span>.<span style="color:#74531f;">AddEnvironmentVariables</span>();&nbsp;<span style="color:green;">//if&nbsp;you&#39;ve&nbsp;set&nbsp;DOTNET_ENVIRONMENT=&nbsp;&quot;Production&quot;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;})<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.<span style="color:#74531f;">ConfigureAppConfiguration</span>((<span style="color:#1f377f;">context</span>,&nbsp;<span style="color:#1f377f;">builder</span>)&nbsp;=&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//optional,&nbsp;these&nbsp;are&nbsp;done&nbsp;automatically&nbsp;if&nbsp;you&nbsp;don&#39;t&nbsp;specify&nbsp;this...</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#1f377f;">builder</span>.Sources.<span style="color:#74531f;">Clear</span>();&nbsp;<span style="color:green;">//clear&nbsp;the&nbsp;default&nbsp;ones&nbsp;from&nbsp;CreateDefaultBuilder</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#1f377f;">builder</span>.<span style="color:#74531f;">SetBasePath</span>(<span style="color:#2b91af;">Environment</span>.CurrentDirectory);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#1f377f;">builder</span>.<span style="color:#74531f;">AddJsonFile</span>(<span style="color:#a31515;">&quot;appsettings.json&quot;</span>,&nbsp;<span style="color:#1f377f;">optional</span>:&nbsp;<span style="color:blue;">true</span>,&nbsp;<span style="color:#1f377f;">reloadOnChange</span>:&nbsp;<span style="color:blue;">true</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#1f377f;">builder</span>.<span style="color:#74531f;">AddJsonFile</span>(<span style="color:#a31515;">$&quot;appsettings.</span>{<span style="color:#1f377f;">context</span>.HostingEnvironment.EnvironmentName}<span style="color:#a31515;">.json&quot;</span>,&nbsp;<span style="color:#1f377f;">optional</span>:&nbsp;<span style="color:blue;">true</span>,&nbsp;<span style="color:#1f377f;">reloadOnChange</span>:&nbsp;<span style="color:blue;">true</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#1f377f;">builder</span>.<span style="color:#74531f;">AddEnvironmentVariables</span>();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;})<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.<span style="color:#74531f;">ConfigureWebHostDefaults</span>(<span style="color:#1f377f;">webBuilder</span>&nbsp;=&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#1f377f;">webBuilder</span>.<span style="color:#74531f;">UseStartup</span>&lt;<span style="color:#2b91af;">Startup</span>&gt;();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});<br/>
 </div>
 
-<p>Json files are loaded into sections, delimited by ":" (rather than ".").</p>
-<h3>Environmental settings</h3>
-<p>In the Startup ctor, take IHostingEnvironment to get the current environment name (env.EnvironmentName, "Development" or "Production")</p>
-<div class="code">
-<p><span style="color:blue;">var</span>&nbsp;builder&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;ConfigurationBuilder()<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.AddJsonFile(<span style="color:#a31515;">$&quot;appsettings.</span>{env.EnvironmentName}<span style="color:#a31515;">.json&quot;</span>);</p>
-</div>
+<h3>Using config settings</h3>
 
+<p>ConfigurationBuilder creates an IConfiguration object, a bag containing all your settings. The standard dependency injection will plug it into your constructors (including Startup.cs)</p>
+<div class="code">
+<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">readonly</span>&nbsp;<span style="color:#2b91af;">IConfiguration</span>&nbsp;_configuration;<br />
+<span style="color:blue;">public</span>&nbsp;<span style="color:#2b91af;">RecordController</span>(<span style="color:#2b91af;">IConfiguration</span>&nbsp;<span style="color:#1f377f;">configuration</span>)<br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;_configuration&nbsp;=&nbsp;<span style="color:#1f377f;">configuration</span>;<br />
+}</div>
+
+<p>You can access the values (including connection strings) as follows:</p>
+
+<div class="code">
+<span style="color:green;">//connection&nbsp;strings&nbsp;-&nbsp;&quot;ConnectionStrings&quot;:&nbsp;{&quot;DB&quot;:&nbsp;&quot;Data&nbsp;Source=...&quot;}</span><br />
+<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">connectionString</span>&nbsp;=&nbsp;_configuration.<span style="color:#74531f;">GetConnectionString</span>(<span style="color:#a31515;">&quot;DB&quot;</span>);<br />
+<span style="color:green;">//get&nbsp;values&nbsp;(with&nbsp;a&nbsp;default)</span><br />
+<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">myValue</span>&nbsp;=&nbsp;_configuration.<span style="color:#74531f;">GetValue</span>&lt;<span style="color:blue;">string</span>&gt;(<span style="color:#a31515;">&quot;myValue&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;myDefault&quot;</span>);<br />
+<span style="color:green;">//get&nbsp;sections&nbsp;with&nbsp;binding</span><br />
+<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">config</span>&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">ApiConfig</span>();<br />
+_configuration.<span style="color:#74531f;">GetSection</span>(<span style="color:#a31515;">&quot;ApiConfig&quot;</span>).<span style="color:#74531f;">Bind</span>(<span style="color:#1f377f;">config</span>);<br />
+<span style="color:green;">//easier&nbsp;get&nbsp;sections</span><br />
+<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">config2</span>&nbsp;=&nbsp;_configuration.<span style="color:#74531f;">Get</span>&lt;<span style="color:#2b91af;">ApiConfig</span>&gt;();</div>
 
 <h3>IOptions</h3>
 <p>You don't want to load the entire configuration into every class that just requires specific keys. The Options pattern breaks the config into small sections, with a simple poco class. This is registered with the DI (as services.Configure).</p>
-<p>You can load "sections" in Startup.ConfigureServices with Configuration.GetSection("a:b") (this looks like the old xml config).</p>
+
 <div class="code">
 <p><span style="color:blue;">public</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:darkcyan;">ConfigureServices</span>(<span style="color:darkblue;">IServiceCollection</span>&nbsp;services)<br/>
 {<br/>
