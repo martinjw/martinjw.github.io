@@ -58,7 +58,7 @@
 </ul>
 </li>
 </ul>
-<p>NB: Core 1-2 is intended for servers (incl. Asp and consoles), not for clients (so no Winforms/WPF) or old webforms. Core 3.0 supports winforms and WPF.</p>
+<p>NB: Core 1-2 is intended for servers (incl. Asp and consoles), not for clients (so no Winforms/WPF) or old webforms. Core 3.0 and .net 5+ supports winforms and WPF.</p>
 
 <h3>.Net Standard</h3>
 <p>.Net Core (1-2) can run on .Net full framework, or by itself.</p>
@@ -83,6 +83,11 @@
 <td>netstandard2.1</td>
 <td>- (Not supported!)</td>
 <td>Core 3.0</td>
+</tr>
+<tr>
+<td>net5.0</td>
+<td>- (Not supported!)</td>
+<td>.net 5 (no netcoreapp/netstandard)</td>
 </tr>
 </table>
 
@@ -143,7 +148,7 @@ NB: for multi-targeting, it's plural &lt;<span style="color:#a31515;">TargetFram
 AND ".NET Standard"/"Class Library (.NET Standard)" (netstandard1.4)</li></li></li>
 </ul></li>
 </ul>
-<p>Netstandard class libraries can be called by "classic" framework .net as well as Core.</p>
+<p>Netstandard class libraries can be called by "classic" framework .net as well as Core. (net5.0 websites/exes can also call NetStandard2.0, or net5.0 dlls).</p>
 <div class="code"><span style="color:blue;">&lt;</span><span style="color:#a31515;">Project</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Sdk</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">Microsoft.NET.Sdk</span>&quot;<span style="color:blue;">&gt;</span><br />
 <span style="color:blue;">&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PropertyGroup</span><span style="color:blue;">&gt;</span><br />
 <span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">TargetFramework</span><span style="color:blue;">&gt;</span>netstandard1.4<span style="color:blue;">&lt;/</span><span style="color:#a31515;">TargetFramework</span><span style="color:blue;">&gt;</span><br />

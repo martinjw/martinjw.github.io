@@ -62,6 +62,11 @@ logger.<span style="color:darkcyan;">LogWarning</span>(<span style="color:#a3151
 </li>
 <li>Or = take argument <cite>ILogger&lt;T&gt;</cite> where T is probably your classname.</li>
 </ul>
+<h3>Unit Tests</h3>
+<p>In a test you will need to provide an ILogger&lt;X&gt;. Provide it with NullLogger&lt;X&gt;.Instance</p>
+<div class="code">
+<p><span style="color:blue;">var</span>&nbsp;validator&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">X</span>(<span style="color:#2b91af;">NullLogger</span>&lt;<span style="color:#2b91af;">X</span>&gt;.Instance);</p>
+</div>
 
 </div>
 <div class="Footer"></div>
