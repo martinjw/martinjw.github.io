@@ -35,42 +35,27 @@
 
 
 <h3>MVC</h3>
-<ul>
-<li>Dependencies: "Microsoft.AspNetCore.Mvc"<br/>
-"Microsoft.AspNetCore.Mvc.TagHelpers"<br/>
-"Microsoft.AspNetCore.Tooling.Razor"<br/>
-"Microsoft.AspNetCore.StaticFiles"<br/>
-"Microsoft.AspNetCore.Diagnostics" (error pages, etc)</li>
-<li>Startup.ConfigureServices : services.AddMvc();</li>
-<li>Startup.Configure: app.UseMvc() for attribute routing, for routes:
-<div class="code">
-<p>app.UseMvc(routes&nbsp;=&gt;<br/>
-{<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;routes.MapRoute(<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name:&nbsp;<span style="color:#a31515;">&quot;default&quot;</span>,<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;template:&nbsp;<span style="color:#a31515;">&quot;{controller=Home}/{action=Index}/{id?}&quot;</span>);<br/>
-});<br/>
-</p>
-</div>
-</li>
-</ul>
-<p>You can break down into individual components of MVC (a WebApi may just have Microsoft,AspNet.Mvc.Core and Microsoft.AspNet.Mvc.Formatters.Json - configureServices as services.AddMvcCore().AddJsonFormatters();).</p>
+<p></p>
 <h3>Differences from .net 4.5/MVC 5</h3>
+<p>Core/net5/net6 has changed design several times</p>
 <ul>
 <li>Project<ul>
-<li><span style="text-decoration: line-through red;">No csproj - it uses xproj and project.json</span> As of May 2016, we are back to csproj (MSBuild xml) and a project.json that may be renamed nuget.json</li>
+<li>Revised (minimal) version of csproj, including PackageReference(nuget) <span style="text-decoration: line-through red;">Pre 2016 it was xproj and project.json</span></li>
 <li>References are now Nuget packages (dependencies in <span style="text-decoration: line-through red;">project.json</span> csproj)</li>
-<li>No global.asax - use startup.cs</li>
-<li>It is multi-targeting- you build both for full framework .net (4.6) and the multi-platform .net core.</li>
+<li>No global.asax <ul>
+<li>Core/net5: program.cs and startup.cs</li>
+<li>net6: program.cs</li>
+</ul></li>
+<li>It is multi-platform (linux servers/containers).</li>
 </ul></li>
 <li>Asp<ul>
 <li>No Asp lifecycle events- it has OWIN type middleware</li>
-<li>You can't just deploy the asp project folder. The web root is now the wwwroot folder. Binaries are written to the solution/artifacts folder (outside wwwroot).</li>
-<li>No bundling - use gulp instead</li>
-<li>Front-end resources (jquery etc) are not nuget any more, they are bower</li>
+<li>You can't just deploy the asp project folder. The web root is now the wwwroot folder. You need to Publish (to Release/publish folder) which puts the web.config/exe/dlls top and copies wwwroot below.</li>
+<li>No bundling - use LigerShark.WebOptimizer.Core or gulp instead</li>
+<li>Front-end resources (jquery etc) are not nuget any more.</li>
 <li>Dependency injection is pervasive (not service-locator as before)</li>
 <li>MVC and WebApi are the same now, not parallel frameworks with misleading similarities (2 different AuthorizeAttributes)</li>
-<li>Less IIS. If you use IIS, it just launches the dotnet process, there are no handlers, modules or application pools.</li>
+<li>Less IIS. For core 2 you used kestrel to IIS, but we're back in IIS now.</li>
 <li>A minimal, static web.config. All configuration settings are via the configuration system- environment variables, json files.. </li>
 </ul></li>
 </ul>

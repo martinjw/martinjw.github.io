@@ -32,7 +32,7 @@
 </div>
 <div class="content">
 <h2>ASP.Net Core</h2>
-<p>ASP.Net Core 1 (previously Asp.Net 5/MVC6) released June 2016.   </p>
+
 
 <ul>
 <li><a href="https://www.microsoft.com/net/download">Downloads</a></li>
@@ -44,7 +44,48 @@
 <li><a href="https://packagesearch.azurewebsites.net/">Package search - find which nuget package contains which api</a></li>
 </ul></li>
 </ul>
-
+<table>
+<tr>
+<td>Asp.Net 5/MVC6 (pre-release)</td>
+<td>Pre 2016</td>
+<td>The command line tools were k (hence "Kestrel") and then dnx, before becoming "dotnet".</td>
+</tr>
+<tr>
+<td>.Net Core 1.0</td>
+<td>released June 2016</td>
+<td>originally in Visual Studio 2015. Support ended in 2019.</td>
+</tr>
+<tr>
+<td>.Net Core 1.1</td>
+<td>released November 2016</td>
+<td>Support ended in 2019.</td>
+</tr>
+<tr>
+<td>.Net Core 2.0</td>
+<td>released August 2017</td>
+<td>Implemented .NetStandard 2.0 and lots more APIs. Project files changed from project.json/ .xproj to an updated .csproj xml formt. Support has ended (in October 2018)</td>
+</tr>
+<tr>
+<td>.Net Core 2.1</td>
+<td>released May 2018</td>
+<td>Added Span&lt;T&gt;</td>
+</tr>
+<tr>
+<td>.Net Core 3.0/3.1</td>
+<td>released 2019</td>
+<td>Supports more APIs including winforms. Support ends December 2022</td>
+</tr>
+<tr>
+<td>net 5</td>
+<td>released 2020</td>
+<td>Drops "core" from name; there was no v4. C# 9 (record types, init setters). Supports ends 2022</td>
+</tr>
+<tr>
+<td>net 6</td>
+<td>released 2021</td>
+<td>C# 10 (global usings, file-scoped namespace), minimal apis. <a href="https://docs.microsoft.com/en-gb/dotnet/core/compatibility/6.0">breaking changes</a></td>
+</tr>
+</table>
 <h3>Source code</h3>
 <ul>
 <li><a href="https://github.com/dotnet/core">DotNet Core Repo</a> includes
@@ -58,81 +99,37 @@
 </ul>
 </li>
 </ul>
-<p>NB: Core 1-2 is intended for servers (incl. Asp and consoles), not for clients (so no Winforms/WPF) or old webforms. Core 3.0 and .net 5+ supports winforms and WPF.</p>
-
-<h3>.Net Standard</h3>
-<p>.Net Core (1-2) can run on .Net full framework, or by itself.</p>
-<p>To support either .Net Core or .net framework (or one of the rarer platforms- Xamarin, Windows Phone, UWP), create a <a href="https://docs.microsoft.com/en-us/dotnet/standard/net-standard">.Net Standard</a> class library, which is binary compatible.</p>
-<table>
-<tr>
-<th>.Net Standard</th>
-<th>.Net Framework</th>
-<th>.Net Core</th>
-</tr>
-<tr>
-<td>netstandard1.0</td>
-<td>net 4.5 (net45)</td>
-<td>Core 1.0 (netcoreapp1.0)</td>
-</tr>
-<tr>
-<td>netstandard2.0</td>
-<td>net 4.6.1 (net461)</td>
-<td>Core 2.0 (netcoreapp2.0)</td>
-</tr>
-<tr>
-<td>netstandard2.1</td>
-<td>- (Not supported!)</td>
-<td>Core 3.0</td>
-</tr>
-<tr>
-<td>net5.0</td>
-<td>- (Not supported!)</td>
-<td>.net 5 (no netcoreapp/netstandard)</td>
-</tr>
-</table>
 
 <h3>dotnet tooling/SDK</h3>
 <p>The 2016/VS2015 tooling was preview; it is only RTM with VS2017.</p>
 <ul>
-<li>View the current runtime version with "dotnet --version"; SDK tooling version can be seen in "dotnet"</li>
+<li>View the current runtime version with "<strong>dotnet --version</strong>"; SDK tooling version can be seen in "dotnet"</li>
 <li>there can be multiple runtimes and sdks installed- see %PROGRAMFILES%\dotnet\<ul>
-<li>runtimes: %PROGRAMFILES%\dotnet\shared\Microsoft.NETCore.App\</li>
-<li>tooling: %PROGRAMFILES%\dotnet\sdk</li>
+<li><strong>dotnet --list-runtimes</strong> runtimes: %PROGRAMFILES%\dotnet\shared\Microsoft.NETCore.App\</li>
+<li><strong>dotnet --list-sdks</strong> tooling: %PROGRAMFILES%\dotnet\sdk</li>
 </ul></li>
 <li><a href="https://www.microsoft.com/net/download/core">Downloads</a> - <strong>L</strong>ong<strong>T</strong>erm<strong>S</strong>upport + "Current" (latest)</li>
 <li><a href="https://github.com/dotnet/core/blob/master/release-notes/download-archive.md#net-core-runtime-and-sdk-download-archive">.NET Core Runtime and SDK download archive</a></li>
 <li><a href="projectjson.html">Notes on the obsolete VS2015 project.json format</a></li>
 </ul>
-<table>
-<tr>
-<th>Core runtime/ VS</th>
-<th>Tooling version (SDK)</th>
-</tr>
-<tr>
-<td>1.0 / VS2015 Update 3</td>
-<td>1.0.0-preview2-003121</td>
-</tr>
-<tr>
-<td>1.1.0 / VS2017 RC4</td>
-<td>1.0.0-rc4-004771</td>
-</tr>
-<tr>
-<td>1.1.0 / VS2017</td>
-<td>1.0.0</td>
-</tr>
-</table>
 
 <h4>Project-specific tooling: global.json</h4>
 <ul>
-<li>The tooling version can be specified in the solution file <strong>global.json</strong> (as from VS2017, the "projects" is obsolete).</li>
-<li>If you don't set this, the latest installed version of the sdk is used. This will break older projects (eg VS2015 projects after you installed VS2017)</li>
+<li>The tooling/sdk version can be specified in the solution file <strong>global.json</strong> (as from VS2017, the "projects" is obsolete).<ul>
+<li>The runtime is specified in the csproj (TargetFramework)</li>
+</ul></li>
+<li>If you don't set this, the latest installed version of the sdk is used. This may break older projects (eg VS2015 projects after you installed VS2017)</li>
+<li>Since net 3 you can use allowPrerelease (true/false), rollForward: (latestMajor, latestMinor ...) to allow later versions <ul>
+<li><a href="https://docs.microsoft.com/en-us/dotnet/core/tools/global-json">docs</a></li>
+<li>Older version (pre 3) had a projects section, which no longer exists</li>
+</ul></li>
 </ul>
 
 <p></p>
 <div class="code">{<br/>
-&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">projects</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;[&nbsp;<span style="color:#a31515;">&quot;src&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;test&quot;</span>&nbsp;],<br/>
 &nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">sdk</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;{<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">version</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;1.0.0-preview2-003121&quot;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">version</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;3.1.102&quot;</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2e75b6;">&quot;</span><span style="color:#147fc8;">rollForward</span><span style="color:#2e75b6;">&quot;</span>:&nbsp;<span style="color:#a31515;">&quot;latestMinor&quot;</span><br/>
 &nbsp;&nbsp;}<br/>
 }</div>
 
@@ -145,38 +142,30 @@ NB: for multi-targeting, it's plural &lt;<span style="color:#a31515;">TargetFram
 </ul></li>
 <li>Class libraries only need an API - &lt;<span style="color:#a31515;">TargetFramework</span><span style="color:blue;">&gt;</span>netstandard1.4<span style="color:blue;">&lt;/</span><span style="color:#a31515;">TargetFramework</span><span style="color:blue;">&gt;</span><ul>
 <li>VS2017 Add new project has ".NET Core"/"Class Library (.NET Core)" (netcoreapp1.0)<br />
-AND ".NET Standard"/"Class Library (.NET Standard)" (netstandard1.4)</li></li></li>
+AND ".NET Standard"/"Class Library (.NET Standard)" (netstandard1.4)</li>
+<li>VS2019/VS2022 Add new project has "class library that targets Net Standard or Net Core"; in the wizard after naming the project, select the target from the dropdown as NetStandard, Core 3.1 or net5/net6</li></li></li>
 </ul></li>
 </ul>
-<p>Netstandard class libraries can be called by "classic" framework .net as well as Core. (net5.0 websites/exes can also call NetStandard2.0, or net5.0 dlls).</p>
+<p>Netstandard class libraries can be called by "classic" framework .net as well as Core.</p>
+
 <div class="code"><span style="color:blue;">&lt;</span><span style="color:#a31515;">Project</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Sdk</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">Microsoft.NET.Sdk</span>&quot;<span style="color:blue;">&gt;</span><br />
 <span style="color:blue;">&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PropertyGroup</span><span style="color:blue;">&gt;</span><br />
-<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">TargetFramework</span><span style="color:blue;">&gt;</span>netstandard1.4<span style="color:blue;">&lt;/</span><span style="color:#a31515;">TargetFramework</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">TargetFramework</span><span style="color:blue;">&gt;</span>netstandard2.1<span style="color:blue;">&lt;/</span><span style="color:#a31515;">TargetFramework</span><span style="color:blue;">&gt;</span><br />
 <span style="color:blue;">&nbsp;&nbsp;&lt;/</span><span style="color:#a31515;">PropertyGroup</span><span style="color:blue;">&gt;</span><br />
 <span style="color:blue;">&lt;/</span><span style="color:#a31515;">Project</span><span style="color:blue;">&gt;</span></div>
 <p>Core class libraries can only be called from Core projects, not full framework.</p>
 <div class="code"><span style="color:blue;">&lt;</span><span style="color:#a31515;">Project</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Sdk</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">Microsoft.NET.Sdk</span>&quot;<span style="color:blue;">&gt;</span><br />
 <span style="color:blue;">&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PropertyGroup</span><span style="color:blue;">&gt;</span><br />
-<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">TargetFramework</span><span style="color:blue;">&gt;</span>netcoreapp1.0<span style="color:blue;">&lt;/</span><span style="color:#a31515;">TargetFramework</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">TargetFramework</span><span style="color:blue;">&gt;</span>netcoreapp3.1<span style="color:blue;">&lt;/</span><span style="color:#a31515;">TargetFramework</span><span style="color:blue;">&gt;</span><br />
 <span style="color:blue;">&nbsp;&nbsp;&lt;/</span><span style="color:#a31515;">PropertyGroup</span><span style="color:blue;">&gt;</span><br />
 <span style="color:blue;">&lt;/</span><span style="color:#a31515;">Project</span><span style="color:blue;">&gt;</span></div>
-<p>Asp.net Core websites can also target full framework (note the sdk for web is <span style="color:blue;">Microsoft.NET.Sdk.Web</span>; otherwise it's <span style="color:blue;">Microsoft.NET.Sdk</span>)</p>
+<p>For Asp.net Core websites the sdk for web is <span style="color:blue;">Microsoft.NET.Sdk.Web</span>; otherwise it's <span style="color:blue;">Microsoft.NET.Sdk</span></p>
+<p>.net core 2 could run on framework (<span style="color:#a31515;">TargetFramework</span> net461 with RuntimeIdentifier of win7-x86) but since core 3 this is no longer possible.</p>
 <div class="code"><span style="color:blue;">&lt;</span><span style="color:#a31515;">Project</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Sdk</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">Microsoft.NET.Sdk.Web</span>&quot;<span style="color:blue;">&gt;</span><br />
  
 <span style="color:blue;">&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PropertyGroup</span><span style="color:blue;">&gt;</span><br />
-<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">TargetFramework</span><span style="color:blue;">&gt;</span>net461<span style="color:blue;">&lt;/</span><span style="color:#a31515;">TargetFramework</span><span style="color:blue;">&gt;</span><br />
-<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">RuntimeIdentifier</span><span style="color:blue;">&gt;</span>win7-x86<span style="color:blue;">&lt;/</span><span style="color:#a31515;">RuntimeIdentifier</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">TargetFramework</span><span style="color:blue;">&gt;</span>netcoreapp3.1<span style="color:blue;">&lt;/</span><span style="color:#a31515;">TargetFramework</span><span style="color:blue;">&gt;</span><br />
 <span style="color:blue;">&nbsp;&nbsp;&lt;/</span><span style="color:#a31515;">PropertyGroup</span><span style="color:blue;">&gt;</span><br />
-<span style="color:blue;">&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">ItemGroup</span><span style="color:blue;">&gt;</span><br />
-<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PackageReference</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Include</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">Microsoft.AspNetCore</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">Version</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">1.0.3</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br />
-<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PackageReference</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Include</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">Microsoft.AspNetCore.Mvc</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">Version</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">1.0.2</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br />
-<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PackageReference</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Include</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">Microsoft.AspNetCore.StaticFiles</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">Version</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">1.0.1</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br />
-<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PackageReference</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Include</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">Microsoft.Extensions.Logging.Debug</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">Version</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">1.0.1</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br />
-<span style="color:blue;">&nbsp;&nbsp;&lt;/</span><span style="color:#a31515;">ItemGroup</span><span style="color:blue;">&gt;</span><br />
-<span style="color:blue;">&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">ItemGroup</span><span style="color:blue;">&gt;</span><br />
-<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">DotNetCliToolReference</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Include</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">Microsoft.VisualStudio.Web.CodeGeneration.Tools</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">Version</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">1.0.0-msbuild3-final</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br />
-<span style="color:blue;">&nbsp;&nbsp;&lt;/</span><span style="color:#a31515;">ItemGroup</span><span style="color:blue;">&gt;</span><br />
- 
 <span style="color:blue;">&lt;/</span><span style="color:#a31515;">Project</span><span style="color:blue;">&gt;</span></div>
 <p>A console app just has an OutputType of "Exe"</p>
 <div class="code"><span style="color:blue;">&lt;</span><span style="color:#a31515;">Project</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Sdk</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">Microsoft.NET.Sdk</span>&quot;<span style="color:blue;">&gt;</span><br />
@@ -225,8 +214,8 @@ AND ".NET Standard"/"Class Library (.NET Standard)" (netstandard1.4)</li></li></
 </tr>
 <tr>
 <td>Full framework</td>
-<td>4.6.1</td>
-<td>net461 (or net46)</td>
+<td>4.8</td>
+<td>net48</td>
 <td>N/A (installation)</td>
 </tr>
 <tr>
@@ -247,8 +236,44 @@ AND ".NET Standard"/"Class Library (.NET Standard)" (netstandard1.4)</li></li></
 <td>netcoreapp1.1</td>
 <td>Microsoft.NETCore.App 1.1.0</td>
 </tr>
+<tr>
+<td>.Net Core (Aug 2017)</td>
+<td>2.0-3.1</td>
+<td>netcoreapp2.0<br />
+netcoreapp3.1</td>
+<td>No longer required</td>
+</tr>
 </table>
 
+
+<h3>.Net Standard</h3>
+<p>.Net Core (1-2) can run on .Net full framework, or by itself. <a href="https://docs.microsoft.com/en-us/dotnet/standard/net-standard">.Net Standard</a> is a common API (in programming terms, an interface). Netstandard class libraries are binary compatible across the framework, core, Xamarin, UWP etc.</p>
+<p>Each netstandard is a superset of the previous. Core 1.0 supports all netstandards from netstandard1.0 (net45) to netstandard1.6 (net461). </p>
+<p>With .Net Core 3.0, there is no longer any support for the full framework. </p>
+<p>Netstandard 2.1 is the highest (final) version; net5 and net6 are newer versions which are not compatible with .net framework (although netstandard can still be referenced). </p>
+
+<table>
+<tr>
+<th>.Net Standard</th>
+<th>.Net Framework</th>
+<th>.Net Core</th>
+</tr>
+<tr>
+<td>netstandard1.6</td>
+<td>net 4.6.1 (net461)</td>
+<td>Core 1.0 (netcoreapp1.0)</td>
+</tr>
+<tr>
+<td>netstandard2.0</td>
+<td>net 4.6.1 (net461)</td>
+<td>Core 2.0 (netcoreapp2.0)</td>
+</tr>
+<tr>
+<td>netstandard2.1</td>
+<td>- (Not supported!)</td>
+<td>Core 3.0</td>
+</tr>
+</table>
 
 </div>
 <div class="Footer"></div>

@@ -38,13 +38,13 @@
 <ul>
 <li>Solution/<ul>
 <li>.sln</li>
-<li>global.json - lists sdk (eg 1.0.0-preview2-003121)</li>
+<li>global.json - lists sdk (optional)</li>
 <li>test\ <ul>
 <li>Test Projects (one or more)</li>
 </ul></li>
 <li>src - source<ul>
 <li>{Project}\ -NB: folder name==assembly name<ul>
-<li>bin\Debug\netcoreapp1.0 - compiled dlls
+<li>bin\Debug\netcoreapp3.1 - compiled dlls
 <ul>
 <li>publish\ - </li>
 </ul></li>
@@ -55,12 +55,9 @@
 <li>web.config - tells IIS to launch dotnet</li>
 </ul></li>
 <li>appsettings.json</li>
-<li>bower.json - for jquery/bootstrap etc</li>
-<li>bundleconfig.json - for bundling and minification. <a href="https://github.com/madskristensen/BundlerMinifier/wiki">this one</a>, or use gulp or grunt</li>
-<li>Program.cs - static vod Main that calls startup (below)</li>
-<li>Startup.cs - startup file (like global.asax)</li>
-<li>{project}.csproj - msbuild. <br />
-VS2015: {project}.xproj - msbuild xml for Visual Studio and project.json</li>
+<li>Program.cs - static vod Main. Before .net6, calls startup. After net6, this does the startup</li>
+<li>Startup.cs - startup file (like global.asax) (Not in .net 6)</li>
+<li>{project}.csproj - msbuild. </li>
 </ul></li>
 </ul></li>
 </ul></li>
@@ -69,32 +66,29 @@ VS2015: {project}.xproj - msbuild xml for Visual Studio and project.json</li>
 <ul>
 <li>There's a wwwroot folder for the static javascript/css/images</li>
 <li>There's no web.config. It only appears when you publish.</li>
-<li>The global.asax is gone; now there's Program.cs and Startup.cs - <a href="startup.html">see more</a></li>
+<li>The global.asax is gone; now there's Program.cs and (pre net6) Startup.cs - <a href="startup.html">see more</a></li>
 </ul>
 
 <h3>Publishing</h3>
 <p>You can "Publish" from VS as before, or "dotnet publish".</p>
 <ul>
-<li>The RC1 approot/wwwwroot structure has gone (it allowed the binaries to be completely outside the web path)</li>
-<li>You publish to (default) /bin/Release/PublishOutputs/<br />
-dotnet publish default is Debug\netcoreapp1.0\publish\, so add "-c release" for a release build!</li>
+<li>You publish to (default) /bin/Release/Publish/<br />
+dotnet publish default is Debug\netcoreapp3.1\publish\, so add "-c release" for a release build!</li>
 <li>Unlike classic asp.net, there is no "bin" folder- the dlls are toplevel, the static files ("wwwroot") are below.</li>
 </ul>
 <p>The structure (reverse alphabetic order, to explain it better):</p>
 <ul>
-<li>web.config (<a href="iis.html">See IIS description</a></li>
-<li>*.dll. All dlls are top level</li>
+<li>web.config (<a href="iis.html">See IIS description</a>)</li>
+<li>appsettings.json for configuration</li>
+<li>*.dll. All dlls are top level. The startup is an .exe; views are in the .Views.dll</li>
 <li>wwwroot\ - static files.</li>
-<li>Views\ - standard view structure</li>
-<li>runtimes\ - the native dll <strong>libuv.dll</strong> (used by Kestrel) for different environments (for Windows it's win7-x64) </li>
-<li>refs\ - Reference assemblies (contracts, not implementations). Used, I think, for Razor compilation.</li>
 </ul>
 <p>Normally it's a FDD-framework dependent deployment, using an installed version of dotnet, It can be a SCD-self-contained deployment, including the .net Core runtime, by specifying the RuntimeIdentifiers (eg "Win10-x64") in csproj and your "dotnet publish -r win10-x64".</p>
 
 
 <h3>Project.json + csproj</h3>
 <p>VS2015's project.json includes parts that were originally in the csproj, packages.config, and project.nuspec (but other bits were in project.xproj).<br />
-In VS2017, we have csproj.</p>
+In VS2017+, we have csproj.</p>
 <ul>
 <li><strong>buildOptions</strong> with "emitEntryPoint" means it is runnable (by calling static void Main), not a library</li>
 <li>The dependency and framework change from an abstract API (netstandard.Library/netstandard) to an implementation (Microsoft.NETCore.App /netcoreapp). See about versions below.</li>

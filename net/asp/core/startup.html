@@ -39,7 +39,7 @@
 
 <h3>static void Main</h3>
 <p>Asp.Net Core is a true console application, with a <span style="color:blue;">public</span>&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:darkcyan;">Main</span>(<span style="color:blue;">string</span>[]&nbsp;args)</p>
-<p>In .net 3.1 it looks like this:</p>
+<p>In .net core 3.1 it looks like this. In asp use <a href="https://docs.microsoft.com/en-us/aspnet/core/fundamentals/host/web-host?view=aspnetcore-5.0">WebHost</a> (in .net6 you can use WebApplication, which removes the need for Startup.cs) </p>
 <div class="code">
 <p><span style="color:blue;">public</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">Program</span><br/>
 {<br/>
@@ -56,7 +56,31 @@
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});<br/>
 }</p>
 </div>
+<p>For <a href="di.html">Dependency Injection</a> with, say, <a href="https://autofac.readthedocs.io/en/latest/integration/aspnetcore.html">Autofac</a>, add Autofac.Extensions.DependencyInjection:</p>
+<div class="code">
+<p><span style="color:#2b91af;">Host</span>.<span style="color:#74531f;">CreateDefaultBuilder</span>(<span style="color:#1f377f;">args</span>)<br />
+.<span style="color:#74531f;">UseServiceProviderFactory</span>(new <span style="color:#2b91af;">AutofacServiceProviderFactory</span>()) //etc</p>
+</div>
 <p>See configuration for <a href="https://github.com/serilog/serilog-aspnetcore">Serilog logging</a> and <a href="https://github.com/NLog/NLog/wiki/Getting-started-with-ASP.NET-Core-3">NLog logging</a></p>
+<p>In .net 6, old projects aren't upgraded, but new ones have the "class-less" program.cs format and a more imperative style.</p>
+<div class="code">
+<p><span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">builder</span>&nbsp;=&nbsp;<span style="color:#2b91af;">WebApplication</span>.<span style="color:#74531f;">CreateBuilder</span>(<span style="color:#1f377f;">args</span>);<br/>
+<span style="color:#1f377f;">builder.Services.</span>.<span style="color:#74531f;">AddControllersWithViews</span>();<br />
+<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">app</span>&nbsp;=&nbsp;<span style="color:#1f377f;">builder</span>.<span style="color:#74531f;">Build</span>();<br />
+<span style="color:green;">//trimmed app.Use stuff</span><br />
+<span style="color:#1f377f;">app</span>.<span style="color:#74531f;">UseRouting</span>();<br />
+<span style="color:#1f377f;">app</span>.<span style="color:#74531f;">UseAuthorization</span>();<br />
+<span style="color:#1f377f;">app</span>.<span style="color:#74531f;">MapControllerRoute</span>(<br/>
+&nbsp;&nbsp;name:<span style="color:#a31515;">"default"</span><br />
+&nbsp;&nbsp;pattern: <span style="color:#a31515;">"{controller=Home}/{action=Index}/{id?}"</span>);<br />
+<span style="color:#1f377f;">app</span>.<span style="color:#74531f;">Run</span>();
+</p>
+</div>
+<ul>
+<li><span style="color:#2b91af;">WebApplication</span>.<span style="color:#74531f;">CreateBuilder</span> is the new <span style="color:#2b91af;">WebHost</span>.<span style="color:#74531f;">CreateDefaultBuilder</span></li>
+<li><span style="color:#74531f;">UseStartup</span>&lt;<span style="color:#2b91af;">Startup</span>&gt;();> will error. Startup doesn't exist anymore. But you can extract out the configuration, see below.</li>
+</ul>
+
 <details>
 <summary>.Net Core 1</summary>
 <p>In RC1 it was in Startup.cs; from RC2 it is in Program.cs</p>
@@ -76,11 +100,27 @@
 </details>
 
 
-
 <h3>Startup.cs</h3>
-<p>In classic Asp.net, you configured things in Global.asax. In Core, you use Startup.cs</p>
+<p>In classic Asp.net, you configured things in Global.asax. In Core 1-5, you use Startup.cs. In .net 6 it's gone again.</p>
 <p>There is no base class or interface. The name and standard methods are conventions. You can have multiple "Startup" classes, but only one is used... either the project namespace, or it uses namespace alphabetical order(!).</p>
+<p>Net6 - if you use WebApplication.CreateBuilder(args), you can't use Startup in the same way. But you can new it up and use it explicitly. </p>
 
+<div class="code">
+<p>
+<span style="color:green;">//using the new WebApplication instead of WebHost</span><br />
+<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">builder</span>&nbsp;=&nbsp;<span style="color:#2b91af;">WebApplication</span>.<span style="color:#74531f;">CreateBuilder</span>(<span style="color:#1f377f;">args</span>);<br/>
+<span style="color:green;">//just new up startup with the configuration</span><br />
+<span style="color:blue;">var</span> <span style="color:#1f377f;">startup</span> = new <span style="color:#2b91af;">Startup</span>(builder.Configuration);<br />
+<span style="color:green;">//then add the services (AddControllersWithViews)</span><br />
+<span style="color:#1f377f;">startup</span>.<span style="color:#74531f;">ConfigureServices</span>(builder.Services); <br />
+<span style="color:green;">//as before</span><br />
+<span style="color:blue;">var</span> <span style="color:#1f377f;">app</span> = builder.<span style="color:#74531f;">Build</span>(); <br />
+<span style="color:green;">//then do the configuration</span><br />
+<span style="color:#1f377f;">startup</span>.<span style="color:#74531f;">Configure</span>(<span style="color:#1f377f;">app</span>, <span style="color:#1f377f;">app</span>.Environment);<br />
+<span style="color:green;">//as before</span><br />
+<span style="color:#1f377f;">app</span>.<span style="color:#74531f;">Run</span>();
+</p>
+</div>
 
 <h3>Structure</h3>
 <p>The minimum:</p>
@@ -114,8 +154,10 @@ IWebHostEnvironment</td>
 </table>
 <p>IApplicationBuilder must only be used for Configure, and IServiceCollection must only be used for ConfigureServices</p>
 <ul>
-<li>IWebHostEnvironment or IHostEnvironment (in .net 1/2 this was IHostingEnvironment) - EnvironmentName, WebRootPath, ContentRootPath</li>
-<li>In .net 1/2 you could inject a ILoggerFactory but that's not possible in .net 3 (initialize the logger in Program.cs)</li>
+<li>IWebHostEnvironment or IHostEnvironment (in .net core 1/2 this was IHostingEnvironment) - EnvironmentName, WebRootPath, ContentRootPath</li>
+<li>In .net core 1/2 you could inject a ILoggerFactory but that's not possible in .net core 3 (initialize the logger in Program.cs)</li>
+<li>A less commonly used Startup method is ConfigureContainer(ContainerBuilder), which is called after ConfigureServices.</li>
+<li>The startup loader checks and calls environment-named variations of the methods, eg ConfigureProductionServices() if your environment is production. This is so weird, avoid.</li>
 </ul>
 
 <div class="code">

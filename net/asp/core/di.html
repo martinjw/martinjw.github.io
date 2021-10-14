@@ -36,8 +36,12 @@
 <p>See <a href="https://docs.asp.net/en/latest/fundamentals/dependency-injection.html">docs.asp.net</a></p>
 
 <p>There is a simple DI built into core (using IServiceProvider, which goes back to .net 1.1 but now is in Microsoft.Extensions.DependencyInjection.Abstractions).<br />
-It's functional enough that a full DI container isn't required, but the usual suspects (Structuremap etc) should have hooks.</p>
-
+It's functional enough that a full DI container isn't required, but the usual suspects have hooks.</p>
+<p>Eg <a href="https://autofac.readthedocs.io/en/latest/integration/aspnetcore.html">Autofac</a>, add Autofac.Extensions.DependencyInjection and in Program.cs:</p>
+<div class="code">
+<p><span style="color:#2b91af;">Host</span>.<span style="color:#74531f;">CreateDefaultBuilder</span>(<span style="color:#1f377f;">args</span>)<br />
+.<span style="color:#74531f;">UseServiceProviderFactory</span>(new <span style="color:#2b91af;">AutofacServiceProviderFactory</span>()) //etc</p>
+</div>
 <h3>Configuration</h3>
 <p>Services are configured in Startup.<strong>ConfigureServices</strong>(IServiceCollection services)</p>
 <p>Most middleware services are added using the standard services.AddX convention.</p>

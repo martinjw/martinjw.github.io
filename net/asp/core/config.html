@@ -39,14 +39,26 @@
 <p>Web.config no longer exists, so connection strings and other settings must be stored in other files- json or xml or environmental variables.</p>
 <h3>ConfigurationBuilder</h3>
 
-<p>In a web application, it is done automatically by <span style="color:#2b91af;">Host</span>.<span style="color:#74531f;">CreateDefaultBuilder</span>(<span style="color:#1f377f;">args</span>). The default order is (later ones override earlier ones): </p>
+<p>You can manually new a ConfigurationBuilder directly (without the DI/logging of Host)</p>
+<div class="code">
+<p><span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">builder</span>&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;ConfigurationBuilder();<br/>
+builder.AddJsonFile(<span style="color:#a31515;">&quot;appsettings.json&quot;</span>);<br/>
+IConfigurationRoot&nbsp;<span style="color:#1f377f;">config</span>&nbsp;=&nbsp;builder.Build();<br/>
+<span style="color:blue;">string</span>&nbsp;<span style="color:#1f377f;">value</span>&nbsp;=&nbsp;config[<span style="color:#a31515;">&quot;Key&quot;</span>];&nbsp;<span style="color:green;">//&nbsp;get&nbsp;a&nbsp;value</span></p>
+</div>
+
+
+<p>In a web application, it is done as part of <span style="color:#2b91af;">Host</span>.<span style="color:#74531f;">CreateDefaultBuilder</span>(<span style="color:#1f377f;">args</span>), or, in .net 6, <span style="color:#2b91af;">WebApplication</span>.<span style="color:#74531f;">CreateBuilder</span>(<span style="color:#1f377f;">args</span>) </p>
+<p>The default order is (later ones override earlier ones):</p>
 <ul>
 <li>Environment variables</li>
 <li>appsettings.json in local directory</li>
 <li>app.{EnvironmentName}.settings.json in local directory </li>
 <li>Command line arguments</li>
 </ul>
-<p>You can customise it in the Program.cs </p>
+<div class="alert">
+<p>You can customise it in the Program.cs (net 1-5 code). NB <span style="color:#74531f;">CreateDefaultBuilder</span> in core 3.1 (and <span style="color:#2b91af;">WebApplication</span> in net 6) automatically reads all the sources in order- there is no need to specify them manually unless you're doing something special.</p>
+</div>
 <div class="code">
 <span style="color:blue;">public</span>&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:#2b91af;">IHostBuilder</span>&nbsp;<span style="color:#74531f;">CreateHostBuilder</span>(<span style="color:blue;">string</span>[]&nbsp;<span style="color:#1f377f;">args</span>)&nbsp;=&gt;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#2b91af;">Host</span>.<span style="color:#74531f;">CreateDefaultBuilder</span>(<span style="color:#1f377f;">args</span>)<br/>
@@ -70,6 +82,9 @@
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#1f377f;">webBuilder</span>.<span style="color:#74531f;">UseStartup</span>&lt;<span style="color:#2b91af;">Startup</span>&gt;();<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});<br/>
 </div>
+
+
+<p>In .net 6 there is a ConfigurationManager class, which looks similar, but adds the sources when you do builder.Add() ... builder.Build() is a no-op. This helps avoid scenarios when some config is needed for another (eg config in database).</p>
 
 <h3>Using config settings</h3>
 

@@ -93,8 +93,8 @@ You can't precompile Razor views in Core v1 (&lt;MvcBuildViews&gt;false&lt;/MvcB
 <h3>TagHelpers</h3>
 <ul>
 <li><a href="../mvc/htmlhelpers.html">HtmlHelpers</a> (<span style="background: yellow;">@</span>Html.TextBox) still exist</li>
-<li>Taghelpers are <strong>server-side</strong> html extensions (like Angular directives)- the cshtml is more HTML-like and less C# codes</li>
-<li>They arem't webforms controls- you can have several taghelpers on the same element - but some helpers write large chunks of code and even javascript (script asp-fallback-src)</li>
+<li>Taghelpers are <strong>server-side</strong> html extensions (they look like client side Angular directives)- the cshtml is more HTML-like and less C# code</li>
+<li>They aren't webforms controls- you can have several taghelpers on the same element - but some helpers write large chunks of code and even javascript (script asp-fallback-src)</li>
 <li><a href="https://docs.asp.net/projects/mvc/en/latest/views/tag-helpers/intro.html">docs.asp.net</a> - <a href="https://github.com/aspnet/Mvc/tree/dev/src/Microsoft.AspNetCore.Mvc.TagHelpers">source</a></li>
 </ul>
 <p>Instead of <span style="background: yellow;">@</span>Html.ActionLink("Log in", "Account", "Login"), use a taghelper (and it's easier to add a class or other attributes)</p>
