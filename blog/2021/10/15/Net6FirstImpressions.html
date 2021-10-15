@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Net6 First Impressions</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/default.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
+<style>
+img {max-width: 95%;}
+</style>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Net6 First Impressions</h2>
+<p>Published Friday 15 October 2021</p><article>
+<p>The first thing you notice in .net 6/ Visual Studio 2022 is what's missing.</p>
+<p>Program.cs exists, but there's no namespace or class or public static void Main method.</p>
+<pre><code  class="language-cs">
+// See https://aka.ms/new-console-template for more information
+Console.WriteLine("Hello, World!");</code>
+</pre>
+<p><a href="https://docs.microsoft.com/en-gb/dotnet/csharp/fundamentals/program-structure/top-level-statements">Top level statements</a> were introduced in .net 5/C#9 but they are used by default in the .net 6/C#10 Visual Studio 2022 templates.</p>
+<p>You can put using statements above the code, and other methods (and other classes) below. </p>
+<p>So what's going on? Let's use a bit of reflection.</p>
+<pre><code  class="language-cs">
+var method = System.Reflection.MethodBase.GetCurrentMethod();
+var type = method.DeclaringType;
+Console.WriteLine($"Class={type.FullName} method={method.Name}");</code>
+</pre>
+<p>This writes:</p>
+<pre>
+Class=Program method=&lt;Main&gt;$
+</pre>
+<p>Interestingly, the method name isn't Main, but a weird variation of it.</p>
+<p>You can change the name of Program.cs (eg to Startup.cs, just to confuse the asp developers). But that program name is always <strong>Program</strong></p>
+<p>The other thing to note is there is no namespace. You're in the global:: namespace here (so are any classes you write below in the same file).</p>
+<p>A project has a default namespace which matches the project name - it's in the project properties.</p>
+<img src="proj_namespace.png" alt="Default namespace in project properties" />
+
+<p>If you add a class, you add it in the default namespace. Which your top-level program.cs cannot see, because it is not in the project namespace, unless it adds a using statement.  </p>
+<p>You can't create another file with top-level statements - you get a CS8802	Only one compilation unit can have top-level statements error. </p>
+<img src="cs8802.png" alt="Only one compilation unit can have top-level statements" />
+<p>Top-level statements are really just a nice demo/teaching aid, but really we are still in the world of namespaces and classes. You can put back the project namespace, Program class and Main method, and it works like before. Having a different namespace to your classes is annoying. If this was a new project - "Console App (Educational)" I'd be more forgiving, but for mainstream projects, especially asp, top-level statements are a gimmick.</p>
+<h3>File scoped namespaces</h3>
+<p>When you add a class, you get the namespace wrapped around everything as before.</p>
+<pre><code  class="language-cs">
+namespace ConsoleApp2
+{
+    public class Class1
+    {
+        public void Execute()
+        {
+        }
+    }
+}</code>
+</pre>
+<p>In net 6 you can make the namespace file-scoped (no-one ever has more than one namespace in a file).</p>
+<pre><code  class="language-cs">
+namespace ConsoleApp2;
+public class Class1
+{
+    public void Execute()
+    {
+    }
+}</code>
+</pre>
+<p>A minor cosmetic change, but the reduced indentation makes real code a bit more readable, and when you copy and paste methods, ifs and other things with {braces} it's just a little easier without that namespace closing brace at the end.</p>
+<p>This is a compiler trick, so the C#10 compiler should, and does, generate older .net binaries. You can use file-scoped namespaces in framework 4.8, by changing the csproj file (although note other C#10 things are not backwards compatible, use with care). </p>
+<pre><code  class="language-xml">
+ &lt;PropertyGroup&gt;
+   &lt;LangVersion&gt;10&lt;/LangVersion&gt;
+&lt;/PropertyGroup&gt;</code>
+</pre>
+<p>The obvious next step is file-scoped classes, so only method contents are indented. Best practice is one class per file, and the braced version will always be available for legacy/generated code.  I would rather see that than top-level statements.</p>
+<h3>Global usings</h3>
+<p>In net6, the compiler can automatically add some using statements, such as "using System;" </p>
+<p>This is controlled by the implicit usings setting in csproj (old projects default to disable; new net6 projects are set to enable).</p>
+<pre><code  class="language-xml">
+&lt;Project Sdk="Microsoft.NET.Sdk"&gt;
+  &lt;PropertyGroup&gt;
+    &lt;OutputType&gt;Exe&lt;/OutputType&gt;
+    &lt;TargetFramework&gt;net6.0&lt;/TargetFramework&gt;
+    &lt;ImplicitUsings&gt;enable&lt;/ImplicitUsings&gt;
+    &lt;Nullable&gt;enable&lt;/Nullable&gt;
+  &lt;/PropertyGroup&gt;
+&lt;/Project&gt;</code>
+</pre>
+<img src="proj_implicit.png" alt="Implicit Usings in project properties page" />
+
+<p>This can cause conflicts, if a class name exists in multiple namespaces (which is why it is disabled when upgrading an existing project to net6).</p>
+<p>Even if you turn off implicit usings, you can use <a href="https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/using-directive#global-modifier">global usings</a> which are defined once (it is not an error to define them multiple times in different files).</p>
+<p>The first syntax is in code (maybe in your program.cs):</p>
+<pre><code  class="language-cs">
+global using System;
+global using MyCompany.SuperUtilities;</code>
+</pre>
+<p>You can also add it in the csproj.</p>
+<pre><code  class="language-xml">
+	&lt;ItemGroup&gt;
+		&lt;Using Include="System.IO"/&gt;
+	&lt;/ItemGroup&gt;</code>
+</pre>
+<p>In the obj folder you can see the compiler autogenerates a ConsoleApp1.GlobalUsings.g.cs file with the global usings from the csproj.</p>
+<p>This is nice for keeping the using statements minimal. Sometimes your code will have common classes or extensions in nested namespaces that aren't very discoverable, but you can make them always available using global usings. </p>
+</article>
+<ul class="categories">
+<li><a href="../../../categories/net6/">Net6</a></li>
+</ul>
+<p>Previously: <a href="../../../2018/08/08/TeamCityMsTest.html">TeamCity MsTest</a> (8 August 2018)</p>
+</div>
+<div class="Footer">
+
+</div>
+<script>hljs.highlightAll();</script>
+</body>
+</html>
