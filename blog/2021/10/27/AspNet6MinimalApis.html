@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Asp Net 6 Minimal Apis</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/default.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
+<style>
+.code {background-color: aliceblue;border-radius:10px;padding:20px;box-shadow: 5px 5px #ddd;}
+</style>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Asp Net 6 Minimal Apis</h2>
+<p>Published Wednesday 27 October 2021</p><article>
+<p>When you create a new "Empty" web application, you get just 4 code lines in Program.cs:</p>
+<p class="code"><span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">builder</span>&nbsp;=&nbsp;WebApplication.CreateBuilder(args);<br />
+<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">app</span>&nbsp;=&nbsp;builder.Build();<br />
+ <br />
+app.MapGet(<span style="color:#a31515;">&quot;/&quot;</span>,&nbsp;()&nbsp;=&gt;&nbsp;<span style="color:#a31515;">&quot;Hello&nbsp;World!&quot;</span>);<br />
+ <br />
+app.Run();</p>
+<p>There is a new cut-down lambda syntax for endpoints, suitable for simple microservices. There is no routing and no controllers.</p>
+<p>It's the new .net 6 no-class single-file philosophy. As <a href="https://martinwilley.com/blog/2021/10/15/Net6FirstImpressions.html">I discussed before</a>, it's nice for demos and teaching, but I'm sceptical for real-world professional development. You don't have to religiously adhere to SRP etc to recognise that 100s of lines of code in a single file is bad news.</p>
+<p>There is also the risk of confusion- we already have asp MVC, web api, Razor pages and Blazor. You can mix these types, even in a single website, but that leaves an even heavier learning curve. You can start with one approach and over time the requirements change, forcing a rewrite.  </p>
+<p>The theory is that this is useful for microservices, doing simple and focussed tasks which are not going to evolve and grow. Of course, in practice everything becomes more complex over time.  </p>
+<p>If it looks familiar, it's an evolution of the .net 3 endpoints, which you often ignore because you just do endpoints.MapControllers.</p>
+<p class="code">app.UseEndpoints(<span style="color:#1f377f;">endpoints</span>&nbsp;=&gt;<br/>{<br/>&nbsp;&nbsp;&nbsp;&nbsp;endpoints.MapGet(<span style="color:#a31515;">&quot;/&quot;</span>,&nbsp;<span style="color:blue;">async</span>&nbsp;<span style="color:#1f377f;">context</span>&nbsp;=&gt;<br/>&nbsp;&nbsp;&nbsp;&nbsp;{<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">await</span>&nbsp;context.Response.WriteAsync(<span style="color:#a31515;">&quot;Hello&nbsp;World!&quot;</span>);<br/>&nbsp;&nbsp;&nbsp;&nbsp;});<br/>});</p>
+<p>Under the covers, it is still calling UseRouting() and UseEndpoints(), they are just hidden.</p>
+<p class="code">app.UseRouting();</p>
+<p>Let's take a semi-realistic microservice- a monitoring service. Other services ping it to say they are alive; the monitoring services tracks the pings and can show a list of services that are out-of-date, possibly hung or stopped.</p>
+<p>I'm using Swashbuckle.AspNetCore and EntityFrameworkCore.Sqlite here.</p>
+<p class="code"><span style="color:blue;">using</span>&nbsp;Microsoft.EntityFrameworkCore;<br />
+ <br />
+<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">builder</span>&nbsp;=&nbsp;WebApplication.CreateBuilder(args);<br />
+builder.Services.AddEndpointsApiExplorer();<br />
+builder.Services.AddSwaggerGen();<br />
+builder.Services.AddDbContext&lt;MonitorDb&gt;(<span style="color:#1f377f;">opt</span>&nbsp;=&gt;&nbsp;opt.UseSqlite(<span style="color:#a31515;">&quot;Data&nbsp;Source=Monitors.db;&quot;</span>));<br />
+ <br />
+<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">app</span>&nbsp;=&nbsp;builder.Build();<br />
+<span style="color:#8f08c4;">if</span>&nbsp;(app.Environment.IsDevelopment())<br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;app.UseSwagger();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;app.UseSwaggerUI();<br />
+}<br />
+ <br />
+<span style="color:green;">//this&nbsp;endpoint&nbsp;just&nbsp;to&nbsp;create&nbsp;the&nbsp;empty&nbsp;db&nbsp;without&nbsp;doing&nbsp;a&nbsp;migration</span><br />
+app.MapGet(<span style="color:#a31515;">&quot;/&quot;</span>,&nbsp;<span style="color:blue;">async</span>&nbsp;(MonitorDb&nbsp;<span style="color:#1f377f;">db</span>)&nbsp;=&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">await</span>&nbsp;db.Database.EnsureCreatedAsync());<br />
+ <br />
+<span style="color:green;">//all&nbsp;monitors</span><br />
+app.MapGet(<span style="color:#a31515;">&quot;/list&quot;</span>,&nbsp;<span style="color:blue;">async</span>&nbsp;(MonitorDb&nbsp;<span style="color:#1f377f;">db</span>)&nbsp;=&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">await</span>&nbsp;db.Monitors<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.OrderBy(<span style="color:#1f377f;">m</span>&nbsp;=&gt;&nbsp;m.Name)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.ToListAsync());<br />
+ <br />
+<span style="color:green;">//all&nbsp;monitors&nbsp;more&nbsp;than&nbsp;5&nbsp;minutes&nbsp;old</span><br />
+app.MapGet(<span style="color:#a31515;">&quot;/listOld&quot;</span>,&nbsp;<span style="color:blue;">async</span>&nbsp;(MonitorDb&nbsp;<span style="color:#1f377f;">db</span>)&nbsp;=&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">await</span>&nbsp;db.Monitors<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.OrderBy(<span style="color:#1f377f;">m</span>&nbsp;=&gt;&nbsp;m.Recorded)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.Where(<span style="color:#1f377f;">m</span>&nbsp;=&gt;&nbsp;m.Recorded&nbsp;&lt;=&nbsp;DateTime.Now.AddMinutes(-5))<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.ToListAsync());<br />
+ <br />
+<span style="color:green;">//ping&nbsp;from&nbsp;a&nbsp;named&nbsp;service</span><br />
+app.MapPost(<span style="color:#a31515;">&quot;/ping&quot;</span>,&nbsp;<span style="color:blue;">async</span>&nbsp;(<span style="color:blue;">string</span>&nbsp;<span style="color:#1f377f;">name</span>,&nbsp;MonitorDb&nbsp;<span style="color:#1f377f;">db</span>)&nbsp;=&gt;<br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">monitor</span>&nbsp;=&nbsp;<span style="color:blue;">await</span>&nbsp;db.Monitors.FirstOrDefaultAsync(<span style="color:#1f377f;">x</span>&nbsp;=&gt;&nbsp;x.Name&nbsp;==&nbsp;name);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#8f08c4;">if</span>&nbsp;(monitor&nbsp;==&nbsp;<span style="color:blue;">null</span>)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;monitor&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;Monitor&nbsp;{&nbsp;Name&nbsp;=&nbsp;name&nbsp;};<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;db.Monitors.Add(monitor);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;}<br />
+&nbsp;&nbsp;&nbsp;&nbsp;monitor.Recorded&nbsp;=&nbsp;DateTime.Now;<br />
+ <br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">await</span>&nbsp;db.SaveChangesAsync();<br />
+ <br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#8f08c4;">return</span>&nbsp;Results.Accepted(<span style="color:#a31515;">$&quot;/ping/</span>{monitor.Name}<span style="color:#a31515;">&quot;</span>,&nbsp;monitor);<br />
+});<br />
+app.Run();<br />
+ <br />
+<span style="color:green;">//The&nbsp;model/table</span><br />
+<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">Monitor</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">int</span>&nbsp;Id&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;<span style="color:blue;">set</span>;&nbsp;}<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;DateTime?&nbsp;Recorded&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;<span style="color:blue;">set</span>;&nbsp;}<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">string</span>?&nbsp;Name&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;<span style="color:blue;">set</span>;&nbsp;}<br />
+}<br />
+ <br />
+<span style="color:green;">//The&nbsp;EF&nbsp;DbContext</span><br />
+<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">MonitorDb</span>&nbsp;:&nbsp;DbContext<br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:#2b91af;">MonitorDb</span>(DbContextOptions&lt;MonitorDb&gt;&nbsp;<span style="color:#1f377f;">options</span>)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<span style="color:blue;">base</span>(options)&nbsp;{&nbsp;}
+ <br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;DbSet&lt;Monitor&gt;&nbsp;Monitors&nbsp;=&gt;&nbsp;Set&lt;Monitor&gt;();<br />
+}</p>
+<p>That's 64 lines, not bad. You could reduce it by moving the DbContext and model class to their own files, and not doing the sketchy database creation, but you would add configuration of connection string, perhaps a database migrateAsync initialization, validation (which is lacking, see below), authorization etc </p>
+<ul>
+<li>Routing is via http action handlers- MapGet/MapPost/MapPut/MapDelete. The methods are lambdas, but you can create a method (returning IResult). The same MVC/API binding is being used for arguments, plus DI properties (see below) <ul>
+<li>There is an implicit app.UseRouting() called before everything else (so you can app.UseAuthorization() anywhere- usually the order is critical)</li>
+</ul></li>
+<li>You can add .WithName("routeName") to help with routing redirects.</li>
+<li>Whereas controllers have IActionResult, minimal API lambdas return IResult (eg from static Results.Ok(), Results.BadRequest(), etc).</li>
+<li>DI cannot be via constructor args, so it has parameter DI (and standard HttpContext, HttpRequest, ClaimsPrincipal). </li>
+<li>There is no built-in model validation. You don't have MVC's controller.ModelState.IsValid() or the [ApiController] attribute. You have to do it manually.</li>
+<li>You can add authorization:
+<p>app.MapGet(<span style="color:#a31515;">&quot;/auth&quot;</span>,&nbsp;()&nbsp;=&gt;&nbsp;Results.Ok).RequireAuthorization();</p></li>
+</ul>
+
+<p>If you are confident your microservice will be small, simple and won't change, it looks ok, but it won't take much additional requirements to make good old controllers look easier.</p>
+</article>
+<ul class="categories">
+<li><a href="../../../categories/net6/">Net6</a></li>
+</ul>
+<p>Previously: <a href="../../../2021/10/15/Net6FirstImpressions.html">Net6 First Impressions</a> (27 October 2021)</p>
+</div>
+<div class="Footer">
+
+</div>
+<script>hljs.highlightAll();</script>
+</body>
+</html>
