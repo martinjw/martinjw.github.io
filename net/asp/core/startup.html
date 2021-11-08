@@ -206,8 +206,43 @@ IWebHostEnvironment</td>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br />
 &nbsp;&nbsp;&nbsp;&nbsp;}<br />
 }
-</div
-
+</div>
+<ul>
+<li>app.UseMvc() is obsolete (.net IRouting). For .net 3+, <span style="color:#1f377f;">app</span>.<span style="color:#74531f;">UseEndpoints</span>(<span style="color:#1f377f;">e</span>&nbsp;=&gt; { <span style="color:#1f377f;">e</span>.<span style="color:#74531f;">MapControllers</span>();});</li>
+<li>Order is important- <span style="color:#1f377f;">app</span>.<span style="color:#74531f;">UseRouting</span>(); then .<span style="color:#74531f;">UseAuthorization</span>() then .<span style="color:#74531f;">UseEndpoints</span>()<ul>
+<li>.Net 6 minimal Apis hides UseRouting and UseEndpoints, calling them implicitly in the correct order</li>
+</ul></li>
+</ul>
+<table>
+<tr>
+<th>Type</th>
+<th><span style="color:#74531f;">ConfigureServices</span>(IServiceCollection&nbsp;<span style="color:#1f377f;">services</span>)</th>
+<th><span style="color:#74531f;">Configure</span>(IApplicationBuilder&nbsp;<span style="color:#1f377f;">app</span>,&nbsp;...</th>
+</tr>
+<tr>
+<td>API</td>
+<td><p class="code">services.AddControllers();</p><br/>
+Includes CORS/Authorization etc
+</td>
+<td>
+<p class="code">app.UseEndpoints(<span style="color:#1f377f;">endpoints</span>&nbsp;=&gt;<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;endpoints.MapControllers();<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});</p>
+<p>Hooks up controllers with attributes ([<span style="color:#008000;">Route</span>(<span style="color:#a31515;">&quot;[controller]&quot;</span>)] or [<span style="color:#008000;">HttpPost</span>]</p>
+</td>
+</tr>
+<tr>
+<td>MVC</td>
+<td><p class="code">services.AddControllersWithViews();</p>
+<p>Same as API, but with views!</p></td>
+<td><p class="code">app.UseEndpoints(<span style="color:#1f377f;">endpoints</span>&nbsp;=&gt;<br/>{<br/>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//endpoints.MapDefaultControllerRoute();</span><br/>&nbsp;&nbsp;&nbsp;&nbsp;endpoints.MapControllerRoute(<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name:&nbsp;<span style="color:#a31515;">&quot;default&quot;</span>,<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pattern:&nbsp;<span style="color:#a31515;">&quot;{controller=Home}/{action=Index}/{id?}&quot;</span>);<br/>});</p>
+<p>You have one or more routing patterns to match controller and action names. NB: if it has attributes it is ignored.</p>
+<p>MapDefaultControllerRoute does what the more explicit template code does, and is probably all you need.</p></td>
+</tr>
+<tr>
+<td>Razor Pages</td>
+<td><p class="code">services.AddRazorPages();</p></td>
+<td><p class="code">app.UseEndpoints(<span style="color:#1f377f;">endpoints</span>&nbsp;=&gt;<br/>{<br/>&nbsp;&nbsp;&nbsp;&nbsp;endpoints.MapRazorPages();<br/>});</p></td>
+</tr>
+</table>
 
 
 </div>
