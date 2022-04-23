@@ -288,7 +288,7 @@ mu.urchinLoaded = function () {
 mu.urchinLoad = function () {
     if (!document.createElement) return;
     var script = document.createElement("script");
-    script.src = "http://www.google-analytics.com/ga.js";
+    script.src = "https://www.google-analytics.com/ga.js";
     script.type="text/javascript";
     document.body.appendChild(script);
 	var script2 = document.createElement("script");
