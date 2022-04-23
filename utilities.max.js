@@ -291,6 +291,14 @@ mu.urchinLoad = function () {
     script.src = "http://www.google-analytics.com/ga.js";
     script.type="text/javascript";
     document.body.appendChild(script);
+	var script2 = document.createElement("script");
+    script2.src = "https://www.googletagmanager.com/gtag/js?id=G-JKRBYJ59VT";
+    document.body.appendChild(script2);
+   window.dataLayer = window.dataLayer || [];
+   function gtag(){dataLayer.push(arguments);}
+   gtag('js', new Date());
+   gtag('config', 'G-JKRBYJ59VT');
+
     //onload for scripts
     script.onload = script.onreadystatechange = function() {
         if (script.readyState && script.readyState != 'loaded' && script.readyState != 'complete')
