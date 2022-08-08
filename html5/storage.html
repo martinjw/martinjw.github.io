@@ -208,11 +208,61 @@ function readAllIndexDb() {
 }
 </pre>
 
+<h3>How much storage?</h3>
+<p><a href="https://developer.mozilla.org/en-US/docs/Web/API/StorageManager/estimate">navigator.storage.estimate().then(function(estimate) { })</a></p>
+<p><label>Storage <input type="range" id="storage" /></label> 
+</p>
+<p>Usage <output id="usage"></output></p>
+<p>Quota <output id="quota"></output></p>
+<pre class="prettyPrint">
+function formatBytes(bytes, decimals = 2) {
+    if (bytes === 0) return '0';
+
+    const k = 1024;
+    const dm = decimals &lt; 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+if(navigator.storage) {
+navigator.storage.estimate().then(function(estimate) {
+	let range= document.getElementById("storage");
+	range.value = estimate.usage;
+	range.max = estimate.quota;
+    document.getElementById("usage").value = formatBytes(estimate.usage, 2);
+    document.getElementById("quota").value = formatBytes(estimate.quota,2);
+});
+}
+</pre>
+
+
 </div>
 <div class="Footer"><script type="text/javascript" src="../js/prettify.js">
 </script>
-<script type="text/javascript">
+<script>
 prettyPrint();
+function formatBytes(bytes, decimals = 2) {
+    if (bytes === 0) return '0';
+
+    const k = 1024;
+    const dm = decimals &lt; 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+if(navigator.storage) {
+navigator.storage.estimate().then(function(estimate) {
+	let range= document.getElementById("storage");
+	range.value = estimate.usage;
+	range.max = estimate.quota;
+    document.getElementById("usage").value = formatBytes(estimate.usage, 2);
+    document.getElementById("quota").value = formatBytes(estimate.quota,2);
+});
+}
 </script>
 </div>
 </body>
