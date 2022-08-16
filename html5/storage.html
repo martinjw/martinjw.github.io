@@ -210,7 +210,7 @@ function readAllIndexDb() {
 
 <h3>How much storage?</h3>
 <p><a href="https://developer.mozilla.org/en-US/docs/Web/API/StorageManager/estimate">navigator.storage.estimate().then(function(estimate) { })</a></p>
-<p><label>Storage <input type="range" id="storage" /></label> 
+	<p><label>Storage <meter id="storage"></meter></label> 
 </p>
 <p>Usage <output id="usage"></output></p>
 <p>Quota <output id="quota"></output></p>
@@ -225,9 +225,9 @@ function formatBytes(bytes, decimals = 2) {
 }
 if(navigator.storage) {
 navigator.storage.estimate().then(function(estimate) {
-	let range= document.getElementById("storage");
-	range.value = estimate.usage;
-	range.max = estimate.quota;
+	let meter= document.getElementById("storage");
+	meter.value = estimate.usage;
+	meter.max = estimate.quota;
     document.getElementById("usage").value = formatBytes(estimate.usage, 2);
     document.getElementById("quota").value = formatBytes(estimate.quota,2);
 });
@@ -250,9 +250,9 @@ function formatBytes(bytes, decimals = 2) {
 }
 if(navigator.storage) {
 navigator.storage.estimate().then(function(estimate) {
-	let range= document.getElementById("storage");
-	range.value = estimate.usage;
-	range.max = estimate.quota;
+	let meter= document.getElementById("storage");
+	meter.value = estimate.usage;
+	meter.max = estimate.quota;
     document.getElementById("usage").value = formatBytes(estimate.usage, 2);
     document.getElementById("quota").value = formatBytes(estimate.quota,2);
 });
