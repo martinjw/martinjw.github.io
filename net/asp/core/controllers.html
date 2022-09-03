@@ -33,7 +33,13 @@
 <div class="content">
 <h2>ASP.Net Core Controllers</h2>
 
-<p>Up to ASP.net 4.6, MVC used a "Controller" base class while WebApi had an "ApiController" base class. For Core, MVC and Api have a single base class, "Controller" (and they can use POCO controllers, with no base class).</p>
+<p>Up to ASP.net 4.6, MVC used a "Controller" base class while WebApi had an "ApiController" base class. 
+    For Core, MVC and Api moved to a single base class, "Controller" (and they can use POCO controllers, with no base class).</p>
+    <p>For Net 6+ we effectively use 2 base classes again (or Minimal Api!) </p>
+    <ul>
+        <li>API controler: ControllerBase and has [ApiController] attribute, which dictates attribute routing (not endpoint routing)</li>
+        <li>MVC controller: Controller (which :ControllerBase)</li>
+    </ul>
 <h3>Dependency Injection</h3>
 <ul>
 <li>In Startup.<strong>ConfigureServices</strong> add your services: services.AddTransient&lt;IService, MyService&gt;()</li>
