@@ -72,6 +72,32 @@ You can also accept an IOptions&lt;settings&gt; instance to read your settings (
 <p>You cannot use MVC 5 <a href="../mvc/mvcactions.html">partial actions</a> - <span style="background: yellow;">@</span>Html.Action / [<span style="color: #2b91af;">ChildActionOnly</span>] / <span style="color: blue;">return</span> PartialView </p>
 <p>Use viewcomponents instead: <span style="background: yellow;">@</span>Component.Invoke("name",model) / component inherits from ViewComponent and implements Invoke(args)</p>
 
+ <h3>Dependency Injection</h3>
+<p>ILogger and IOptions are built in. You can also get the root path via <span style="color:#1f377f;">IWebHostEnvironment</span> (NB: create a wwwroot folder in the project or it doesn't work)</p>
+    <p>See <a href="https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection?view=aspnetcore-6.0#framework-provided-services">Microsoft docs</p>
+    <div class="code">
+  <span style="color:blue;">private</span>&nbsp;<span style="color:blue;">readonly</span>&nbsp;ILogger&lt;UserManualController&gt;&nbsp;_logger;<br />
+<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">readonly</span>&nbsp;IWebHostEnvironment&nbsp;_webHostEnvironment;<br />
+ <br />
+<span style="color:blue;">public</span>&nbsp;<span style="color:#2b91af;">UserManualController</span>(<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ILogger&lt;UserManualController&gt;&nbsp;<span style="color:#1f377f;">logger</span>,&nbsp;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IWebHostEnvironment&nbsp;<span style="color:#1f377f;">webHostEnvironment</span>)<br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;_logger&nbsp;=&nbsp;logger;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;_webHostEnvironment&nbsp;=&nbsp;webHostEnvironment;<br />
+}<br />
+ <br />
+[HttpGet(<span style="color:#a31515;">&quot;/Download&quot;</span>)]<br />
+<span style="color:blue;">public</span>&nbsp;IActionResult&nbsp;<span style="color:#74531f;">Download</span>()<br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//you&nbsp;must&nbsp;have&nbsp;a&nbsp;wwwroot&nbsp;folder&nbsp;otherwise&nbsp;WebRootPath&nbsp;is&nbsp;null</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">path</span>&nbsp;=&nbsp;Path.Combine(Path.Combine(_webHostEnvironment.WebRootPath,&nbsp;<span style="color:#a31515;">&quot;Manual&quot;</span>),&nbsp;<span style="color:#a31515;">&quot;userguide.pdf&quot;</span>);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;_logger.LogInformation(<span style="color:#a31515;">$&quot;Downloading&nbsp;</span>{path}<span style="color:#a31515;">&quot;</span>);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">fileStream</span>&nbsp;=&nbsp;System.IO.File.OpenRead(path);<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#8f08c4;">return</span>&nbsp;File(fileStream,&nbsp;<span style="color:#a31515;">&quot;application/pdf&quot;</span>);<br />
+}    
+ </code>
+    
 </div>
 <div class="Footer"></div>
 </body>
