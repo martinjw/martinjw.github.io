@@ -46,7 +46,14 @@ builder.AddJsonFile(<span style="color:#a31515;">&quot;appsettings.json&quot;</s
 IConfigurationRoot&nbsp;<span style="color:#1f377f;">config</span>&nbsp;=&nbsp;builder.Build();<br/>
 <span style="color:blue;">string</span>&nbsp;<span style="color:#1f377f;">value</span>&nbsp;=&nbsp;config[<span style="color:#a31515;">&quot;Key&quot;</span>];&nbsp;<span style="color:green;">//&nbsp;get&nbsp;a&nbsp;value</span></p>
 </div>
-
+<p>Install <cite>Microsoft.Extensions.Configuration.Json</cite> and <cite>Microsoft.Extensions.Configuration.Binder</cite></p>
+<div class="code">
+<p><span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">config</span> = <span style="color:blue;">new</span> ConfigurationBuilder()<br/>
+&nbsp;&nbsp;&nbsp;.AddJsonFile(<span style="color:#a31515;">"appsettings.json"</span>)<br/>
+&nbsp;&nbsp;&nbsp;.Build();<br/>
+<br/>
+<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">settings</span> = config.GetRequiredSection(<span style="color:#a31515;">"Settings"</span>).Get&lt;<span style="color:#2b91af;">Settings</span>&gt;();</p>
+</div>
 
 <p>In a web application, it is done as part of <span style="color:#2b91af;">Host</span>.<span style="color:#74531f;">CreateDefaultBuilder</span>(<span style="color:#1f377f;">args</span>), or, in .net 6, <span style="color:#2b91af;">WebApplication</span>.<span style="color:#74531f;">CreateBuilder</span>(<span style="color:#1f377f;">args</span>) </p>
 <p>The default order is (later ones override earlier ones):</p>
