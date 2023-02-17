@@ -1,5 +1,4 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
@@ -21,6 +20,7 @@
 <li><a href="project.html">Core Project</a></li>
 <li><a href="startup.html">Startup</a></li>
 <li><a href="config.html">Config Settings</a></li>
+<li><a href="env.html">Config Environments</a></li>
 <li><a href="iis.html">IIS</a></li>
 <li><a href="controllers.html">Controllers</a></li>
 <li><a href="views.html">Views</a></li>
@@ -34,26 +34,11 @@
 <h2>ASP.Net Core Configuration Settings</h2>
 
 <ul>
-<li><a href="https://docs.asp.net/en/latest/fundamentals/configuration.html">docs.asp.net</a></li>
+<li><a href="https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/">docs.asp.net</a></li>
+<li>See also <a href="env.html">Environments</a> for different sets of configuration</li>
 </ul>
 <p>Web.config no longer exists, so connection strings and other settings must be stored in other files- json or xml or environmental variables.</p>
 <h3>ConfigurationBuilder</h3>
-
-<p>You can manually new a ConfigurationBuilder directly (without the DI/logging of Host)</p>
-<div class="code">
-<p><span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">builder</span>&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;ConfigurationBuilder();<br/>
-builder.AddJsonFile(<span style="color:#a31515;">&quot;appsettings.json&quot;</span>);<br/>
-IConfigurationRoot&nbsp;<span style="color:#1f377f;">config</span>&nbsp;=&nbsp;builder.Build();<br/>
-<span style="color:blue;">string</span>&nbsp;<span style="color:#1f377f;">value</span>&nbsp;=&nbsp;config[<span style="color:#a31515;">&quot;Key&quot;</span>];&nbsp;<span style="color:green;">//&nbsp;get&nbsp;a&nbsp;value</span></p>
-</div>
-<p>Install <cite>Microsoft.Extensions.Configuration.Json</cite> and <cite>Microsoft.Extensions.Configuration.Binder</cite></p>
-<div class="code">
-<p><span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">config</span> = <span style="color:blue;">new</span> ConfigurationBuilder()<br/>
-&nbsp;&nbsp;&nbsp;.AddJsonFile(<span style="color:#a31515;">"appsettings.json"</span>)<br/>
-&nbsp;&nbsp;&nbsp;.Build();<br/>
-<br/>
-<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">settings</span> = config.GetRequiredSection(<span style="color:#a31515;">"Settings"</span>).Get&lt;<span style="color:#2b91af;">Settings</span>&gt;();</p>
-</div>
 
 <p>In a web application, it is done as part of <span style="color:#2b91af;">Host</span>.<span style="color:#74531f;">CreateDefaultBuilder</span>(<span style="color:#1f377f;">args</span>), or, in .net 6, <span style="color:#2b91af;">WebApplication</span>.<span style="color:#74531f;">CreateBuilder</span>(<span style="color:#1f377f;">args</span>) </p>
 <p>The default order is (later ones override earlier ones):</p>
@@ -93,6 +78,18 @@ IConfigurationRoot&nbsp;<span style="color:#1f377f;">config</span>&nbsp;=&nbsp;b
 
 <p>In .net 6 there is a ConfigurationManager class, which looks similar, but adds the sources when you do builder.Add() ... builder.Build() is a no-op. This helps avoid scenarios when some config is needed for another (eg config in database).</p>
 
+<h3>Manual ConfigurationBuilder</h3>
+<p>In .net 6 consoles, there's no equivalent to WebApplication.CreateBuilder and we're stuck with the old Host.CreateDefaultBuilder(args). For consoles, it imposes an AddHostedService() using a type of IHostedService, which you have to implement. It's usually overkill, but you can get standard configuration out of it (and services too if required).</p>
+<p>Most minimal: Install <cite>Microsoft.Extensions.Configuration.Json</cite> and <cite>Microsoft.Extensions.Configuration.Binder</cite></p>
+<div class="code">
+<p><span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">config</span> = <span style="color:blue;">new</span> ConfigurationBuilder()<br/>
+&nbsp;&nbsp;&nbsp;.AddJsonFile(<span style="color:#a31515;">"appsettings.json"</span>)<br/>
+&nbsp;&nbsp;&nbsp;.Build();<br/>
+<br/>
+<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">settings</span> = config.GetRequiredSection(<span style="color:#a31515;">"Settings"</span>).Get&lt;<span style="color:#2b91af;">Settings</span>&gt;();</p>
+</div>
+<p>Hacky, but gets appsettings.[env].json just like asp, and you could build and get the services.</p>
+<div class="code">IConfiguration&nbsp;<span style="color:#1f377f;">configuration</span>&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br/><span style="color:blue;">string</span>&nbsp;<span style="color:#1f377f;">environmentName</span>&nbsp;=&nbsp;<span style="color:blue;">null</span>;<br/><span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">builder</span>=&nbsp;Host.CreateDefaultBuilder(args)<br/>&nbsp;&nbsp;&nbsp;&nbsp;.ConfigureServices((<span style="color:#1f377f;">context</span>,&nbsp;<span style="color:#1f377f;">services</span>)&nbsp;=&gt;<br/>&nbsp;&nbsp;&nbsp;&nbsp;{<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;configuration&nbsp;=&nbsp;context.Configuration;<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;environmentName=&nbsp;context.HostingEnvironment.EnvironmentName;<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;services.AddTransient&lt;IMyService,&nbsp;MyService&gt;();<br/>&nbsp;&nbsp;&nbsp;&nbsp;})<br/>&nbsp;&nbsp;&nbsp;&nbsp;.Build();<br/> <br/><span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">settings</span>&nbsp;=&nbsp;configuration.GetRequiredSection(<span style="color:#a31515;">&quot;Settings&quot;</span>).Get&lt;Settings&gt;();<br/> <br/><span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">myService</span>&nbsp;=&nbsp;builder.Services.GetService&lt;IMyService&gt;();<br/> <br/><span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">runner</span>&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;Runner(environmentName,&nbsp;settings,&nbsp;myService);<br/>runner.Run();</div>
 <h3>Using config settings</h3>
 
 <p>ConfigurationBuilder creates an IConfiguration object, a bag containing all your settings. The standard dependency injection will plug it into your constructors (including Startup.cs)</p>
