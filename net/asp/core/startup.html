@@ -39,7 +39,50 @@
 
 <h3>static void Main</h3>
 <p>Asp.Net Core is a true console application, with a <span style="color:blue;">public</span>&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:darkcyan;">Main</span>(<span style="color:blue;">string</span>[]&nbsp;args)</p>
-<p>In .net core 3.1 it looks like this. In asp use <a href="https://docs.microsoft.com/en-us/aspnet/core/fundamentals/host/web-host?view=aspnetcore-5.0">WebHost</a> (in .net6 you can use WebApplication, which removes the need for Startup.cs) </p>
+<p>In Core 3.1 there were separate Program.cs and Startup.cs. In .net 6, everything is in Program.cs (but old projects aren't upgraded, and Startup.cs still works).</p>
+
+<p>For <a href="di.html">Dependency Injection</a> with, say, <a href="https://autofac.readthedocs.io/en/latest/integration/aspnetcore.html">Autofac</a>, add Autofac.Extensions.DependencyInjection:</p>
+<div class="code">
+<p><span style="color:#2b91af;">Host</span>.<span style="color:#74531f;">CreateDefaultBuilder</span>(<span style="color:#1f377f;">args</span>)<br />
+.<span style="color:#74531f;">UseServiceProviderFactory</span>(new <span style="color:#2b91af;">AutofacServiceProviderFactory</span>()) //etc</p>
+</div>
+<p>See configuration for <a href="https://github.com/serilog/serilog-aspnetcore">Serilog logging</a> and <a href="https://github.com/NLog/NLog/wiki/Getting-started-with-ASP.NET-Core-3">NLog logging</a></p>
+
+<div class="code">
+<p><span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">builder</span>&nbsp;=&nbsp;<span style="color:#2b91af;">WebApplication</span>.<span style="color:#74531f;">CreateBuilder</span>(<span style="color:#1f377f;">args</span>);<br/>
+<span style="color:#1f377f;">builder.Services.</span><span style="color:#74531f;">AddControllersWithViews</span>();<br />
+<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">app</span>&nbsp;=&nbsp;<span style="color:#1f377f;">builder</span>.<span style="color:#74531f;">Build</span>();<br />
+<span style="color:green;">//trimmed app.Use stuff</span><br />
+<span style="color:#1f377f;">app</span>.<span style="color:#74531f;">UseRouting</span>();<br />
+<span style="color:#1f377f;">app</span>.<span style="color:#74531f;">UseAuthorization</span>();<br />
+<span style="color:#1f377f;">app</span>.<span style="color:#74531f;">MapControllerRoute</span>(<br/>
+&nbsp;&nbsp;name:<span style="color:#a31515;">"default"</span><br />
+&nbsp;&nbsp;pattern: <span style="color:#a31515;">"{controller=Home}/{action=Index}/{id?}"</span>);<br />
+<span style="color:#1f377f;">app</span>.<span style="color:#74531f;">Run</span>();
+</p>
+</div>
+<ul>
+<li><span style="color:#2b91af;">WebApplication</span>.<span style="color:#74531f;">CreateBuilder</span> is the new <span style="color:#2b91af;">WebHost</span>.<span style="color:#74531f;">CreateDefaultBuilder</span></li>
+<li><span style="color:#74531f;">UseStartup</span>&lt;<span style="color:#2b91af;">Startup</span>&gt;();> will error. Startup doesn't exist anymore. But you can extract out the configuration.</li>
+</ul>
+
+<h3>Nuget packages</h3>
+<p>You will probably need:</p><ul>
+<li>Dependency Injection - Autofac.Extensions.DependencyInjection <a href="di.html#autofac">See example</a></li>
+<li>Logging - NLog.Web.AspNetCore. <a href="logging.html#nlog">See example</a></li>
+<li>Some sort of authentication. For webAPI, probably Microsoft.AspNetCore.Authentication.JwtBearer <a href="security.html#jwt">See example</a></li>
+<li>For webAPI, you probably want MediatR</li>
+</ul>
+<div class="code"><span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PackageReference</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Include</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">Autofac.Extensions.DependencyInjection</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">Version</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">8.0.0</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br/>
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PackageReference</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Include</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">MediatR</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">Version</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">12.1.1</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br/>
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PackageReference</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Include</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">Microsoft.AspNetCore.Authentication.JwtBearer</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">Version</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">6.0.22</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br/>
+<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PackageReference</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Include</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">NLog.Web.AspNetCore</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">Version</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">5.3.4</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span></div>
+
+
+<h2>Older versions of Core</h2>
+<details>
+<summary>.Net Core 3.1</summary>
+<p>In .net core 3.1 for asp use <a href="https://docs.microsoft.com/en-us/aspnet/core/fundamentals/host/web-host?view=aspnetcore-5.0">WebHost</a> (in .net6 you can use WebApplication, which removes the need for Startup.cs) </p>
 <div class="code">
 <p><span style="color:blue;">public</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">Program</span><br/>
 {<br/>
@@ -56,48 +99,6 @@
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});<br/>
 }</p>
 </div>
-<p>For <a href="di.html">Dependency Injection</a> with, say, <a href="https://autofac.readthedocs.io/en/latest/integration/aspnetcore.html">Autofac</a>, add Autofac.Extensions.DependencyInjection:</p>
-<div class="code">
-<p><span style="color:#2b91af;">Host</span>.<span style="color:#74531f;">CreateDefaultBuilder</span>(<span style="color:#1f377f;">args</span>)<br />
-.<span style="color:#74531f;">UseServiceProviderFactory</span>(new <span style="color:#2b91af;">AutofacServiceProviderFactory</span>()) //etc</p>
-</div>
-<p>See configuration for <a href="https://github.com/serilog/serilog-aspnetcore">Serilog logging</a> and <a href="https://github.com/NLog/NLog/wiki/Getting-started-with-ASP.NET-Core-3">NLog logging</a></p>
-<p>In .net 6, old projects aren't upgraded, but new ones have the "class-less" program.cs format and a more imperative style.</p>
-<div class="code">
-<p><span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">builder</span>&nbsp;=&nbsp;<span style="color:#2b91af;">WebApplication</span>.<span style="color:#74531f;">CreateBuilder</span>(<span style="color:#1f377f;">args</span>);<br/>
-<span style="color:#1f377f;">builder.Services.</span><span style="color:#74531f;">AddControllersWithViews</span>();<br />
-<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">app</span>&nbsp;=&nbsp;<span style="color:#1f377f;">builder</span>.<span style="color:#74531f;">Build</span>();<br />
-<span style="color:green;">//trimmed app.Use stuff</span><br />
-<span style="color:#1f377f;">app</span>.<span style="color:#74531f;">UseRouting</span>();<br />
-<span style="color:#1f377f;">app</span>.<span style="color:#74531f;">UseAuthorization</span>();<br />
-<span style="color:#1f377f;">app</span>.<span style="color:#74531f;">MapControllerRoute</span>(<br/>
-&nbsp;&nbsp;name:<span style="color:#a31515;">"default"</span><br />
-&nbsp;&nbsp;pattern: <span style="color:#a31515;">"{controller=Home}/{action=Index}/{id?}"</span>);<br />
-<span style="color:#1f377f;">app</span>.<span style="color:#74531f;">Run</span>();
-</p>
-</div>
-<ul>
-<li><span style="color:#2b91af;">WebApplication</span>.<span style="color:#74531f;">CreateBuilder</span> is the new <span style="color:#2b91af;">WebHost</span>.<span style="color:#74531f;">CreateDefaultBuilder</span></li>
-<li><span style="color:#74531f;">UseStartup</span>&lt;<span style="color:#2b91af;">Startup</span>&gt;();> will error. Startup doesn't exist anymore. But you can extract out the configuration, see below.</li>
-</ul>
-
-<details>
-<summary>.Net Core 1</summary>
-<p>In RC1 it was in Startup.cs; from RC2 it is in Program.cs</p>
-<div class="code">
-<p><span style="color:blue;">public</span>&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:darkcyan;">Main</span>(<span style="color:blue;">string</span>[]&nbsp;args)<br/>
-{<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;host&nbsp;=&nbsp;new <span style="color:#2b91af;">WebHostBuilder</span>(args)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.UseKestrel()<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.UseContentRoot(<span style="color:#2b91af;">Directory</span>.GetCurrentDirectory())<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.UseIISIntegration()<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.UseStartup&lt;<span style="color:#2b91af;">Startup</span>&gt;()<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.Build();<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;host.Run();<br/>
-}</p>
-</div>
-<p>For Windows/IIS, you don't need to change this.</p>
-</details>
 
 
 <h3>Startup.cs</h3>
@@ -225,7 +226,10 @@ IWebHostEnvironment</td>
 Includes CORS/Authorization etc
 </td>
 <td>
-<p class="code">app.UseEndpoints(<span style="color:#1f377f;">endpoints</span>&nbsp;=&gt;<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;endpoints.MapControllers();<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});</p>
+<p class="code">app.UseEndpoints(<span style="color:#1f377f;">endpoints</span>&nbsp;=&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;endpoints.MapControllers();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});</p>
 <p>Hooks up controllers with attributes ([<span style="color:#008000;">Route</span>(<span style="color:#a31515;">&quot;[controller]&quot;</span>)] or [<span style="color:#008000;">HttpPost</span>]</p>
 </td>
 </tr>
@@ -233,16 +237,46 @@ Includes CORS/Authorization etc
 <td>MVC</td>
 <td><p class="code">services.AddControllersWithViews();</p>
 <p>Same as API, but with views!</p></td>
-<td><p class="code">app.UseEndpoints(<span style="color:#1f377f;">endpoints</span>&nbsp;=&gt;<br/>{<br/>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//endpoints.MapDefaultControllerRoute();</span><br/>&nbsp;&nbsp;&nbsp;&nbsp;endpoints.MapControllerRoute(<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name:&nbsp;<span style="color:#a31515;">&quot;default&quot;</span>,<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pattern:&nbsp;<span style="color:#a31515;">&quot;{controller=Home}/{action=Index}/{id?}&quot;</span>);<br/>});</p>
+<td><p class="code">app.UseEndpoints(<span style="color:#1f377f;">endpoints</span>&nbsp;=&gt;<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//endpoints.MapDefaultControllerRoute();</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;endpoints.MapControllerRoute(<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name:&nbsp;<span style="color:#a31515;">&quot;default&quot;</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pattern:&nbsp;<span style="color:#a31515;">&quot;{controller=Home}/{action=Index}/{id?}&quot;</span>);<br/>
+});</p>
 <p>You have one or more routing patterns to match controller and action names. NB: if it has attributes it is ignored.</p>
 <p>MapDefaultControllerRoute does what the more explicit template code does, and is probably all you need.</p></td>
 </tr>
 <tr>
 <td>Razor Pages</td>
 <td><p class="code">services.AddRazorPages();</p></td>
-<td><p class="code">app.UseEndpoints(<span style="color:#1f377f;">endpoints</span>&nbsp;=&gt;<br/>{<br/>&nbsp;&nbsp;&nbsp;&nbsp;endpoints.MapRazorPages();<br/>});</p></td>
+<td><p class="code">app.UseEndpoints(<span style="color:#1f377f;">endpoints</span>&nbsp;=&gt;<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;endpoints.MapRazorPages();<br/>
+});</p></td>
 </tr>
 </table>
+
+
+</details>
+
+<details>
+<summary>.Net Core 1</summary>
+<p>In RC1 it was in Startup.cs; from RC2 it is in Program.cs</p>
+<div class="code">
+<p><span style="color:blue;">public</span>&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:darkcyan;">Main</span>(<span style="color:blue;">string</span>[]&nbsp;args)<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;host&nbsp;=&nbsp;new <span style="color:#2b91af;">WebHostBuilder</span>(args)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.UseKestrel()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.UseContentRoot(<span style="color:#2b91af;">Directory</span>.GetCurrentDirectory())<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.UseIISIntegration()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.UseStartup&lt;<span style="color:#2b91af;">Startup</span>&gt;()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.Build();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;host.Run();<br/>
+}</p>
+</div>
+<p>For Windows/IIS, you don't need to change this.</p>
+</details>
 
 
 </div>

@@ -37,11 +37,7 @@
 
 <p>There is a simple DI built into core (using IServiceProvider, which goes back to .net 1.1 but now is in Microsoft.Extensions.DependencyInjection.Abstractions).<br />
 It's functional enough that a full DI container isn't required, but the usual suspects have hooks.</p>
-<p>Eg <a href="https://autofac.readthedocs.io/en/latest/integration/aspnetcore.html">Autofac</a>, add Autofac.Extensions.DependencyInjection and in Program.cs:</p>
-<div class="code">
-<p><span style="color:#2b91af;">Host</span>.<span style="color:#74531f;">CreateDefaultBuilder</span>(<span style="color:#1f377f;">args</span>)<br />
-.<span style="color:#74531f;">UseServiceProviderFactory</span>(new <span style="color:#2b91af;">AutofacServiceProviderFactory</span>()) //etc</p>
-</div>
+<p><a href="#autofac">See autofac below</a></p>
 <h3>Configuration</h3>
 <p>Services are configured in Startup.<strong>ConfigureServices</strong>(IServiceCollection services)</p>
 <p>Most middleware services are added using the standard services.AddX convention.</p>
@@ -114,8 +110,41 @@ It's functional enough that a full DI container isn't required, but the usual su
  
 }</p>
 </div>
+<h3><a name="autofac">Autofac</a></h3>
+<p>Eg <a href="https://autofac.readthedocs.io/en/latest/integration/aspnetcore.html">Autofac</a>, add Autofac.Extensions.DependencyInjection and in Program.cs:</p>
+<div class="code">
+<p><span style="color:#2b91af;">Host</span>.<span style="color:#74531f;">CreateDefaultBuilder</span>(<span style="color:#1f377f;">args</span>)<br />
+.<span style="color:#74531f;">UseServiceProviderFactory</span>(new <span style="color:#2b91af;">AutofacServiceProviderFactory</span>()) //etc</p>
+</div>
+<p>Fuller example</p>
+<div class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">builder</span>&nbsp;=&nbsp;WebApplication.CreateBuilder(args);<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Add&nbsp;services&nbsp;to&nbsp;the&nbsp;container.</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//grab&nbsp;the&nbsp;connection&nbsp;string</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">connString</span>&nbsp;=&nbsp;builder.Configuration.GetConnectionString(<span style="color:#a31515;">&quot;Database&quot;</span>);<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//autofac</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;builder.Host.UseServiceProviderFactory(<span style="color:blue;">new</span>&nbsp;AutofacServiceProviderFactory())<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.ConfigureContainer&lt;ContainerBuilder&gt;(<span style="color:#1f377f;">cb</span>&nbsp;=&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cb.RegisterModule(<span style="color:blue;">new</span>&nbsp;RegistryModule());<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//inject&nbsp;the&nbsp;connection&nbsp;string</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cb.Register(<span style="color:#1f377f;">c</span>&nbsp;=&gt;&nbsp;<span style="color:blue;">new</span>&nbsp;ConnectionFactory(connString)).As&lt;IConnectionFactory&gt;();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});</div>
 
-
+<p>Extract the DI config itself into an autofac module</p>
+<div class="code"><span style="color:blue;">using</span>&nbsp;Autofac;<br/>
+ <br/>
+<span style="color:blue;">namespace</span>&nbsp;MyWebApi;<br/>
+ <br/>
+<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">RegistryModule</span>&nbsp;:&nbsp;Module<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">protected</span>&nbsp;<span style="color:blue;">override</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:#74531f;">Load</span>(ContainerBuilder&nbsp;<span style="color:#1f377f;">builder</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//hook&nbsp;up&nbsp;all&nbsp;your&nbsp;assemblies</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;builder.RegisterAssemblyTypes(<span style="color:blue;">typeof</span>(MyService).Assembly).PublicOnly().AsImplementedInterfaces();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+}</div>
 </div>
 <div class="Footer"></div>
 </body>
