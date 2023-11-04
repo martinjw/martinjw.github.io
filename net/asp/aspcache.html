@@ -27,7 +27,14 @@
 </div>
 <div class="content">
 <h2>ASP Caching</h2>
-
+<div class="alert">
+<p>For Core, ignore everything below this (although System.Runtime.Caching still exists).</p>
+<ul>
+<li>install <cite>Microsoft.Extensions.Caching.Memory</cite> </li>
+<li>in your startup .Services.AddMemoryCache()</li>
+<li>In classes, get IMemoryCache via ctor injection</li>
+</ul>
+</div>
 <ul>
 <li>Session (<a href="http://msdn.microsoft.com/en-us/library/system.web.sessionstate.httpsessionstate.aspx">HttpSessionState</a>) - per user cache</li>
 <li>Application (<a href="http://msdn.microsoft.com/en-us/library/system.web.httpapplicationstate.aspx">HttpApplicationState</a> - global cache (all users). DOES NOT EXPIRE.</li>
