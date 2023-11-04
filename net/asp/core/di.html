@@ -132,7 +132,7 @@ It's functional enough that a full DI container isn't required, but the usual su
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cb.Register(<span style="color:#1f377f;">c</span>&nbsp;=&gt;&nbsp;<span style="color:blue;">new</span>&nbsp;ConnectionFactory(connString)).As&lt;IConnectionFactory&gt;();<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});</div>
 
-<p>Extract the DI config itself into an autofac module</p>
+<p>Extract the DI config itself into an autofac module. Especially if you have multiple websites/apis/consoles/tests, one or more DI config modules is the best way to build them in the same way.</p>
 <div class="code"><span style="color:blue;">using</span>&nbsp;Autofac;<br/>
  <br/>
 <span style="color:blue;">namespace</span>&nbsp;MyWebApi;<br/>
@@ -143,6 +143,195 @@ It's functional enough that a full DI container isn't required, but the usual su
 &nbsp;&nbsp;&nbsp;&nbsp;{<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//hook&nbsp;up&nbsp;all&nbsp;your&nbsp;assemblies</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;builder.RegisterAssemblyTypes(<span style="color:blue;">typeof</span>(MyService).Assembly).PublicOnly().AsImplementedInterfaces();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+}</div>
+
+<h3>DI with user</h3>
+<p>The key here is to hook into IHttpContextAccessor in a lifetime scope.</p>
+<div class="code"><span style="color:blue;">public</span>&nbsp;<span style="color:blue;">interface</span>&nbsp;<span style="color:#2b91af;">IUserContext</span><br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;ClaimsPrincipal&nbsp;User&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;}<br/>
+}
+<br/>
+<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">UserContext</span>&nbsp;:&nbsp;IUserContext<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:#2b91af;">UserContext</span>(IHttpContextAccessor&nbsp;<span style="color:#1f377f;">httpContextAccessor</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;User&nbsp;=&nbsp;httpContextAccessor.HttpContext?.User&nbsp;??&nbsp;<span style="color:blue;">new</span>&nbsp;ClaimsPrincipal();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;ClaimsPrincipal&nbsp;User&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;}<br/>
+}
+<br />
+<br/>
+<span style="color:blue;">using</span>&nbsp;Autofac;<br/>
+<span style="color:blue;">using</span>&nbsp;Logic;<br/>
+<span style="color:blue;">using</span>&nbsp;Microsoft.AspNetCore.Http;<br/>
+ <br/>
+<span style="color:blue;">namespace</span>&nbsp;Api.Startup<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">RegistryModule</span>&nbsp;:&nbsp;Module<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">protected</span>&nbsp;<span style="color:blue;">override</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:#74531f;">Load</span>(ContainerBuilder&nbsp;<span style="color:#1f377f;">builder</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//register&nbsp;interfaces</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;builder.RegisterAssemblyTypes(<span style="color:blue;">typeof</span>(ConnectionFactory).Assembly).PublicOnly().AsImplementedInterfaces();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//register&nbsp;also&nbsp;concrete&nbsp;classes</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;builder.RegisterAssemblyTypes(<span style="color:blue;">typeof</span>(ConnectionFactory).Assembly).PublicOnly();<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//register&nbsp;httpContext&nbsp;(yes,&nbsp;as&nbsp;a&nbsp;singleton)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;builder.RegisterType&lt;HttpContextAccessor&gt;().As&lt;IHttpContextAccessor&gt;().SingleInstance();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//and&nbsp;the&nbsp;user&nbsp;is&nbsp;scoped</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;builder.RegisterType&lt;UserContext&gt;().As&lt;IUserContext&gt;().InstancePerLifetimeScope();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+}<br/>
+<br/>
+
+</div>
+<p>And hook up the module from your Program.Main</p>
+<div class="code"><span style="color:blue;">public</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">Program</span><br/>
+{<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:#74531f;">Main</span>(<span style="color:blue;">string</span>[]&nbsp;<span style="color:#1f377f;">args</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">builder</span>&nbsp;=&nbsp;WebApplication.CreateBuilder(args);<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Add&nbsp;services&nbsp;to&nbsp;the&nbsp;container.</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//grab&nbsp;the&nbsp;connection&nbsp;string</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">connectionString</span>&nbsp;=&nbsp;builder.Configuration.GetConnectionString(<span style="color:#a31515;">&quot;Db&quot;</span>);<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//autofac</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;builder.Host.UseServiceProviderFactory(<span style="color:blue;">new</span>&nbsp;AutofacServiceProviderFactory())<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.ConfigureContainer&lt;ContainerBuilder&gt;(<span style="color:#1f377f;">cb</span>&nbsp;=&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cb.RegisterModule(<span style="color:blue;">new</span>&nbsp;RegistryModule());<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//inject&nbsp;the&nbsp;connection&nbsp;string</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cb.Register(<span style="color:#1f377f;">c</span>&nbsp;=&gt;&nbsp;<span style="color:blue;">new</span>&nbsp;ConnectionFactory(connectionString)).As&lt;IConnectionFactory&gt;();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});<br/>
+</div>
+
+<h3>Testing DI</h3>
+<p>You should have some sort of test for UI, plus, except for simple unit tests, you probably want DI in tests.</p>
+<ul>
+<li>Install-Package Autofac</li>
+<li>Install-Package Microsoft.Extensions.Hosting so we can grab configuration (or use Microsoft.Extensions.Configuration for more low-level control)</li>
+</ul>
+<p>Here's the test structure we want (this is an integration test - we save and read a record but the non-committing transaction ensures nothing remains in the db).</p>
+<div class="code"><span style="color:blue;">using</span>&nbsp;Autofac;<br/>
+<span style="color:blue;">using</span>&nbsp;Services;<br/>
+<span style="color:blue;">using</span>&nbsp;Models;<br/>
+<span style="color:blue;">using</span>&nbsp;Microsoft.VisualStudio.TestTools.UnitTesting;<br/>
+<span style="color:blue;">using</span>&nbsp;System.Transactions;<br/>
+ <br/>
+<span style="color:blue;">namespace</span>&nbsp;IntegrationTests<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;[TestClass]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">TestService</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">readonly</span>&nbsp;TestContainer&nbsp;_container&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;TestContainerBuilder().Build();<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[TestMethod]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:#74531f;">TestSave</span>()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">using</span>&nbsp;(<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">scope</span>&nbsp;=&nbsp;_container.LifetimeScope)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">service</span>&nbsp;=&nbsp;scope.Resolve&lt;Service&gt;();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">using</span>&nbsp;(<span style="color:blue;">new</span>&nbsp;TransactionScope(TransactionScopeAsyncFlowOption.Enabled))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">model</span>&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;Model();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">result</span>&nbsp;=&nbsp;service.Save(model);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Assert.IsTrue(result.IsSuccess);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">dbModel</span>&nbsp;=&nbsp;service.Read(result.Id);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Assert.IsNotNull(dbModel);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</div>
+<p>We have a TestContainer to wrap the DI container</p>
+<div class="code"><span style="color:blue;">public</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">TestContainer</span>&nbsp;:&nbsp;IDisposable<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">readonly</span>&nbsp;IContainer&nbsp;_container;<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:#2b91af;">TestContainer</span>(IContainer&nbsp;<span style="color:#1f377f;">container</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_container&nbsp;=&nbsp;container;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;ILifetimeScope?&nbsp;LifetimeScope&nbsp;=&gt;&nbsp;_container.BeginLifetimeScope();<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:#74531f;">Dispose</span>()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_container.Dispose();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+}</div>
+<p>This is setup in a builder.</p>
+<ul>
+<li>We use Microsoft.Extensions.Hosting to build configuration from appsettings.json etc (remember to make it Copy Always)</li>
+<li>A built Host doesn't expose Configuration, just Services, so we grab the reference during ConfigureServices. Ignore the nullable warnings.</li>
+<li>For injecting a connection string, we have a I/ConnectionFactory which holds it.</li>
+<li>If you have Automapper or other dependencies, you can initialise them here</li>
+<li>We're using Autofac modules, so various projects can re-use mostly the same DI config. If you inject users see below for test specific code</li>
+</ul>
+<div class="code"><span style="color:blue;">using</span>&nbsp;Autofac;<br/>
+<span style="color:blue;">using</span>&nbsp;Services.AutoMapper;<br/>
+<span style="color:blue;">using</span>&nbsp;DataAccess;<br/>
+<span style="color:blue;">using</span>&nbsp;Models;<br/>
+<span style="color:blue;">using</span>&nbsp;Microsoft.Extensions.Configuration;<br/>
+<span style="color:blue;">using</span>&nbsp;Microsoft.Extensions.Hosting;<br/>
+ <br/>
+<span style="color:blue;">namespace</span>&nbsp;IntegrationTests<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">TestContainerBuilder</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;TestContainer&nbsp;<span style="color:#74531f;">Build</span>()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//if&nbsp;you&nbsp;use&nbsp;automapper,&nbsp;call&nbsp;the&nbsp;MapperConfiguration.CreateMapper()&nbsp;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AutoMap.RegisterMappings();<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//read&nbsp;the&nbsp;configuration&nbsp;(appsettings.json)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Host.CreateDefaultBuilder()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.ConfigureServices((<span style="color:#1f377f;">context</span>,&nbsp;<span style="color:#1f377f;">services</span>)&nbsp;=&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Configuration&nbsp;=&nbsp;context.Configuration;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;})<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.Build();<br/>
+<span style="color:gray;">#pragma</span>&nbsp;<span style="color:gray;">warning</span>&nbsp;<span style="color:gray;">disable</span>&nbsp;CS8604&nbsp;<span style="color:green;">//&nbsp;Possible&nbsp;null&nbsp;reference&nbsp;argument.</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">connectionString</span>&nbsp;=&nbsp;Configuration.GetConnectionString(<span style="color:#a31515;">&quot;Db&quot;</span>);<br/>
+<span style="color:gray;">#pragma</span>&nbsp;<span style="color:gray;">warning</span>&nbsp;<span style="color:gray;">restore</span>&nbsp;CS8604&nbsp;<span style="color:green;">//&nbsp;Possible&nbsp;null&nbsp;reference&nbsp;argument.</span><br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//build&nbsp;the&nbsp;Autofac&nbsp;container</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">builder</span>&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;ContainerBuilder();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;builder.Register(<span style="color:#1f377f;">c</span>&nbsp;=&gt;&nbsp;<span style="color:blue;">new</span>&nbsp;ConnectionFactory(connectionString)).As&lt;IConnectionFactory&gt;();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;builder.RegisterModule&lt;TestRegistryModule&gt;();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">container</span>&nbsp;=&nbsp;builder.Build();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#8f08c4;">return</span>&nbsp;<span style="color:blue;">new</span>&nbsp;TestContainer(container);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;IConfiguration?&nbsp;Configuration&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;<span style="color:blue;">set</span>;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+}</div>
+<p>If you're injecting the user (see the IHttpContextAccessor trick above), you can create a special test user context (see IUserContext above). If you use an IClaimsTransformer in your website pipeline, you'll need to run that too.</p>
+<div class="code"><span style="color:blue;">using</span>&nbsp;Model;<br/>
+<span style="color:blue;">using</span>&nbsp;System;<br/>
+<span style="color:blue;">using</span>&nbsp;System.Collections.Generic;<br/>
+<span style="color:blue;">using</span>&nbsp;System.Security.Claims;<br/>
+ <br/>
+<span style="color:blue;">namespace</span>&nbsp;IntegrationTests<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//register&nbsp;this&nbsp;in&nbsp;DI</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//builder.RegisterType&lt;TestUserContext&gt;().As&lt;IUserContext&gt;().InstancePerLifetimeScope();</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">TestUserContext</span>&nbsp;:&nbsp;IUserContext<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:#2b91af;">TestUserContext</span>()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//using&nbsp;the&nbsp;name&nbsp;of&nbsp;the&nbsp;person&nbsp;running&nbsp;the&nbsp;test,&nbsp;or&nbsp;a&nbsp;fixed&nbsp;string&nbsp;eg&nbsp;&quot;TestUser&quot;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">name</span>&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;Claim(ClaimTypes.Name,&nbsp;Environment.UserName);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">principal</span>&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;ClaimsPrincipal(<span style="color:blue;">new</span>&nbsp;ClaimsIdentity(<span style="color:blue;">new</span>&nbsp;List&lt;Claim&gt;&nbsp;{&nbsp;name&nbsp;},&nbsp;<span style="color:#a31515;">&quot;Basic&quot;</span>));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;User&nbsp;=&nbsp;principal;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;ClaimsPrincipal&nbsp;User&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;}<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;}<br/>
 }</div>
 </div>
