@@ -1,11 +1,13 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
 <meta name="viewport" content="width=device-width,initial-scale=1.0" />
 <title>.Net Security</title>
 <link rel="stylesheet" type="text/css" href="../../style.css" />
+<style>
+.obsolete {background-color: #ddd;padding:0 5%;}
+</style>
 <script type="text/javascript" src="../../utilities.js">
 </script>
 </head>
@@ -46,6 +48,7 @@ allowCrossAppMapping flag: Request.MapPath(input, Request.ApplicationPath, false
 </ul>
 
 <h3>Role Based Security</h3>
+<div class="alert">For legacy reasons, much of this still exists, but you should use <a href="claims.html">claims</a> instead</div>
 <ul>
 <li><a href="http://msdn.microsoft.com/en-us/library/52kd59t0.aspx">msdn on RBS</a></li>
 </ul>
@@ -97,7 +100,7 @@ perm.Demand();</code></li>
 }</p>
 </div>
 
-
+<div class="obsolete"><div class="alert">CAS is obsolete - not available in .net Core</div>
 <h3>Code Access Security</h3>
 <ul>
 <li><a href="http://msdn2.microsoft.com/en-us/library/930b76w0.aspx">msdn on CAS</a></li>
@@ -224,6 +227,7 @@ Then: myDomain.SetAppDomainPolicy(safePolicyLevel);
 </ul>
 </li>
 </ul>
+</div>
 
 </div>
 <div class="Footer">

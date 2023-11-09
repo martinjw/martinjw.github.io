@@ -277,6 +277,7 @@ It's functional enough that a full DI container isn't required, but the usual su
 <span style="color:blue;">using</span>&nbsp;Services.AutoMapper;<br/>
 <span style="color:blue;">using</span>&nbsp;DataAccess;<br/>
 <span style="color:blue;">using</span>&nbsp;Models;<br/>
+<span style="color:blue;">using</span>&nbsp;Microsoft.Extensions.Caching.Hosting;<br/>
 <span style="color:blue;">using</span>&nbsp;Microsoft.Extensions.Configuration;<br/>
 <span style="color:blue;">using</span>&nbsp;Microsoft.Extensions.Hosting;<br/>
  <br/>
@@ -304,6 +305,8 @@ It's functional enough that a full DI container isn't required, but the usual su
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">builder</span>&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;ContainerBuilder();<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;builder.Register(<span style="color:#1f377f;">c</span>&nbsp;=&gt;&nbsp;<span style="color:blue;">new</span>&nbsp;ConnectionFactory(connectionString)).As&lt;IConnectionFactory&gt;();<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;builder.RegisterModule&lt;TestRegistryModule&gt;();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//Microsoft.Extensions.Caching.Memory&nbsp;added&nbsp;manually</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;builder.Register(<span style="color:#1f377f;">m</span>=&gt;&nbsp;<span style="color:blue;">new</span>&nbsp;MemoryCache(<span style="color:blue;">new</span>&nbsp;MemoryCacheOptions())).As&lt;IMemoryCache&gt;().SingleInstance();<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">container</span>&nbsp;=&nbsp;builder.Build();<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#8f08c4;">return</span>&nbsp;<span style="color:blue;">new</span>&nbsp;TestContainer(container);<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>

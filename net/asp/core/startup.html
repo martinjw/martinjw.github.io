@@ -41,13 +41,6 @@
 <p>Asp.Net Core is a true console application, with a <span style="color:blue;">public</span>&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:darkcyan;">Main</span>(<span style="color:blue;">string</span>[]&nbsp;args)</p>
 <p>In Core 3.1 there were separate Program.cs and Startup.cs. In .net 6, everything is in Program.cs (but old projects aren't upgraded, and Startup.cs still works).</p>
 
-<p>For <a href="di.html">Dependency Injection</a> with, say, <a href="https://autofac.readthedocs.io/en/latest/integration/aspnetcore.html">Autofac</a>, add Autofac.Extensions.DependencyInjection:</p>
-<div class="code">
-<p><span style="color:#2b91af;">Host</span>.<span style="color:#74531f;">CreateDefaultBuilder</span>(<span style="color:#1f377f;">args</span>)<br />
-.<span style="color:#74531f;">UseServiceProviderFactory</span>(new <span style="color:#2b91af;">AutofacServiceProviderFactory</span>()) //etc</p>
-</div>
-<p>See configuration for <a href="https://github.com/serilog/serilog-aspnetcore">Serilog logging</a> and <a href="https://github.com/NLog/NLog/wiki/Getting-started-with-ASP.NET-Core-3">NLog logging</a></p>
-
 <div class="code">
 <p><span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">builder</span>&nbsp;=&nbsp;<span style="color:#2b91af;">WebApplication</span>.<span style="color:#74531f;">CreateBuilder</span>(<span style="color:#1f377f;">args</span>);<br/>
 <span style="color:#1f377f;">builder.Services.</span><span style="color:#74531f;">AddControllersWithViews</span>();<br />
