@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Net 8 Highlights</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/default.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
+<style>
+.code {background-color: aliceblue;border-radius:10px;padding:20px;box-shadow: 5px 5px #ddd;}
+</style>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Net 8 Highlights</h2>
+<p>Published Wednesday 15 November 2023</p><article>
+<p>Having covered the <a href="../14/Net8.html">Net8 links</a>, here's some highlights.</p>
+<p>It's not a huge game-changing release. We can just change the TargetFramework and get some performance benefits, without rewriting or adding anything. The biggest changes are probably in Blazor, which seem to fulfil the promise of the technology. Only two new C# constructs, both of which are a bit more concise: collection initializers and primary constructors. The AOT is potentially interesting, but probably something for later .net versions. First Microsoft have to rework more of ASP, and then common libraries and techniques need to evolve to be compatible.</p>
+<h3>Performance</h3>
+<p>There are lots of perf improvements under the covers, in .net, asp, blazor... </p>
+<h3>Blazor</h3>
+<p>Blazor had 2 main models that look similar but are fundamentally different; server-side razor pages/websockets and compiled to browser webassembly. Net8 is a major release to add a new mode, Server-side rendering (SSR), and provide a simple way to move between the models (rendermode) within the same application, and even the same page (what was global to the project can now be component based). </p>
+<p>NB: the _Imports.razor should have a import to refer to rendermode</p>
+<div class="code"><span style="background:#ffffb3;">@</span><span style="color:blue;">using</span>&nbsp;<span style="color:blue;">static</span>&nbsp;Microsoft.AspNetCore.Components.Web.<span style="color:#2b91af;">RenderMode</span></div>
+<p>Components/pages can have the rendermode directive - default (not specified) is static (or technically, inherit from parent), the other options are InteractiveServer, InteractiveClient and InteractiveAuto (= server, then client). You can specify this on the top of routable pages, or specify it on the component instance. InteractiveClient components must live in the client project, not the server project (so you download them; you don't want to download server-side components with entity framework etc).</p>
+<div class="code"><span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">rendermode</span>&nbsp;InteractiveAuto</div>
+<p>This is the server side configuration for interactive server/client components.</p>
+<div class="code"><span style="color:blue;">public</span>&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:#74531f;">Main</span>(<span style="color:blue;">string</span>[]&nbsp;<span style="color:#1f377f;">args</span>)<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">builder</span>&nbsp;=&nbsp;WebApplication.CreateBuilder(args);<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Add&nbsp;services</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;builder.Services.AddRazorComponents()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//add&nbsp;interactive&nbsp;SERVER&nbsp;components&nbsp;(websockets)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.AddInteractiveServerComponents()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//add&nbsp;interactive&nbsp;WASM&nbsp;components&nbsp;(in&nbsp;the&nbsp;browser)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.AddInteractiveWebAssemblyComponents();<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">app</span>&nbsp;=&nbsp;builder.Build();<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;Other stuff omitted.</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;app.UseStaticFiles();<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;app.MapRazorComponents&lt;App&gt;()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.AddInteractiveServerRenderMode()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.AddInteractiveWebAssemblyRenderMode()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.AddAdditionalAssemblies(<span style="color:blue;">typeof</span>(ClientSideCmponent).Assembly);<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;app.Run();<br/>
+}</div>
+
+<p>There's a new extension, .webcil, for webassembly, to avoid downloading .dll files which corporate security used to block.</p>
+<h3>Asp.net - keyed services and routing</h3>
+<p>You could do keyed services with 3rd party DI frameworks like Autofac, but now the built-in DI supports it (add an attribute [FromKeyedServices(key)]).</p>
+<div class="code">builder.Services.AddKeyedScoped&lt;IMyService,&nbsp;MyService&gt;(<span style="color:#a31515;">&quot;Key&quot;</span>);</div>
+<p>Consuming in Blazor with an attribute:</p>
+<div class="code">[<span style="color:#2b91af;">Inject</span>(Key&nbsp;=&nbsp;<span style="color:#a31515;">&quot;key&quot;</span>)]<br/>
+<span style="color:blue;">public</span>&nbsp;<span style="color:#2b91af;">IMyService</span>&nbsp;Service&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;<span style="color:blue;">set</span>;&nbsp;}&nbsp;=&nbsp;<span style="color:blue;">default</span>!;</div>
+<p>Visual Studio colour-codes routes and uses analysers to spot problems.</p>
+<h3>Aspire (preview)</h3>
+<p>Aspire is a builder for cloud (i.e. Azure) applications. It's intended for developers, and uses C# code (not yaml!) to orchestrate your dependencies into containers. Most of the configuration glue is done for you (including specifying ports and connection strings, using internal service discovery), and it automatically adds best practices like metrics, logging and the Polly retry project. There are two new Visual Studio projects, AppHost (the startup project) and ServiceDefaults. Launching the AppHost brings up a developer dashboard to check the status.</p>
+<h3>Primary ctors on classes</h3>
+<p>You could do it with (immutable) Records before, but now you can do them on classes. You don't need constructor boilerplate- it is defined on the class line (you can also have conventional ctor overloads). Note the parameters are not hidden fields, they are initialization values; the values are captured in the properties. For simpler classes and DI, this makes sense. If you need logic, you need explicit constructors.</p>
+<div class="code"><span style="color:blue;">public</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">Person</span>(<span style="color:blue;">string</span>&nbsp;<span style="color:#1f377f;">name</span>)<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">string</span>&nbsp;Name&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;}&nbsp;=&nbsp;name;<br/>
+}</div>
+<h3>Collection initializing</h3>
+<p>Until .net 8 you initialize arrays/lists with curly brackets {} and a type or new().</p>
+<div class="code"><span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">array</span>&nbsp;=&nbsp;<span style="color:blue;">new</span>[]&nbsp;{&nbsp;1,&nbsp;2,&nbsp;3&nbsp;};<br/>
+<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">list</span>&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;List&lt;<span style="color:blue;">int</span>&gt;&nbsp;{&nbsp;1,&nbsp;2,&nbsp;3&nbsp;};</div>
+<p>Now you can use square brackets [] instead of curlies (like in javascript). It's always an enumerable to fill any array/list type.</p>
+<p>You can concatenate/shallow copy stuff with the .. spread operator (also familiar from javascript)</p>
+<div class="code">
+<span style="color:blue;">int</span>[]&nbsp;<span style="color:#1f377f;">part1</span>&nbsp;=&nbsp;[1,&nbsp;2,&nbsp;3];<br/>
+<span style="color:blue;">int</span>[]&nbsp;<span style="color:#1f377f;">part2</span>&nbsp;=&nbsp;[4,&nbsp;5,&nbsp;6];<br/>
+<span style="color:blue;">int</span>[]&nbsp;<span style="color:#1f377f;">all</span>&nbsp;=&nbsp;[..part1,&nbsp;..part2,&nbsp;7,&nbsp;8,&nbsp;9];</div>
+
+<h3>AOT</h3>
+<p><a href="https://learn.microsoft.com/en-gb/dotnet/core/deploying/native-aot/">AOT/Ahead-of-time compilation</a> compiles .net into native code, so it starts faster and runs quicker.</p>
+<ul>
+<li>First check if can work in AOT: In the csproj, add IsAotCompatible true</li>
+<li>If ok, in the csproj, add PublishAot true</li>
+</ul>
+<p>The huge limitation is you can't use reflection, which is used all over the place (any serialization including json, regex, things like automapper or even your DI scanning an assembly to map the interfaces to classes). Source generators (compile-time rewriting) can remove the reflection, and the asp team has done it for MinimalApis, but not for MVC/webapi/blazor.   </p>
+
+</article>
+<p>Previously: <a href="../14/Net8.html">Net8</a> (Tuesday 14 November 2023)</p>
+</div>
+<div class="Footer">
+
+</div>
+<script>hljs.highlightAll();</script>
+</body>
+</html>
