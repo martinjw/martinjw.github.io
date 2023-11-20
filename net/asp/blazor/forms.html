@@ -1,0 +1,148 @@
+<!DOCTYPE html> 
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Blazor Forms</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="blazor.html">Blazor</a></li>
+<li><a href="components.html">Components</a></li>
+<li><a href="parameters.html">Parameters</a></li>
+<li><a href="forms.html">Forms</a></li>
+<li><a href="di.html">Dependency Injection</a></li>
+<li><a href="loc.html">Localization</a></li>
+<li><a href="config.html">Configuration</a></li>
+<li><a href="httpclient.html">HttpClient</a></li>
+<li><a href="javascript.html">Javascript</a></li>
+<li><a href="sections.html">Sections</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Blazor Forms</h2>
+<ul>
+<li><span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">EditForm</span><span style="color:blue;">&gt;</span> is the Html Form<ul>
+<li>It refers to a model (field or property, probably created in OnInitializedAsync) </li>
+<li>There is an OnValidSubmit event. There is also a OnSubmit (if you handle your own validation) </li>
+</ul></li>
+<li><span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">InputText</span>&gt; is just an Html Input type=text</li>
+</ul>
+<div class="code"><span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">page</span>&nbsp;<span style="color:#a31515;">&quot;/useredit/{Id:int}&quot;</span><br/>
+<span style="background:#ffffb3;">@</span><span style="color:blue;">using</span>&nbsp;BlazorApp.Shared<br/>
+<span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">inject</span>&nbsp;<span style="color:#2b91af;">HttpClient</span>&nbsp;<span style="color:#1f377f;">Http</span><br/>
+<span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">inject</span>&nbsp;<span style="color:#2b91af;">NavigationManager</span>&nbsp;<span style="color:#1f377f;">Navigation</span><br/>
+ <br/>
+<span style="color:blue;">&lt;</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span>Editing&nbsp;user&nbsp;<span style="background:#ffffb3;">@</span>Id<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span><br/>
+<span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">EditForm</span>&nbsp;<span style="font-weight:bold;color:purple;">Model</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span>_user<span style="color:blue;">&quot;</span>&nbsp;<span style="font-weight:bold;color:purple;">OnValidSubmit</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:#74531f;">HandleValidSubmit</span><span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">DataAnnotationsValidator</span><span style="color:blue;">&nbsp;</span><span style="color:blue;">/</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">ValidationSummary</span><span style="color:blue;">&nbsp;</span><span style="color:blue;">/</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">label</span>&nbsp;<span style="color:red;">for</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:blue;">UserName</span><span style="color:blue;">&quot;</span>&nbsp;<span style="color:red;">class</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:blue;">form-label</span><span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span>Name<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">label</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">InputText</span>&nbsp;<span style="color:red;">id</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:blue;">UserName</span><span style="color:blue;">&quot;</span>&nbsp;<span style="background:#ffffb3;">@</span><span style="color:purple;">bind-</span><span style="color:purple;">Value</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span>_user.Name<span style="color:blue;">&quot;</span>&nbsp;<span style="color:red;">class</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:blue;">form-control</span><span style="color:blue;">&quot;</span><span style="color:blue;">/</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">button</span>&nbsp;<span style="color:red;">type</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:blue;">submit</span><span style="color:blue;">&quot;</span>&nbsp;<span style="color:red;">class</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:blue;">btn</span><span style="color:blue;">&nbsp;btn-primary</span><span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span>Submit<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">button</span><span style="color:blue;">&gt;</span><br/>
+<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="font-weight:bold;color:purple;">EditForm</span><span style="color:blue;">&gt;</span><br/>
+ <br/>
+<span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">code</span>&nbsp;<span style="background:#ffffb3;">{</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;[<span style="color:#2b91af;">Parameter</span>]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">int</span>&nbsp;Id&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;<span style="color:blue;">set</span>;&nbsp;}<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:#2b91af;">User</span>?&nbsp;_user&nbsp;=&nbsp;<span style="color:blue;">new</span>();<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">protected</span>&nbsp;<span style="color:blue;">override</span>&nbsp;<span style="color:blue;">async</span>&nbsp;<span style="color:#2b91af;">Task</span>&nbsp;<span style="color:#74531f;">OnInitializedAsync</span>()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_user&nbsp;=&nbsp;<span style="color:blue;">await</span>&nbsp;Http.<span style="color:#74531f;">GetFromJsonAsync</span>&lt;<span style="color:#2b91af;">User</span>&gt;(<span style="color:#a31515;">$&quot;</span><span style="color:#a31515;">User/</span>{Id}<span style="color:#a31515;">&quot;</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">async</span>&nbsp;<span style="color:#2b91af;">Task</span>&nbsp;<span style="color:#74531f;">HandleValidSubmit</span>(<span style="color:#2b91af;">EditContext</span>&nbsp;<span style="color:#1f377f;">arg</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">await</span>&nbsp;Http.<span style="color:#74531f;">PostAsJsonAsync</span>(<span style="color:#a31515;">&quot;User&quot;</span>,&nbsp;_user);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navigation.<span style="color:#74531f;">NavigateTo</span>(<span style="color:#a31515;">&quot;/&quot;</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+<span style="background:#ffffb3;">}</span><br/>
+</div>
+
+
+<h3>Binding</h3>
+<div class="code"><span style="color:blue;">&lt;</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span>One&nbsp;way:&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">input</span>&nbsp;<span style="color:red;">value</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="background:#ffffb3;">@</span>Name<span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span><span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span><br/>
+<span style="color:blue;">&lt;</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span>Two&nbsp;way&nbsp;(default&nbsp;onblur):&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">input</span>&nbsp;<span style="background:#ffffb3;">@</span><span style="color:purple;">bind</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span>Name<span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span><span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span><br/>
+<span style="color:blue;">&lt;</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span>Custom&nbsp;event&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">input</span>&nbsp;<span style="background:#ffffb3;">@</span><span style="color:purple;">bind</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span>Name<span style="color:blue;">&quot;</span>&nbsp;<span style="background:#ffffb3;">@</span><span style="color:purple;">bind</span><span style="background:#ffffb3;">:</span><span style="color:purple;">event</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:blue;">oninput</span><span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span><span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span><br/>
+<span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">EditForm</span>&nbsp;<span style="font-weight:bold;color:purple;">EditContext</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span>editContext<span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span>With&nbsp;blazor&nbsp;InputText&nbsp;component:&nbsp;<span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">InputText</span>&nbsp;<span style="background:#ffffb3;">@</span><span style="color:purple;">bind-</span><span style="color:purple;">Value</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span>Name<span style="color:blue;">&quot;</span><span style="color:blue;">&nbsp;</span><span style="color:blue;">/</span><span style="color:blue;">&gt;</span><span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span><br/>
+<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="font-weight:bold;color:purple;">EditForm</span><span style="color:blue;">&gt;</span></div>
+<ul >
+<li >@bind:after to a async Task method</li>
+<li >@bind:format="dd-MM-yyyy" for formats</li>
+</ul>
+
+<h3>Event handling</h3>
+<p>Components have html-DOM type event handlers (which fire WASM/.net delegates).</p>
+<div class="code"><span style="color:blue;">&lt;</span><span style="color:maroon;">button</span>&nbsp;<span style="background:#ffffb3;">@</span><span style="color:purple;">onclick</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:#74531f;">BtnClick</span><span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span>Click&nbsp;Me<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">button</span><span style="color:blue;">&gt;</span><br/>
+<span style="color:blue;">&lt;</span><span style="color:maroon;">input</span>&nbsp;<span style="color:red;">type</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:blue;">checkbox</span><span style="color:blue;">&quot;</span>&nbsp;<span style="background:#ffffb3;">@</span><span style="color:purple;">onclick</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:#74531f;">HandleCheck</span><span style="color:blue;">&quot;</span>&nbsp;<span style="color:blue;">/</span><span style="color:blue;">&gt;</span><br/>
+<span style="color:blue;">&lt;</span><span style="color:maroon;">input</span>&nbsp;<span style="color:red;">type</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:blue;">checkbox</span><span style="color:blue;">&quot;</span>&nbsp;<span style="background:#ffffb3;">@</span><span style="color:purple;">onclick</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="background:#ffffb3;">@</span>(<span style="color:#1f377f;">e</span>&nbsp;=&gt;&nbsp;MyString&nbsp;=&nbsp;<span style="color:#a31515;">&quot;Checked&quot;</span>)<span style="color:blue;">&quot;</span>&nbsp;<span style="color:blue;">/</span><span style="color:blue;">&gt;</span></div>
+
+
+<p>You can use onclick:preventDefault and onclick:stopPropagation modifiers.</p>
+<p>For a child component, you may want one or more events passed up to the parent. Add a parameter of type EventCallback or EventCallback&lt;TValue&gt;</p>
+<p>Parent:</p>
+<div class="code"><span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">UserList</span>&nbsp;<span style="font-weight:bold;color:purple;">Users</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span>UserList<span style="color:blue;">&quot;</span>&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="font-weight:bold;color:purple;">OnSelectedCallback</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:#74531f;">SelectedUser</span><span style="color:blue;">&quot;</span>&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="font-weight:bold;color:purple;">OnClickCallback</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:#74531f;">SelectedAll</span><span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span><span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="font-weight:bold;color:purple;">UserList</span><span style="color:blue;">&gt;</span><br/>
+<span style="color:blue;">&lt;</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span>Selected&nbsp;<span style="background:#ffffb3;">@</span>_selectedUser<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span>
+<span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">code</span>&nbsp;<span style="background:#ffffb3;">{</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">int</span>?&nbsp;_selectedUser;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:#74531f;">SelectedUser</span>(<span style="color:blue;">int</span>&nbsp;<span style="color:#1f377f;">id</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_selectedUser&nbsp;=&nbsp;<span style="color:#1f377f;">id</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:#74531f;">SelectedAll</span>(<span style="color:#2b91af;">MouseEventArgs</span>&nbsp;<span style="color:#1f377f;">obj</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_selectedUser&nbsp;=&nbsp;9999;&nbsp;<span style="color:green;">//magic&nbsp;value</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}</div>
+<p>Child</p>
+<div class="code"><span style="color:blue;">&lt;</span><span style="color:maroon;">button</span>&nbsp;<span style="background:#ffffb3;">@</span><span style="color:purple;">onclick</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span>OnClickCallback<span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span>Select&nbsp;All<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">button</span><span style="color:blue;">&gt;</span><br/>
+<span style="color:blue;">&lt;</span><span style="color:maroon;">br</span>&nbsp;<span style="color:blue;">/</span><span style="color:blue;">&gt;</span><br/>
+<span style="color:blue;">&lt;</span><span style="color:maroon;">ul</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="background:#ffffb3;">@</span><span style="color:#8f08c4;">for</span>&nbsp;(<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">i</span>&nbsp;=&nbsp;0;&nbsp;<span style="color:#1f377f;">i</span>&nbsp;&lt;&nbsp;Users.Count;&nbsp;<span style="color:#1f377f;">i</span>++)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//we&nbsp;have&nbsp;to&nbsp;use&nbsp;a&nbsp;for-loop&nbsp;with&nbsp;counter</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">user</span>&nbsp;=&nbsp;Users[<span style="color:#1f377f;">i</span>];<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">li</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">button</span>&nbsp;<span style="background:#ffffb3;">@</span><span style="color:purple;">onclick</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span>()&nbsp;=&gt;&nbsp;<span style="color:#74531f;">Trigger</span>(<span style="color:#1f377f;">user</span>.Id)<span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span>Select<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">button</span><span style="color:blue;">&gt;</span>&nbsp;<span style="background:#ffffb3;">@</span><span style="color:#1f377f;">user</span>.Name<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">li</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">ul</span><span style="color:blue;">&gt;</span><br/>
+ <br/>
+<span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">code</span>&nbsp;<span style="background:#ffffb3;">{</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;[<span style="color:#2b91af;">Parameter</span>]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:#2b91af;">IList</span>&lt;<span style="color:#2b91af;">User</span>&gt;&nbsp;Users&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;<span style="color:blue;">set</span>;&nbsp;}&nbsp;=&nbsp;<span style="color:blue;">default</span>!;<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//event&nbsp;for&nbsp;the&nbsp;Select&nbsp;All&nbsp;button&nbsp;click-&nbsp;pass&nbsp;it&nbsp;to&nbsp;parent</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;[<span style="color:#2b91af;">Parameter</span>]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:#2b91af;">EventCallback</span>&lt;<span style="color:#2b91af;">MouseEventArgs</span>&gt;&nbsp;OnClickCallback&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;<span style="color:blue;">set</span>;&nbsp;}<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//event&nbsp;from&nbsp;the&nbsp;individual&nbsp;rows,&nbsp;but&nbsp;fired&nbsp;from&nbsp;the&nbsp;Trigger&nbsp;event&nbsp;below</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;[<span style="color:#2b91af;">Parameter</span>]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:#2b91af;">EventCallback</span>&lt;<span style="color:blue;">int</span>&gt;&nbsp;OnSelectedCallback&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;<span style="color:blue;">set</span>;&nbsp;}<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//the&nbsp;private&nbsp;event&nbsp;called&nbsp;from&nbsp;the&nbsp;lambda&nbsp;with&nbsp;custom&nbsp;data</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">async</span>&nbsp;<span style="color:#2b91af;">Task</span>&nbsp;<span style="color:#74531f;">Trigger</span>(<span style="color:blue;">int</span>&nbsp;<span style="color:#1f377f;">userId</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">await</span>&nbsp;OnSelectedCallback.<span style="color:#74531f;">InvokeAsync</span>(<span style="color:#1f377f;">userId</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+<span style="background:#ffffb3;">}</span></div>
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html> 
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Blazor Dependency Injection</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="blazor.html">Blazor</a></li>
+<li><a href="components.html">Components</a></li>
+<li><a href="parameters.html">Parameters</a></li>
+<li><a href="forms.html">Forms</a></li>
+<li><a href="di.html">Dependency Injection</a></li>
+<li><a href="loc.html">Localization</a></li>
+<li><a href="config.html">Configuration</a></li>
+<li><a href="httpclient.html">HttpClient</a></li>
+<li><a href="javascript.html">Javascript</a></li>
+<li><a href="sections.html">Sections</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Blazor Dependency Injection</h2>
+<p>In Program.cs (you can use Autofac)</p>
+<p>In WASM, everything Scoped is essentially Singleton - the lifetime is as long as the browser is open.</p>
+<h3>Registration (Program.cs)</h3>
+<p>NB: ILogger, <a href="javascript.html">IJSRuntime</a> and NavigationManager are automatically registered by Blazor.</p>
+<p>See <a href="httpclient.html">HttpClient</a> for registration of HttpClient and HttpClientFactory.</p>
+<div class="code">builder.Services.AddScoped&lt;IMyService,&nbsp;MyService&gt;();<br/>
+<span style="color:green;">//keyed&nbsp;services&nbsp;in&nbsp;.net8</span><br/>
+builder.Services.AddKeyedScoped&lt;IScaleService,&nbsp;BigService&gt;(<span style="color:#a31515;">&quot;Big&quot;</span>);<br/>
+builder.Services.AddKeyedScoped&lt;IScaleService,&nbsp;SmallService&gt;(<span style="color:#a31515;">&quot;Small&quot;</span>);
+ <br/>
+<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">webAssemblyHost</span>&nbsp;=&nbsp;builder.Build();<br/>
+ <br/>
+<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">myService</span>&nbsp;=&nbsp;webAssemblyHost.Services.GetRequiredService&lt;IMyService&gt;();<br/>
+<span style="color:green;">//you&nbsp;can&nbsp;configure&nbsp;between&nbsp;Build&nbsp;and&nbsp;Run</span><br/>
+myService.Init(builder.Configuration);<br/>
+<span style="color:blue;">await</span>&nbsp;webAssemblyHost.RunAsync();</div>
+
+<h3>Injecting into components</h3>
+<p>Blazor components can use the inject operator  ...</p>
+<div class="code"><span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">inject</span>&nbsp;<span style="color:#2b91af;">IHttpClientFactory</span>&nbsp;<span style="color:#1f377f;">ClientFactory</span><br/>
+<span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">inject</span>&nbsp;<span style="color:#2b91af;">IConfiguration</span>&nbsp;<span style="color:#1f377f;">Configuration</span><br/>
+<span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">inject</span>&nbsp;<span style="color:#2b91af;">IMyService</span>&nbsp;<span style="color:#1f377f;">MyService</span></div>
+<p>...or an attributed property...</p>
+<div class="code"><span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">code</span>&nbsp;<span style="background:#ffffb3;">{</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;[<span style="color:#2b91af;">Inject</span>]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:#2b91af;">IMyService</span>&nbsp;MyService&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;<span style="color:blue;">set</span>;&nbsp;}&nbsp;=&nbsp;<span style="color:blue;">default</span>!;</div>
+<p>...with keyed services in .net8...</p>
+<div class="code">[<span style="color:#2b91af;">Inject</span>(Key&nbsp;=&nbsp;<span style="color:#a31515;">&quot;key&quot;</span>)]<br/>
+<span style="color:blue;">public</span>&nbsp;<span style="color:#2b91af;">HttpClient</span>&nbsp;Http&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;<span style="color:blue;">set</span>;&nbsp;}&nbsp;=&nbsp;<span style="color:blue;">default</span>!;</div>
+
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

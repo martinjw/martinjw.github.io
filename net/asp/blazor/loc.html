@@ -1,0 +1,138 @@
+<!DOCTYPE html> 
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Blazor Localization</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="blazor.html">Blazor</a></li>
+<li><a href="components.html">Components</a></li>
+<li><a href="parameters.html">Parameters</a></li>
+<li><a href="forms.html">Forms</a></li>
+<li><a href="di.html">Dependency Injection</a></li>
+<li><a href="loc.html">Localization</a></li>
+<li><a href="config.html">Configuration</a></li>
+<li><a href="httpclient.html">HttpClient</a></li>
+<li><a href="javascript.html">Javascript</a></li>
+<li><a href="sections.html">Sections</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Blazor Localization</h2>
+
+<h3>Registration in Program.cs</h3>
+<ul >
+<li >Nuget install <em>Microsoft.Extensions.Localization</em></li>
+<li >In _Imports.razor you probably need <span style="background:#ffffb3;">@</span><span style="color:blue;">using</span>&nbsp;Microsoft.Extensions.Localization</li>
+<li >In csproj add <div class="code"><span style="color:blue;">&lt;</span><span style="color:#a31515;">BlazorWebAssemblyLoadAllGlobalizationData</span><span style="color:blue;">&gt;</span>true<span style="color:blue;">&lt;/</span><span style="color:#a31515;">BlazorWebAssemblyLoadAllGlobalizationData</span><span style="color:blue;">&gt;</span></div></li>
+<li >In Program.cs add the service builder.Services.AddLocalization();</li>
+<li >Store and load the culture in localStorage and set in program.cs (between host.build() and host.RunAsync())</li>
+</ul>
+<div class="code"><span style="color:blue;">using</span>&nbsp;Microsoft.AspNetCore.Components.WebAssembly.Hosting;<br/>
+<span style="color:blue;">using</span>&nbsp;Microsoft.JSInterop;<br/>
+<span style="color:blue;">using</span>&nbsp;System.Globalization;<br/>
+ <br/>
+<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">builder</span>&nbsp;=&nbsp;WebAssemblyHostBuilder.CreateDefault(args);<br/>
+<span style="color:green;">//add&nbsp;localization&nbsp;support</span><br/>
+builder.Services.AddLocalization();<br/>
+ <br/>
+<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">webAssemblyHost</span>&nbsp;=&nbsp;builder.Build();<br/>
+ <br/>
+<span style="color:green;">//look&nbsp;in&nbsp;localStorage,&nbsp;otherwise&nbsp;use&nbsp;a&nbsp;default</span><br/>
+<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">js</span>&nbsp;=&nbsp;webAssemblyHost.Services.GetRequiredService&lt;IJSRuntime&gt;();<br/>
+<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">currentLanguage</span>&nbsp;=&nbsp;<span style="color:blue;">await</span>&nbsp;js.InvokeAsync&lt;<span style="color:blue;">string</span>&gt;(<span style="color:#a31515;">&quot;localStorage.getItem&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;currentLanguage&quot;</span>)&nbsp;??&nbsp;<span style="color:#a31515;">&quot;en-GB&quot;</span>;<br/>
+ <br/>
+<span style="color:green;">//always&nbsp;set&nbsp;culture&nbsp;+&nbsp;ui&nbsp;culture&nbsp;to&nbsp;the&nbsp;same&nbsp;thing</span><br/>
+CultureInfo&nbsp;<span style="color:#1f377f;">cultureInfo</span>;<br/>
+<span style="color:#8f08c4;">try</span><br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;cultureInfo&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;CultureInfo(currentLanguage);<br/>
+}<br/>
+<span style="color:#8f08c4;">catch</span>&nbsp;(CultureNotFoundException&nbsp;)<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//protect&nbsp;against&nbsp;poison&nbsp;values</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;currentLanguage&nbsp;=&nbsp;<span style="color:#a31515;">&quot;en-GB&quot;</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;cultureInfo&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;CultureInfo(currentLanguage);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">await</span>&nbsp;js.InvokeVoidAsync(<span style="color:#a31515;">&quot;localStorage.setItem&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;currentLanguage&quot;</span>,&nbsp;currentLanguage);<br/>
+}<br/>
+ <br/>
+CultureInfo.DefaultThreadCurrentCulture&nbsp;=&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;CultureInfo.DefaultThreadCurrentUICulture&nbsp;=&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cultureInfo;<br/>
+ <br/>
+<span style="color:blue;">await</span>&nbsp;webAssemblyHost.RunAsync();<br/>
+</div>
+<h3>Language Picker component</h3>
+<p>In your language buttons, use NavigateTo with forceLoad to reload the culture</p>
+<div class="code"><span style="background:#ffffb3;">@</span><span style="color:blue;">using</span>&nbsp;System.Globalization<br/>
+<span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">inject</span>&nbsp;<span style="color:#2b91af;">IJSRuntime</span>&nbsp;<span style="color:#1f377f;">JsRuntime</span><br/>
+<span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">inject</span>&nbsp;<span style="color:#2b91af;">NavigationManager</span>&nbsp;<span style="color:#1f377f;">Navigation</span><br/>
+<span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">inject</span>&nbsp;<span style="color:#2b91af;">IStringLocalizer</span>&lt;<span style="color:#2b91af;">PageResources</span>&gt;&nbsp;<span style="color:#1f377f;">Loc</span><br/>
+<span style="background:#ffffb3;">@</span><span style="color:#8f08c4;">if</span>&nbsp;(!_refreshing)<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">form</span>&nbsp;<span style="color:red;">action</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:blue;">#</span><span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">fieldset</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">legend</span><span style="color:blue;">&gt;</span><span style="background:#ffffb3;">@</span>Loc[<span style="color:#a31515;">&quot;Language&quot;</span>]&nbsp;<span style="background:#ffffb3;">@</span>_currentLanguage&nbsp;<span style="background:#ffffb3;">@</span><span style="color:#2b91af;">DateTime</span>.Now.<span style="color:#74531f;">ToString</span>(<span style="color:#a31515;">&quot;f&quot;</span>)<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">legend</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">button</span>&nbsp;<span style="background:#ffffb3;">@</span><span style="color:purple;">onclick</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:#74531f;">SetFrench</span><span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span><span style="background:#ffffb3;">@</span>Loc[<span style="color:#a31515;">&quot;French&quot;</span>]<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">button</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">button</span>&nbsp;<span style="background:#ffffb3;">@</span><span style="color:purple;">onclick</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:#74531f;">SetEnglish</span><span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span><span style="background:#ffffb3;">@</span>Loc[<span style="color:#a31515;">&quot;English&quot;</span>]<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">button</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">fieldset</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">form</span><span style="color:blue;">&gt;</span><br/>
+}<br/>
+<span style="color:#8f08c4;">else</span><br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span>Page&nbsp;will&nbsp;be&nbsp;refreshed<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span><br/>
+}<br/>
+<span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">code</span>&nbsp;<span style="background:#ffffb3;">{</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">string</span>&nbsp;_currentLanguage;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">bool</span>&nbsp;_refreshing;<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">async</span>&nbsp;<span style="color:#2b91af;">Task</span>&nbsp;<span style="color:#74531f;">SetFrench</span>()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_refreshing&nbsp;=&nbsp;<span style="color:blue;">true</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">await</span>&nbsp;JsRuntime.<span style="color:#74531f;">InvokeVoidAsync</span>(<span style="color:#a31515;">&quot;localStorage.setItem&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;currentLanguage&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;fr-Fr&quot;</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navigation.<span style="color:#74531f;">Refresh</span>(<span style="color:blue;">true</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">async</span>&nbsp;<span style="color:#2b91af;">Task</span>&nbsp;<span style="color:#74531f;">SetEnglish</span>()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_refreshing&nbsp;=&nbsp;<span style="color:blue;">true</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">await</span>&nbsp;JsRuntime.<span style="color:#74531f;">InvokeVoidAsync</span>(<span style="color:#a31515;">&quot;localStorage.setItem&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;currentLanguage&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;en-GB&quot;</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navigation.<span style="color:#74531f;">Refresh</span>(<span style="color:blue;">true</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">protected</span>&nbsp;<span style="color:blue;">async</span>&nbsp;<span style="color:blue;">override</span>&nbsp;<span style="color:#2b91af;">Task</span>&nbsp;<span style="color:#74531f;">OnInitializedAsync</span>()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_currentLanguage&nbsp;=&nbsp;<span style="color:blue;">await</span>&nbsp;JsRuntime.<span style="color:#74531f;">InvokeAsync</span>&lt;<span style="color:blue;">string</span>&gt;(<span style="color:#a31515;">&quot;localStorage.getItem&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;currentLanguage&quot;</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#8f08c4;">if</span>&nbsp;(<span style="color:blue;">string</span>.<span style="color:#74531f;">IsNullOrEmpty</span>(_currentLanguage))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_currentLanguage&nbsp;=&nbsp;<span style="color:#2b91af;">CultureInfo</span>.DefaultThreadCurrentCulture.Name;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+<span style="background:#ffffb3;">}</span><br/>
+</div>
+<p>NB: in the .net8 interactive components, ensure this is <span style="background:#ffffb3;">@</span><span style="color:purple;">rendermode</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">InteractiveWebAssemblyRenderMode</span>(<span style="color:#1f377f;">prerender</span>:&nbsp;<span style="color:blue;">false</span>)<span style="color:blue;">&quot;</span><span style="color:blue;">&nbsp;</span></p>
+<h3>Component Resources</h3>
+<ul >
+<li >As in standard .net, you can add .resx files as embedded resources.</li>
+<li ><span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">inject</span>&nbsp;<span style="color:#2b91af;">IStringLocalizer</span>&lt;<span style="color:#2b91af;">PageResources</span>&gt;&nbsp;<span style="color:#1f377f;">Loc</span><br/>
+<span style="background:#ffffb3;">@</span>Loc[<span style="color:#a31515;">&quot;Language&quot;</span>]</li>
+<li>In WASM, you must create a dummy empty file with the same name, so the StringLocalizer can find it.<ul>
+<li>OR you can still use the resources codegen (eg @Resources.MyString). Because the file name exists, it works with IStringLocalizer</li>
+<li>And you can still use traditional .net strongly typed resources. Which frankly are easier and better.</li>
+</ul></li>
+</ul>
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

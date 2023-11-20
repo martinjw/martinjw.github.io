@@ -1,0 +1,171 @@
+<!DOCTYPE html> 
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Blazor HttpClient</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="blazor.html">Blazor</a></li>
+<li><a href="components.html">Components</a></li>
+<li><a href="parameters.html">Parameters</a></li>
+<li><a href="forms.html">Forms</a></li>
+<li><a href="di.html">Dependency Injection</a></li>
+<li><a href="loc.html">Localization</a></li>
+<li><a href="config.html">Configuration</a></li>
+<li><a href="httpclient.html">HttpClient</a></li>
+<li><a href="javascript.html">Javascript</a></li>
+<li><a href="sections.html">Sections</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Blazor HttpClient</h2>
+<div class="alert">Install Microsoft.Extensions.Http<br />
+<a href="https://learn.microsoft.com/en-us/aspnet/core/blazor/call-web-api?pivots=webassembly">learn.microsoft.com</a> (these pages discuss WASM only, no Blazor server)<br />
+HttpClient in wasm is actually a facade over javascript FETCH api</div>
+<h3>Set up DI in Program.cs</h3>
+<p>This is setting up a named HttpClient (name and the API uri from settings).</p>
+<div class="code"><span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">appSettings</span>&nbsp;=&nbsp;builder.Configuration.GetSection(<span style="color:#a31515;">&quot;settings&quot;</span>).Get&lt;AppSettings&gt;();<br/>
+ <br/>
+<span style="color:green;">//install&nbsp;Microsoft.Extensions.Http</span><br/>
+ <br/>
+<span style="color:green;">//this&nbsp;adds&nbsp;the&nbsp;IHttpClientFactory&nbsp;service</span><br/>
+builder.Services.AddHttpClient(appSettings.ApiName,&nbsp;<span style="color:#1f377f;">c</span>&nbsp;=&gt;<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//or&nbsp;builder.HostEnvironment.BaseAddress&nbsp;if&nbsp;self-hosted</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;c.BaseAddress&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;Uri(appSettings.Api);<br/>
+});<br/>
+<span style="color:green;">//this&nbsp;add&nbsp;an&nbsp;HttpClient</span><br/>
+builder.Services.AddScoped(<span style="color:#1f377f;">sp</span>&nbsp;=&gt;&nbsp;sp.GetService&lt;IHttpClientFactory&gt;().CreateClient(appSettings.ApiName));</div>
+<p>In .net8 you can set up keyed services (here getting the named HttpClient)</p>
+<div class="code">builder.Services.AddKeyedScoped(appSettings.ApiName,&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span style="color:#1f377f;">sp</span>,&nbsp;<span style="color:#1f377f;">_</span>)&nbsp;=&gt;&nbsp;sp.GetService&lt;IHttpClientFactory&gt;().CreateClient(appSettings.ApiName));</div>
+<h3>Inject into component</h3>
+<p>Either as an HttpClient</p>
+<div class="code"><span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">page</span>&nbsp;<span style="color:#a31515;">&quot;/useredit/{Id:int}&quot;</span><br/>
+<span style="background:#ffffb3;">@</span><span style="color:blue;">using</span>&nbsp;BlazorApp.Shared<br/>
+<span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">inject</span>&nbsp;<span style="color:#2b91af;">HttpClient</span>&nbsp;<span style="color:#1f377f;">Http</span><br/>
+ <br/>
+<span style="color:blue;">&lt;</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span>Editing&nbsp;user&nbsp;<span style="background:#ffffb3;">@</span>Id<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span><br/>
+<span style="background:#ffffb3;">@</span><span style="color:#8f08c4;">if</span>&nbsp;(_user&nbsp;==&nbsp;<span style="color:blue;">null</span>)<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span>User&nbsp;not&nbsp;found<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span><br/>
+}<br/>
+<span style="color:#8f08c4;">else</span><br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span><span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">(</span>_user.Name<span style="background:#ffffb3;">)</span><span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span><br/>
+}<br/>
+ <br/>
+<span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">code</span>&nbsp;<span style="background:#ffffb3;">{</span><br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;[<span style="color:#2b91af;">Parameter</span>]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">int</span>&nbsp;Id&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;<span style="color:blue;">set</span>;&nbsp;}<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:#2b91af;">User</span>?&nbsp;_user;<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">protected</span>&nbsp;<span style="color:blue;">override</span>&nbsp;<span style="color:blue;">async</span>&nbsp;<span style="color:#2b91af;">Task</span>&nbsp;<span style="color:#74531f;">OnInitializedAsync</span>()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_user&nbsp;=&nbsp;<span style="color:blue;">await</span>&nbsp;Http.<span style="color:#74531f;">GetFromJsonAsync</span>&lt;<span style="color:#2b91af;">User</span>&gt;(<span style="color:#a31515;">$&quot;</span><span style="color:#a31515;">User/</span>{Id}<span style="color:#a31515;">&quot;</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+<span style="background:#ffffb3;">}</span><br/>
+</div>
+<p>Or as an HttpClientFactory.</p>
+<div class="code"><span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">page</span>&nbsp;<span style="color:#a31515;">&quot;/useredit/{Id:int}&quot;</span><br/>
+<span style="background:#ffffb3;">@</span><span style="color:blue;">using</span>&nbsp;BlazorApp.Shared<br/>
+<span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">inject</span>&nbsp;<span style="color:#2b91af;">IHttpClientFactory</span>&nbsp;<span style="color:#1f377f;">ClientFactory</span><br/>
+<span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">inject</span>&nbsp;<span style="color:#2b91af;">IConfiguration</span>&nbsp;<span style="color:#1f377f;">Configuration</span><br/>
+ <br/>
+<span style="color:blue;">&lt;</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span>Editing&nbsp;user&nbsp;<span style="background:#ffffb3;">@</span>Id<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span><br/>
+<span style="background:#ffffb3;">@</span><span style="color:#8f08c4;">if</span>&nbsp;(_user&nbsp;==&nbsp;<span style="color:blue;">null</span>)<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span>User&nbsp;not&nbsp;found<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span><br/>
+}<br/>
+<span style="color:#8f08c4;">else</span><br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span><span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">(</span>_user.Name<span style="background:#ffffb3;">)</span><span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span><br/>
+}<br/>
+ <br/>
+<span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">code</span>&nbsp;<span style="background:#ffffb3;">{</span><br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;[<span style="color:#2b91af;">Parameter</span>]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">int</span>&nbsp;Id&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;<span style="color:blue;">set</span>;&nbsp;}<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:#2b91af;">User</span>?&nbsp;_user;<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">protected</span>&nbsp;<span style="color:blue;">override</span>&nbsp;<span style="color:blue;">async</span>&nbsp;<span style="color:#2b91af;">Task</span>&nbsp;<span style="color:#74531f;">OnInitializedAsync</span>()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">appSettings</span>&nbsp;=&nbsp;Configuration.<span style="color:#74531f;">GetSection</span>(<span style="color:#a31515;">&quot;settings&quot;</span>).<span style="color:#74531f;">Get</span>&lt;<span style="color:#2b91af;">AppSettings</span>&gt;();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">client</span>&nbsp;=&nbsp;ClientFactory.<span style="color:#74531f;">CreateClient</span>(<span style="color:#1f377f;">appSettings</span>.ApiName);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_user&nbsp;=&nbsp;<span style="color:blue;">await</span>&nbsp;<span style="color:#1f377f;">client</span>.<span style="color:#74531f;">GetFromJsonAsync</span>&lt;<span style="color:#2b91af;">User</span>&gt;(<span style="color:#a31515;">$&quot;</span><span style="color:#a31515;">User/</span>{Id}<span style="color:#a31515;">&quot;</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+<span style="background:#ffffb3;">}</span><br/>
+</div>
+<p>Or use property injection (you have to do this for keyed services in .net8)</p>
+<div class="code">[<span style="color:#2b91af;">Inject</span>(Key&nbsp;=&nbsp;<span style="color:#a31515;">&quot;key&quot;</span>)]<br/>
+<span style="color:blue;">public</span>&nbsp;<span style="color:#2b91af;">HttpClient</span>&nbsp;Http&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;<span style="color:blue;">set</span>;&nbsp;}&nbsp;=&nbsp;<span style="color:blue;">default</span>!;</div>
+
+<h3>Adding authentication</h3>
+<p>Install Microsoft.AspNetCore.Components.WebAssembly.Authentication to use PKCE authorization code flow (<a href="https://learn.microsoft.com/en-us/aspnet/core/blazor/security/webassembly/standalone-with-authentication-library">docs</a>).</p>
+<details>
+<summary>There are quite a few steps...</summary>
+<ul>
+<li>Add appsettings.json</li>
+<li><details><summary>services.AddMsalAuthentication</summary>
+<div class="code">builder.Services.AddMsalAuthentication(<span style="color:#1f377f;">options</span>&nbsp;=&gt;<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;builder.Configuration.Bind(<span style="color:#a31515;">&quot;IDP&quot;</span>,&nbsp;options.ProviderOptions.Authentication);<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;options.ProviderOptions.LoginMode&nbsp;=&nbsp;<span style="color:#a31515;">&quot;redirect&quot;</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;options.ProviderOptions.Cache.CacheLocation&nbsp;=&nbsp;<span style="color:#a31515;">&quot;localStorage&quot;</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;options.ProviderOptions.Authentication.ValidateAuthority&nbsp;=&nbsp;<span style="color:blue;">true</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;options.ProviderOptions.DefaultAccessTokenScopes.Add(<span style="color:#a31515;">&quot;openid&quot;</span>);<br/>
+});</div>
+</details> </li>
+<li>AuthenticationService.js into index.html</li>
+<li>in app.razor <span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">CascadingAuthenticationState</span><span style="color:blue;">&gt;</span> and AuthorizeRouteView</li>
+<li>Shared/RedirectToLogin.razor</li>
+</ul>
+</details>
+<p>But when that is setup, hooking up your httpclient to always provide the token is simple.</p>
+
+<p>In Program.cs add a MessageHandlerService to the HttpClient</p>
+<div class="code">builder.Services.AddHttpClient(appSettings.ApiName,&nbsp;<span style="color:#1f377f;">c</span>&nbsp;=&gt;<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//or&nbsp;builder.HostEnvironment.BaseAddress&nbsp;if&nbsp;self-hosted</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;c.BaseAddress&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;Uri(appSettings.Api);<br/>
+}).AddHttpMessageHandler&lt;BearerAuthorizationMessageHandler&gt;();</div>
+<p>And implement an AuthorizationMessageHandler which hooks up the api Urls. Note the library will supply the IAccessTokenProvider </p>
+<div class="code"><span style="color:blue;">using</span>&nbsp;Microsoft.AspNetCore.Components;<br/>
+<span style="color:blue;">using</span>&nbsp;Microsoft.AspNetCore.Components.WebAssembly.Authentication;<br/>
+ <br/>
+<span style="color:blue;">namespace</span>&nbsp;BlazorApp.Client;<br/>
+ <br/>
+<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;</span><span style="color:gray;">summary</span><span style="color:gray;">&gt;</span><br/>
+<span style="color:gray;">///</span><span style="color:green;">&nbsp;A&nbsp;</span><span style="color:gray;">&lt;</span><span style="color:gray;">see</span>&nbsp;<span style="color:gray;">cref</span><span style="color:gray;">=</span><span style="color:gray;">&quot;</span>DelegatingHandler<span style="color:gray;">&quot;</span><span style="color:gray;">/&gt;</span><span style="color:green;">&nbsp;that&nbsp;attaches&nbsp;access&nbsp;tokens&nbsp;to&nbsp;outgoing&nbsp;</span><span style="color:gray;">&lt;</span><span style="color:gray;">see</span>&nbsp;<span style="color:gray;">cref</span><span style="color:gray;">=</span><span style="color:gray;">&quot;</span>HttpResponseMessage<span style="color:gray;">&quot;</span><span style="color:gray;">/&gt;</span><span style="color:green;">&nbsp;instances.</span><br/>
+<span style="color:gray;">///</span><span style="color:green;">&nbsp;Access&nbsp;tokens&nbsp;will&nbsp;only&nbsp;be&nbsp;added&nbsp;when&nbsp;the&nbsp;request&nbsp;URI&nbsp;is&nbsp;within&nbsp;one&nbsp;of&nbsp;the&nbsp;base&nbsp;addresses&nbsp;configured&nbsp;using</span><br/>
+<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;</span><span style="color:gray;">see</span>&nbsp;<span style="color:gray;">cref</span><span style="color:gray;">=</span><span style="color:gray;">&quot;</span>ConfigureHandler(IEnumerable{<span style="color:blue;">string</span>},&nbsp;IEnumerable{<span style="color:blue;">string</span>},&nbsp;<span style="color:blue;">string</span>)<span style="color:gray;">&quot;</span><span style="color:gray;">/&gt;</span><span style="color:green;">.</span><br/>
+<span style="color:gray;">///</span><span style="color:green;">&nbsp;</span><span style="color:gray;">&lt;/</span><span style="color:gray;">summary</span><span style="color:gray;">&gt;</span><br/>
+<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">BearerAuthorizationMessageHandler</span>&nbsp;:&nbsp;AuthorizationMessageHandler<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:#2b91af;">BearerAuthorizationMessageHandler</span>(IAccessTokenProvider&nbsp;<span style="color:#1f377f;">provider</span>,&nbsp;NavigationManager&nbsp;<span style="color:#1f377f;">navigation</span>,&nbsp;IConfiguration&nbsp;<span style="color:#1f377f;">config</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<span style="color:blue;">base</span>(provider,&nbsp;navigation)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">api</span>&nbsp;=&nbsp;config.GetSection(<span style="color:#a31515;">&quot;settings&quot;</span>).GetValue&lt;<span style="color:blue;">string</span>&gt;(<span style="color:#a31515;">&quot;api&quot;</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ConfigureHandler(<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;authorizedUrls:&nbsp;<span style="color:blue;">new</span>[]&nbsp;{&nbsp;api&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+}</div>
+</div>
+<div class="Footer"></div>
+</body>
+</html>

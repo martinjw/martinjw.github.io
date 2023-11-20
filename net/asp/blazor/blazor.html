@@ -1,0 +1,99 @@
+<!DOCTYPE html> 
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Blazor</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="blazor.html">Blazor</a></li>
+<li><a href="components.html">Components</a></li>
+<li><a href="parameters.html">Parameters</a></li>
+<li><a href="forms.html">Forms</a></li>
+<li><a href="di.html">Dependency Injection</a></li>
+<li><a href="loc.html">Localization</a></li>
+<li><a href="config.html">Configuration</a></li>
+<li><a href="httpclient.html">HttpClient</a></li>
+<li><a href="javascript.html">Javascript</a></li>
+<li><a href="sections.html">Sections</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Blazor</h2>
+
+<p>Blazor looks like razor pages (.cshtml, the MVC without controllers/models), but .razor files are components, not pages, and work like a SPA (Angular, React, Vue). The razor components are similar to webforms controls, for older devs...
+<a href="https://learn.microsoft.com/en-us/aspnet/core/blazor/">learn.microsoft.com</a></p>
+<p>The first release was in 2020 (.net Core 3.1) with major updates in .net 6 (2022) and net 8 (2023)</p>
+<ul>
+<li>Blazor WASM/Web Assembly - compiles into browser byte-code which are downloaded and executed in the browser (basically, like javascript but in C#). The static dll files are big (the entire Net framework + your app).</li>
+<li>Blazor Server - executes on the server and the razor turns into html (like mvc)- but the trick is to use SignalR (websockets) to update page fragments</li>
+<li>Blazor Hybrid - for WPF/Winforms/Maui apps, running in a native app and render html (not webassembly) into a webview.</li>
+<li>Blazor SSR (net 8+) - server side rendering, renders html (like server, but more like MVC). There is no signalR, but blazor.web.js intercepts form posts with fetches, allowing partial page updates (hello again, webforms UpdatePanel). With renderMode Auto, the first page can initialize fast as SSR, an continue to download until it switches to WASM</li>
+</ul>
+<h3 id="wasm-project-structure"><a ></a>WASM Project Structure</h3>
+<p >The standard visual studio template...</p>
+<ul>
+<li>/Pages - routable pages (.razor with @page directive)</li>
+<li>/Shared (or /Components) - components (.razor, includes MainLayout.razor)</li>
+<li>/wwwroot - static website. Up to .net7 included index.html (blazor is rendered into div id="app")</li>
+<li>_Imports.razor - common using statements</li>
+<li>App.razor - does the main routing (Router Found/NotFound). From .net8:<ul>
+<li>includes the html index content with a <span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">Routes</span><span style="color:blue;">&nbsp;</span><span style="color:blue;">/</span><span style="color:blue;">&gt;</span> component.</li>
+<li>There is a separate Routes.razor</li>
+</ul></li>
+<li >Program.cs - static Main with a builder (WebAssemblyHostBuilder.CreateDefault) and adds services.</li>
+</ul>
+<p>Which type of blazor? Check the script reference in the index.html/App.razor</p>
+<ul>
+<li><span style="color:blue;">&lt;</span><span style="color:maroon;">script</span>&nbsp;<span style="color:red;">src</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:blue;">_framework/blazor.webassembly.js</span><span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span><span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">script</span><span style="color:blue;">&gt;</span> Blazor WASM/Web Assembly</li>
+<li><span style="color:blue;">&lt;</span><span style="color:maroon;">script</span>&nbsp;<span style="color:red;">src</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:blue;">_framework/blazor.server.js</span><span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span><span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">script</span><span style="color:blue;">&gt;</span>  Blazor Server (SignalR websockets)</li>
+<li><span style="color:blue;">&lt;</span><span style="color:maroon;">script</span>&nbsp;<span style="color:red;">src</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:blue;">_framework/blazor.web.js</span><span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span><span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">script</span><span style="color:blue;">&gt;</span> .net8+ Blazor webapp (static server rendering which this script enhances)</li>
+</ul>
+
+<p >The key types of components (=razor files = classes):</p>
+<ul>
+<li>Components - general</li>
+<li>Routable pages - components with a @page="/" address (which the Router in app.razor will find)
+<ul>
+<li>A page can have more than one @page directives</li>
+<li>The RouteView has a DefaultLayout="@typeof(MainLayout)"</li>
+<li>Pages can override the layout</li>
+<li><span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">Router</span>&nbsp;<span style="font-weight:bold;color:purple;">AppAssembly</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="background:#ffffb3;">@</span><span style="color:blue;">typeof</span>(<span style="color:#2b91af;">App</span>).Assembly<span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span>- the router (App.razor) looks in the current assembly. You will probably need to specify AdditionalAssemblies="new[] { typeof(Component1).Assembly }"</li>
+</ul>
+</li>
+</ul>
+<h3 id="hosting-wasm-in-a-standard-asp.net-core-project"><a ></a>Hosting WASM in a standard Asp.net core project</h3>
+<ul >
+<li >See <a href="https://learn.microsoft.com/en-us/aspnet/core/blazor/host-and-deploy/webassembly#hosted-deployment-with-aspnet-core">webassembly#hosted-deployment-with-aspnet-core</a></li>
+<li>Publish the WASM project into the asp.net wwwroot publish folder (it's just static files- app.UseStaticFiles();)</li>
+<li>In the asp project, stop asp serving the static wasm:
+<ul>
+<li>Nuget install Microsoft.AspNetCore.Components.WebAssembly.Server</li>
+<li>Add a project reference from asp.net project to the WASM project</li>
+<li>In program.cs add app.UseBlazorFrameworkFiles(); BEFORE app.UseStaticFiles();</li>
+</ul>
+</li>
+</ul>
+<h3>Nuget packages</h3>
+<ul>
+<li>Microsoft.AspNetCore.Components.WebAssembly.Authentication - auth</li>
+<li>Microsoft.Extensions.Http - for HttpClient to connect to webapi</li>
+<li>Microsoft.Extensions.Localization - if you do any localization</li>
+</ul>
+<div class="alert">
+<p>Company proxies can stop Blazor debugging. Control Panel-User Accounts-Change my environment variables add NO_PROXY with value localhost,127.0.0.1 (<a href="https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient.defaultproxy">docs</a>)</p>
+</div>
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

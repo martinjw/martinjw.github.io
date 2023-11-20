@@ -1,0 +1,113 @@
+<!DOCTYPE html> 
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Blazor Sections</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="blazor.html">Blazor</a></li>
+<li><a href="components.html">Components</a></li>
+<li><a href="parameters.html">Parameters</a></li>
+<li><a href="forms.html">Forms</a></li>
+<li><a href="di.html">Dependency Injection</a></li>
+<li><a href="loc.html">Localization</a></li>
+<li><a href="config.html">Configuration</a></li>
+<li><a href="httpclient.html">HttpClient</a></li>
+<li><a href="javascript.html">Javascript</a></li>
+<li><a href="sections.html">Sections</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Blazor Sections</h2>
+<h3>Index html</h3>
+<p>In net8+, the App.razor contains the index html (routes used to be there, now in a separate Routes.razor)</p>
+<div class="code">
+<span style="color:blue;">&lt;</span><span style="color:maroon;">head</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">HeadOutlet</span><span style="color:blue;">&nbsp;</span><span style="color:blue;">/</span><span style="color:blue;">&gt;</span><br/>
+<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">head</span><span style="color:blue;">&gt;</span><br/>
+<span style="color:blue;">&lt;</span><span style="color:maroon;">body</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">Routes</span><span style="color:blue;">&nbsp;</span><span style="color:blue;">/</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">script</span>&nbsp;<span style="color:red;">src</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:blue;">_framework/blazor.webassembly.js</span><span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span><span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">script</span><span style="color:blue;">&gt;</span><br/>
+<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">body</span><span style="color:blue;">&gt;</span></div>
+<p>Up to net7, index.html was in wwwroot, and had a div with id=app</p>
+<div class="code"><span style="color:blue;">&lt;</span><span style="color:maroon;">div</span>&nbsp;<span style="color:red;">id</span><span style="color:blue;">=</span><span style="color:blue;">&quot;app&quot;</span><span style="color:blue;">&gt;</span>Loading...<span style="color:blue;">&lt;/</span><span style="color:maroon;">div</span><span style="color:blue;">&gt;</span>
+<br/>
+<span style="color:blue;">&lt;</span><span style="color:maroon;">script</span>&nbsp;<span style="color:red;">src</span><span style="color:blue;">=</span><span style="color:blue;">&quot;_framework/blazor.webassembly.js&quot;</span><span style="color:blue;">&gt;&lt;/</span><span style="color:maroon;">script</span><span style="color:blue;">&gt;</span><br/>
+</div>
+<p>In Program.cs you could redefine the div hook</p>
+<div class="code">builder.RootComponents.Add&lt;App&gt;(<span style="color:#a31515;">&quot;#app&quot;</span>);<br/></div>
+<h3>HeadOutlet</h3>
+<p>This lives in the html head</p>
+<div class="code">
+<span style="color:blue;">&lt;</span><span style="color:maroon;">head</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">HeadOutlet</span><span style="color:blue;">&nbsp;</span><span style="color:blue;">/</span><span style="color:blue;">&gt;</span><br/>
+<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">head</span><span style="color:blue;">&gt;</span><br/>
+</div>
+<p>But in wasm it is dynamically created in program.cs</p>
+<div class="code">builder.RootComponents.Add&lt;HeadOutlet&gt;(<span style="color:#a31515;">&quot;head::after&quot;</span>);</div>
+<p>It is filled from pages with HeadContent</p>
+<div class="code"><div class="code"><span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">page</span>&nbsp;<span style="color:#a31515;">&quot;/mypage&quot;</span>
+<span style="color:blue;">&lt;</span><span style="color:maroon;">PageTitle</span><span style="color:blue;">&gt;</span>My Page<span style="color:blue;">&lt;/</span><span style="color:maroon;">PageTitle</span><span style="color:blue;">&gt;</span>
+<span style="color:blue;">&lt;</span><span style="color:maroon;">HeadContent</span><span style="color:blue;">&gt;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">meta</span>&nbsp;name<span style="color:blue;">=</span>&quot;color-scheme&quot;&nbsp;content<span style="color:blue;">=</span>&quot;dark&nbsp;light&quot;&nbsp;<span style="color:blue;">/&gt;</span>
+<span style="color:blue;">&lt;/</span><span style="color:maroon;">HeadContent</span><span style="color:blue;">&gt;</span><br/>
+</div></div>
+<p><span style="color:blue;">&lt;</span><span style="color:maroon;">PageTitle</span><span style="color:blue;">&gt;</span> is setting document.title.</p>
+<h3>Layouts</h3>
+<ul>
+<li><span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">inherits</span>&nbsp;LayoutComponentBase</li>
+<li>Have a RenderFragment named <span style="background:#ffffb3;">@</span>Body</li>
+<li>Normally applied in App.razor/Routes.razor with <span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">RouteView</span>&nbsp;<span style="font-weight:bold;color:purple;">RouteData</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="background:#ffffb3;">@</span><span style="color:#1f377f;">routeData</span><span style="color:blue;">&quot;</span>&nbsp;<span style="font-weight:bold;color:purple;">DefaultLayout</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="background:#ffffb3;">@</span><span style="color:blue;">typeof</span>(Layout.<span style="color:#2b91af;">MainLayout</span>)<span style="color:blue;">&quot;</span></li>
+<li>Can be nested : <div class="code"><span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">inherits</span>&nbsp;<span style="color:#2b91af;">LayoutComponentBase</span><br/><span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">layout</span>&nbsp;<span style="color:#2b91af;">MainLayout</span><br/><span style="color:blue;">&lt;</span><span style="color:maroon;">marquee</span><span style="color:blue;">&gt;</span><br/>&nbsp;&nbsp;&nbsp;&nbsp;<span style="background:#ffffb3;">@</span>Body<br/><span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">marquee</span><span style="color:blue;">&gt;</span></div> </li>
+</ul>
+<h3>Sections</h3>
+<p>Sections are introduced in <a href="https://learn.microsoft.com/en-us/aspnet/core/blazor/components/sections">net8</a>. A layout or component can contain a <span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">SectionOutlet</span> (with a <span style="font-weight:bold;color:purple;">SectionId</span> or <span style="font-weight:bold;color:purple;">SectionName</span>). SectionId requires a field (which can be just an object) which sub-components can use.</p>
+<p>NB: some templates may not include the namespace in _imports.razor so add <span style="background:#ffffb3;">@</span><span style="color:blue;">using</span>&nbsp;Microsoft.AspNetCore.Components.Sections</p>
+<div class="code"><span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">inherits</span>&nbsp;<span style="color:#2b91af;">LayoutComponentBase</span><br/>
+<span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">layout</span>&nbsp;<span style="color:#2b91af;">MainLayout</span><br/>
+ <br/>
+<span style="color:blue;">&lt;</span><span style="color:maroon;">div</span>&nbsp;<span style="color:red;">class</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:blue;">page</span><span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">header</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">SectionOutlet</span>&nbsp;<span style="font-weight:bold;color:purple;">SectionId</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span>Header<span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span><span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="font-weight:bold;color:purple;">SectionOutlet</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">header</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">aside</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">SectionOutlet</span>&nbsp;<span style="font-weight:bold;color:purple;">SectionId</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span>Sidebar<span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span><span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="font-weight:bold;color:purple;">SectionOutlet</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">aside</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">main</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="background:#ffffb3;">@</span>Body<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">main</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">footer</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">SectionOutlet</span>&nbsp;<span style="font-weight:bold;color:purple;">SectionId</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span>Footer<span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span><span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="font-weight:bold;color:purple;">SectionOutlet</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">footer</span><span style="color:blue;">&gt;</span><br/>
+<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">div</span><span style="color:blue;">&gt;</span><br/>
+ <br/>
+<span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">code</span>&nbsp;<span style="background:#ffffb3;">{</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//SectionIds&nbsp;need&nbsp;a&nbsp;static&nbsp;field</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:blue;">object</span>&nbsp;Header&nbsp;=&nbsp;<span style="color:blue;">new</span>();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:blue;">object</span>&nbsp;Sidebar&nbsp;=&nbsp;<span style="color:blue;">new</span>();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:blue;">object</span>&nbsp;Footer&nbsp;=&nbsp;<span style="color:blue;">new</span>();<br/>
+<span style="background:#ffffb3;">}</span></div>
+<p>In your nested component, you use <span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">SectionContent</span>&gt; with the same SectionId (hence the public field) or SectionName.</p>
+<div class="code"><span style="color:blue;">&lt;</span><span style="color:maroon;">button</span>&nbsp;<span style="background:#ffffb3;">@</span><span style="color:purple;">onclick</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:#74531f;">AddToBasket</span><span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span>Add&nbsp;to&nbsp;basket<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">button</span><span style="color:blue;">&gt;</span><br/>
+ <br/>
+<span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">SectionContent</span>&nbsp;<span style="font-weight:bold;color:purple;">SectionId</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:#2b91af;">BasketLayout</span>.Header<span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span>Basket:&nbsp;<span style="background:#ffffb3;">@</span>Basket&nbsp;items<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span><br/>
+<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="font-weight:bold;color:purple;">SectionContent</span><span style="color:blue;">&gt;</span><br/>
+<span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">SectionContent</span>&nbsp;<span style="font-weight:bold;color:purple;">SectionId</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:#2b91af;">BasketLayout</span>.Sidebar<span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">button</span>&nbsp;<span style="background:#ffffb3;">@</span><span style="color:purple;">onclick</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:#74531f;">Checkout</span><span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span>Go&nbsp;to&nbsp;Checkout<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">button</span><span style="color:blue;">&gt;</span><br/>
+<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="font-weight:bold;color:purple;">SectionContent</span><span style="color:blue;">&gt;</span></div>
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

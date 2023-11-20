@@ -1,0 +1,57 @@
+<!DOCTYPE html> 
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Blazor Javascript Interop</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="blazor.html">Blazor</a></li>
+<li><a href="components.html">Components</a></li>
+<li><a href="parameters.html">Parameters</a></li>
+<li><a href="forms.html">Forms</a></li>
+<li><a href="di.html">Dependency Injection</a></li>
+<li><a href="loc.html">Localization</a></li>
+<li><a href="config.html">Configuration</a></li>
+<li><a href="httpclient.html">HttpClient</a></li>
+<li><a href="javascript.html">Javascript</a></li>
+<li><a href="sections.html">Sections</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Blazor Javascript Interop</h2>
+<p>In components, inject the IJSRuntime (no need to register it).</p>
+<div class="code">
+<span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">inject</span>&nbsp;<span style="color:#2b91af;">IJSRuntime</span>&nbsp;<span style="color:#1f377f;">JsRuntime</span></div>
+<p>Calling into javascript is always async (wrapped in a js promise)</p>
+<div class="code">
+_currentLanguage&nbsp;=&nbsp;<span style="color:blue;">await</span>&nbsp;JsRuntime.<span style="color:#74531f;">InvokeAsync</span>&lt;<span style="color:blue;">string</span>&gt;(<span style="color:#a31515;">&quot;localStorage.getItem&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;currentLanguage&quot;</span>);<br/>
+<span style="color:blue;">await</span>&nbsp;JsRuntime.<span style="color:#74531f;">InvokeVoidAsync</span>(<span style="color:#a31515;">&quot;localStorage.setItem&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;currentLanguage&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;fr-Fr&quot;</span>);
+</div>
+<p>Capture ElementReference with @ref and use the OnAfterRenderAsync event, not OnInitialized</p>
+<div class="code"><span style="color:blue;">&lt;</span><span style="color:maroon;">div</span>&nbsp;<span style="background:#ffffb3;">@</span><span style="color:purple;">ref</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span>_myElement<span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span><span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">div</span><span style="color:blue;">&gt;</span><br/>
+<span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">code</span>&nbsp;<span style="background:#ffffb3;">{</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//capture&nbsp;the&nbsp;@ref&nbsp;element&nbsp;reference</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:#2b91af;">ElementReference</span>&nbsp;_myElement;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//use&nbsp;OnAfterRenderAsync&nbsp;for&nbsp;js&nbsp;using&nbsp;an&nbsp;ElementReference-&nbsp;as&nbsp;it&nbsp;must&nbsp;have&nbsp;been&nbsp;rendered</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">protected</span>&nbsp;<span style="color:blue;">override</span>&nbsp;<span style="color:blue;">async</span>&nbsp;<span style="color:#2b91af;">Task</span>&nbsp;<span style="color:#74531f;">OnAfterRenderAsync</span>(<span style="color:blue;">bool</span>&nbsp;<span style="color:#1f377f;">firstRender</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#8f08c4;">if</span>&nbsp;(<span style="color:#1f377f;">firstRender</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">await</span>&nbsp;JsRuntime.<span style="color:#74531f;">InvokeVoidAsync</span>(<span style="color:#a31515;">&quot;myFunction&quot;</span>,&nbsp;_myElement);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}</div>
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

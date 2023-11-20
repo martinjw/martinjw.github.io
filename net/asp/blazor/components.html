@@ -1,0 +1,115 @@
+<!DOCTYPE html> 
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Blazor Components</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="blazor.html">Blazor</a></li>
+<li><a href="components.html">Components</a></li>
+<li><a href="parameters.html">Parameters</a></li>
+<li><a href="forms.html">Forms</a></li>
+<li><a href="di.html">Dependency Injection</a></li>
+<li><a href="loc.html">Localization</a></li>
+<li><a href="config.html">Configuration</a></li>
+<li><a href="httpclient.html">HttpClient</a></li>
+<li><a href="javascript.html">Javascript</a></li>
+<li><a href="sections.html">Sections</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Blazor Components</h2>
+
+
+<p>Each .razor file (+ partial classes) is a <em>component</em>- and invisibly inherits ComponentBase : IComponent. You can @inherits from another base class than inherits from ComponentBase.</p>
+<p>Layouts inherit  LayoutComponentBase and have a @Body parameter. Apply a layout with @layout name (overrides router's RouteView DefaultLayout). A folder with an _imports.razor can have a @layout that applies to all components in the folder.</p>
+<p>You can also @implements IDisposable or @implements IAsyncDisposable (but not both!) - things like events and js interop.</p>
+
+<div class="alert">
+<p>Prefer using .razor.cs partial classes for code alongside the .razor, avoid @code blocks. NB: @using and using statements are different.</p>
+<p>You can also use standard generic C# instead of <span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">typeparam</span>&nbsp;<span style="color:#1f377f;">TMyType</span></p>
+</div>
+<div class="code"><span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">code</span>&nbsp;<span style="background:#ffffb3;">{</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//don&#39;t&nbsp;do&nbsp;this,&nbsp;this&nbsp;is&nbsp;a&nbsp;partial&nbsp;class,&nbsp;so&nbsp;add&nbsp;x.razor.cs</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;[<span style="color:#2b91af;">Parameter</span>]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">string</span>?&nbsp;Name&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;<span style="color:blue;">set</span>;&nbsp;}<br/>
+<span style="background:#ffffb3;">}</span></div>
+<div class="code"><span style="color:blue;">using</span>&nbsp;Microsoft.AspNetCore.Components;<br/>
+ <br/>
+<span style="color:blue;">namespace</span>&nbsp;BlazorApp.Client.Shared;<br/>
+ <br/>
+<span style="color:green;">//better:&nbsp;partial&nbsp;class&nbsp;with&nbsp;your&nbsp;code&nbsp;separate&nbsp;from&nbsp;markup</span><br/>
+<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">partial</span>&nbsp;<span style="color:blue;">class</span>&nbsp;<span style="color:#2b91af;">UserName</span><br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;[Parameter]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">string</span>?&nbsp;Name&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;<span style="color:blue;">set</span>;&nbsp;}<br/>
+}</div>
+
+<p>You can use an ILogger, but in WASM it is just to browser devtools/F12. There is no Application Insights for blazor client side. Finding client side exceptions is tough, but perhaps a component with an httpClient to send the stack to the server might help...</p>
+
+<h3>Lifecycle</h3>
+<p>This component shows a list of the lifecycle events- SetParametersAsync, OnInitialized and OnParametersSet.<br />
+OnAfterRender should not appear (because it finished rendering!) unless we notify that StateHasChanged() as done here!</p>
+
+<div class="code"><span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">inject</span>&nbsp;<span style="color:#2b91af;">ILogger</span>&lt;<span style="color:#2b91af;">UserName</span>&gt;&nbsp;<span style="color:#1f377f;">Logger</span><br/>
+<span style="color:blue;">&lt;</span><span style="color:maroon;">ul</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="background:#ffffb3;">@</span><span style="color:#8f08c4;">foreach</span>&nbsp;(<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">e</span>&nbsp;<span style="color:#8f08c4;">in</span>&nbsp;LifeCycleEvents)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">li</span><span style="color:blue;">&gt;</span><span style="background:#ffffb3;">@</span><span style="color:#1f377f;">e</span><span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">li</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">ul</span><span style="color:blue;">&gt;</span><br/>
+ <br/>
+<span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">code</span>&nbsp;<span style="background:#ffffb3;">{</span><br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:#2b91af;">IList</span>&lt;<span style="color:blue;">string</span>&gt;&nbsp;LifeCycleEvents&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;<span style="color:blue;">set</span>;&nbsp;}&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">List</span>&lt;<span style="color:blue;">string</span>&gt;();<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//lifecycle&nbsp;in&nbsp;order</span><br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">override</span>&nbsp;<span style="color:blue;">async</span>&nbsp;<span style="color:#2b91af;">Task</span>&nbsp;<span style="color:#74531f;">SetParametersAsync</span>(<span style="color:#2b91af;">ParameterView</span>&nbsp;<span style="color:#1f377f;">parameters</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//sets&nbsp;the&nbsp;parameters</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">await</span>&nbsp;<span style="color:blue;">base</span>.<span style="color:#74531f;">SetParametersAsync</span>(<span style="color:#1f377f;">parameters</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LifeCycleEvents.<span style="color:#74531f;">Add</span>(<span style="color:#a31515;">&quot;SetParametersAsync&quot;</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">protected</span>&nbsp;<span style="color:blue;">override</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:#74531f;">OnInitialized</span>()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//this&nbsp;(or&nbsp;the&nbsp;async&nbsp;version)&nbsp;is&nbsp;the&nbsp;OnLoad&nbsp;for&nbsp;most&nbsp;startup&nbsp;logic</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LifeCycleEvents.<span style="color:#74531f;">Add</span>(<span style="color:#a31515;">&quot;OnInitialized&quot;</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//or&nbsp;async&nbsp;version</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;protected&nbsp;override&nbsp;async&nbsp;Task&nbsp;OnInitializedAsync()</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;{</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;await&nbsp;...</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//&nbsp;}</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">protected</span>&nbsp;<span style="color:blue;">override</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:#74531f;">OnParametersSet</span>()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LifeCycleEvents.<span style="color:#74531f;">Add</span>(<span style="color:#a31515;">&quot;OnParametersSet&quot;</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">protected</span>&nbsp;<span style="color:blue;">override</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:#74531f;">OnAfterRender</span>(<span style="color:blue;">bool</span>&nbsp;<span style="color:#1f377f;">firstRender</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LifeCycleEvents.<span style="color:#74531f;">Add</span>(<span style="color:#a31515;">&quot;OnAfterRender&nbsp;&quot;</span>&nbsp;+&nbsp;<span style="color:#1f377f;">firstRender</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Logger.<span style="color:#74531f;">LogInformation</span>(<span style="color:#a31515;">&quot;Too&nbsp;late,&nbsp;already&nbsp;rendered,&nbsp;but&nbsp;this&nbsp;appears&nbsp;in&nbsp;F12&nbsp;devtools&quot;</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//you&nbsp;can&nbsp;make&nbsp;it&nbsp;appear&nbsp;by&nbsp;changing&nbsp;state</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#8f08c4;">if</span>&nbsp;(<span style="color:#1f377f;">firstRender</span>)&nbsp;<span style="color:#74531f;">StateHasChanged</span>();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+<span style="background:#ffffb3;">}</span></div>
+
+<p>Each component (including eg form components like InputText) can have a @ref- you use this as the id.</p>
+
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html> 
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Blazor Configuration</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="blazor.html">Blazor</a></li>
+<li><a href="components.html">Components</a></li>
+<li><a href="parameters.html">Parameters</a></li>
+<li><a href="forms.html">Forms</a></li>
+<li><a href="di.html">Dependency Injection</a></li>
+<li><a href="loc.html">Localization</a></li>
+<li><a href="config.html">Configuration</a></li>
+<li><a href="httpclient.html">HttpClient</a></li>
+<li><a href="javascript.html">Javascript</a></li>
+<li><a href="sections.html">Sections</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Blazor Configuration</h2>
+<p>In WASM, it's wwwroot\appsettings.json - note it's client side, and there's no  support.</p>
+<div class="code"><span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">inject</span>&nbsp;<span style="color:#2b91af;">IConfiguration</span>&nbsp;<span style="color:#1f377f;">Configuration</span><br/>
+ <br/>
+<span style="color:blue;">&lt;</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span><span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">(</span>Configuration.<span style="color:#74531f;">GetValue</span>&lt;<span style="color:blue;">string</span>&gt;(<span style="color:#a31515;">&quot;AppName&quot;</span>)<span style="background:#ffffb3;">)</span><span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span></div>
+
+<p>For IOptions, add nuget Microsoft.Extensions.Options.ConfigurationExtensions</p>
+<div class="code"><span style="color:green;">//needs&nbsp;Microsoft.Extensions.Options.ConfigurationExtensions</span><br/>
+builder.Services.Configure&lt;AppSettings&gt;(builder.Configuration.GetSection(<span style="color:#a31515;">&quot;settings&quot;</span>));</div>
+<p>And in components</p>
+<div class="code"><span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">inject</span>&nbsp;<span style="color:#2b91af;">IOptions</span>&lt;<span style="color:#2b91af;">AppSettings</span>&gt;&nbsp;<span style="color:#1f377f;">AppSettings</span><br/>
+ <br/>
+<span style="color:blue;">&lt;</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span><span style="background:#ffffb3;">@</span>AppSettings.Value.AppName<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span></div>
+
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>

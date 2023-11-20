@@ -1,0 +1,95 @@
+<!DOCTYPE html> 
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Blazor Parameters</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="blazor.html">Blazor</a></li>
+<li><a href="components.html">Components</a></li>
+<li><a href="parameters.html">Parameters</a></li>
+<li><a href="forms.html">Forms</a></li>
+<li><a href="di.html">Dependency Injection</a></li>
+<li><a href="loc.html">Localization</a></li>
+<li><a href="config.html">Configuration</a></li>
+<li><a href="httpclient.html">HttpClient</a></li>
+<li><a href="javascript.html">Javascript</a></li>
+<li><a href="sections.html">Sections</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Blazor Parameters</h2>
+
+<ul>
+<li>Parameters can be passed as component properties: <div class="code"><span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">UserName</span>&nbsp;<span style="font-weight:bold;color:purple;">Name</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:blue;">Alice</span><span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span><span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="font-weight:bold;color:purple;">UserName</span><span style="color:blue;">&gt;</span></div>
+<ul>
+<li>You can also use [<span style="color:#2b91af;">CascadingParameter</span>]</li>
+</ul> </li>
+<li>Parameters can be passed to pages as route values (including querystring), and use route contraints: <div class="code"><span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">NavLink</span>&nbsp;<span style="color:red;">href</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">(</span><span style="color:#a31515;">$&quot;</span><span style="color:#a31515;">UserEdit/</span>{<span style="color:#1f377f;">user</span>.Id}<span style="color:#a31515;">&quot;</span><span style="background:#ffffb3;">)</span><span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span>Edit<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="font-weight:bold;color:purple;">NavLink</span><span style="color:blue;">&gt;</span></div></li>
+</ul>
+
+<p>Passing parameters down to components uses the [Parameter] attribute on properties (just get/set, don't implement any code).</p>
+<div class="code"><span style="color:blue;">&lt;</span><span style="color:maroon;">div</span>&nbsp;<span style="color:red;">class</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:blue;">row</span><span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">div</span>&nbsp;<span style="color:red;">class</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:blue;">col</span><span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span>Event:&nbsp;<span style="background:#ffffb3;">@</span>UserEvent.EventDetails<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">div</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">div</span>&nbsp;<span style="color:red;">class</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:blue;">col</span><span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span>&nbsp;<span style="background:#ffffb3;">@</span>ChildContent&nbsp;<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">div</span><span style="color:blue;">&gt;</span><br/>
+<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">div</span><span style="color:blue;">&gt;</span><br/>
+ <br/>
+<span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">code</span>&nbsp;<span style="background:#ffffb3;">{</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//a&nbsp;standard&nbsp;parameter</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//default!&nbsp;-&nbsp;the&nbsp;!&nbsp;null&nbsp;forgiving&nbsp;operator&nbsp;is&nbsp;useful&nbsp;for&nbsp;initializing&nbsp;something&nbsp;that&nbsp;is&nbsp;always&nbsp;passed&nbsp;in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;[<span style="color:#2b91af;">Parameter</span>]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:#2b91af;">UserEvent</span>&nbsp;UserEvent&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;<span style="color:blue;">set</span>;&nbsp;}&nbsp;=&nbsp;<span style="color:blue;">default</span>!;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//the&nbsp;body&nbsp;-&nbsp;basically&nbsp;the&nbsp;innerHtml</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;[<span style="color:#2b91af;">Parameter</span>]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:#2b91af;">RenderFragment</span>?&nbsp;ChildContent&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;<span style="color:blue;">set</span>;&nbsp;}<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//available&nbsp;to&nbsp;all&nbsp;nested&nbsp;components-&nbsp;you&nbsp;don&#39;t&nbsp;have&nbsp;to&nbsp;pass&nbsp;them&nbsp;down&nbsp;the&nbsp;hierarchy.</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;[<span style="color:#2b91af;">CascadingParameter</span>]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:#2b91af;">User</span>&nbsp;CurrentUser&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;<span style="color:blue;">set</span>;&nbsp;}&nbsp;=&nbsp;<span style="color:blue;">default</span>!;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//nb-&nbsp;for&nbsp;real,&nbsp;use&nbsp;Microsoft.AspNetCore.Components.WebAssembly.Authentication/&lt;CascadingAuthenticationState&gt;</span><br/>
+<span style="background:#ffffb3;">}</span></div>
+<h3>RenderFragment</h3>
+<p>You can have several <span style="color:#2b91af;">RenderFragment</span>s but the calling components must specify the property name</p>
+<div class="code"><span style="color:blue;">&lt;</span><span style="color:maroon;">h3</span><span style="color:blue;">&gt;</span>User&nbsp;details<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">h3</span><span style="color:blue;">&gt;</span><br/><span style="background:#ffffb3;">@</span>ChildContent<br/> <br/><span style="color:blue;">&lt;</span><span style="color:maroon;">h3</span><span style="color:blue;">&gt;</span>User&nbsp;rights<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">h3</span><span style="color:blue;">&gt;</span><br/><span style="background:#ffffb3;">@</span>UserRights<br/> <br/><span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">code</span>&nbsp;<span style="background:#ffffb3;">{</span><br/>&nbsp;&nbsp;&nbsp;&nbsp;[Parameter]<br/>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;RenderFragment?&nbsp;ChildContent&nbsp;{&nbsp;get;&nbsp;set;&nbsp;}<br/> <br/>&nbsp;&nbsp;&nbsp;&nbsp;[Parameter]<br/>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;RenderFragment?&nbsp;UserRights&nbsp;{&nbsp;get;&nbsp;set;&nbsp;}<br/><span style="background:#ffffb3;">}</span></div>
+<p>Call it like this:</p>
+<div class="code"><span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">User</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">UserRights</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;No&nbsp;permissions<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">UserRights</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">ChildContent</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Bob<br/>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">ChildContent</span><span style="color:blue;">&gt;</span><br/>
+<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="font-weight:bold;color:purple;">User</span><span style="color:blue;">&gt;</span></div>
+<p>ChildContent is a magic name- you can omit the property tags (no <span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">ChildContent</span><span style="color:blue;">&gt;</span>)</p>
+<div class="code"><span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">User</span><span style="color:blue;">&gt;</span><br/>&nbsp;&nbsp;&nbsp;&nbsp;Bob<br/>
+<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="font-weight:bold;color:purple;">User</span><span style="color:blue;">&gt;</span></div>
+
+<p>Foreach loops are not good with RenderFragments, so use a for with counter.</p>
+<div class="code"><span style="background:#ffffb3;">@</span><span style="color:#8f08c4;">for</span>&nbsp;(<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">i</span>&nbsp;=&nbsp;0;&nbsp;<span style="color:#1f377f;">i</span>&nbsp;&lt;&nbsp;Users.Count;&nbsp;<span style="color:#1f377f;">i</span>++)<br/>
+{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">user</span>&nbsp;=&nbsp;Users[<span style="color:#1f377f;">i</span>];<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">UserComponent</span>&nbsp;<span style="font-weight:bold;color:purple;">User</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="background:#ffffb3;">@</span><span style="color:#1f377f;">user</span><span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">NavLink</span>&nbsp;<span style="color:red;">href</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">(</span><span style="color:#a31515;">$&quot;</span><span style="color:#a31515;">UserEdit/</span>{<span style="color:#1f377f;">user</span>.Id}<span style="color:#a31515;">&quot;</span><span style="background:#ffffb3;">)</span><span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span>Edit<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="font-weight:bold;color:purple;">NavLink</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="font-weight:bold;color:purple;">UserComponent</span><span style="color:blue;">&gt;</span><br/>
+}</div>
+
+<h3>CascadingValue</h3>
+<p>Wrap cascading values in a parent component or layout.</p>
+<div class="code"><span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">CascadingValue</span>&nbsp;<span style="font-weight:bold;color:purple;">Value</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span>CurrentUser<span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="background:#ffffb3;">@</span>Body<br/>
+<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="font-weight:bold;color:purple;">CascadingValue</span><span style="color:blue;">&gt;</span></div>
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>
