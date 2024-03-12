@@ -75,14 +75,27 @@
 <h3>Binding</h3>
 <div class="code"><span style="color:blue;">&lt;</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span>One&nbsp;way:&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">input</span>&nbsp;<span style="color:red;">value</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="background:#ffffb3;">@</span>Name<span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span><span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span><br/>
 <span style="color:blue;">&lt;</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span>Two&nbsp;way&nbsp;(default&nbsp;onblur):&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">input</span>&nbsp;<span style="background:#ffffb3;">@</span><span style="color:purple;">bind</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span>Name<span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span><span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span><br/>
+<span style="color:blue;">&lt;</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span>Two&nbsp;way&nbsp;(specific property- which for input is default value):&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">input</span>&nbsp;<span style="background:#ffffb3;">@</span><span style="color:purple;">bind-value</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span>Name<span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span><span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span><br/>
 <span style="color:blue;">&lt;</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span>Custom&nbsp;event&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">input</span>&nbsp;<span style="background:#ffffb3;">@</span><span style="color:purple;">bind</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span>Name<span style="color:blue;">&quot;</span>&nbsp;<span style="background:#ffffb3;">@</span><span style="color:purple;">bind</span><span style="background:#ffffb3;">:</span><span style="color:purple;">event</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:blue;">oninput</span><span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span><span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span><br/>
 <span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">EditForm</span>&nbsp;<span style="font-weight:bold;color:purple;">EditContext</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span>editContext<span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span>With&nbsp;blazor&nbsp;InputText&nbsp;component:&nbsp;<span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">InputText</span>&nbsp;<span style="background:#ffffb3;">@</span><span style="color:purple;">bind-</span><span style="color:purple;">Value</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span>Name<span style="color:blue;">&quot;</span><span style="color:blue;">&nbsp;</span><span style="color:blue;">/</span><span style="color:blue;">&gt;</span><span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span><br/>
 <span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="font-weight:bold;color:purple;">EditForm</span><span style="color:blue;">&gt;</span></div>
 <ul >
+<li>For two way binding, the component must also have an EventChanged parameter with name xChanged
+
+</li>
 <li >@bind:after to a async Task method</li>
 <li >@bind:format="dd-MM-yyyy" for formats</li>
+<li>It can have an EditContext:<ul>
+<li>Add a property EditContext</li>
+<li>Remove the Model, and initialize (OnInitialized) the EditContext = new (Model)</li>
+<li>You can subscribe to OnFieldChanged and disable/hide elements according to valid status</li>
+<li>remember to add StateHasChanged in the event</li>
+</ul></li>
 </ul>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;private&nbsp;EditContext&nbsp;_editContext&nbsp;=&nbsp;default!;<br/>private&nbsp;bool&nbsp;_formInvalid&nbsp;=&nbsp;true;<br/> <br/>protected&nbsp;override&nbsp;void&nbsp;OnInitialized()<br/>{<br/>&nbsp;&nbsp;&nbsp;&nbsp;_editContext&nbsp;=&nbsp;new(Customer);<br/>&nbsp;&nbsp;&nbsp;&nbsp;_editContext.OnFieldChanged&nbsp;+=&nbsp;(_,&nbsp;__)&nbsp;=&gt;<br/>&nbsp;&nbsp;&nbsp;&nbsp;{<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_formInvalid&nbsp;=&nbsp;!_editContext.Validate();<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;StateHasChanged();<br/>&nbsp;&nbsp;&nbsp;&nbsp;};<br/>}</div>
+
 
 <h3>Event handling</h3>
 <p>Components have html-DOM type event handlers (which fire WASM/.net delegates).</p>
