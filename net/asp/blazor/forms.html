@@ -19,6 +19,7 @@
 <li><a href="components.html">Components</a></li>
 <li><a href="parameters.html">Parameters</a></li>
 <li><a href="forms.html">Forms</a></li>
+<li><a href="nav.html">Navigation</a></li>
 <li><a href="di.html">Dependency Injection</a></li>
 <li><a href="loc.html">Localization</a></li>
 <li><a href="config.html">Configuration</a></li>
@@ -93,8 +94,23 @@
 <li>remember to add StateHasChanged in the event</li>
 </ul></li>
 </ul>
-<div class="code">
-&nbsp;&nbsp;&nbsp;&nbsp;private&nbsp;EditContext&nbsp;_editContext&nbsp;=&nbsp;default!;<br/>private&nbsp;bool&nbsp;_formInvalid&nbsp;=&nbsp;true;<br/> <br/>protected&nbsp;override&nbsp;void&nbsp;OnInitialized()<br/>{<br/>&nbsp;&nbsp;&nbsp;&nbsp;_editContext&nbsp;=&nbsp;new(Customer);<br/>&nbsp;&nbsp;&nbsp;&nbsp;_editContext.OnFieldChanged&nbsp;+=&nbsp;(_,&nbsp;__)&nbsp;=&gt;<br/>&nbsp;&nbsp;&nbsp;&nbsp;{<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_formInvalid&nbsp;=&nbsp;!_editContext.Validate();<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;StateHasChanged();<br/>&nbsp;&nbsp;&nbsp;&nbsp;};<br/>}</div>
+<div class="code"><span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">EditForm</span>&nbsp;<span style="font-weight:bold;color:purple;">OnSubmit</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:#74531f;">Save</span><span style="color:blue;">&quot;</span>&nbsp;<span style="font-weight:bold;color:purple;">EditContext</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span>_editContext<span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span><span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">InputNumber</span>&nbsp;<span style="background:#ffffb3;">@</span><span style="color:purple;">bind-</span><span style="color:purple;">Value</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span>_model.Count<span style="color:blue;">&quot;</span><span style="color:blue;">/</span><span style="color:blue;">&gt;</span><span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">button</span>&nbsp;<span style="color:red;">type</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:blue;">submit</span><span style="color:blue;">&quot;</span>&nbsp;<span style="color:red;">disabled</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="background:#ffffb3;">@</span>_formInvalid<span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span>Submit<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">button</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="font-weight:bold;color:purple;">EditForm</span><span style="color:blue;">&gt;</span><br />
+
+<span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">code</span>&nbsp;<span style="background:#ffffb3;">{</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:#2b91af;">EditContext</span>&nbsp;_editContext&nbsp;=&nbsp;<span style="color:blue;">default</span>!;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">bool</span>&nbsp;_formInvalid&nbsp;=&nbsp;<span style="color:blue;">true</span>;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:#2b91af;">CounterModel</span>&nbsp;_model&nbsp;=&nbsp;<span style="color:blue;">default</span>!;<br />
+
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">protected</span>&nbsp;<span style="color:blue;">override</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:#74531f;">OnInitialized</span>()<br />
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_model&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">CounterModel</span>();<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_editContext&nbsp;=&nbsp;<span style="color:blue;">new</span>(_model);<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_editContext.OnFieldChanged&nbsp;+=&nbsp;(<span style="color:#1f377f;">_</span>,&nbsp;<span style="color:#1f377f;">__</span>)&nbsp;=&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_formInvalid&nbsp;=&nbsp;!_editContext.<span style="color:#74531f;">Validate</span>();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#74531f;">StateHasChanged</span>();<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;};<br />
+&nbsp;&nbsp;&nbsp;&nbsp;}</div>
 
 
 <h3>Event handling</h3>

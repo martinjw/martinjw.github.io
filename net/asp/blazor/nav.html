@@ -1,0 +1,104 @@
+<!DOCTYPE html> 
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Blazor Navigation</title>
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+<script type="text/javascript" src="../../../utilities.js">
+</script>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../index.html">Main &gt;</a></li>
+<li><a href="../../dotnet.html">.Net &gt;</a></li>
+<li><a href="../aspdotnet.html">ASP.Net &gt;</a></li>
+<li><a href="blazor.html">Blazor</a></li>
+<li><a href="components.html">Components</a></li>
+<li><a href="parameters.html">Parameters</a></li>
+<li><a href="forms.html">Forms</a></li>
+<li><a href="nav.html">Navigation</a></li>
+<li><a href="di.html">Dependency Injection</a></li>
+<li><a href="loc.html">Localization</a></li>
+<li><a href="config.html">Configuration</a></li>
+<li><a href="httpclient.html">HttpClient</a></li>
+<li><a href="javascript.html">Javascript</a></li>
+<li><a href="sections.html">Sections</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Blazor Navigation</h2>
+<h3>Routing</h3>
+<ul>
+<li>Routing is done via the page directive (with MVC routing constraints)</li>
+<li>Routes.razor has a Router (scans assemblies for page directives) and RouteView.</li>
+</ul>
+<h3>NavigationManager</h3>
+<p>You can navigate with normal HTML anchors, NavLink (an anchor which matches the current url and sets the class active) and hook up to Navigation Manager</p>
+<div class="code"><span style="color:blue;">&lt;</span><span style="color:maroon;">ul</span><span style="color:blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">li</span><span style="color:blue;">&gt;</span><span style="color:blue;">&lt;</span><span style="color:maroon;">a</span>&nbsp;<span style="color:red;">href</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:blue;">/counter</span><span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span>Go&nbsp;to&nbsp;counter&nbsp;page<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">a</span><span style="color:blue;">&gt;</span><span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">li</span><span style="color:blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">li</span><span style="color:blue;">&gt;</span><span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">NavLink</span>&nbsp;<span style="color:red;">href</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:blue;">/counter</span><span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span>Go&nbsp;to&nbsp;counter&nbsp;page<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="font-weight:bold;color:purple;">NavLink</span><span style="color:blue;">&gt;</span><span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">li</span><span style="color:blue;">&gt;</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">li</span><span style="color:blue;">&gt;</span><span style="color:blue;">&lt;</span><span style="color:maroon;">button</span>&nbsp;<span style="background:#ffffb3;">@</span><span style="color:purple;">onclick</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:#74531f;">ClickBtn</span><span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span>Go&nbsp;to&nbsp;counter&nbsp;page<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">button</span><span style="color:blue;">&gt;</span><span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">li</span><span style="color:blue;">&gt;</span><br />
+<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">ul</span><span style="color:blue;">&gt;</span><br />
+
+<span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">code</span>&nbsp;<span style="background:#ffffb3;">{</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;[<span style="color:#2b91af;">Inject</span>]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">required</span>&nbsp;<span style="color:#2b91af;">NavigationManager</span>&nbsp;NavigationManager&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;<span style="color:blue;">set</span>;&nbsp;}<br/>
+ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:#74531f;">ClickBtn</span>()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NavigationManager.<span style="color:#74531f;">NavigateTo</span>(<span style="color:#a31515;">&quot;/counter&quot;</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}</div>
+
+<h3>Navigating</h3>
+<p>Just add a spinner or text to the router in a <span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">Navigating</span><span style="color:blue;">&gt;</span> element.</p>
+<div class="code"><span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">Router</span>&nbsp;<span style="font-weight:bold;color:purple;">AppAssembly</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="background:#ffffb3;">@</span><span style="color:blue;">typeof</span>(<span style="color:#2b91af;">Program</span>).Assembly<span style="color:blue;">&quot;</span>&nbsp;<span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">Found</span>&nbsp;<span style="font-weight:bold;color:purple;">Context</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:blue;">routeData</span><span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">RouteView</span>&nbsp;<span style="font-weight:bold;color:purple;">RouteData</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="background:#ffffb3;">@</span><span style="color:#1f377f;">routeData</span><span style="color:blue;">&quot;</span>&nbsp;<span style="font-weight:bold;color:purple;">DefaultLayout</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="background:#ffffb3;">@</span><span style="color:blue;">typeof</span>(Layout.<span style="color:#2b91af;">MainLayout</span>)<span style="color:blue;">&quot;</span><span style="color:blue;">&nbsp;</span><span style="color:blue;">/</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">FocusOnNavigate</span>&nbsp;<span style="font-weight:bold;color:purple;">RouteData</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="background:#ffffb3;">@</span><span style="color:#1f377f;">routeData</span><span style="color:blue;">&quot;</span>&nbsp;<span style="font-weight:bold;color:purple;">Selector</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:blue;">h1</span><span style="color:blue;">&quot;</span><span style="color:blue;">&nbsp;</span><span style="color:blue;">/</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="font-weight:bold;color:purple;">Found</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">Navigating</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span>Loading&amp;hellip;<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="font-weight:bold;color:purple;">Navigating</span><span style="color:blue;">&gt;</span><br/>
+<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="font-weight:bold;color:purple;">Router</span><span style="color:blue;">&gt;</span><br/></div>
+
+<h3>NavigationLock</h3>
+<p>You can subscribe to navigation events from the NavigationManager.</p>
+<p><span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">NavigationLock</span> can intercept external redirects (actually via window.beforeunload- no real control) and internal navigation. Note internal redirects are only within the page (not menu navigation - you need a NavigationLock in your NavMenu for that).</p>
+<div class="code"><span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">NavigationLock</span>&nbsp;<span style="font-weight:bold;color:purple;">ConfirmExternalNavigation</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:blue;">true</span><span style="color:blue;">&quot;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="font-weight:bold;color:purple;">OnBeforeInternalNavigation</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:#74531f;">OnBeforeInternalNavigation</span><span style="color:blue;">&quot;</span><span style="color:blue;">&nbsp;</span><span style="color:blue;">/</span><span style="color:blue;">&gt;</span><br/>
+<br/>
+<span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">EditForm</span>&nbsp;<span style="font-weight:bold;color:purple;">OnSubmit</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:#74531f;">Save</span><span style="color:blue;">&quot;</span>&nbsp;<span style="font-weight:bold;color:purple;">EditContext</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span>_editContext<span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span><span style="color:blue;">&lt;</span><span style="font-weight:bold;color:purple;">InputNumber</span>&nbsp;<span style="background:#ffffb3;">@</span><span style="color:purple;">bind-</span><span style="color:purple;">Value</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span>_model.Count<span style="color:blue;">&quot;</span><span style="color:blue;">/</span><span style="color:blue;">&gt;</span><span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">&lt;</span><span style="color:maroon;">button</span>&nbsp;<span style="color:red;">type</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="color:blue;">submit</span><span style="color:blue;">&quot;</span>&nbsp;<span style="color:red;">disabled</span><span style="color:blue;">=</span><span style="color:blue;">&quot;</span><span style="background:#ffffb3;">@</span>_formInvalid<span style="color:blue;">&quot;</span><span style="color:blue;">&gt;</span>Submit<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">button</span><span style="color:blue;">&gt;</span><br/>
+<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="font-weight:bold;color:purple;">EditForm</span><span style="color:blue;">&gt;</span><br/>
+<span style="color:blue;">&lt;</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span>Is&nbsp;_editContext&nbsp;modified?&nbsp;<span style="background:#ffffb3;">@</span>_editContext.<span style="color:#74531f;">IsModified</span>()<span style="color:blue;">&lt;</span><span style="color:blue;">/</span><span style="color:maroon;">p</span><span style="color:blue;">&gt;</span><br/>
+<br/>
+<span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">code</span>&nbsp;<span style="background:#ffffb3;">{</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:#2b91af;">EditContext</span>&nbsp;_editContext&nbsp;=&nbsp;<span style="color:blue;">default</span>!;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">bool</span>&nbsp;_formInvalid&nbsp;=&nbsp;<span style="color:blue;">true</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:#2b91af;">CounterModel</span>&nbsp;_model&nbsp;=&nbsp;<span style="color:blue;">default</span>!;<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">protected</span>&nbsp;<span style="color:blue;">override</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:#74531f;">OnInitialized</span>()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_model&nbsp;=&nbsp;<span style="color:blue;">new</span>&nbsp;<span style="color:#2b91af;">CounterModel</span>();<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_editContext&nbsp;=&nbsp;<span style="color:blue;">new</span>(_model);<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_editContext.OnFieldChanged&nbsp;+=&nbsp;(<span style="color:#1f377f;">_</span>,&nbsp;<span style="color:#1f377f;">__</span>)&nbsp;=&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_formInvalid&nbsp;=&nbsp;!_editContext.<span style="color:#74531f;">Validate</span>();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#74531f;">StateHasChanged</span>();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;};<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;[<span style="color:#2b91af;">Inject</span>]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">public</span>&nbsp;<span style="color:#2b91af;">IJSRuntime</span>&nbsp;JsRuntime&nbsp;{&nbsp;<span style="color:blue;">get</span>;&nbsp;<span style="color:blue;">set</span>;&nbsp;}<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">private</span>&nbsp;<span style="color:blue;">async</span>&nbsp;<span style="color:#2b91af;">Task</span>&nbsp;<span style="color:#74531f;">OnBeforeInternalNavigation</span>(<span style="color:#2b91af;">LocationChangingContext</span>&nbsp;<span style="color:#1f377f;">locationChangingContext</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#8f08c4;">if</span>&nbsp;(_editContext.<span style="color:#74531f;">IsModified</span>())<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//or&nbsp;a&nbsp;modal&nbsp;blazor&nbsp;component</span><br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">bool</span>&nbsp;<span style="color:#1f377f;">isConfirmed</span>&nbsp;=&nbsp;<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:blue;">await</span>&nbsp;JsRuntime.<span style="color:#74531f;">InvokeAsync</span>&lt;<span style="color:blue;">bool</span>&gt;(<span style="color:#a31515;">&quot;confirm&quot;</span>,&nbsp;<span style="color:#a31515;">&quot;Leave&nbsp;without&nbsp;saving?&quot;</span>);<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#8f08c4;">if</span>&nbsp;(!<span style="color:#1f377f;">isConfirmed</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#1f377f;">locationChangingContext</span>.<span style="color:#74531f;">PreventNavigation</span>();<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}</div>
+
+</div>
+<div class="Footer"></div>
+</body>
+</html>
