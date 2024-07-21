@@ -16,7 +16,8 @@
 <div class="menu">
 <ul>
 <li><a href="../index.html">Home &gt;</a></li>
-<li><a href="index.html">HTML5</a></li>
+<li><a href="../web/jsobjects.html">JS Objects</a></li>
+<li><a href="../web/jquery.html">jQuery Tips</a></li>
 <li><a href="forms.html">Forms</a></li>
 <li><a href="offline.html">AppCache</a></li>
 <li><a href="storage.html">LocalStorage and IndexedDB</a></li>
@@ -40,10 +41,8 @@ Written September 2012- specs and browser support will change!
 <h3>Local Storage</h3>
 <ul>
 <li>IE 8+. All browsers give 5Mb of key-value storage.<br/>
-Even if it is supported it might not be enabled. Features may throw exceptions, so use <a href="http://modernizr.com/">Modernizr</a></li>
-<li><a href="http://diveintohtml5.info/storage.html">DiveIntoHtml5</a></li>
-<li><a href="https://developer.mozilla.org/en-US/docs/DOM/Storage">MDN</a></li>
-<li><a href="http://www.w3schools.com/html/html5_webstorage.asp">w3Schools</a></li>
+Even if it is supported it might not be enabled. Features may throw exceptions, so use <a href="http://modernizr.com/" target="_">Modernizr</a></li>
+<li><a href="https://developer.mozilla.org/en-US/docs/DOM/Storage" target="_">MDN</a></li>
 </ul>
 
 <pre class="prettyprint">
@@ -92,7 +91,7 @@ var size = localStorage.length;
 <ul>
 <li>IE 10+, FF and Chrome. As at end 2012, Chrome is prefixed (IE+FF not), no support in Safari (which still has WebSQL) or any mobile browsers.<br/>
 It doesn't work in PrivateMode</li>
-<li><a href="https://developer.mozilla.org/en-US/docs/IndexedDB">MDN</a></li>
+<li><a href="https://developer.mozilla.org/en-US/docs/IndexedDB" target="_">MDN</a></li>
 <li>Almost everything returns asynchronous requests. Always hook on .onerror and .onsuccess.</li>
 </ul>
 <h4>Open/create the database</h4>
