@@ -255,7 +255,18 @@ See IndexedDB for larger data sets</li>
 	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;};<br/>
 	&nbsp;&nbsp;&nbsp;&nbsp;});<br/>
 	}<br/></div>
+<h3>Demo</h3>
+<p>Using <a href="dbOperations.js">dbOperations.js</a> (all local)</p>
+<ul id="countryList"></ul>
 
+<h4>Add a New Country</h4>
+<input type="text" id="newCountryName" placeholder="Country Name">
+<input type="text" id="newCountryShortName" placeholder="Country Short Name">
+<button onclick="addCountry()">Add Country</button>
+
+<h4>Search Countries</h4>
+<input type="text" id="searchInput" placeholder="Search..." list="autocompleteList">
+<datalist id="autocompleteList"></datalist>
 <h3>How much storage?</h3>
 <p><a href="https://developer.mozilla.org/en-US/docs/Web/API/StorageManager/estimate">navigator.storage.estimate().then(function(estimate) { })</a></p>
 	<p><label>Storage <meter id="storage"></meter></label> 
@@ -275,6 +286,7 @@ See IndexedDB for larger data sets</li>
 </div>
 <div class="Footer"><script type="text/javascript" src="../js/prettify.js">
 </script>
+<script src="dbOperations.js"></script>
 <script>
 prettyPrint();
 function formatBytes(bytes, decimals = 2) {
@@ -293,6 +305,52 @@ navigator.storage.estimate().then(function(estimate) {
     document.getElementById("usage").value = formatBytes(estimate.usage, 2);
     document.getElementById("quota").value = formatBytes(estimate.quota,2);
 });
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+	listAllCountries();
+
+	document.getElementById("searchInput").addEventListener("input", function() {
+		const inputValue = this.value;
+		if (!inputValue) {
+			document.getElementById("autocompleteList").innerHTML = "";
+			return;
+		}
+		dbOperations.searchCountriesByNamePrefix(inputValue).then(results => {
+			const autocompleteList = document.getElementById("autocompleteList");
+			autocompleteList.innerHTML = "";
+			results.forEach(country => {
+				const option = document.createElement("option");
+				option.value = country.Name;
+				option.textContent = `${country.Name} (${country.ShortName})`;
+				autocompleteList.appendChild(option);
+			});
+		});
+	});
+});
+
+function listAllCountries() {
+	dbOperations.fetchAllCountries().then(countries => {
+		countries.sort((a, b) => a.Name.localeCompare(b.Name));
+
+		const countryList = document.getElementById("countryList");
+		countryList.innerHTML = "";
+		countries.forEach(country => {
+			const li = document.createElement("li");
+			li.textContent = `${country.Name} (${country.ShortName})`;
+			countryList.appendChild(li);
+		});
+	});
+}
+
+function addCountry() {
+	const name = document.getElementById("newCountryName").value;
+	const shortName = document.getElementById("newCountryShortName").value;
+	dbOperations.addCountry(name, shortName).then(() => {
+		listAllCountries(); // Refresh the list
+	}).catch(error => {
+		alert(error);
+	});
 }
 </script>
 </div>
