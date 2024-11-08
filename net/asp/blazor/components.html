@@ -31,7 +31,6 @@
 <div class="content">
 <h2>Blazor Components</h2>
 
-
 <p>Each .razor file (+ partial classes) is a <em>component</em>- and invisibly inherits ComponentBase : IComponent. You can @inherits from another base class than inherits from ComponentBase.</p>
 <p>Layouts inherit  LayoutComponentBase and have a @Body parameter. Apply a layout with @layout name (overrides router's RouteView DefaultLayout). A folder with an _imports.razor can have a @layout that applies to all components in the folder.</p>
 <p>You can also @implements IDisposable or @implements IAsyncDisposable (but not both!) - things like events and js interop.</p>
@@ -39,6 +38,9 @@
 <div class="alert">
 <p>Prefer using .razor.cs partial classes for code alongside the .razor, avoid @code blocks. NB: @using and using statements are different.</p>
 <p>You can also use standard generic C# instead of <span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">typeparam</span>&nbsp;<span style="color:#1f377f;">TMyType</span></p>
+</div>
+<div class="alert">
+<p>You can @inherit MyBaseComponent but it doesn't inherit razor markup- only the @code. Instead use RenderFragment or simple wrapping.</p>
 </div>
 <div class="code"><span style="background:#ffffb3;">@</span><span style="background:#ffffb3;">code</span>&nbsp;<span style="background:#ffffb3;">{</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:green;">//don&#39;t&nbsp;do&nbsp;this,&nbsp;this&nbsp;is&nbsp;a&nbsp;partial&nbsp;class,&nbsp;so&nbsp;add&nbsp;x.razor.cs</span><br/>
