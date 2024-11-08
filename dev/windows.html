@@ -1,6 +1,5 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
 <meta name="viewport" content="width=device-width,initial-scale=1.0" />
@@ -33,8 +32,6 @@
 <li>Firefox extensions:
 <ul>
 <li>Adblock Plus or uBlock Origin</li>
-<li>WebDeveloper</li>
-<li>Used to use New Tab Homepage, but doesn't work with FF 57+</li>
 <li>Used to use Dafizilla-viewsource With but disabled for FF 57. Instead:<ul>
 <li>about:config</li>
 <li>search for <strong>view_source</strong></li>
@@ -44,11 +41,58 @@
 </ul></li>
 <li><a href="http://filezilla-project.org/">Filezilla</a>. To sync, Site Manager/File has import/export.</li>
 <li><a href="http://technet.microsoft.com/en-gb/sysinternals/default.aspx">SysInternals tools (esp Prcoess Explorer)</a></li>
-<li><a href="http://lessmsi.activescott.com/">LessMsi</a> - tool for looking into msi installers</li>
-<li>Windows 11- set up without internet/local account: shift/F10 opens command window, type <strong>oobe\bypassnro</strong></li>
+<!--<li><a href="http://lessmsi.activescott.com/">LessMsi</a> - tool for looking into msi installers</li>-->
+</ul>
+<h4>Windows 11</h4>
+<ul>
+<li>Set up without internet/local account: on "Let's connect you to a network" shift/F10 opens command window, type <strong>oobe\bypassnro</strong><ul>
+<li>After restart- do not connect to internet. "I don't have internet" "Continue with limited setup" </li>
+</ul></li>
+<li>Remove ads :(<ul>
+<li>Settings - Privacy &amp; Security - Search permissions - More settings / search highlights to OFF</li>
+<li>Settings - Privacy &amp; Security - General - Show me suggested content OFF, and Lets apps show me personalized ads OFF</li>
+<li>Settings - Privacy &amp; Security - Diagnostics &amp; Feedback - Tailored experiences - Let MS ... enhance your product experiences OFF</li>
+<li>Settings - Personalization - Taskbar - Widgets off</li>
+<li>Settings - Personalization - Lock Screen - Personalize - Get fun facts, tricks... OFF </li>
+<li>Settings - Personalization - Device Usage - turn off all (gaming/ entertainment ...)</li>
+<li>Settings - System - Notifications - Additional Settings - clear the "windows welcome" etc </li>
+<li>File explorer - ... menu - Options - View - Show sync provider notifications unticked</li>
+</ul></li>
+<li>Turn off CAPSLOCK<pre>Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Keyboard Layout]
+"Scancode Map"=hex:00,00,00,00,00,00,00,00,02,00,00,00,2a,00,3a,00,00,00,00,00</pre></li>
+
+</ul>
+
+<ul>
+<li>For desktops- Shutdown icon: Create a shortcut to <code>Shutdown.exe -s -t 00</code> (shutdown in 0 seconds) on desktop, customize the icon, then right-click-Pin To Start.</li>
 </ul>
 
 <h4>Settings</h4>
+
+<h3>Development machine- Visual Studio</h3>
+
+
+<p>General options</p>
+<ul>
+<li>Tools/Options/ TextEditor/ All Languages - Wordwrap and line numbers.</li>
+<li>In a web project File/Browse With - Add Firefox and make default.</li>
+<li>Add Resharper</li>
+<li>SQL Server (Express) latest + SPs. In Management Studio, server node rightclick/ Properties/ Security/ SQL Server and Windows Authentication (i.e. mixed mode)</li>
+<li>SSMS can be slow so <em>uncheck</em> IE Options/Advanced tab/Security-<q>Check publisher's certificate revocation</q> (or put this entry in C:\windows\system32\drivers\etc\hosts: 127.0.0.1 crl.microsoft.com)</li>
+</ul>
+
+<details>
+<summary>Obsolete Visual Studio stuff</summary>
+<ul>
+<li>Visual Studio latest + SPs + extensions/addins. 
+<ul><li>Vista/7/8: go to C:\Program Files (x86)\Microsoft Visual Studio 10.0\Common7\IDE and right-click devenv.exe. In compatibility tab, set to run as administrator</li>
+<li>Vista/7/8: install IIS7 + IIS - Web Management - IIS6 Compatibility- IIS Metabase and IIS 6 configuration + IIS - WWW Services - ASP.Net + IIS - Security - Windows Authentication. See <a href="https://support.microsoft.com/en-us/kb/920201">KB for SQL Server</a></li>
+</ul></li>
+<li>For SSL: <ul><li>PreVista: download/install IIS 6 resource kit and run SelfSSL (selfssl /T for default localhost website)</li>
+<li>Vista/IIS7: all in IIS manager - <a href="http://weblogs.asp.net/scottgu/archive/2007/04/06/tip-trick-enabling-ssl-on-iis7-using-self-signed-certificates.aspx">Scottgu</a></li></ul> </li>
+</ul>
 <ul>
 <li>PATH Environment Variable: required for .net csc.<br />
 <table><tr><th>1.1</th><td>;%windir%\Microsoft.NET\Framework\v1.1.4322;C:\Program Files\Microsoft.NET\SDK\v1.1\Bin;</td></tr>
@@ -78,30 +122,10 @@
 <li>If installed SP1, C:\WINDOWS\system32\VSP1CLN.exe to recover disc space. For sp2, run Compcln.exe</li>
 </ul>
 </li>
-<li>Turn off CAPSLOCK<pre>Windows Registry Editor Version 5.00
+</ul>
+</details>
 
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Keyboard Layout]
-"Scancode Map"=hex:00,00,00,00,00,00,00,00,02,00,00,00,2a,00,3a,00,00,00,00,00</pre></li>
-</ul>
-<h3>Development machine- Visual Studio</h3>
-<ul>
-<li>Visual Studio latest + SPs + extensions/addins. 
-<ul>
-<li>Vista/7/8: go to C:\Program Files (x86)\Microsoft Visual Studio 10.0\Common7\IDE and right-click devenv.exe. In compatibility tab, set to run as administrator</li>
-<li>Vista/7/8: install IIS7 + IIS - Web Management - IIS6 Compatibility- IIS Metabase and IIS 6 configuration + IIS - WWW Services - ASP.Net + IIS - Security - Windows Authentication. See <a href="https://support.microsoft.com/en-us/kb/920201">KB for SQL Server</a></li>
-</ul></li>
-</ul>
 
-<p>General options</p>
-<ul>
-<li>Tools/Options/ TextEditor/ All Languages - Wordwrap and line numbers.</li>
-<li>In a web project File/Browse With - Add Firefox and make default.</li>
-<li>Add GhostDoc, Resharper</li></ul> </li>
-<li>SQL Server (Express) latest + SPs. In Management Studio, server node rightclick/ Properties/ Security/ SQL Server and Windows Authentication (i.e. mixed mode)</li>
-<li>SSMS can be slow so <em>uncheck</em> IE Options/Advanced tab/Security-<q>Check publisher's certificate revocation</q> (or put this entry in C:\windows\system32\drivers\etc\hosts: 127.0.0.1 crl.microsoft.com)</li>
-<li>For SSL: <ul><li>PreVista: download/install IIS 6 resource kit and run SelfSSL (selfssl /T for default localhost website)</li>
-<li>Vista/IIS7: all in IIS manager - <a href="http://weblogs.asp.net/scottgu/archive/2007/04/06/tip-trick-enabling-ssl-on-iis7-using-self-signed-certificates.aspx">Scottgu</a></li></ul> </li>
-</ul>
 <h3>Development machine- Node + Grunt</h3>
 <ul>
 <li>Install <a href="http://nodejs.org/">Node.js</a> either with installer or via chocolately <code>cinst nodejs.install</code> </li>
@@ -138,14 +162,10 @@ no_proxy=https://internal-git
 </pre>
 
 
-<h3>Home machine</h3>
-<ul>
-<li><a href="http://www.ubcd4win.com/contents.htm">ultimate Windows boot cd</a> (and <a href="http://www.ultimatebootcd.com/">the non-Windows original</a>)</li>
-<li>XP-Win7: <a href="http://www.slysoft.com/en/virtual-clonedrive.html">Mount iso images as drives</a></li>
-<li>Win 8 Shutdown tile: Create a shortcut to <code>Shutdown.exe -s -t 00</code> (shutdown in 0 seconds) on desktop, customize the icon, then right-click-Pin To Start.</li>
-</ul>
-<p>And see <a href="http://www.hanselman.com/tools">the Scott Hanselman tools list</a></p>
+
 <h3>Misc.</h3>
+<details>
+<summary>Old stuff</summary>
 <h4>VB6</h4>
 <p>Unfortunately still around :(</p>
 <ul>
@@ -176,6 +196,7 @@ For context-menu Register item, save and merge this reg file (use HKEY_CLASSES_R
 <li>Get a file list: <code>dir *.gif /B &gt; list.txt</code></li>
 <li>Append a number of files together: <code>copy *.txt output.txt</code></li>
 </ul>
+</details>
 </div>
 <div class="Footer">
 
