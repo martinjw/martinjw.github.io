@@ -24,15 +24,24 @@
 
 <h4>Software</h4>
 <ul>
-<li><a href="http://notepad-plus-plus.org/">Notepad++</a> <br />
-<small>For .config syntax highlighting: Settings - Styler Configurator - pick xml - add "User ext"</small>
+<li><a href="http://notepad-plus-plus.org/">Notepad++</a> <ul>
+<li>Edit shortcuts.zml (C:\Program Files (x86)\Notepad++\shortcuts.xml): add user defined command for firefox (and/or chrome)<br/>
+<small>&lt;UserDefinedCommands&gt;<br />
+&lt;Command name="Launch in Firefox" Ctrl="yes" Alt="yes" Shift="yes" Key="88"&gt;firefox &quot;$(FULL_CURRENT_PATH)&quot;&lt;/Command&gt;
+</small></li>
+<li>Plugins- Plugins Admin - add JsTool and XmlTools</li>
+<li>For .config syntax highlighting: Settings - Styler Configurator - pick xml - add "User ext" for .config</li>
+<li>Settings - Preferences - Backup - disable Remember Current Session for next launch</li>
+</ul>
 </li>
+<li><a href="https://learn.microsoft.com/en-us/windows/powertoys/install">Microsoft's Windows PowerToys</a></li>
 <li><a href="http://winmerge.sourceforge.net/">WinMerge</a></li>
 <li><a href="http://www.irfanview.com/">IrfanView</a></li>
+<li><a href="https://github.com/apps/desktop">Github desktop as a git UI</a></li>
 <li>Firefox extensions:
 <ul>
 <li>Adblock Plus or uBlock Origin</li>
-<li>Used to use Dafizilla-viewsource With but disabled for FF 57. Instead:<ul>
+<li>To viewsource with notepad++:<ul>
 <li>about:config</li>
 <li>search for <strong>view_source</strong></li>
 <li>change <strong>view_source.editor.external</strong> to <strong>true</strong> (just double click)</li>
