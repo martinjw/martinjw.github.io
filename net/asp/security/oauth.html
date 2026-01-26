@@ -1,5 +1,4 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
@@ -19,29 +18,22 @@
 <li><a href="../../../index.html">Main &gt;</a></li>
 <li><a href="../../dotnet.html">.Net &gt;</a></li>
 <li><a href="../aspsecurity.html">Asp Security</a></li>
-<li><a href="forms.html">Forms Authentication</a></li>
-<li><a href="wsfederation.html">WS-Federation</a></li>
-<li><a href="wsfederationconfig.html">WS-Federation Config</a></li>
+<li><a href="forms.html">Legacy Security</a></li>
 <li><a href="ssl.html">SSL</a></li>
-<li><a href="owin.html">Owin</a></li>
 <li><a href="oauth.html">OAuth</a></li>
 </ul>
 
 </div>
 <div class="content">
 <h2>OAuth 2</h2>
-<p>OAuth 2 is supported using <a href="owin.html">Owin</a> middleware, so you have to use Owin.</p>
-<ul>
-<li><a href="oauthserver.html">Creating an OAuth Server</a></li>
-</ul>
-<h3>Roles</h3>
-<ul>
-<li><strong>Resource owner</strong> - the end user</li>
-<li><strong>Client</strong> - an application making requests on behalf of the resource owner. Maybe a browser, server or smartphone app. </li>
-<li><strong>Resource server</strong> - the application/ API (it hosts protected resources)</li>
-<li><strong>Authorization server</strong> - the server issuing access tokens (Facebook, Google...).</li>
-</ul>
-<p>In <a href="wsfederation.html">WS-Federation</a> terms, Authorization server is an STS/Identity Provider (IdentityServer v3 and ADFS v4 support both OAuth2 and Ws-fed). The Relying Party/Service Provider role is split into two: client (uses data) and resource server (provides data). </p>
+<p>There is a central Authorization Server (AS)/Identity Provider (IDP). This may be an internal server (eg ADFS), or an eternal one (Azure). It manages resources and scopes, and publishes a public discovery  metadata  (/.well-known/openid-configuration). This includes the public key, urls to get tokens, scopes etc.</p>
+<p>The IDP issues JWT (jason web token/"jot") tokens. This is a base64 encoded string (not secure from reading), but includes a footer section which is signed by the issuer (verify with the public key) so it is tamper-proof. This token can be passed as a bearer token between applications/browser-api in the http Authorization header (Authorization: Bearer xxxx).</p>
+<div class="alert">
+Yes, the Authorization header is actually authentication. See also in the apicontroller the Authorize() attribute /.RequireAuthorization() which is actually authentication. If you include policies it includes authorization (checking specific scopes).
+</div>
+<p>The terminology for the api/application is confusing. <strong>Resource server</strong> is the API with protected resources. <strong>Resource owner</strong> is the client/application using it.</p>
+<p>Microsoft (Azure AD) extends OAuth with audience (rather than just scope) and mapInboundClaims (renaming claims), which can be confusing. </p>
+
 <h4>Tokens</h4>
 <p>Access tokens are like cookies in traditional forms authentication:</p>
 <ul>
@@ -53,16 +45,28 @@
 <div class="alert">
 You should normally request scopes when explicitly needed, not all in advance. The authorization API should include a "include_granted_scopes=true" to roll up previously granted scopes.
 </div>
-
+<p>OpenId (with scope "openid" plus "profile" and others) adds an id_token in addition to an access (bearer) token with user claims, which is put into the cookie.</p>
+<p>With scope "offline_access" we can get a refresh_token, which is effectively a keep-alive for a token.</p>
 <h3>Flows</h3>
+<p>As of OAuth 2.1 there are only 2 recommended flows (others such as Password and Implicit flow are obsolete)</p>
+<ul>
+<li>Machine to machine: <strong>client credentials</strong></li>
+<li>User/browser to server/api: <strong>authorization code</strong> (includes OpenId)<ul>
+<li>For SPAs like Angular you can use a js lib like msal, which handles the token</li>
+<li>This is no longer recommended; instead use BFF (back-end for front-end) pattern with an app server that does the security and creates a same-site cookie which is used for apis. The browser only uses the local apis, which on the server can proxy out to "external" apis without exposing tokens.<ul>
+<li>You can use a reverse proxy (eg yarp) in front of the static and api websites</li>
+<li>In Blazor, the BFF project can reference the blazor wasm, and includes app.MapFallbackToFile("index.html"); </li>
+</ul></li>
+</ul></li>
+</ul>
+
 <p><a href="https://developers.google.com/accounts/docs/OAuth2">Google's OAuth documentation</a></p>
-<p>The most common interactions are <em>implicit/ token</em> (javascript in the browser) and <em>code</em> (server page gets code and does a server-to-server post for the token). The latter never exposes the token, so it's more secure.</p>
 <p>Generally you have to register the client with the auth server (so it knows where to redirect, or at least validate your redirect_uri).</p>
-<h4>Implicit Flow (Browsers/Apps)</h4>
+<h4>Authorization code (Browsers/Apps)</h4>
 <ul>
-<li><strong>Implicit / client-side</strong> (response_type=<em>token</em>): browser-based redirect to auth server, which logs in/shows consent screen.<br/>
+<li><strong>Authorization</strong> (response_type=<em>code</em>): browser-based redirect to auth server, which logs in/shows consent screen.<br/>
 <ul>
-<li>&#8594; <span class="url">https://server/auth?client_id=1&amp;response_type=<em>token</em><br/>
+<li>&#8594; <span class="url">https://server/auth?client_id=1&amp;response_type=<em>code</em><br/>
 The query-string has a <em>client_id</em> and may have a <em>redirect_uri</em> and <em>scope</em> (e.g. read, update...).</li>
 <li>&#8592; <span class="url">https://client/callback#token=xxx</span><br />
 The consent screen redirects back with the token in the url hash: location.hash.substr(1)</li>
@@ -87,10 +91,6 @@ The client POSTs to a token endpoint with <em>grant_type=authorization_code</em>
 The auth server replies with the access_token in json.</li>
 </ul>
 </li></ul>
-<h4>Password (Secure servers only)</h4>
-<ul>
-<li><strong>Password</strong> (also "response owner password credential flow") (grant_type=password): send username and password to authorization server (via Basic Auth or form-encoded), get token. This is a replacement to HTTP Basic Authentication.  </li>
-</ul>
 <h4>Client Credential (application-level access)</h4>
 <ul>
 <li>&#8594; <span class="url">POST https://server/?grant_type=client_credentials&amp;client_id=CLIENT_ID&amp;client_secret=CLIENT_SECRET</span><br />
@@ -99,10 +99,9 @@ Intended for app access (get list of users etc)</li>
 
 
 <h3>OpenID Connect</h3>
-<p>OpenID Connect is an authentication protocol built on top of OAuth2. OpenID identity providers (IdP) include 3rd parties like Google and Microsoft, plus your own with IdentityServer or ADFS 4.</p>
+<p>OpenID Connect is an authentication protocol built on top of OAuth2.</p>
 <ul>
-<li>install-package <strong>Microsoft.Owin.Security.Cookies</strong></li>
-<li>install-package <strong>Microsoft.Owin.Security.OpenIdConnect</strong></li>
+<li>install-package <strong>Microsoft.AspNetCore.Authentication.JwtBearer</strong></li>
 </ul>
 <p>In Startup do the following:</p>
 <ul>
