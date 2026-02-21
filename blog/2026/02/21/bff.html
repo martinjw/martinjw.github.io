@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Backend for frontend (BFF)</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/default.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+<style>
+pre { max-height:none;}
+.code {background-color: aliceblue;border-radius:10px;padding:20px;box-shadow: 5px 5px #ddd;}
+</style>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Backend for frontend (BFF)</h2>
+<p>Published Saturday 21 February 2026</p><article>
+<h3>BFF</h3>
+<p>The Backend for frontend pattern simply means each front-end (eg SPA, mobile app) has a specific back end. Rather than create a large API with complicated security for different clients, you can have a single API for each client (which may sit in front of one or more internal APIs). </p>
+<p>The downside if you have many clients is more APIs, duplication, versioning drift (it can enable adaptor pattern to control versioning, but tht complexity will accumulate over time).</p>
+<p>The BFF api talks to the client with simple cookie authentication, but the api can talk to one or more other apis with OAuth- the key point being that tokens are never exposed to the front-end.</p>
+<h3>SPAs with bearer tokens considered harmful</h3>
+<p>Front-end js libs like msal, oidc-client-ts and angular-auth-oidc-client handle the OIDC/OAuth2 protocol flow, but the settings (authority, clientid, scopes) and the tokens, including refresh tokens, are all in the browser. You can easily inspect them in browser dev tools. Worse, they are hackable.</p>
+<ul>
+<li>Token theft (XSS, browser extensions, wi-fi mitm interception/dns spoofing, AI agents...)<ul>
+<li>Tokens can be used typically for between 5 minutes and 1 hour. Stealing the token allows an attacker to impersonate you</li>
+<li>Refresh tokens are worse, as they can mint new tokens</li>
+<li>Bearer tokens are not tied to device or IP, and can be reused anywhere in the world </li>
+</ul></li>
+<li>Token replay</li>
+<li>Information disclosure (especially if you have different roles, all data may be available in the token) </li>
+</ul>
+<p>With BFF your tokens may be stored in cookies, but they should be encrypted and served as HTTP only cookies, unreadable by javascript (you can see them in dev tools, but they are encrypted, so unreadable).</p>
+<p>The BFF and front-end should be served from the same origin, so there are no CORS issues.</p>
+<p>Authentication cookies are vulnerable to CSRF (cross-site request forgery), but you can largely mitigate this:</p>
+<ul>
+<li>HTTPS</li>
+<li>HttpOnly cookies</li>
+<li>SameSite=Lax/Strict. Lax is needed if your IDP is a different domain, but is normally good enough. Blocks most CSRF</li>
+<li>Origin checks (middleware to check "Origin" and "Request" headers)</li>
+<li>Anti-forgery doesn't fit api/BFF as the SPA javascript is handling a vulnerable token.</li>
+</ul>
+
+<h3>BFF flow</h3>
+<ul>
+<li>Front end does initial unauthenticated call to BFF API</li>
+<li>Api does http redirect to identity provider (Authorization Code Flow with PKCE)</li>
+<li>User logs in via identity provider</li>
+<li>Identity provider redirects to BFF url with access token, id token, refresh token</li>
+<li>BFF encrypts the tokens into HTTP-only session cookie, and serves cookie and homepage to front-end<ul>
+<li>In .net using Microsoft.Identity.Web, the authentication cookie is AES-encrypted and signed; load balanced servers will share keys (or use DataProtection PersistKeys with azure key vault). But only the server with keys can read it, not the front-end</li>
+<li>NB: after a refresh, the cookie is rewritten (there is new token)</li>
+</ul></li>
+<li>Front-end sends cookie with all calls to back-end (same origin, automatic), with no view of the tokens.</li>
+</ul>
+<p>The BFF provides one or more authentication endpoints (minimally something like /bff/login) which redirect to the IDP. </p>
+<h3>.Net example</h3>
+<pre><code class="csharp">
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddAuthentication(options =&gt;
+{
+    options.DefaultScheme = "Cookies";
+    options.DefaultChallengeScheme = "oidc";
+})
+.AddCookie("Cookies", options =&gt;
+{
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Strict;
+})
+.AddOpenIdConnect("oidc", options =&gt;
+{
+    options.Authority = "https://example/idp";
+    options.ClientId = "client-bff";
+    options.ClientSecret = "secret";
+    options.ResponseType = "code";
+
+    options.SaveTokens = true; // keep tokens in auth session
+    options.GetClaimsFromUserInfoEndpoint = true;
+
+    options.Scope.Clear();
+    options.Scope.Add("openid");
+    options.Scope.Add("profile");
+    options.Scope.Add("offline_access"); // refresh tokens
+    options.Scope.Add("api"); // your API scope
+});
+
+builder.Services.AddAuthorization();
+
+// HTTP client to call downstream API
+builder.Services.AddHttpClient("downstream", client =&gt;
+{
+    client.BaseAddress = new Uri("https://example/api");
+});
+
+var app = builder.Build();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Trigger OIDC login
+app.MapGet("/bff/login", async (HttpContext ctx) =&gt;
+{
+    if (!ctx.User.Identity?.IsAuthenticated ?? true)
+    {
+        await ctx.ChallengeAsync("oidc");
+        return;
+    }
+
+    return Results.Ok();
+});
+
+// Logout (BFF session + IdP)
+app.MapPost("/bff/logout", async (HttpContext ctx) =&gt;
+{
+    await ctx.SignOutAsync("Cookies");
+    await ctx.SignOutAsync("oidc");
+    return Results.Ok();
+});
+
+// Current user info for front-end
+app.MapGet("/bff/user", (HttpContext ctx) =&gt;
+{
+    if (!ctx.User.Identity?.IsAuthenticated ?? true)
+        return Results.Unauthorized();
+
+    var claims = ctx.User.Claims.Select(c =&gt; new { c.Type, c.Value });
+    return Results.Ok(claims);
+});
+
+//a downstream endpoint that relays to a private internal api
+app.MapGet("/api/todos", async (
+    IHttpClientFactory httpClientFactory,
+    HttpContext ctx) =&gt;
+{
+    if (!ctx.User.Identity?.IsAuthenticated ?? true)
+        return Results.Unauthorized();
+
+    // Get access token from auth session
+    var accessToken = await ctx.GetTokenAsync("access_token");
+    if (string.IsNullOrEmpty(accessToken))
+        return Results.Unauthorized();
+
+    var client = httpClientFactory.CreateClient("downstream");
+    client.DefaultRequestHeaders.Authorization =
+        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+    var response = await client.GetAsync("/todos");
+    var content = await response.Content.ReadAsStringAsync();
+
+    return Results.Content(content, response.Content.Headers.ContentType?.ToString());
+});
+</code></pre>
+<p>The angular app doesn't have to do much, because the browser attaches the cookies.</p>
+<pre><code class="javascript">
+this.http.get('/bff/user').subscribe({
+  next: user => this.user = user,
+  error: () => window.location.href = '/bff/login'
+});
+</code></pre>
+
+<p>Aside: you will probably prefer to use the nugets Microsoft.Identity.Web with Microsoft.Identity.Web.DownstreamApi (which handles token refresh etc: see <a href="https://learn.microsoft.com/en-us/entra/identity-platform/scenario-web-api-call-api-app-configuration?tabs=aspnetcore">docs</a>)</p>
+<pre><code class="csharp">
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddMicrosoftIdentityWebApi(Configuration, "AzureAd")
+    .EnableTokenAcquisitionToCallDownstreamApi()
+    .AddDownstreamApi("MyApi", Configuration.GetSection("MyApiScope"))
+    .AddInMemoryTokenCaches();
+</code></pre>
+<p>This gives you a IDownsteamApi with a named target to use in the endpoint</p>
+<pre><code class="csharp">
+app.MapGet("/api/todos", async (IDownstreamApi api, HttpContext ctx) =&gt;
+{
+    if (!ctx.User.Identity?.IsAuthenticated ?? true)
+        return Results.Unauthorized();
+
+    var result = await api.GetForUserAsync&lt;IEnumerable&lt;TodoItem&gt;&gt;("TodoApi", "/todos");
+    return Results.Ok(result);
+});
+</code></pre>
+<p>Note these tokens must be stored on the server (InMemoryTokenCache above, or SqlServer or Redis); they are not in the authentication cookie like the primary login</p>
+<details>
+<summary>Origin checking middleware (example)</summary>
+<pre><code class="csharp">
+//looks like CORS - that blocks the response, this checks the request
+var allowedOrigins = new[]
+{
+    "https://localhost:4200", // dev
+    "https://example.com" // Production
+};
+
+app.Use(async (context, next) =>
+{
+    //Blocks cross-origin POST/PUT/PATCH/DELETE
+    //browsers automatically add Origin for cross origin and same-origin non-GET
+    var origin = context.Request.Headers["Origin"].ToString();
+    var referer = context.Request.Headers["Referer"].ToString();
+
+    bool IsAllowed(string value) =&gt;
+        !string.IsNullOrEmpty(value) &&
+        allowedOrigins.Any(o =&gt; value.StartsWith(o, StringComparison.OrdinalIgnoreCase));
+
+    // Only enforce for unsafe HTTP methods
+    if (HttpMethods.IsPost(context.Request.Method) ||
+        HttpMethods.IsPut(context.Request.Method) ||
+        HttpMethods.IsPatch(context.Request.Method) ||
+        HttpMethods.IsDelete(context.Request.Method))
+    {
+        if (!IsAllowed(origin) && !IsAllowed(referer))
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            await context.Response.WriteAsync("Forbidden: Invalid origin");
+            return;
+        }
+    }
+
+    await next();
+});
+</code></pre>
+</details>
+<h3>.Net example with Duende.Bff</h3>
+<p>These are open source nuget libs for Bff. Duende.Bff is the basic one, and Duende.Bff.Yarp for routing to remote apis (which includes yarp).</p>
+<p>Note this uses an in-memory session store, but an EntityFramework extension is available.</p>
+<p>See <a href="https://docs.duendesoftware.com/bff/">docs</a></p>
+<pre><code class="csharp">
+using Duende.Bff;
+using Duende.Bff.Yarp;
+using Microsoft.AspNetCore.Authentication;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddAuthorization();
+builder.Services.AddCascadingAuthenticationState();
+builder.Services
+    .AddBff() //add Duende.Bff
+    .AddRemoteApis() //add support for remote API access (Duende.Bff.Yarp)
+    .ConfigureOpenIdConnect(options =>
+    {
+        options.Authority = "https://identityProvider/";
+    
+        options.ClientId = "interactive.confidential";
+        options.ClientSecret = "secret";
+        options.ResponseType = "code";
+        options.ResponseMode = "query";
+    
+        options.Scope.Clear();
+        options.Scope.Add("openid");
+        options.Scope.Add("profile");
+        options.Scope.Add("api");
+        options.Scope.Add("offline_access");
+
+        options.MapInboundClaims = false;
+        options.ClaimActions.MapAll();
+        options.GetClaimsFromUserInfoEndpoint = true;
+        options.SaveTokens = true;
+
+        options.TokenValidationParameters.NameClaimType = "name";
+        options.TokenValidationParameters.RoleClaimType = "role";
+    })
+    .ConfigureCookies(options =&gt;
+    {
+        options.Cookie.SameSite = SameSiteMode.Strict;
+    });
+
+var app = builder.Build();
+
+app.UseAuthentication();
+app.UseBff(); //add antiforgery protection
+app.UseAuthorization();
+
+app.MapBffManagementEndpoints();
+
+app.MapStaticAssets();
+
+//add a local API endpoint
+app.MapGet("/api/data", async () =&gt;
+{
+    return Results.Content(
+		await File.ReadAllTextAsync("weather.json"), "application/json");
+}).RequireAuthorization()
+    .AsBffApiEndpoint(); //adds [BffApiAttribute] =CSRF protection
+
+//add a remote API endpoint (via YARP) that requires an access token to be sent to the remote API
+app.MapRemoteBffApiEndpoint("/remoteapi", new Uri("https://example.com/api"))
+    .WithAccessToken();
+
+//this api references a BlazorWasm project, which pulls the BlazorWasm app from the wwwroot folder
+app.MapFallbackToFile("index.html");
+
+app.Run();
+</code></pre>
+</article>
+<p>Previously: <a href="../18/Verifiedcredentials.html">Verified credentials</a> (Wednesday 18 February 2026)</p>
+</div>
+<div class="Footer">
+
+</div>
+<script>hljs.highlightAll();</script>
+</body>
+</html>
