@@ -1,5 +1,4 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
@@ -114,7 +113,16 @@ Beware of <strong>anti-patterns</strong> or <strong>code smells</strong>- things
 </div>
 <h3>Other patterns</h3>
 <ul>
-<li><strong>3-tier/n-tier (layers)</strong>: Typically a web (or windows) solution would have 3 core projects: domain/model, data access and UI. In other words, separation of concerns. A very old but still well-used pattern. A variation is <strong>hexagonal architecture</strong> (aka "ports and adaptors"). The domain is in the centre, with available ports (contracts/interfaces). Plugging into the ports are adaptors, which are the data access and UI.</li>
+<li><strong>3-tier/n-tier (layers)</strong>: Typically a web (or windows) solution would have 3 core projects: domain/model, data access and UI. In other words, separation of concerns. A very old but still well-used pattern. <ul>
+<li>A variation is <strong>hexagonal architecture</strong> (aka "ports and adaptors"). The domain is in the centre, with available ports (contracts/interfaces). Plugging into the ports are adaptors, which are the data access and UI.</li>
+</ul></li>
+<li><strong>Messaging</strong> via message brokers- point to point or pubsub (eg MQTT)<ul>
+<li>Decoupled and async, but risks are messages treated twice, need for events (success/failure) and rollback (eg paymemt failed, stop delivery)</li>
+<li>Message broker/ Service bus: stores and routes messages. Eg Kafka, RabbitMQ, Azure Service Bus</li>
+<li>Inbox-outbox pattern: messages in a db table as part of the transaction. Tolerates disconnections, double processing.</li>
+<li>Orchestration Saga - a central service controls services with events. Risk: central dependency</li>
+<li>Choreography Saga - no central service, each service reacts with events. Risk: event spaghetti</li>
+</ul></li>
 <li><strong>Service oriented architecture (SOA)</strong> : loosely coupled components ("services") performing self-contained actions. In practice, interaction becomes RPC (remote procedure call) using SOAP (xml) messages.</li>
 <li><strong>MVC</strong> : model view controller, a pattern for separating UI code.</li>
 <li><strong>MVVM</strong> : model view-model model is a variation of MVC, initially WPF and now most javascript SPA frameworks. The view-model exposes the model for data binding (data binding is the controller).</li>
@@ -153,22 +161,27 @@ In practice most people name their *Unit/Test tests in BDD style (Given_When_The
 <p>No application/service is production-ready without some these:</p>
 <ul>
 <li>Documentation. At least a technical "read-me" (volumes of comprehensive text will be ignored). Must be up-to-date.</li>
-<li>Developer Tests (unit and/or integration as applicable and practical).</li>
-<li>Some kind of performance profiling. From manual acceptance tests to NewRelic type analytics.</li>
+<li>Developer Tests (unit and/or integration as applicable and practical).<ul>
+<li>Don't forget to plan manual testing. From developer to user acceptance; automated tests will never be enough</li></ul>
+</ul></li>
+<li>Some kind of performance profiling. From manual acceptance tests to Elastic Search-type analytics.</li>
 <li><a href="http://msdn.microsoft.com/en-us/library/dn589789.aspx">Monitoring</a>. From simple pings to detailed analysis. For historical data and alerts when it dies.</li>
 <li>Logging. At least exception logging.</li>
 <li>Security. Even inside an organization you need some.</li>
 <li>Build process. Visual Studio/Source control/build server may be enough, but you need to be able to produce a repeatable deployment package.</li>
 <li>Deployment plan. Plan for initial deployment as well as upgrades, server maintenance and server moves.</li>
 <li>Dependencies: You need an agreed list of core dependencies.<ul>
-<li>IDE (Visual Studio, Resharper), source control (git, svn, TFS), build servers.</li>
-<li>Data access e.g. ORM like Entity Framework or Dapper, or raw ADO</li>
+<li>IDE (Visual Studio, Resharper), source control (git, svn, TFS), build servers/ devops (Azure Devops/Github/Jenkins).</li>
+<li>Data access e.g. ORM like Entity Framework or Dapper, or raw ADO (maybe multiple)</li>
 <li>UI e.g. Winforms, MV Razor, an SPA like Angular...</li>
-<li>Dependency Injection e.g. StructureMap</li>
+<li>Dependency Injection e.g. StructureMap, Autofac</li>
 <li>Logging e.g. log4net, NLog, Serilog, EntLib, .net Trace. "Common logging" is normally an abstraction too far.</li>
 <li>Exception logging e.g. ELMAH</li>
-<li>Tracing e,g. Glimpse</li>
-<li>Testing framework e.g. MsTest, XUnit, NUnit. Some like extension assertions like Shouldly (some, like me, dislike them)</li>
+<li>Tracing/ Telemetry (via logging framework or OpenTelemetry, Application Insights, Elastic APM)</li>
+<li>Testing framework e.g. MsTest, XUnit, NUnit. Some like extension assertions like Shouldly (some, like me, dislike them)
+<ul>
+<li>Standard organisation is Arrange-Act-Assert. Which is basically the same as Given-When-Then (behaviour driven)</li>
+</ul></li>
 <li>Mocking (ideally limited, but probably required) e.g. Moq</li>
 <li>Others: AutoMapper, Swagger ...</li>
 </ul></li>
