@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Secrets and hosting</title>
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+<script type="text/javascript" src="../../../../utilities.js">
+</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.12.0/styles/default.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.12.0/highlight.min.js"></script>
+<style>
+pre { max-height:none;}
+.code {background-color: aliceblue;border-radius:10px;padding:20px;box-shadow: 5px 5px #ddd;}
+</style>
+</head>
+<body>
+<h1>static void</h1>
+<div class="menu">
+<ul>
+<li><a href="../../../../index.html">About</a></li>
+<li><a href="../../../index.html">Blog</a></li>
+</ul>
+</div>
+<div class="content">
+<h2>Secrets and hosting</h2>
+<p>Published Wednesday 2 September 2026</p><article>
+<p>As a responsible developer, you are using <a href="https://github.com/gitleaks/gitleaks">gitleaks</a> and you're using <a href="https://www.sonarsource.com/">SonarCube</a> on your commits and PRs to make sure you don't leak secrets into github.</p>
+<p>Both of them are objecting to your connection strings and other secrets in appsettings.config. How do you fix this?</p>
+<h3>User Secrets (or maybe not...)</h3>
+<p>You'll first discover UserSecrets, so let's look at it, and find out why it's not what you're looking for.</p>
+<h4>user-secrets init</h4>
+<p>In folder with the .csproj file (not .slnx or anywhere else), open a command line and run:</p>
+<pre><code class="bash">
+dotnet user-secrets init
+</code></pre>
+<p>If it errors, you just ignored the comment about the command line being in the folder with the csproj file. </p>
+<p><strong>user-secrets init</strong> does two things:</p>
+<ul>
+<li>adds a &lt;UserSecretsId&gt;guid...&lt;/UserSecretsId&gt; to the .csproj file</li>
+<li>creates a folder and file %APPDATA%\Microsoft\UserSecrets\guid...\secrets.json</li>
+</ul>
+<h4>user-secrets set</h4>
+<p>Add secrets in the command line (note colon delimiter for nested values):</p>
+<pre><code class="bash">
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=.;Database=MI6;Trusted_Connection=True;"
+dotnet user-secrets set "MySettings:Name" "James Bond"
+</code></pre>
+<p>Tne file %APPDATA%\Microsoft\UserSecrets\guid...\secrets.json will contain the following:</p>
+<pre><code class="json">
+{
+  "ConnectionStrings:DefaultConnection": "Server=.;Database=MI6;Trusted_Connection=True;",
+  "MySettings:Name": "James Bond"
+}
+</code></pre>
+<h4>Using UserSecrets</h4>
+<p>Our scenario is consoles and integration tests, not asp hosts.</p>
+<p>Add the Microsoft.Extensions.Configuration.UserSecrets NuGet package<br />
+Add the Microsoft.Extensions.Configuration.Json NuGet package</p>
+<p>Then use ConfigurationBuilder to load the json and override it with UserSecrets.</p>
+<pre><code class="csharp">
+using Microsoft.Extensions.Configuration;
+
+var config = new ConfigurationBuilder()
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddUserSecrets&lt;Program&gt;()   // enables user-secrets
+    .Build();
+var conn = config.GetConnectionString("DefaultConnection");
+//or via Microsoft.Extensions.Configuration.Binder
+var mySettings = config.GetSection("MySettings").Get&lt;MySettings&gt;();
+</code></pre>
+
+<h4>Share the secrets</h4>
+<p>As a developer, you normally work in a team, and your colleagues need to run and debug the code. So you need to share the secrets (but not in the repository, where others can see your secrets).</p>
+<p>UserSecrets is designed for single developers. If they run user-secrets init, they get a different guid in the csproj. You can copy the %APPDATA%\Microsoft\UserSecrets\guid folder, and every team member copies it to their local %APPDATA%. </p>
+<p>If you use Host.CreateApplicationBuilder(), it will load UserSecrets automatically ... if there is a UserSecretsId in the csproj AND it is in development mode (app.Environment.IsDevelopment()).</p>
+<p>There is a slightly simpler way...</p>
+
+<h3>Environmental Variables</h3>
+<p>Environmental variables are also specific to your machine, and will not get into the repository. <br />
+There is no UserSecretsId in the csproj <br />
+Instead of AddUserSecrets() you AddEnvironmentVariables().<br />
+Again, Host.CreateApplicationBuilder() does it automatically, but not just in debug. </p>
+<p>You have to share the command line among the team, but it's just the command line, not a secrets.json that has to be coied to a specific location.</p>
+<pre><code class="bash">
+setx ConnectionStrings__DefaultConnection "Server=.;Database=MI6;Trusted_Connection=True;"
+setx MySettings__Name "James Bond"
+</code></pre>
+<p>setx (set persistent environment variable) uses __ (two underscores) for nested values, not : (colon) like user-secrets.</p>
+<h3>Console with hosting</h3>
+<p>Here's a full example for a console (which could also be used for an integration test). <br />
+In addition to configuration, it includes logging (NLog) and Dependency Injection (Autofac)</p>
+<p>The Runner here is IAsyncDisposable, hence the "await using".</p>
+<p></p>
+<pre><code class="csharp">
+using Autofac;
+using Autofac.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using NLog.Extensions.Logging;
+
+// configure NLog from nlog.config
+NLog.LogManager.LoadConfiguration("nlog.config");
+
+var builder = Host.CreateApplicationBuilder();
+//get the configuration from the builder
+var configSettings = builder.Configuration.GetRequiredSection("MySettings")
+    .Get&lt;MySettings&gt;()!;
+//connection string also available, we'll put it manually into the MySettings
+configSettings.ConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+// logging using NLog
+builder.Logging.ClearProviders();
+builder.Logging.SetMinimumLevel(LogLevel.Information);
+builder.Logging.AddNLog();
+
+//Dependency injection with autofac
+builder.ConfigureContainer(
+    new AutofacServiceProviderFactory(),
+    container =>
+    {
+        // register the configured MySettings instance so it is available to Runner via DI
+        container.RegisterInstance(configSettings).AsSelf().SingleInstance();
+        container.RegisterModule(new RegistryModule());
+    });
+
+var app = builder.Build();
+
+//just resolve the service, with configuration injected
+await using var runner = app.Services.GetRequiredService&lt;IRunner&gt;();
+runner.Run();
+</code></pre>
+<p>In theory the Host.CreateApplicationBuilder() should also do UserSecrets in development mode, but you might have to be explicit. Another reason just to do Environmental Variables, which work reliably. </p>
+<pre><code class="csharp">
+var builder = Host.CreateApplicationBuilder();
+// ensure user secrets are included (optional: true so missing secrets will not error)
+builder.Configuration.AddUserSecrets<Program>(optional: true);
+</code></pre>
+<p>In asp, you use WebApplication.CreateBuilder(args), configure it, var app = builder.Build() and then app.Run()</p>
+<p>You can do this in consoles too, but you need to implement an IHostedService is a singleton with StartAsync and StopAsync methods.<br />
+I prefer to just get the service fully loaded with DI and logging, as shown above.</p>
+<pre><code class="csharp">
+builder.Services.AddHostedService&lt;Runner&gt;();
+var app = builder.Build();
+await app.RunAsync();
+</code></pre>
+
+</article>
+<p>Previously: <a href="../21/bff.html">Backend for frontend (BFF)</a> (Saturday 21 February 2026)</p>
+</div>
+<div class="Footer">
+
+</div>
+<script>hljs.highlightAll();</script>
+</body>
+</html>
