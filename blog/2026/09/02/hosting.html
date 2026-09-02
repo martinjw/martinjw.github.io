@@ -148,6 +148,10 @@ var app = builder.Build();
 await app.RunAsync();
 </code></pre>
 
+<h3>Deployment to servers</h3>
+<p>Azure Devops Release Pipelines have pipeline variables where you can add your secrets, including connection strings. Link them with scopes per target (eg for tst connection string, prod connection string),</p>
+<p>I prefer to use Pipelines/Library/Variable Groups with a group per scope (eg TST variables, PROD variables), which can be linked to multiple release pipelines. You can also like Variable Groups to Azure Key Vault (there's a toggle for this).</p>
+
 </article>
 <p>Previously: <a href="../21/bff.html">Backend for frontend (BFF)</a> (Saturday 21 February 2026)</p>
 </div>
