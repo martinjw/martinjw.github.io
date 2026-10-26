@@ -39,7 +39,7 @@
 
 <h3>static void Main</h3>
 <p>Asp.Net Core is a true console application, with a <span style="color:blue;">public</span>&nbsp;<span style="color:blue;">static</span>&nbsp;<span style="color:blue;">void</span>&nbsp;<span style="color:darkcyan;">Main</span>(<span style="color:blue;">string</span>[]&nbsp;args)</p>
-<p>In Core 3.1 there were separate Program.cs and Startup.cs. In .net 6, everything is in Program.cs (but old projects aren't upgraded, and Startup.cs still works).</p>
+<p>In Core 3.1 there were separate Program.cs and Startup.cs. In .net 6+, everything is in Program.cs (but old projects aren't upgraded, and Startup.cs still works).</p>
 
 <div class="code">
 <p><span style="color:blue;">var</span>&nbsp;<span style="color:#1f377f;">builder</span>&nbsp;=&nbsp;<span style="color:#2b91af;">WebApplication</span>.<span style="color:#74531f;">CreateBuilder</span>(<span style="color:#1f377f;">args</span>);<br/>
@@ -64,12 +64,9 @@
 <li>Dependency Injection - Autofac.Extensions.DependencyInjection <a href="di.html#autofac">See example</a></li>
 <li>Logging - NLog.Web.AspNetCore. <a href="logging.html#nlog">See example</a></li>
 <li>Some sort of authentication. For webAPI, probably Microsoft.AspNetCore.Authentication.JwtBearer <a href="security.html#jwt">See example</a></li>
-<li>For webAPI, you probably want MediatR</li>
+<li>For webAPI, you probably want MediatR or one of the many clones</li>
 </ul>
-<div class="code"><span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PackageReference</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Include</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">Autofac.Extensions.DependencyInjection</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">Version</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">8.0.0</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br/>
-<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PackageReference</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Include</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">MediatR</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">Version</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">12.1.1</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br/>
-<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PackageReference</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Include</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">Microsoft.AspNetCore.Authentication.JwtBearer</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">Version</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">6.0.22</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span><br/>
-<span style="color:blue;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</span><span style="color:#a31515;">PackageReference</span><span style="color:blue;">&nbsp;</span><span style="color:red;">Include</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">NLog.Web.AspNetCore</span>&quot;<span style="color:blue;">&nbsp;</span><span style="color:red;">Version</span><span style="color:blue;">=</span>&quot;<span style="color:blue;">5.3.4</span>&quot;<span style="color:blue;">&nbsp;/&gt;</span></div>
+
 
 
 <h2>Older versions of Core</h2>
